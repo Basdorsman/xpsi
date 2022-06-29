@@ -6,6 +6,7 @@
 
 """ Image a star on a distant observer's sky. """
 
+
 from __future__ import division, print_function
 import numpy as np
 from cython.parallel cimport *
@@ -42,6 +43,9 @@ from xpsi.pixelmesh.geometricConfiguration cimport _GEOM
 cdef int SUCCESS = 0
 cdef double keV = 1.60217662e-16
 cdef double _2pi = 2.0 * M_PI
+
+
+
 
 def integrate(size_t numThreads,
               double r_s,
@@ -87,7 +91,6 @@ def integrate(size_t numThreads,
 
     """
     setbuf(stdout, NULL)
-    printf("Imaging the star and computing light-curves...")
 
     cdef:
         signed int kk
@@ -209,6 +212,7 @@ def integrate(size_t numThreads,
             INDEX += 1
 
         # free memory
+        printf("free rays")
         for T in range(N_T):
             free_RAY(RAYS[T])
         free(RAYS)
@@ -289,15 +293,19 @@ def integrate(size_t numThreads,
                            phases[k] - LAG[0],
                            &(radiation_field_global_variables[0]),
                            local_vars_buf) == 1:
+                
                 NUM_HITS = 1
+                #printf("Here 1",NUM_HITS)
                 NUM_MISSES = 0
                 ORIGIN_HIT = 1
             else:
                 NUM_HITS = 0
+                #printf("Here 2",NUM_HITS)
                 NUM_MISSES = 1
                 ORIGIN_HIT = 0
         else:
             NUM_HITS = 0
+            #printf("Here 3",NUM_HITS)
             NUM_MISSES = 0
             ORIGIN_HIT = 0
 
@@ -313,6 +321,7 @@ def integrate(size_t numThreads,
                                    local_vars_buf) == 1:
 
                         NUM_HITS = NUM_HITS + 1
+                        #printf("Here 4",NUM_HITS)
                         HIT[THREAD_INDEX + INDEX] = 1
                     else:
                         NUM_MISSES = NUM_MISSES + 1
@@ -430,10 +439,12 @@ def integrate(size_t numThreads,
     #----------------------------------------------------------------------->>>
     # >>> Free memory.
     #----------------------------------------------------------------------->>>
+    printf("free atmosphere")
     if atmosphere:
         free_preload(preloaded)
-
+    printf("free hot")
     free_hot(N_T, data)
+    printf("free local variables")
     free_local_variables(N_T, local_vars_buf)
 
     if cache_intensities == 1:

@@ -45,6 +45,7 @@ from .rays cimport eval_image_deflection, invert, link_rayXpanda
 
 from ..tools cimport _get_phase_interpolant, gsl_interp_type
 
+
 def integrate(size_t numThreads,
               double R,
               double omega,
@@ -71,6 +72,7 @@ def integrate(size_t numThreads,
               elsewhere_atmosphere,
               image_order_limit = None):
 
+    printf("inside cellmesh/integrator")
     # check for rayXpanda explicitly in case of some linker issue
     cdef double rayXpanda_defl_lim
     cdef bint _use_rayXpanda
@@ -611,7 +613,6 @@ def integrate(size_t numThreads,
                         j = j + 1
             if terminate[T] == 1:
                 break # out of image loop
-
         if not _use_rayXpanda:
             gsl_interp_free(interp_alpha_alt[T])
         if terminate[T] == 1:

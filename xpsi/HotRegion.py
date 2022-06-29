@@ -484,8 +484,10 @@ class HotRegion(ParameterSubspace):
 
         # find the required integrator
         if declaration: # can we safely assume azimuthal invariance?
+            #print("azimuthal invariance")
             from .cellmesh.integrator_for_azimuthal_invariance import integrate as _integrator
         else: # more general purpose
+            #print("general integrator")
             from .cellmesh.integrator import integrate as _integrator
         self._integrator = _integrator
 
@@ -1054,6 +1056,7 @@ class HotRegion(ParameterSubspace):
                             integration.
 
         """
+        print("inside hot.integrate")
         if self.fast_mode and not self.do_fast:
             try:
                 if self.cede:
@@ -1079,6 +1082,36 @@ class HotRegion(ParameterSubspace):
         else:
             super_energies = cede_energies = energies
 
+
+        # print("checking variables")
+        # print(threads)
+        # print(st.R)
+        # print(st.Omega)
+        # print(st.r_s)
+        # print(st.i)
+        # print(self._super_cellArea)
+        # print(self._super_r)
+        # print(self._super_r_s_over_r)
+        # print(self._super_theta)
+        # print(self._super_phi)
+        # print(self._super_cellParamVecs)
+        # print(self._super_radiates)
+        # print(self._super_correctionVecs)
+        # print(num_rays)
+        # print(self._super_deflection)
+        # print(self._super_cos_alpha)
+        # print(self._super_lag)
+        # print(self._super_maxDeflection)
+        # print(self._super_cos_gamma)
+        # print(super_energies)
+        # print(leaves)
+        # print(phases)
+        # print(hot_atmosphere)
+        # print(elsewhere_atmosphere)
+        # print(self._image_order_limit)
+        # print("all variables ok")
+
+        print("attempting super_pulse") 
         super_pulse = self._integrator(threads,
                                        st.R,
                                        st.Omega,
@@ -1104,12 +1137,13 @@ class HotRegion(ParameterSubspace):
                                        hot_atmosphere,
                                        elsewhere_atmosphere,
                                        self._image_order_limit)
-
+        print("super pulse done")
         if super_pulse[0] == 1:
             raise PulseError('Fatal numerical error during superseding-'
                              'region pulse integration.')
 
         try:
+            print("attempting cede_pulse")
             cede_pulse = self._integrator(threads,
                                           st.R,
                                           st.Omega,

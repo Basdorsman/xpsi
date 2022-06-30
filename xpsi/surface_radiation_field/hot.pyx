@@ -49,7 +49,7 @@ cdef void* init_hot(size_t numThreads, const _preloaded *const preloaded) nogil:
     # the user's responsibility to manage.
     # Return NULL if dynamic memory is not required for the model
 
-    printf("inside init_hot()")
+    #printf("inside init_hot()")
     cdef DATA *D = <DATA*> malloc(sizeof(DATA))
     D.p = preloaded
     
@@ -83,7 +83,8 @@ cdef void* init_hot(size_t numThreads, const _preloaded *const preloaded) nogil:
         D.acc.node_vals[T] = <double*> malloc(2 * D.p.ndims * sizeof(double))
         D.acc.SPACE[T] = <double*> malloc(4 * D.p.ndims * sizeof(double))
         D.acc.DIFF[T] = <double*> malloc(4 * D.p.ndims * sizeof(double))
-        D.acc.INTENSITY_CACHE[T] = <double*> malloc(256 * sizeof(double))
+        #D.acc.INTENSITY_CACHE[T] = <double*> malloc(256 * sizeof(double))
+        D.acc.INTENSITY_CACHE[T] = <double*> malloc(1024 * sizeof(double))
         D.acc.VEC_CACHE[T] = <double*> malloc(D.p.ndims * sizeof(double))
         for i in range(D.p.ndims):
             D.acc.BN[T][i] = 0
@@ -172,14 +173,14 @@ cdef int free_hot(size_t numThreads, void *const data) nogil:
     #   init_hot()
     # because data is expected to be NULL in this case
 
-    printf("inside free_hot()")
+    # printf("inside free_hot()")
 
     cdef DATA *D = <DATA*> data
 
     cdef size_t T
 
     for T in range(numThreads):
-        printf("freeing thread specific memory")
+        # printf("freeing thread specific memory")
         free(D.acc.BN[T])
         free(D.acc.node_vals[T])
         free(D.acc.SPACE[T])
@@ -187,7 +188,7 @@ cdef int free_hot(size_t numThreads, void *const data) nogil:
         free(D.acc.INTENSITY_CACHE[T])
         free(D.acc.VEC_CACHE[T])
 
-    printf("freeing D.acc...")
+    # printf("freeing D.acc...")
     free(D.acc.BN)
     free(D.acc.node_vals)
     free(D.acc.SPACE)
@@ -195,7 +196,7 @@ cdef int free_hot(size_t numThreads, void *const data) nogil:
     free(D.acc.INTENSITY_CACHE)
     free(D.acc.VEC_CACHE)
 
-    printf("freeing D...")
+    # printf("freeing D...")
     free(D)
 
     return SUCCESS
@@ -240,7 +241,7 @@ cdef double eval_hot(size_t THREAD,
     # vec[2] = mu
     # vec[3] = log10(E / E_eff)
 
-    vec[0] = 5 # THIS IS MY CUSTOM VARIABLE: MODULATES INTENSITY BY A FACTOR x1-10
+    vec[0] = 0 # THIS IS MY CUSTOM VARIABLE: MODULATES INTENSITY BY A FACTOR x10^-0.3-x10^0.3 #x1-10
     vec[1] = VEC[0]
     vec[2] = VEC[1]
     vec[3] = mu

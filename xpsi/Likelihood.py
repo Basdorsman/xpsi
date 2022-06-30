@@ -296,13 +296,13 @@ class Likelihood(ParameterSubspace):
 
     def _driver(self, fast_mode=False, synthesise=False, **kwargs):
         """ Main likelihood evaluation driver routine. """
-        print("inside driver")
+        # print("inside driver")
         self._star.activate_fast_mode(fast_mode)
 
         star_updated = False
 
         if self._star.needs_update: # ignore fast parameters in this version
-            print("if self._star.needs_update: # ignore fast parameters in this version")
+            # print("if self._star.needs_update: # ignore fast parameters in this version")
             try:
                 if fast_mode or not self._do_fast:
                     fast_total_counts = None
@@ -329,9 +329,9 @@ class Likelihood(ParameterSubspace):
                         energies = signals[0].fast_energies
                     else:
                         energies = signals[0].energies
-                    print("attempting to integrate")
+                    # print("attempting to integrate")
                     photosphere.integrate(energies, self.threads)
-                    print("photosphere.integrate(energies, self.threads)")
+                    # print("photosphere.integrate(energies, self.threads)")
                 except xpsiError as e:
                     try:
                         prefix = ' prefix ' + photosphere.prefix
@@ -425,7 +425,7 @@ class Likelihood(ParameterSubspace):
         :returns: The logarithm of the likelihood.
 
         """
-        print("likelihood called")
+        # print("likelihood called")
         if reinitialise: # for safety if settings have been changed
             self.reinitialise() # do setup again given exisiting object refs
             self.clear_cache() # clear cache and values
@@ -444,10 +444,10 @@ class Likelihood(ParameterSubspace):
                 pass
             else:
                 if not _np.isfinite(logprior):
-                    print("if not _np.isfinite(logprior):")
+                    # print("if not _np.isfinite(logprior):")
                     # we need to restore due to premature return
                     super(Likelihood, self).__call__(self.cached)
-                    print("super(Likelihood, self).__call__(self.cached)")
+                    # print("super(Likelihood, self).__call__(self.cached)")
                     return self.less_than_llzero
 
             if self._do_fast:
@@ -463,7 +463,7 @@ class Likelihood(ParameterSubspace):
                         super(Likelihood, self).__call__(self.cached) # restore
                         return x
             else:
-                print('go to driver')
+                # print('go to driver')
                 x = self._driver()
                 if not isinstance(x, bool):
                     super(Likelihood, self).__call__(self.cached) # restore
@@ -476,7 +476,7 @@ class Likelihood(ParameterSubspace):
         for signals in self._signals:
             for signal in signals:
                 loglikelihood += signal.loglikelihood
-        #print("checking signal.loglikelihood done")
+        # print("checking signal.loglikelihood done")
         if loglikelihood <= self.llzero:
             return self.random_near_llzero
 

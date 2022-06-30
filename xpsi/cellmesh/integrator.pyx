@@ -72,7 +72,7 @@ def integrate(size_t numThreads,
               elsewhere_atmosphere,
               image_order_limit = None):
 
-    printf("inside cellmesh/integrator")
+    # printf("inside cellmesh/integrator")
     # check for rayXpanda explicitly in case of some linker issue
     cdef double rayXpanda_defl_lim
     cdef bint _use_rayXpanda
@@ -353,9 +353,9 @@ def integrate(size_t numThreads,
                 if psi <= maxDeflection[i]:
                     if (psi < interp_alpha[T].xmin or psi > interp_alpha[T].xmax):
                         # some crude diagnostic output
-                        printf("Interpolation error: deflection = %.16e\n", psi)
-                        printf("Out of bounds: min = %.16e\n", interp_alpha[T].xmin)
-                        printf("Out of bounds: max = %.16e\n", interp_alpha[T].xmax)
+                        # printf("Interpolation error: deflection = %.16e\n", psi)
+                        # printf("Out of bounds: min = %.16e\n", interp_alpha[T].xmin)
+                        # printf("Out of bounds: max = %.16e\n", interp_alpha[T].xmax)
                         terminate[T] = 1
                         break # out of phase loop
                     else:
@@ -387,9 +387,9 @@ def integrate(size_t numThreads,
                             deriv = exp( log(fabs(deriv)) - log(fabs(sin_psi)) ) # singularity hack above
 
                         if (psi < interp_lag[T].xmin or psi > interp_lag[T].xmax):
-                            printf("Interpolation error: deflection = %.16e\n", psi)
-                            printf("Out of bounds: min = %.16e\n", interp_lag[T].xmin)
-                            printf("Out of bounds: max = %.16e\n", interp_lag[T].xmax)
+                            # printf("Interpolation error: deflection = %.16e\n", psi)
+                            # printf("Out of bounds: min = %.16e\n", interp_lag[T].xmin)
+                            # printf("Out of bounds: max = %.16e\n", interp_lag[T].xmax)
                             terminate[T] = 1
                             break # out of phase loop
                         else:
@@ -543,8 +543,8 @@ def integrate(size_t numThreads,
             else: # proceed to sum over images
                 for m in range(1, N_L):
                     if _PHASE[T][m] <= _PHASE[T][m - 1]:
-                        printf("Interpolation error: phases are not strictly increasing.")
-                        printf('%.8e -> %.8e\n', _PHASE[T][m - 1], _PHASE[T][m])
+                        # printf("Interpolation error: phases are not strictly increasing.")
+                        # printf('%.8e -> %.8e\n', _PHASE[T][m - 1], _PHASE[T][m])
                         terminate[T] = 1
                         break # out of phase loop
                 if terminate[T] == 1:
@@ -578,9 +578,9 @@ def integrate(size_t numThreads,
                                         __PHASE_plusShift = __PHASE_plusShift + _2pi
 
                                 if (__PHASE_plusShift < interp_GEOM[T].xmin or __PHASE_plusShift > interp_GEOM[T].xmax):
-                                    printf("Interpolation error: phase = %.16e\n", __PHASE_plusShift)
-                                    printf("Out of bounds: min = %.16e\n", interp_GEOM[T].xmin)
-                                    printf("Out of bounds: max = %.16e\n", interp_GEOM[T].xmax)
+                                    # printf("Interpolation error: phase = %.16e\n", __PHASE_plusShift)
+                                    # printf("Out of bounds: min = %.16e\n", interp_GEOM[T].xmin)
+                                    # printf("Out of bounds: max = %.16e\n", interp_GEOM[T].xmax)
                                     terminate[T] = 1
                                     break # out of phase loop
 

@@ -1056,7 +1056,7 @@ class HotRegion(ParameterSubspace):
                             integration.
 
         """
-        print("inside hot.integrate")
+        # print("inside hot.integrate")
         if self.fast_mode and not self.do_fast:
             try:
                 if self.cede:
@@ -1111,7 +1111,7 @@ class HotRegion(ParameterSubspace):
         # print(self._image_order_limit)
         # print("all variables ok")
 
-        print("attempting super_pulse") 
+        # print("attempting super_pulse") 
         super_pulse = self._integrator(threads,
                                        st.R,
                                        st.Omega,
@@ -1137,13 +1137,13 @@ class HotRegion(ParameterSubspace):
                                        hot_atmosphere,
                                        elsewhere_atmosphere,
                                        self._image_order_limit)
-        print("super pulse done")
+        # print("super pulse done")
         if super_pulse[0] == 1:
             raise PulseError('Fatal numerical error during superseding-'
                              'region pulse integration.')
 
         try:
-            print("attempting cede_pulse")
+            # print("attempting cede_pulse")
             cede_pulse = self._integrator(threads,
                                           st.R,
                                           st.Omega,

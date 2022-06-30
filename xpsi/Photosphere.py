@@ -304,7 +304,7 @@ class Photosphere(ParameterSubspace):
             Number of ``OpenMP`` threads to spawn for signal integration.
 
         """
-        print("inside integrate")
+        # print("inside integrate")
         if self._everywhere is not None:
             spectrum = self._everywhere.integrate(self._spacetime,
                                                    energies,
@@ -322,7 +322,7 @@ class Photosphere(ParameterSubspace):
                                                      *self._elsewhere_atmosphere)
 
             if self._hot is not None:
-                print("if self._hot is not None:")
+                # print("if self._hot is not None:")
                 self._signal = self._hot.integrate(self._spacetime,
                                                    energies,
                                                    threads,

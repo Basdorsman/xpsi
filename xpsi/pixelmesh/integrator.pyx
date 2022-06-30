@@ -439,12 +439,12 @@ def integrate(size_t numThreads,
     #----------------------------------------------------------------------->>>
     # >>> Free memory.
     #----------------------------------------------------------------------->>>
-    printf("free atmosphere")
+    # printf("free atmosphere")
     if atmosphere:
         free_preload(preloaded)
-    printf("free hot")
+    # printf("free hot")
     free_hot(N_T, data)
-    printf("free local variables")
+    # printf("free local variables")
     free_local_variables(N_T, local_vars_buf)
 
     if cache_intensities == 1:

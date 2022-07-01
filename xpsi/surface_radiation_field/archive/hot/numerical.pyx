@@ -247,6 +247,13 @@ cdef double eval_hot(size_t THREAD,
     vec[3] = mu
     vec[4] = log10(E / E_eff)
     
+    # printf("\nvec[0]: %.8e, ", vec[0])
+    # printf("vec[1]: %.8e, ", vec[1])
+    # printf("vec[2]: %.8e, ", vec[2])
+    # printf("vec[3]: %.8e, ", vec[3])
+    # printf("vec[4]: %.8e, ", vec[4])
+    
+    
     #printf("\neval_hot() called")
     #printf("\nVEC[0]: %f", VEC[0])
     #printf("\nVEC[1]: %f", VEC[1])
@@ -420,8 +427,9 @@ cdef double eval_hot(size_t THREAD,
 
     if I < 0.0:
         return 0.0
-
-    return I * pow(10.0, 3.0 * vec[0])
+    # Vec here should be the temperature!
+    # printf(" I_out: %.8e, ", I * pow(10.0, 3.0 * vec[1]))
+    return I * pow(10.0, 3.0 * vec[1])
 
 
 cdef double eval_hot_norm() nogil:

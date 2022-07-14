@@ -322,9 +322,9 @@ class Likelihood(ParameterSubspace):
                 return self.random_near_llzero
 
             for photosphere, signals in zip(self._star.photospheres, self._signals):
-                print("for photosphere, signals in zip(self._star.photospheres, self._signals):")
+                #print("for photosphere, signals in zip(self._star.photospheres, self._signals):")
                 try:
-                    print("setting energies")
+                    #print("setting energies")
                     if fast_mode:
                         energies = signals[0].fast_energies
                     else:

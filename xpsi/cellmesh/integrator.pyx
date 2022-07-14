@@ -592,6 +592,12 @@ def integrate(size_t numThreads,
 
                                     for p in range(N_E):
                                         E_prime = energies[p] / __Z
+                                        # printf("\ninput parameters reporting:")
+                                        # printf("E_prime: %.8e, ", E_prime)
+                                        # printf("__ABB: %.8e, ", __ABB)
+                                        # printf("srcCellParams[i,j,0]: %.8e, ", srcCellParams[i,j,0])
+                                        # printf("srcCellParams[i,j,1]: %.8e, ", srcCellParams[i,j,1])
+
                                         I_E = eval_hot(T,
                                                        E_prime,
                                                        __ABB,

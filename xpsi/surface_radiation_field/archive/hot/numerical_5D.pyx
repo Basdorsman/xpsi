@@ -212,8 +212,9 @@ cdef double eval_hot(size_t THREAD,
                      const double *const VEC,
                      void *const data) nogil:
 
-    cdef double g, Temperature
-    Temperature = VEC[1]
+    cdef double g, mod, Temperature
+    Temperature = VEC[0]
+    modulator = VEC[1]
     g = VEC[2]
     
     # Arguments:
@@ -247,19 +248,17 @@ cdef double eval_hot(size_t THREAD,
     # vec[3] = log10(E / E_eff)
     
     
-
-    vec[0] = 0 # THIS IS MY CUSTOM VARIABLE: MODULATES INTENSITY BY A FACTOR x10^-0.3-x10^0.3 #x1-10
+    vec[0] = modulator #0 # THIS IS MY CUSTOM VARIABLE: MODULATES INTENSITY BY A FACTOR x10^-0.3-x10^0.3 #x1-10
     vec[1] = Temperature
     vec[2] = g
     vec[3] = mu
     vec[4] = log10(E / E_eff)
     
-    
-    # printf("diagnostics 0:\n")
-    # printf("E: %.2e, ", E)
-    # printf("Temperature: %.2e, ", Temperature)
-    # printf("k_B_over_keV: %.2e, ", k_B_over_keV)
-    # printf("E_eff: %.2e, ", E_eff)
+
+    # printf("vec[0]: %.2e\n", vec[0])
+    # printf("vec[1]: %.2e\n", vec[1])
+    # printf("vec[2]: %.2e\n", vec[2])    
+    # printf("vec[3]: %.2e\n", vec[3])
     # printf("vec[4]: %.2e\n", vec[4])
     
     # printf("diagnostics 1:\n") # using i breaks next code block

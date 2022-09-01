@@ -222,8 +222,9 @@ cdef int free_hot(size_t numThreads, void *const data) nogil:
 cdef double eval_hot(size_t THREAD,
                       double E,
                       double mu,
-                      double g,
-                      double Temperature,
+                      double tau,
+                      double t_bb,
+                      double t_e,
                       void *const data) nogil:
     # Arguments:
     # E = photon energy in keV
@@ -244,7 +245,7 @@ cdef double eval_hot(size_t THREAD,
         double *V_CACHE = D.acc.VEC_CACHE[THREAD]
         double vec[5] # should be = ndims
         # double E_eff = k_B_over_keV * pow(10.0, VEC[0])
-        double E_eff = k_B_over_keV * pow(10.0, Temperature)
+        # double E_eff = k_B_over_keV * pow(10.0, Temperature)
         int update_baseNode[5]  # should be = ndims
         int CACHE = 0
 
@@ -258,11 +259,18 @@ cdef double eval_hot(size_t THREAD,
     # vec[2] = mu
     # vec[3] = log10(E / E_eff)
 
-    vec[0] = 0 # THIS IS MY CUSTOM VARIABLE: MODULATES INTENSITY BY A FACTOR x10^-0.3-x10^0.3 #x1-10
-    vec[1] = Temperature
-    vec[2] = g
+    vec[0] = t_e # THIS IS MY CUSTOM VARIABLE: MODULATES INTENSITY BY A FACTOR x10^-0.3-x10^0.3 #x1-10
+    vec[1] = t_bb
+    vec[2] = tau
     vec[3] = mu
-    vec[4] = log10(E / E_eff)
+    vec[4] = E
+    
+
+    # vec[0] = 0 # THIS IS MY CUSTOM VARIABLE: MODULATES INTENSITY BY A FACTOR x10^-0.3-x10^0.3 #x1-10
+    # vec[1] = Temperature
+    # vec[2] = g
+    # vec[3] = mu
+    # vec[4] = log10(E / E_eff)
     
     # vec[4] = 0 # THIS IS MY CUSTOM VARIABLE: MODULATES INTENSITY BY A FACTOR x10^-0.3-x10^0.3 #x1-10
     # vec[0] = Temperature
@@ -504,8 +512,8 @@ cdef double eval_hot(size_t THREAD,
         return 0.0
     # Vec here should be the temperature!
     # printf(" I_out: %.8e, ", I * pow(10.0, 3.0 * vec[1]))
-    return I * pow(10.0, 3.0 * Temperature)
-
+    #return I * pow(10.0, 3.0 * Temperature)
+    return I
 
 cdef double eval_hot_norm() nogil:
     # Source radiation field normalisation which is independent of the

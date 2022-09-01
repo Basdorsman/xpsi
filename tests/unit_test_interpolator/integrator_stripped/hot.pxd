@@ -6,11 +6,19 @@ from preload cimport _preloaded
 #                      const double *const VEC,
 #                      void *const data) nogil
 
+# cdef double eval_hot(size_t THREAD,
+#                      double E,
+#                      double mu,
+#                      double g,
+#                      double T,
+#                      void *const data) nogil
+
 cdef double eval_hot(size_t THREAD,
                       double E,
                       double mu,
-                      double g,
-                      double T,
+                      double tau,
+                      double t_bb,
+                      double t_e,
                       void *const data) nogil
 
 cdef double eval_hot_norm() nogil

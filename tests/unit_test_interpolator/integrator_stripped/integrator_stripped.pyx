@@ -13,8 +13,9 @@ from libc.stdio cimport printf
 def interpolate(size_t N_T,
                 double E_prime,
                 double cos_zenith,
-                double g,
-                double T,
+                double tau,
+                double t_bb,
+                double t_e,
                 atmosphere = None):
 
     cdef _preloaded *preloaded = NULL
@@ -46,8 +47,9 @@ def interpolate(size_t N_T,
         I_E = eval_hot(Thread,
                     E_prime,
                     cos_zenith,
-                    g,
-                    T,
+                    tau,
+                    t_bb,
+                    t_e,
                     data)
     
     free_preload(preloaded)

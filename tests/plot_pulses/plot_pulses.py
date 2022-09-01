@@ -12,6 +12,7 @@ import numpy as np
 import math
 
 from matplotlib import rcParams
+import matplotlib.pyplot as plt
 
 import xpsi
 from xpsi.global_imports import gravradius
@@ -20,8 +21,8 @@ import sys
 sys.path.append('../')
 from custom_tools import CustomInstrument, CustomHotRegion, CustomPhotosphere_4D, CustomPhotosphere_5D, CustomSignal, CustomPrior, plot_2D_pulse
 
-np.random.seed(xpsi._rank+10)
 
+np.random.seed(xpsi._rank+10)
 print('Rank reporting: %d' % xpsi._rank)
 
 ##################################### DATA ####################################
@@ -84,9 +85,8 @@ primary = CustomHotRegion(bounds=bounds,
 bounds['super_temperature'] = None # declare fixed/derived variable
 bounds['super_modulator'] = None
 
-print("primary")
-print(primary)
-print(primary.params)
+#print("printing primary parameters")
+#print(primary.params)
 
 
 class derive(xpsi.Derive):
@@ -129,7 +129,7 @@ secondary = CustomHotRegion(bounds=bounds, # can otherwise use same bounds
 	                      do_fast=False,
 	                      is_antiphased=True,
                           modulated=True,
-	                      prefix='s') 
+	                      prefix='s')
 
 
 
@@ -141,7 +141,14 @@ hot = HotRegions((primary, secondary))
 
 ################################ ATMOSPHERE ################################### 
       
-n_params="5"
+try:
+    os.environ.get('n_params')
+    n_params = os.environ['n_params']
+except KeyError:
+    n_params = "5"
+
+print("n_params: ",n_params)
+
 if n_params == "4":   
     photosphere = CustomPhotosphere_4D(hot = hot, elsewhere = None,
                                     values=dict(mode_frequency = spacetime['frequency']))
@@ -150,8 +157,9 @@ if n_params == "4":
 elif n_params== "5":
     photosphere = CustomPhotosphere_5D(hot = hot, elsewhere = None,
                                     values=dict(mode_frequency = spacetime['frequency']))
-    #photosphere.hot_atmosphere = '/home/bas/Documents/Projects/x-psi/model_datas/model_data/H-atmosphere_Spectra_fully_ionized/NSX_H-atmosphere_Spectra/nsx_H_v171019_5D_no_effect.npz'
+    # photosphere.hot_atmosphere = '/home/bas/Documents/Projects/x-psi/model_datas/model_data/H-atmosphere_Spectra_fully_ionized/NSX_H-atmosphere_Spectra/nsx_H_v171019_5D_no_effect.npz'
     photosphere.hot_atmosphere = '/home/bas/Documents/Projects/x-psi/model_datas/model_data/H-atmosphere_Spectra_fully_ionized/NSX_H-atmosphere_Spectra/nsx_H_v171019_modulated_0dot5_to_2.npz'
+    # photosphere.hot_atmosphere = '/home/bas/Documents/Projects/x-psi/model_datas/Bobrikova_compton_slab.npz'
 
 else:
     print("no dimensionality provided!")
@@ -159,11 +167,6 @@ else:
 ################################### STAR ######################################
 
 star = xpsi.Star(spacetime = spacetime, photospheres = photosphere)
-
-print("Parameters of the star:")
-print(star)
-print(star.params)
-
 # star['mass'] = 1.6
 # star['radius'] = 14.0
 # star['distance'] = 0.2
@@ -179,22 +182,40 @@ print(star.params)
 # star['s__super_radius'] = 0.025
 
 
+# with modulator
 p = [1.6, #1.4, #grav mass
       14.0,#12.5, #coordinate equatorial radius
       0.2, # earth distance kpc
       math.cos(1.25), #cosine of earth inclination
-      0.0, #phase of hotregoin
+      0.0, #phase of hotregion
       1.0, #colatitude of centre of superseding region
       0.075,  #angular radius superceding region
       6.2, #primary temperature
       0.0, #modulator
-      0.2,
+      0.025,
       math.pi - 1.0,
-      0.025
+      0.2
       ]
      
+# without modulator
+# p = [1.6, #1.4, #grav mass
+#       14.0,#12.5, #coordinate equatorial radius
+#       0.2, # earth distance kpc
+#       math.cos(1.25), #cosine of earth inclination
+#       0.0, #phase of hotregoin
+#       1.0, #colatitude of centre of superseding region
+#       0.075,  #angular radius superceding region
+#       6.2, #primary temperature
+#       0.025,
+#       math.pi - 1.0,
+#       0.025
+#       ]
+
 star(p)
 star.update() 
+
+print("printing Parameters of the star:")
+print(star.params)
 
 
 
@@ -224,6 +245,7 @@ likelihood = xpsi.Likelihood(star = star, signals = signal,
                              externally_updated=True)
 
 
+
 # print('define wrapped_params')
 wrapped_params = [0]*len(likelihood)
 wrapped_params[likelihood.index('p__phase_shift')] = 1
@@ -250,14 +272,15 @@ runtime_params = {'resume': False,
                   'max_iter': 1000, # manual termination condition for short test
                   'verbose': True}
                   
-print("let's not require that checks pass before starting to sample. Actually, let's not sample at all!")
+print("likelihood check but no sampling")
 
 try:
     true_logl = -7.94188579e+89 #-1.15566075e+05
-    print('about to evaluate likelihood')
-    print(likelihood(p))
+    # print('about to evaluate likelihood')
+    print("Compute likelikihood(p) once so the check passes. Likelihood = ", likelihood(p)) 
+
     likelihood.check(None, [true_logl], 1.0e-6,physical_points=[p])
-    print(likelihood(p))
+    #print(likelihood(p))
 except:
     print("Likelihood check did not pass. Checking if wrong atmosphere model installed.")
     true_logl = -3.27536126e+04
@@ -280,3 +303,5 @@ plot_2D_pulse((photosphere.signal[0][0], photosphere.signal[1][0]),
               shift=signal.shifts,
               y=signal.energies,
               ylabel=r'Energy (keV)')
+
+# plt.savefig('plotted_pulses.png')

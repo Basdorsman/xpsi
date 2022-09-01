@@ -361,8 +361,10 @@ class Likelihood(ParameterSubspace):
                                      for hot_region in photosphere.signal),
                                fast_mode=fast_mode, threads=self.threads)
                     reregistered = True
+                    # print("reregistered True")
                 else:
                     reregistered = False
+                    # print("reregistered False")
 
                 if not fast_mode and reregistered:
                     if synthesise:
@@ -380,6 +382,7 @@ class Likelihood(ParameterSubspace):
                             hot = photosphere.hot
                             shifts = [h['phase_shift'] for h in hot.objects]
                             signal.shifts = _np.array(shifts)
+                            # print("call signal inside likelihood driver")
                             signal(threads=self._threads, llzero=self._llzero)
                         except LikelihoodError:
                             try:
@@ -425,7 +428,7 @@ class Likelihood(ParameterSubspace):
         :returns: The logarithm of the likelihood.
 
         """
-        # print("likelihood called")
+        # print("likelihood __call__ called")
         if reinitialise: # for safety if settings have been changed
             self.reinitialise() # do setup again given exisiting object refs
             self.clear_cache() # clear cache and values
@@ -453,11 +456,13 @@ class Likelihood(ParameterSubspace):
             if self._do_fast:
                 # perform a low-resolution precomputation to direct cell
                 # allocation
+                # print('go to driver fast mode')
                 x = self._driver(fast_mode=True)
                 if not isinstance(x, bool):
                     super(Likelihood, self).__call__(self.cached) # restore
                     return x
                 elif x:
+                    # print('go to driver')
                     x = self._driver()
                     if not isinstance(x, bool):
                         super(Likelihood, self).__call__(self.cached) # restore
@@ -533,6 +538,7 @@ class Likelihood(ParameterSubspace):
         lps = [] if logprior_call_vals is not None else None
 
         if physical_points is not None:
+            # print("using physical points")
             physical_points = _np.array(physical_points)
 
             try:
@@ -555,6 +561,7 @@ class Likelihood(ParameterSubspace):
 
             self.externally_updated = False
             for point in physical_points:
+                # print("call call function that calls driver..")
                 lls.append(self.__call__(point))
                 if lps is not None:
                     lps.append(self._prior(point))

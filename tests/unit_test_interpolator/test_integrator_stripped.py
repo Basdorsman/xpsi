@@ -15,7 +15,7 @@ from xpsi.global_imports import gravradius, _keV, _k_B
 
 import sys
 sys.path.append('../')
-from custom_tools import CustomPhotosphere_4D, CustomPhotosphere_5D
+from custom_tools import CustomPhotosphere_4D, CustomPhotosphere_5D, CustomPhotosphere_Bobrikova
 
 
 n_params = os.environ['dimensionality']
@@ -109,8 +109,13 @@ if n_params == "4":
 elif n_params== "5":
     photosphere = CustomPhotosphere_5D(hot = hot, elsewhere = None,
                                     values=dict(mode_frequency = spacetime['frequency']))
-    #photosphere.hot_atmosphere = '/home/bas/Documents/Projects/x-psi/model_datas/model_data/H-atmosphere_Spectra_fully_ionized/NSX_H-atmosphere_Spectra/nsx_H_v171019_5D_no_effect.npz'
+    # photosphere.hot_atmosphere = '/home/bas/Documents/Projects/x-psi/model_datas/model_data/H-atmosphere_Spectra_fully_ionized/NSX_H-atmosphere_Spectra/nsx_H_v171019_5D_no_effect.npz'
     photosphere.hot_atmosphere = '/home/bas/Documents/Projects/x-psi/model_datas/model_data/H-atmosphere_Spectra_fully_ionized/NSX_H-atmosphere_Spectra/nsx_H_v171019_modulated_0dot5_to_2.npz'
+
+elif n_params== "B":
+    photosphere = CustomPhotosphere_Bobrikova(hot = hot, elsewhere = None,
+                                    values=dict(mode_frequency = spacetime['frequency']))
+    photosphere.hot_atmosphere = '/home/bas/Documents/Projects/x-psi/model_datas/model_data/Bobrikova_compton_slab.npz'
 
 else:
     print("no dimensionality provided!")
@@ -131,19 +136,31 @@ def get_E_input(E_nsx, T):
     E_input = k_B_over_keV*10**(E_nsx+T)
     return E_input
 
-Threads = 1
-E_nsx = -0.78
-T = 5.1
-cos_zenith=0.001
-g = 13.8
-expect_I_E = -18.0981
 
-# 4D examples, use e.g. "add_dummy_dimension_to_NSX.py" for NSX values.
+Threads = 1
+
+# Bobrikova example 1 (NSX[1000,:]):
+# E = 100
+# cos_zenith = 6
+# tau = 0.5
+# t_bb = 0.00015
+# t_e = 40
+# expect_I_E = 3.24013291e-06
+
+# Bobrikova example 2 (NSX[20000000,:]):
+E = 50
+cos_zenith = 7
+tau = 3.2
+t_bb = 0.0027
+t_e = 132
+expect_I_E = 6.03771436e+04
+
+# Examples, use e.g. "add_dummy_dimension_to_NSX.py" for NSX values.
 # example 1 (NSX[12928,:]):
 # E_nsx = -0.78
-# T = 5.1
 # cos_zenith=0.001
 # g = 13.8
+# T = 5.1
 # expect_I_E = -18.0981
 
 # example 2 (NSX[2000000,:]):
@@ -153,7 +170,10 @@ expect_I_E = -18.0981
 # g = 14
 # expect_I_E = -17.8141
 
-E_input = get_E_input(E_nsx, T)
-I_10_3T = interpolate(Threads, E_input, cos_zenith, g, T, atmosphere = atmosphere_num)
+#E_input = get_E_input(E_nsx, T)
+#I_10_3T = interpolate(Threads, E_input, cos_zenith, g, T, atmosphere = atmosphere_num)
+I_10_3T = interpolate(Threads, E, cos_zenith, tau, t_bb, t_e, atmosphere = atmosphere_num)
+
 print("expecation for log10(I_E) = ", expect_I_E)
-print("log10(I_E) =",np.log10(I_10_3T/(10**(3*T))))
+# print("log10(I_E) =",np.log10(I_10_3T/(10**(3*T))))
+print("log10(I_E) =",I_10_3T)

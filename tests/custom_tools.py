@@ -144,7 +144,7 @@ class CustomHotRegion(xpsi.HotRegion):
             values['super_modulator'] = 0.0    
         
         doc = """
-        adds factor to log10(intensity), which is intensity listed in NSX file
+        [Modulator] adds factor to log10(intensity), which is intensity listed in NSX file
         format.
         """
         super_modulator = Parameter('super_modulator',
@@ -192,7 +192,7 @@ class CustomHotRegion(xpsi.HotRegion):
         
         #return super_modulator
     
-    def _compute_cellParamVecs(self):
+    def _HotRegion__compute_cellParamVecs(self):
         self._super_radiates = _np.greater(self._super_cellArea, 0.0).astype(_np.int32)
         self._super_cellParamVecs = _np.ones((self._super_radiates.shape[0],
                                       self._super_radiates.shape[1],
@@ -286,7 +286,25 @@ class CustomPhotosphere_5D(xpsi.Photosphere):
 
         self._hot_atmosphere = (modulator, logT_opt, logg_opt, _mu_opt, logE_opt, buf_opt)
 
-        
+class CustomPhotosphere_Bobrikova(xpsi.Photosphere):
+    """ A photosphere extension to preload the numerical atmosphere NSX. """
+
+    @xpsi.Photosphere.hot_atmosphere.setter
+    def hot_atmosphere(self, path):
+        size = (150, 9, 31, 20, 41)
+
+        with np.load(path, allow_pickle=True) as data_dictionary:
+            NSX = data_dictionary['arr_0.npy']
+
+        Energy = np.ascontiguousarray(NSX[0:size[0],0])
+        cos_zenith = np.ascontiguousarray([NSX[i*size[0],1] for i in range(size[1])])
+        tau = np.ascontiguousarray([NSX[i*size[0]*size[1],2] for i in range(size[2])])
+        t_bb = np.ascontiguousarray([NSX[i*size[0]*size[1]*size[2],3] for i in range(size[3])])
+        t_e = np.ascontiguousarray([NSX[i*size[0]*size[1]*size[2]*size[3],4] for i in range(size[4])])
+        intensities = np.ascontiguousarray(NSX[:,5])
+
+        self._hot_atmosphere = (t_e, t_bb, tau, cos_zenith, Energy, intensities)
+
 from xpsi.likelihoods.default_background_marginalisation import eval_marginal_likelihood
 from xpsi.likelihoods.default_background_marginalisation import precomputation
 
@@ -303,7 +321,7 @@ class CustomSignal(xpsi.Signal):
     def __init__(self, workspace_intervals = 1000, epsabs = 0, epsrel = 1.0e-8,
                  epsilon = 1.0e-3, sigmas = 10.0, support = None, *args, **kwargs):
         """ Perform precomputation. """
-
+        #print("running CustomSignal init...")
         super(CustomSignal, self).__init__(*args, **kwargs)
 
         try:
@@ -333,6 +351,7 @@ class CustomSignal(xpsi.Signal):
         self._support = obj
 
     def __call__(self, *args, **kwargs):
+        #print("running CustomSignal call...")
         self.loglikelihood, self.expected_counts, self.background_signal, self.background_signal_given_support = \
                 eval_marginal_likelihood(self._data.exposure_time,
                                           self._data.phases,

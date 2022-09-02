@@ -587,7 +587,7 @@ def plot_2D_pulse(z, x, shift, y, ylabel,
 
     profile = ax.pcolormesh(new_phases,
                              y,
-                             interpolated/np.max(interpolated),
+                             interpolated, #/np.max(interpolated),
                              cmap = cm,
                              linewidth = 0,
                              rasterized = True)
@@ -600,12 +600,12 @@ def plot_2D_pulse(z, x, shift, y, ylabel,
     ax.set_xlabel(r'Phase')
     veneer((0.1, 0.5), (None,None), ax)
 
-    cb = plt.colorbar(profile,
-                      cax = ax_cb,
-                      ticks = MultipleLocator(0.2))
+    cb = plt.colorbar(profile, cax = ax_cb) #ticks = MultipleLocator(0.2)
 
-    cb.set_label(label=r'Signal (normalised by maximum)', labelpad=25)
+    cb.set_label(label=r'Signal (arbitrary units)', labelpad=25)
     cb.solids.set_edgecolor('face')
 
     veneer((None, None), (0.05, None), ax_cb)
     cb.outline.set_linewidth(1.0)
+    
+    return ax

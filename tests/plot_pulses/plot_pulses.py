@@ -183,6 +183,7 @@ star = xpsi.Star(spacetime = spacetime, photospheres = photosphere)
 
 
 # with modulator
+modulator = 0.1
 p = [1.6, #1.4, #grav mass
       14.0,#12.5, #coordinate equatorial radius
       0.2, # earth distance kpc
@@ -191,7 +192,7 @@ p = [1.6, #1.4, #grav mass
       1.0, #colatitude of centre of superseding region
       0.075,  #angular radius superceding region
       6.2, #primary temperature
-      0.0, #modulator
+      modulator, #modulator
       0.025,
       math.pi - 1.0,
       0.2
@@ -298,10 +299,11 @@ except:
 rcParams['text.usetex'] = False
 rcParams['font.size'] = 14.0
 
-plot_2D_pulse((photosphere.signal[0][0], photosphere.signal[1][0]),
+ax = plot_2D_pulse((photosphere.signal[0][0], photosphere.signal[1][0]),
               x=signal.phases[0],
               shift=signal.shifts,
               y=signal.energies,
               ylabel=r'Energy (keV)')
 
+ax.set_title('modulator={:.2f}'.format(modulator), loc='center')
 # plt.savefig('plotted_pulses.png')

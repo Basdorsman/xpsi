@@ -250,16 +250,7 @@ cdef double eval_hot(size_t THREAD,
         int CACHE = 0
 
 
-
-    
-    # (3) add my modulator variable. I don't know yet how to tunnel this from
-    # the front end, so I won't. I am choosing value 5, which is in the middle of the range.
-    # vec[0] = VEC[0]
-    # vec[1] = VEC[1]
-    # vec[2] = mu
-    # vec[3] = log10(E / E_eff)
-
-    vec[0] = t_e # THIS IS MY CUSTOM VARIABLE: MODULATES INTENSITY BY A FACTOR x10^-0.3-x10^0.3 #x1-10
+    vec[0] = t_e
     vec[1] = t_bb
     vec[2] = tau
     vec[3] = mu

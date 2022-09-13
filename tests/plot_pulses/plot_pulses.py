@@ -17,13 +17,20 @@ import matplotlib.pyplot as plt
 import xpsi
 from xpsi.global_imports import gravradius
 
+
 import sys
 sys.path.append('../')
-from custom_tools import CustomInstrument, CustomHotRegion, CustomPhotosphere_4D, CustomPhotosphere_5D, CustomSignal, CustomPrior, plot_2D_pulse
+from custom_tools import CustomInstrument, CustomHotRegion, CustomHotRegion_Accreting, CustomPhotosphere_4D, CustomPhotosphere_5D, CustomPhotosphere_Bobrikova, CustomSignal, CustomPrior, CustomPrior_NoSecondary, plot_2D_pulse
 
 
 np.random.seed(xpsi._rank+10)
 print('Rank reporting: %d' % xpsi._rank)
+
+################################ OPTIONS ###############################
+accreting = True
+secondary = True
+
+
 
 ##################################### DATA ####################################
 settings = dict(counts = np.loadtxt('../model_data/example_synthetic_realisation.dat', dtype=np.double),
@@ -60,92 +67,175 @@ spacetime = xpsi.Spacetime(bounds=bounds, values=dict(frequency=300.0))
 
 
 ################################## HOTREGIONS #################################
+################################## PRIMARY ####################################
+from xpsi import HotRegions
 print("hotregions")
+# bounds = dict(super_colatitude = (None, None),
+#               super_radius = (None, None),
+#               phase_shift = (0.0, 0.1),
+#               super_temperature = (5.1, 6.8),
+#               super_modulator = (-0.3, 0.3))
+
 bounds = dict(super_colatitude = (None, None),
               super_radius = (None, None),
               phase_shift = (0.0, 0.1),
-              super_temperature = (5.1, 6.8),
-              super_modulator = (-0.3, 0.3))
+              super_tbb = (0.00015, 0.003),
+              super_te = (40., 200.),
+              super_tau = (0.5, 3.5))
 
-primary = CustomHotRegion(bounds=bounds,
-   	                    values={},
-   	                    symmetry=False, #call general integrator instead of for azimuthal invariance
-   	                    omit=False,
-   	                    cede=False,
-   	                    concentric=False,
-   	                    sqrt_num_cells=32,
-   	                    min_sqrt_num_cells=10,
-   	                    max_sqrt_num_cells=64,
-   	                    num_leaves=100,
-   	                    num_rays=200,
-                        modulated = True, #modulation flag
-   	                    prefix='p')
+if accreting:
+    primary = CustomHotRegion_Accreting(bounds=bounds,
+       	                    values={},
+       	                    symmetry=False, #call general integrator instead of for azimuthal invariance
+       	                    omit=False,
+       	                    cede=False,
+       	                    concentric=False,
+       	                    sqrt_num_cells=32,
+       	                    min_sqrt_num_cells=10,
+       	                    max_sqrt_num_cells=64,
+       	                    num_leaves=100,
+       	                    num_rays=200,
+       	                    prefix='p')
+elif not accreting:
+    primary = CustomHotRegion(bounds=bounds,
+       	                    values={},
+       	                    symmetry=False, #call general integrator instead of for azimuthal invariance
+       	                    omit=False,
+       	                    cede=False,
+       	                    concentric=False,
+       	                    sqrt_num_cells=32,
+       	                    min_sqrt_num_cells=10,
+       	                    max_sqrt_num_cells=64,
+       	                    num_leaves=100,
+       	                    num_rays=200,
+                            modulated = True, #modulation flag
+       	                    prefix='p')
 
 
-bounds['super_temperature'] = None # declare fixed/derived variable
-bounds['super_modulator'] = None
 
-#print("printing primary parameters")
-#print(primary.params)
-
-
-class derive(xpsi.Derive):
-    def __init__(self):
-        """
-        We can pass a reference to the primary here instead
-        and store it as an attribute if there is risk of
-        the global variable changing.
-
-        This callable can for this simple case also be
-        achieved merely with a function instead of a magic
-        method associated with a class.
-        """
-        pass
-
-    def __call__(self, boundto, caller = None):
-        # one way to get the required reference
-        global primary # unnecessary, but for clarity
-        return primary['super_temperature'] - 0.2
+###################################### SECONDARY ##############################
+if secondary:
+    # If you derive bounds for a secondary hotspots, you cannot also define bounds
+    # (above). You must set them to "None" to avoid some conflict. 
     
-class derive_modulator(xpsi.Derive):
-    def __init__(self):
-        pass
-
-    def __call__(self, boundto, caller = None):
-        global primary
-        return primary['super_modulator']  
-
-secondary = CustomHotRegion(bounds=bounds, # can otherwise use same bounds
-	                      values={'super_temperature': derive(), 'super_modulator': derive_modulator()},
-	                      symmetry=False, #call general integrator instead of for azimuthal invariance
-	                      omit=False,
-	                      cede=False, 
-	                      concentric=False,
-	                      sqrt_num_cells=32,
-	                      min_sqrt_num_cells=10,
-	                      max_sqrt_num_cells=100,
-	                      num_leaves=100,
-	                      num_rays=200,
-	                      do_fast=False,
-	                      is_antiphased=True,
-                          modulated=True,
-	                      prefix='s')
-
-
-
-from xpsi import HotRegions
-hot = HotRegions((primary, secondary))
-# h = hot.objects[0]
-# hot['p__super_temperature'] = 6.0 # equivalent to ``primary['super_temperature'] = 6.0``
-# print("printing hot:",hot)
-
+    # bounds['super_temperature'] = None # declare fixed/derived variable
+    # bounds['super_modulator'] = None
+    bounds['super_tbb'] = None
+    bounds['super_te'] = None
+    bounds['super_tau'] = None
+    
+    
+    #print("printing primary parameters")
+    #print(primary.params)
+    
+    
+    class derive(xpsi.Derive):
+        def __init__(self):
+            """
+            We can pass a reference to the primary here instead
+            and store it as an attribute if there is risk of
+            the global variable changing.
+    
+            This callable can for this simple case also be
+            achieved merely with a function instead of a magic
+            method associated with a class.
+            """
+            pass
+    
+        def __call__(self, boundto, caller = None):
+            # one way to get the required reference
+            global primary # unnecessary, but for clarity
+            return primary['super_temperature'] - 0.2
+        
+    class derive_modulator(xpsi.Derive):
+        def __init__(self):
+            pass
+    
+        def __call__(self, boundto, caller = None):
+            global primary
+            return primary['super_modulator']  
+    
+    class derive_tbb(xpsi.Derive):
+        def __init__(self):
+            pass
+    
+        def __call__(self, boundto, caller = None):
+            global primary
+            # print("super_tbb derive")
+            # print(primary['super_tbb'])
+            return primary['super_tbb']  
+        
+    class derive_te(xpsi.Derive):
+        def __init__(self):
+            pass
+    
+        def __call__(self, boundto, caller = None):
+            global primary
+            return primary['super_te']  
+    
+    class derive_tau(xpsi.Derive):
+        def __init__(self):
+            pass
+    
+        def __call__(self, boundto, caller = None):
+            global primary
+            return primary['super_tau']  
+        
+    if accreting:
+        secondary = CustomHotRegion_Accreting(bounds=bounds, # can otherwise use same bounds
+        	                      values={'super_tbb': derive_tbb(), 'super_te': derive_te(), 'super_tau': derive_tau()},
+        	                      symmetry=False, #call general integrator instead of for azimuthal invariance
+        	                      omit=False,
+        	                      cede=False, 
+        	                      concentric=False,
+        	                      sqrt_num_cells=32,
+        	                      min_sqrt_num_cells=10,
+        	                      max_sqrt_num_cells=100,
+        	                      num_leaves=100,
+        	                      num_rays=200,
+        	                      do_fast=False,
+        	                      is_antiphased=True,
+        	                      prefix='s')
+    elif not accreting:
+        secondary = CustomHotRegion(bounds=bounds, # can otherwise use same bounds
+         	                      values={'super_temperature': derive(), 'super_modulator': derive_modulator()},
+         	                      symmetry=False, #call general integrator instead of for azimuthal invariance
+         	                      omit=False,
+         	                      cede=False, 
+         	                      concentric=False,
+         	                      sqrt_num_cells=32,
+         	                      min_sqrt_num_cells=10,
+         	                      max_sqrt_num_cells=100,
+         	                      num_leaves=100,
+         	                      num_rays=200,
+         	                      do_fast=False,
+         	                      is_antiphased=True,
+                                  modulated=True,
+         	                      prefix='s')
+    
+    
+    
+    
+    hot = HotRegions((primary, secondary))
+    # h = hot.objects[0]
+    # hot['p__super_temperature'] = 6.0 # equivalent to ``primary['super_temperature'] = 6.0``
+    # print("printing hot:",hot)
+elif not secondary:
+    hot = HotRegions((primary,))
+    
+    
+    
 ################################ ATMOSPHERE ################################### 
       
 try:
     os.environ.get('n_params')
     n_params = os.environ['n_params']
 except KeyError:
-    n_params = "5"
+    if accreting == True:
+        n_params = "B"
+    elif accreting == False:
+        n_params = "5"
+
 
 print("n_params: ",n_params)
 
@@ -160,6 +250,11 @@ elif n_params== "5":
     # photosphere.hot_atmosphere = '/home/bas/Documents/Projects/x-psi/model_datas/model_data/H-atmosphere_Spectra_fully_ionized/NSX_H-atmosphere_Spectra/nsx_H_v171019_5D_no_effect.npz'
     photosphere.hot_atmosphere = '/home/bas/Documents/Projects/x-psi/model_datas/model_data/H-atmosphere_Spectra_fully_ionized/NSX_H-atmosphere_Spectra/nsx_H_v171019_modulated_0dot5_to_2.npz'
     # photosphere.hot_atmosphere = '/home/bas/Documents/Projects/x-psi/model_datas/Bobrikova_compton_slab.npz'
+
+elif n_params== "B":
+    photosphere = CustomPhotosphere_Bobrikova(hot = hot, elsewhere = None,
+                                    values=dict(mode_frequency = spacetime['frequency']))
+    photosphere.hot_atmosphere = '/home/bas/Documents/Projects/x-psi/model_datas/model_data/Bobrikova_compton_slab.npz'
 
 else:
     print("no dimensionality provided!")
@@ -177,26 +272,48 @@ star = xpsi.Star(spacetime = spacetime, photospheres = photosphere)
 # star['p__super_temperature'] = 6.2 
 # star['p__super_modulator'] = 0.0
 
-# star['s__phase_shift'] = 0.2
+# star['s__phase_shift'] = 0.025 #0.2 gives problems!
 # star['s__super_colatitude'] = math.pi - 1.0
 # star['s__super_radius'] = 0.025
 
 
 # with modulator
-modulator = 0.1
-p = [1.6, #1.4, #grav mass
-      14.0,#12.5, #coordinate equatorial radius
-      0.2, # earth distance kpc
-      math.cos(1.25), #cosine of earth inclination
-      0.0, #phase of hotregion
-      1.0, #colatitude of centre of superseding region
-      0.075,  #angular radius superceding region
-      6.2, #primary temperature
-      modulator, #modulator
-      0.025,
-      math.pi - 1.0,
-      0.2
-      ]
+tbb=0.003
+te=200.
+tau=0.5
+#modulator = -0.1
+
+if secondary:
+    p = [1.6, #1.4, #grav mass
+          14.0,#12.5, #coordinate equatorial radius
+          0.2, # earth distance kpc
+          math.cos(1.25), #cosine of earth inclination
+          0.0, #phase of hotregion
+          1.0, #colatitude of centre of superseding region
+          0.075,  #angular radius superceding region
+          tbb,
+          te,
+          tau,
+          #6.2, #primary temperature
+          #modulator, #modulator
+          0.025,
+          math.pi - 1.0,
+          0.2
+          ]
+elif not secondary:
+    p = [1.6, #1.4, #grav mass
+          14.0,#12.5, #coordinate equatorial radius
+          0.2, # earth distance kpc
+          math.cos(1.25), #cosine of earth inclination
+          0.0, #phase of hotregion
+          1.0, #colatitude of centre of superseding region
+          0.075,  #angular radius superceding region
+          tbb,
+          te,
+          tau,
+          #6.2, #primary temperature
+          #modulator, #modulator
+          ]
      
 # without modulator
 # p = [1.6, #1.4, #grav mass
@@ -236,7 +353,10 @@ signal = CustomSignal(data = data,
 
 ##################################### LIKELIHOOD ##############################
 
-prior = CustomPrior()
+if secondary:
+    prior = CustomPrior()
+elif not secondary:
+    prior = CustomPrior_NoSecondary()
 
 # print('define likelihood')
 likelihood = xpsi.Likelihood(star = star, signals = signal,
@@ -250,7 +370,8 @@ likelihood = xpsi.Likelihood(star = star, signals = signal,
 # print('define wrapped_params')
 wrapped_params = [0]*len(likelihood)
 wrapped_params[likelihood.index('p__phase_shift')] = 1
-wrapped_params[likelihood.index('s__phase_shift')] = 1
+if secondary:
+    wrapped_params[likelihood.index('s__phase_shift')] = 1
 
 try: 
     os.makedirs("run")
@@ -299,11 +420,19 @@ except:
 rcParams['text.usetex'] = False
 rcParams['font.size'] = 14.0
 
-ax = plot_2D_pulse((photosphere.signal[0][0], photosphere.signal[1][0]),
-              x=signal.phases[0],
-              shift=signal.shifts,
-              y=signal.energies,
-              ylabel=r'Energy (keV)')
+if secondary:
+    ax = plot_2D_pulse((photosphere.signal[0][0], photosphere.signal[1][0]),
+                  x=signal.phases[0],
+                  shift=signal.shifts,
+                  y=signal.energies,
+                  ylabel=r'Energy (keV)')
+if not secondary:
+    ax = plot_2D_pulse((photosphere.signal[0][0],),
+                  x=signal.phases[0],
+                  shift=signal.shifts,
+                  y=signal.energies,
+                  ylabel=r'Energy (keV)')
 
-ax.set_title('modulator={:.2f}'.format(modulator), loc='center')
-# plt.savefig('plotted_pulses.png')
+
+ax.set_title('te={:.2e} [keV], tbb={:.2e} [keV], tau={:.2e} [unitless]'.format(te*0.511, tbb*511, tau), loc='center') #unit conversion te and tbb is different due to a cluster leftover according to Anna B.
+plt.savefig('plotted_pulses.png')

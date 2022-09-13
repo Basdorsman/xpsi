@@ -140,16 +140,16 @@ def get_E_input(E_nsx, T):
 Threads = 1
 
 # Bobrikova example 1 (NSX[1000,:]):
-# E = 100
-# cos_zenith = 6
+# E = 0.0965081
+# cos_zenith = 0.806686
 # tau = 0.5
 # t_bb = 0.00015
 # t_e = 40
 # expect_I_E = 3.24013291e-06
 
 # Bobrikova example 2 (NSX[20000000,:]):
-E = 50
-cos_zenith = 7
+E = 4.38815419e-03
+cos_zenith = 9.18016000e-01
 tau = 3.2
 t_bb = 0.0027
 t_e = 132

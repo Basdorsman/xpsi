@@ -369,7 +369,22 @@ class CustomHotRegion_Accreting(xpsi.HotRegion):
         
         #     for i in range(self._cede_cellParamVecs.shape[1]):
         #         self._cede_cellParamVecs[:,i,-1] *= self._cede_effGrav
-    
+
+class CustomPhotosphere_BB(xpsi.Photosphere):
+    """ Implement method for imaging."""
+    @property
+    def global_variables(self):
+
+        return np.array([self['p__super_colatitude'],
+                          self['p__phase_shift'] * _2pi,
+                          self['p__super_radius'],
+                          self['p__super_temperature']#,
+                          #self['s__super_colatitude'],
+                          #(self['s__phase_shift'] + 0.5) * _2pi,
+                          #self['s__super_radius'],
+                          #self.hot.objects[1]['s__super_temperature']])
+                          ])
+
 
 class CustomPhotosphere_4D(xpsi.Photosphere):
     """ A photosphere extension to preload the numerical atmosphere NSX. """

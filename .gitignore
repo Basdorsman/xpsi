@@ -164,3 +164,6 @@ venv.bak/
 # model data, runs
 tests/model_data/
 */run/
+
+# plots
+plots/

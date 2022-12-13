@@ -265,6 +265,8 @@ cdef double eval_hot(size_t THREAD,
     vec[3] = mu #0.5  # mu
     vec[4] = E*1e3/evere #1.01088  # E
     
+    # printf("Bobrikova atmosphere interpolator")
+    
     # printf("diagnostics 0:\n")
     # printf("E: %.2e, ", E)
     # printf("Temperature: %.2e, ", Temperature)

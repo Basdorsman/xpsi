@@ -453,7 +453,8 @@ class CustomPhotosphere_Bobrikova(xpsi.Photosphere):
 
     @xpsi.Photosphere.hot_atmosphere.setter
     def hot_atmosphere(self, path):
-        size = (150, 9, 31, 20, 41)
+        #size = (150, 9, 31, 20, 41)
+        size = (150, 9, 31, 11, 41)
 
         with np.load(path, allow_pickle=True) as data_dictionary:
             NSX = data_dictionary['arr_0.npy']

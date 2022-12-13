@@ -255,13 +255,17 @@ cdef double eval_hot(size_t THREAD,
     te = VEC[0]
     tbb = VEC[1]
     tau = VEC[2]
+    
+    cdef double evere = 0.5109989e6 # electron volts in elecron rest energy
 
     # take into account the order of *._hot_atmosphere
     vec[0] = te
     vec[1] = tbb
     vec[2] = tau
     vec[3] = mu #0.5  # mu
-    vec[4] = E #1.01088  # E
+    vec[4] = E*1e3/evere #1.01088  # E
+    
+    # printf("Bobrikova atmosphere interpolator")
     
     # printf("diagnostics 0:\n")
     # printf("E: %.2e, ", E)

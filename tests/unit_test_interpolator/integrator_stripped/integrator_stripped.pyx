@@ -10,6 +10,8 @@ from hot cimport (init_hot, eval_hot, eval_hot_norm, free_hot)
 from libc.stdio cimport printf
 # from libc.stdlib cimport malloc, free
 
+print("imported integrator_stripped.pyx")
+
 def interpolate(size_t N_T,
                 double E_prime,
                 double cos_zenith,
@@ -18,6 +20,7 @@ def interpolate(size_t N_T,
                 double t_e,
                 atmosphere = None):
 
+    #printf("inside interpolate()")
     cdef _preloaded *preloaded = NULL
     cdef void *data = NULL
 
@@ -34,6 +37,7 @@ def interpolate(size_t N_T,
     cdef:
         size_t Thread
         double I_E
+
 
     # printf("input parameters reporting:")
     # printf("\nvec[0]: %.8e, ", vec[0])
@@ -56,4 +60,7 @@ def interpolate(size_t N_T,
     free_hot(N_T, data)
 
     return I_E
+
+    # cdef double mytest = 12.0
+    # return mytest
 

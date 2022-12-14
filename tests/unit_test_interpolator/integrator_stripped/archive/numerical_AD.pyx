@@ -8,6 +8,9 @@ from libc.stdio cimport printf, fopen, fclose, fread, FILE
 #from GSL cimport gsl_isnan, gsl_isinf
 from libc.stdlib cimport malloc, free
 
+#from libc.time cimport time, time_t, clock, clock_t
+from posix.time cimport clock_gettime, timespec, CLOCK_REALTIME
+
 from xpsi.global_imports import _keV, _k_B
 
 cdef int SUCCESS = 0
@@ -36,6 +39,12 @@ ctypedef struct DATA:
     const _preloaded *p
     ACCELERATE acc
 
+
+cdef:
+    timespec ts, tf, te
+    long int t_elapsed, t_forloops
+
+
 #----------------------------------------------------------------------->>>
 # >>> User modifiable functions.
 # >>> Note that the user is entirely free to wrap thread-safe and
@@ -49,7 +58,10 @@ cdef void* init_hot(size_t numThreads, const _preloaded *const preloaded) nogil:
     # the user's responsibility to manage.
     # Return NULL if dynamic memory is not required for the model
 
-    #printf("inside init_hot()")
+    # printf("inside init_hot()")
+    
+    clock_gettime(CLOCK_REALTIME, &ts)
+    
     cdef DATA *D = <DATA*> malloc(sizeof(DATA))
     D.p = preloaded
     
@@ -151,6 +163,8 @@ cdef void* init_hot(size_t numThreads, const _preloaded *const preloaded) nogil:
     #                     address += D.acc.BN[T][3] + l
     #                     D.acc.INTENSITY_CACHE[T][i * D.p.BLOCKS[0] + j * D.p.BLOCKS[1] + k * D.p.BLOCKS[2] + l] = address[0]
 
+    clock_gettime(CLOCK_REALTIME, &tf)
+
     for T in range(numThreads):
         for i in range(4):
             for j in range(4):
@@ -163,6 +177,14 @@ cdef void* init_hot(size_t numThreads, const _preloaded *const preloaded) nogil:
                             address += (D.acc.BN[T][3] + l) * D.p.S[3]
                             address += D.acc.BN[T][4] + m
                             D.acc.INTENSITY_CACHE[T][i * D.p.BLOCKS[0] + j * D.p.BLOCKS[1] + k * D.p.BLOCKS[2] + l * D.p.BLOCKS[3] + m] = address[0]
+
+
+
+    clock_gettime(CLOCK_REALTIME, &te)
+    t_forloops = (te.tv_nsec - tf.tv_nsec)
+    printf("init_hot() for loops takes %ld ns\n",t_forloops)
+    t_elapsed = (te.tv_nsec - ts.tv_nsec)
+    printf("init_hot() takes %ld ns\n", t_elapsed)
 
 
     # Cast for generalised usage in integration routines
@@ -181,6 +203,7 @@ cdef int free_hot(size_t numThreads, void *const data) nogil:
     # because data is expected to be NULL in this case
 
     # printf("inside free_hot()")
+    clock_gettime(CLOCK_REALTIME, &ts)
 
     cdef DATA *D = <DATA*> data
 
@@ -205,6 +228,10 @@ cdef int free_hot(size_t numThreads, void *const data) nogil:
 
     # printf("freeing D...")
     free(D)
+    
+    clock_gettime(CLOCK_REALTIME, &te)
+    t_elapsed = (te.tv_nsec - ts.tv_nsec)
+    printf("free_hot() takes %ld ns\n", t_elapsed)
 
     return SUCCESS
 
@@ -232,6 +259,20 @@ cdef double eval_hot(size_t THREAD,
     # VEC = variables such as temperature, effective gravity, ...
     # data = numerical model data required for intensity evaluation
     # This function must cast the void pointer appropriately for use.
+    
+    #printf("inside eval_hot()")
+    
+    # timing definitions
+    # cdef:
+    #     clock_t time1, time2
+    #     double cpu_time_used
+
+    #time1 = clock()
+    #printf("Starting Time:%g\n", (double) time1)
+    
+    #cdef timespec ts
+    clock_gettime(CLOCK_REALTIME, &ts)
+    
     cdef DATA *D = <DATA*> data
 
     cdef:
@@ -248,7 +289,6 @@ cdef double eval_hot(size_t THREAD,
         # double E_eff = k_B_over_keV * pow(10.0, Temperature)
         int update_baseNode[5]  # should be = ndims
         int CACHE = 0
-
 
     vec[0] = t_e
     vec[1] = t_bb
@@ -276,22 +316,17 @@ cdef double eval_hot(size_t THREAD,
     # printf("E_eff: %.2e, ", E_eff)
     # printf("vec[4]: %.2e\n", vec[4])
     
-    
     # printf("diagnostics 1:\n") # using i breaks next code block
     # for i in range(D.p.ndims):
     #     printf("i=%d, ", <int>i)
     #     printf("vec[i]: %.2e\n", vec[i])
     # cdef size_t test 
 
-
-
-    
     # printf("\nvec[0]: %.8e, ", vec[0])
     # printf("vec[1]: %.8e, ", vec[1])
     # printf("vec[2]: %.8e, ", vec[2])
     # printf("vec[3]: %.8e, ", vec[3])
     # printf("vec[4]: %.8e, ", vec[4])
-    
     
     #printf("\neval_hot() called")
     #printf("\nVEC[0]: %f", VEC[0])
@@ -462,6 +497,7 @@ cdef double eval_hot(size_t THREAD,
     # printf("BN[3]: %d\n", <int>BN[3])
     # printf("BN[4]: %d\n", <int>BN[4])
         
+    clock_gettime(CLOCK_REALTIME, &tf)
     
     for i in range(4):
         II = i * D.p.BLOCKS[0]
@@ -504,6 +540,24 @@ cdef double eval_hot(size_t THREAD,
     # Vec here should be the temperature!
     # printf(" I_out: %.8e, ", I * pow(10.0, 3.0 * vec[1]))
     #return I * pow(10.0, 3.0 * Temperature)
+    
+
+
+    # time2 = clock()
+    
+    # cdef long double time_taken
+    # time_taken = time2 - time1
+    # printf("Ending Time:%g\n", (double) time2)
+    # printf("Number of clock ticks: %Lf\n", time_taken)
+    # cdef timespec te
+    clock_gettime(CLOCK_REALTIME, &te)
+    
+    # cdef double t_elapsed
+    t_forloops = (te.tv_nsec - tf.tv_nsec)
+    printf("eval_hot() for loops takes %ld ns\n",t_forloops)
+    t_elapsed = (te.tv_nsec - ts.tv_nsec)
+    printf("eval_hot() takes %ld ns\n",t_elapsed)
+
     return I
 
 cdef double eval_hot_norm() nogil:

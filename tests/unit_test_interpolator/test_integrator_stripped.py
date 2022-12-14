@@ -17,8 +17,19 @@ import sys
 sys.path.append('../')
 from custom_tools import CustomPhotosphere_4D, CustomPhotosphere_5D, CustomPhotosphere_Bobrikova
 
+atmosphere = 'accreting' #'blackbody', 'numerical'
 
-n_params = os.environ['dimensionality']
+try: #try to get parameters from shell input
+    os.environ.get('n_params')
+    n_params = os.environ['n_params']
+    if n_params=='B': atmosphere = 'blackbody'
+    elif n_params=='4' or '5': atmosphere = 'numerical'
+    elif n_params=='A': atmosphere = 'accreting'
+except:
+    if atmosphere=='accreting': n_params = "A"
+    elif atmosphere=='numerical': n_params = "5" #4 doesn't work right now
+    elif atmosphere=='blackbody': n_params = "B"
+
 print("n_params: ",n_params)
 
 np.random.seed(xpsi._rank+10)
@@ -100,6 +111,7 @@ hot['p__super_temperature'] = 6.0 # equivalent to ``primary['super_temperature']
 
 
 ################################ ATMOSPHERE ################################### 
+print("defining atmosphere:")
 
 if n_params == "4":   
     photosphere = CustomPhotosphere_4D(hot = hot, elsewhere = None,
@@ -112,10 +124,10 @@ elif n_params== "5":
     # photosphere.hot_atmosphere = '/home/bas/Documents/Projects/x-psi/model_datas/model_data/H-atmosphere_Spectra_fully_ionized/NSX_H-atmosphere_Spectra/nsx_H_v171019_5D_no_effect.npz'
     photosphere.hot_atmosphere = '/home/bas/Documents/Projects/x-psi/model_datas/model_data/H-atmosphere_Spectra_fully_ionized/NSX_H-atmosphere_Spectra/nsx_H_v171019_modulated_0dot5_to_2.npz'
 
-elif n_params== "B":
+elif n_params== "A":
     photosphere = CustomPhotosphere_Bobrikova(hot = hot, elsewhere = None,
                                     values=dict(mode_frequency = spacetime['frequency']))
-    photosphere.hot_atmosphere = '/home/bas/Documents/Projects/x-psi/model_datas/model_data/Bobrikova_compton_slab.npz'
+    photosphere.hot_atmosphere = '/home/bas/Documents/Projects/x-psi/model_datas/bobrikova/Bobrikova_compton_slab.npz'
 
 else:
     print("no dimensionality provided!")
@@ -172,6 +184,7 @@ expect_I_E = 6.03771436e+04
 
 #E_input = get_E_input(E_nsx, T)
 #I_10_3T = interpolate(Threads, E_input, cos_zenith, g, T, atmosphere = atmosphere_num)
+#print("above interpolate()")
 I_10_3T = interpolate(Threads, E, cos_zenith, tau, t_bb, t_e, atmosphere = atmosphere_num)
 
 print("expecation for log10(I_E) = ", expect_I_E)

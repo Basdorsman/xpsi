@@ -1977,12 +1977,12 @@ static int __pyx_f_3hot_free_hot(size_t __pyx_v_numThreads, void *const __pyx_v_
  *     # printf("freeing D...")
  *     free(D)             # <<<<<<<<<<<<<<
  * 
- *     clock_gettime(CLOCK_REALTIME, &te)
+ * 
  */
   free(__pyx_v_D);
 
-  /* "hot.pyx":235
- *     free(D)
+  /* "hot.pyx":237
+ * 
  * 
  *     clock_gettime(CLOCK_REALTIME, &te)             # <<<<<<<<<<<<<<
  *     t_elapsed = (te.tv_nsec - ts.tv_nsec)
@@ -1990,7 +1990,7 @@ static int __pyx_f_3hot_free_hot(size_t __pyx_v_numThreads, void *const __pyx_v_
  */
   (void)(clock_gettime(CLOCK_REALTIME, (&__pyx_v_3hot_te)));
 
-  /* "hot.pyx":236
+  /* "hot.pyx":238
  * 
  *     clock_gettime(CLOCK_REALTIME, &te)
  *     t_elapsed = (te.tv_nsec - ts.tv_nsec)             # <<<<<<<<<<<<<<
@@ -1999,7 +1999,7 @@ static int __pyx_f_3hot_free_hot(size_t __pyx_v_numThreads, void *const __pyx_v_
  */
   __pyx_v_t_elapsed = (__pyx_v_3hot_te.tv_nsec - __pyx_v_3hot_ts.tv_nsec);
 
-  /* "hot.pyx":237
+  /* "hot.pyx":239
  *     clock_gettime(CLOCK_REALTIME, &te)
  *     t_elapsed = (te.tv_nsec - ts.tv_nsec)
  *     printf("free_hot() takes %ld ns\n", t_elapsed)             # <<<<<<<<<<<<<<
@@ -2008,7 +2008,7 @@ static int __pyx_f_3hot_free_hot(size_t __pyx_v_numThreads, void *const __pyx_v_
  */
   (void)(printf(((char const *)"free_hot() takes %ld ns\n"), __pyx_v_t_elapsed));
 
-  /* "hot.pyx":239
+  /* "hot.pyx":241
  *     printf("free_hot() takes %ld ns\n", t_elapsed)
  * 
  *     return SUCCESS             # <<<<<<<<<<<<<<
@@ -2031,7 +2031,7 @@ static int __pyx_f_3hot_free_hot(size_t __pyx_v_numThreads, void *const __pyx_v_
   return __pyx_r;
 }
 
-/* "hot.pyx":252
+/* "hot.pyx":254
  * #                       void *const data) nogil:
  * 
  * cdef double eval_hot(size_t THREAD,             # <<<<<<<<<<<<<<
@@ -2064,9 +2064,6 @@ static double __pyx_f_3hot_eval_hot(size_t __pyx_v_THREAD, double __pyx_v_E, dou
   size_t __pyx_v_KK;
   size_t __pyx_v_LL;
   double *__pyx_v_address;
-  long __pyx_v_t_elapsed;
-  double __pyx_v_I2;
-  int __pyx_v_iterator;
   double __pyx_r;
   int __pyx_t_1;
   int __pyx_t_2;
@@ -2075,9 +2072,8 @@ static double __pyx_f_3hot_eval_hot(size_t __pyx_v_THREAD, double __pyx_v_E, dou
   size_t __pyx_t_5;
   size_t __pyx_t_6;
   size_t __pyx_t_7;
-  int __pyx_t_8;
 
-  /* "hot.pyx":277
+  /* "hot.pyx":279
  * 
  *     #cdef timespec ts
  *     clock_gettime(CLOCK_REALTIME, &ts)             # <<<<<<<<<<<<<<
@@ -2086,7 +2082,7 @@ static double __pyx_f_3hot_eval_hot(size_t __pyx_v_THREAD, double __pyx_v_E, dou
  */
   (void)(clock_gettime(CLOCK_REALTIME, (&__pyx_v_3hot_ts)));
 
-  /* "hot.pyx":279
+  /* "hot.pyx":281
  *     clock_gettime(CLOCK_REALTIME, &ts)
  * 
  *     cdef DATA *D = <DATA*> data             # <<<<<<<<<<<<<<
@@ -2095,7 +2091,7 @@ static double __pyx_f_3hot_eval_hot(size_t __pyx_v_THREAD, double __pyx_v_E, dou
  */
   __pyx_v_D = ((__pyx_t_3hot_DATA *)__pyx_v_data);
 
-  /* "hot.pyx":282
+  /* "hot.pyx":284
  * 
  *     cdef:
  *         size_t i = 0, ii             # <<<<<<<<<<<<<<
@@ -2104,7 +2100,7 @@ static double __pyx_f_3hot_eval_hot(size_t __pyx_v_THREAD, double __pyx_v_E, dou
  */
   __pyx_v_i = 0;
 
-  /* "hot.pyx":283
+  /* "hot.pyx":285
  *     cdef:
  *         size_t i = 0, ii
  *         double I = 0.0, temp             # <<<<<<<<<<<<<<
@@ -2113,7 +2109,7 @@ static double __pyx_f_3hot_eval_hot(size_t __pyx_v_THREAD, double __pyx_v_E, dou
  */
   __pyx_v_I = 0.0;
 
-  /* "hot.pyx":284
+  /* "hot.pyx":286
  *         size_t i = 0, ii
  *         double I = 0.0, temp
  *         double *node_vals = D.acc.node_vals[THREAD]             # <<<<<<<<<<<<<<
@@ -2122,7 +2118,7 @@ static double __pyx_f_3hot_eval_hot(size_t __pyx_v_THREAD, double __pyx_v_E, dou
  */
   __pyx_v_node_vals = (__pyx_v_D->acc.node_vals[__pyx_v_THREAD]);
 
-  /* "hot.pyx":285
+  /* "hot.pyx":287
  *         double I = 0.0, temp
  *         double *node_vals = D.acc.node_vals[THREAD]
  *         size_t *BN = D.acc.BN[THREAD]             # <<<<<<<<<<<<<<
@@ -2131,7 +2127,7 @@ static double __pyx_f_3hot_eval_hot(size_t __pyx_v_THREAD, double __pyx_v_E, dou
  */
   __pyx_v_BN = (__pyx_v_D->acc.BN[__pyx_v_THREAD]);
 
-  /* "hot.pyx":286
+  /* "hot.pyx":288
  *         double *node_vals = D.acc.node_vals[THREAD]
  *         size_t *BN = D.acc.BN[THREAD]
  *         double *SPACE = D.acc.SPACE[THREAD]             # <<<<<<<<<<<<<<
@@ -2140,7 +2136,7 @@ static double __pyx_f_3hot_eval_hot(size_t __pyx_v_THREAD, double __pyx_v_E, dou
  */
   __pyx_v_SPACE = (__pyx_v_D->acc.SPACE[__pyx_v_THREAD]);
 
-  /* "hot.pyx":287
+  /* "hot.pyx":289
  *         size_t *BN = D.acc.BN[THREAD]
  *         double *SPACE = D.acc.SPACE[THREAD]
  *         double *DIFF = D.acc.DIFF[THREAD]             # <<<<<<<<<<<<<<
@@ -2149,7 +2145,7 @@ static double __pyx_f_3hot_eval_hot(size_t __pyx_v_THREAD, double __pyx_v_E, dou
  */
   __pyx_v_DIFF = (__pyx_v_D->acc.DIFF[__pyx_v_THREAD]);
 
-  /* "hot.pyx":288
+  /* "hot.pyx":290
  *         double *SPACE = D.acc.SPACE[THREAD]
  *         double *DIFF = D.acc.DIFF[THREAD]
  *         double *I_CACHE = D.acc.INTENSITY_CACHE[THREAD]             # <<<<<<<<<<<<<<
@@ -2158,7 +2154,7 @@ static double __pyx_f_3hot_eval_hot(size_t __pyx_v_THREAD, double __pyx_v_E, dou
  */
   __pyx_v_I_CACHE = (__pyx_v_D->acc.INTENSITY_CACHE[__pyx_v_THREAD]);
 
-  /* "hot.pyx":289
+  /* "hot.pyx":291
  *         double *DIFF = D.acc.DIFF[THREAD]
  *         double *I_CACHE = D.acc.INTENSITY_CACHE[THREAD]
  *         double *V_CACHE = D.acc.VEC_CACHE[THREAD]             # <<<<<<<<<<<<<<
@@ -2167,7 +2163,7 @@ static double __pyx_f_3hot_eval_hot(size_t __pyx_v_THREAD, double __pyx_v_E, dou
  */
   __pyx_v_V_CACHE = (__pyx_v_D->acc.VEC_CACHE[__pyx_v_THREAD]);
 
-  /* "hot.pyx":294
+  /* "hot.pyx":296
  *         # double E_eff = k_B_over_keV * pow(10.0, Temperature)
  *         int update_baseNode[5]  # should be = ndims
  *         int CACHE = 0             # <<<<<<<<<<<<<<
@@ -2176,7 +2172,7 @@ static double __pyx_f_3hot_eval_hot(size_t __pyx_v_THREAD, double __pyx_v_E, dou
  */
   __pyx_v_CACHE = 0;
 
-  /* "hot.pyx":296
+  /* "hot.pyx":298
  *         int CACHE = 0
  * 
  *     vec[0] = t_e             # <<<<<<<<<<<<<<
@@ -2185,7 +2181,7 @@ static double __pyx_f_3hot_eval_hot(size_t __pyx_v_THREAD, double __pyx_v_E, dou
  */
   (__pyx_v_vec[0]) = __pyx_v_t_e;
 
-  /* "hot.pyx":297
+  /* "hot.pyx":299
  * 
  *     vec[0] = t_e
  *     vec[1] = t_bb             # <<<<<<<<<<<<<<
@@ -2194,7 +2190,7 @@ static double __pyx_f_3hot_eval_hot(size_t __pyx_v_THREAD, double __pyx_v_E, dou
  */
   (__pyx_v_vec[1]) = __pyx_v_t_bb;
 
-  /* "hot.pyx":298
+  /* "hot.pyx":300
  *     vec[0] = t_e
  *     vec[1] = t_bb
  *     vec[2] = tau             # <<<<<<<<<<<<<<
@@ -2203,7 +2199,7 @@ static double __pyx_f_3hot_eval_hot(size_t __pyx_v_THREAD, double __pyx_v_E, dou
  */
   (__pyx_v_vec[2]) = __pyx_v_tau;
 
-  /* "hot.pyx":299
+  /* "hot.pyx":301
  *     vec[1] = t_bb
  *     vec[2] = tau
  *     vec[3] = mu             # <<<<<<<<<<<<<<
@@ -2212,7 +2208,7 @@ static double __pyx_f_3hot_eval_hot(size_t __pyx_v_THREAD, double __pyx_v_E, dou
  */
   (__pyx_v_vec[3]) = __pyx_v_mu;
 
-  /* "hot.pyx":300
+  /* "hot.pyx":302
  *     vec[2] = tau
  *     vec[3] = mu
  *     vec[4] = E             # <<<<<<<<<<<<<<
@@ -2221,7 +2217,7 @@ static double __pyx_f_3hot_eval_hot(size_t __pyx_v_THREAD, double __pyx_v_E, dou
  */
   (__pyx_v_vec[4]) = __pyx_v_E;
 
-  /* "hot.pyx":338
+  /* "hot.pyx":340
  *     #printf("\nVEC[1]: %f", VEC[1])
  * 
  *     while i < D.p.ndims:             # <<<<<<<<<<<<<<
@@ -2232,7 +2228,7 @@ static double __pyx_f_3hot_eval_hot(size_t __pyx_v_THREAD, double __pyx_v_E, dou
     __pyx_t_1 = ((__pyx_v_i < __pyx_v_D->p->ndims) != 0);
     if (!__pyx_t_1) break;
 
-    /* "hot.pyx":341
+    /* "hot.pyx":343
  *         # if parallel == 31:
  *         # printf("\nDimension: %d", <int>i)
  *         update_baseNode[i] = 0             # <<<<<<<<<<<<<<
@@ -2241,7 +2237,7 @@ static double __pyx_f_3hot_eval_hot(size_t __pyx_v_THREAD, double __pyx_v_E, dou
  */
     (__pyx_v_update_baseNode[__pyx_v_i]) = 0;
 
-    /* "hot.pyx":342
+    /* "hot.pyx":344
  *         # printf("\nDimension: %d", <int>i)
  *         update_baseNode[i] = 0
  *         if vec[i] < node_vals[2*i] and BN[i] != 0:             # <<<<<<<<<<<<<<
@@ -2259,7 +2255,7 @@ static double __pyx_f_3hot_eval_hot(size_t __pyx_v_THREAD, double __pyx_v_E, dou
     __pyx_L6_bool_binop_done:;
     if (__pyx_t_1) {
 
-      /* "hot.pyx":345
+      /* "hot.pyx":347
  *             # if parallel == 31:
  *             # printf("\nExecute block 1: %d", <int>i)
  *             update_baseNode[i] = 1             # <<<<<<<<<<<<<<
@@ -2268,7 +2264,7 @@ static double __pyx_f_3hot_eval_hot(size_t __pyx_v_THREAD, double __pyx_v_E, dou
  */
       (__pyx_v_update_baseNode[__pyx_v_i]) = 1;
 
-      /* "hot.pyx":346
+      /* "hot.pyx":348
  *             # printf("\nExecute block 1: %d", <int>i)
  *             update_baseNode[i] = 1
  *             while vec[i] < D.p.params[i][BN[i] + 1]:             # <<<<<<<<<<<<<<
@@ -2279,7 +2275,7 @@ static double __pyx_f_3hot_eval_hot(size_t __pyx_v_THREAD, double __pyx_v_E, dou
         __pyx_t_1 = (((__pyx_v_vec[__pyx_v_i]) < ((__pyx_v_D->p->params[__pyx_v_i])[((__pyx_v_BN[__pyx_v_i]) + 1)])) != 0);
         if (!__pyx_t_1) break;
 
-        /* "hot.pyx":351
+        /* "hot.pyx":353
  *                 #     printf("\nvec i: %.8e", vec[i])
  *                 #     printf("\nBase node: %d", <int>BN[i])
  *                 if BN[i] > 0:             # <<<<<<<<<<<<<<
@@ -2289,7 +2285,7 @@ static double __pyx_f_3hot_eval_hot(size_t __pyx_v_THREAD, double __pyx_v_E, dou
         __pyx_t_1 = (((__pyx_v_BN[__pyx_v_i]) > 0) != 0);
         if (__pyx_t_1) {
 
-          /* "hot.pyx":352
+          /* "hot.pyx":354
  *                 #     printf("\nBase node: %d", <int>BN[i])
  *                 if BN[i] > 0:
  *                     BN[i] -= 1             # <<<<<<<<<<<<<<
@@ -2299,7 +2295,7 @@ static double __pyx_f_3hot_eval_hot(size_t __pyx_v_THREAD, double __pyx_v_E, dou
           __pyx_t_3 = __pyx_v_i;
           (__pyx_v_BN[__pyx_t_3]) = ((__pyx_v_BN[__pyx_t_3]) - 1);
 
-          /* "hot.pyx":351
+          /* "hot.pyx":353
  *                 #     printf("\nvec i: %.8e", vec[i])
  *                 #     printf("\nBase node: %d", <int>BN[i])
  *                 if BN[i] > 0:             # <<<<<<<<<<<<<<
@@ -2309,7 +2305,7 @@ static double __pyx_f_3hot_eval_hot(size_t __pyx_v_THREAD, double __pyx_v_E, dou
           goto __pyx_L10;
         }
 
-        /* "hot.pyx":353
+        /* "hot.pyx":355
  *                 if BN[i] > 0:
  *                     BN[i] -= 1
  *                 elif vec[i] <= D.p.params[i][0]:             # <<<<<<<<<<<<<<
@@ -2319,7 +2315,7 @@ static double __pyx_f_3hot_eval_hot(size_t __pyx_v_THREAD, double __pyx_v_E, dou
         __pyx_t_1 = (((__pyx_v_vec[__pyx_v_i]) <= ((__pyx_v_D->p->params[__pyx_v_i])[0])) != 0);
         if (__pyx_t_1) {
 
-          /* "hot.pyx":354
+          /* "hot.pyx":356
  *                     BN[i] -= 1
  *                 elif vec[i] <= D.p.params[i][0]:
  *                     vec[i] = D.p.params[i][0]             # <<<<<<<<<<<<<<
@@ -2328,7 +2324,7 @@ static double __pyx_f_3hot_eval_hot(size_t __pyx_v_THREAD, double __pyx_v_E, dou
  */
           (__pyx_v_vec[__pyx_v_i]) = ((__pyx_v_D->p->params[__pyx_v_i])[0]);
 
-          /* "hot.pyx":355
+          /* "hot.pyx":357
  *                 elif vec[i] <= D.p.params[i][0]:
  *                     vec[i] = D.p.params[i][0]
  *                     break             # <<<<<<<<<<<<<<
@@ -2337,7 +2333,7 @@ static double __pyx_f_3hot_eval_hot(size_t __pyx_v_THREAD, double __pyx_v_E, dou
  */
           goto __pyx_L9_break;
 
-          /* "hot.pyx":353
+          /* "hot.pyx":355
  *                 if BN[i] > 0:
  *                     BN[i] -= 1
  *                 elif vec[i] <= D.p.params[i][0]:             # <<<<<<<<<<<<<<
@@ -2346,7 +2342,7 @@ static double __pyx_f_3hot_eval_hot(size_t __pyx_v_THREAD, double __pyx_v_E, dou
  */
         }
 
-        /* "hot.pyx":356
+        /* "hot.pyx":358
  *                     vec[i] = D.p.params[i][0]
  *                     break
  *                 elif BN[i] == 0:             # <<<<<<<<<<<<<<
@@ -2356,7 +2352,7 @@ static double __pyx_f_3hot_eval_hot(size_t __pyx_v_THREAD, double __pyx_v_E, dou
         __pyx_t_1 = (((__pyx_v_BN[__pyx_v_i]) == 0) != 0);
         if (__pyx_t_1) {
 
-          /* "hot.pyx":357
+          /* "hot.pyx":359
  *                     break
  *                 elif BN[i] == 0:
  *                     break             # <<<<<<<<<<<<<<
@@ -2365,7 +2361,7 @@ static double __pyx_f_3hot_eval_hot(size_t __pyx_v_THREAD, double __pyx_v_E, dou
  */
           goto __pyx_L9_break;
 
-          /* "hot.pyx":356
+          /* "hot.pyx":358
  *                     vec[i] = D.p.params[i][0]
  *                     break
  *                 elif BN[i] == 0:             # <<<<<<<<<<<<<<
@@ -2377,7 +2373,7 @@ static double __pyx_f_3hot_eval_hot(size_t __pyx_v_THREAD, double __pyx_v_E, dou
       }
       __pyx_L9_break:;
 
-      /* "hot.pyx":359
+      /* "hot.pyx":361
  *                     break
  * 
  *             node_vals[2*i] = D.p.params[i][BN[i] + 1]             # <<<<<<<<<<<<<<
@@ -2386,7 +2382,7 @@ static double __pyx_f_3hot_eval_hot(size_t __pyx_v_THREAD, double __pyx_v_E, dou
  */
       (__pyx_v_node_vals[(2 * __pyx_v_i)]) = ((__pyx_v_D->p->params[__pyx_v_i])[((__pyx_v_BN[__pyx_v_i]) + 1)]);
 
-      /* "hot.pyx":360
+      /* "hot.pyx":362
  * 
  *             node_vals[2*i] = D.p.params[i][BN[i] + 1]
  *             node_vals[2*i + 1] = D.p.params[i][BN[i] + 2]             # <<<<<<<<<<<<<<
@@ -2395,7 +2391,7 @@ static double __pyx_f_3hot_eval_hot(size_t __pyx_v_THREAD, double __pyx_v_E, dou
  */
       (__pyx_v_node_vals[((2 * __pyx_v_i) + 1)]) = ((__pyx_v_D->p->params[__pyx_v_i])[((__pyx_v_BN[__pyx_v_i]) + 2)]);
 
-      /* "hot.pyx":342
+      /* "hot.pyx":344
  *         # printf("\nDimension: %d", <int>i)
  *         update_baseNode[i] = 0
  *         if vec[i] < node_vals[2*i] and BN[i] != 0:             # <<<<<<<<<<<<<<
@@ -2405,7 +2401,7 @@ static double __pyx_f_3hot_eval_hot(size_t __pyx_v_THREAD, double __pyx_v_E, dou
       goto __pyx_L5;
     }
 
-    /* "hot.pyx":365
+    /* "hot.pyx":367
  *             # printf("\nEnd Block 1: %d", <int>i)
  * 
  *         elif vec[i] > node_vals[2*i + 1] and BN[i] != D.p.N[i] - 4: # I believe this has to do with the cubic interpolation points, so this remains 4             # <<<<<<<<<<<<<<
@@ -2423,7 +2419,7 @@ static double __pyx_f_3hot_eval_hot(size_t __pyx_v_THREAD, double __pyx_v_E, dou
     __pyx_L11_bool_binop_done:;
     if (__pyx_t_1) {
 
-      /* "hot.pyx":368
+      /* "hot.pyx":370
  *             # if parallel == 31:
  *             # printf("\nExecute block 2: %d", <int>i)
  *             update_baseNode[i] = 1             # <<<<<<<<<<<<<<
@@ -2432,7 +2428,7 @@ static double __pyx_f_3hot_eval_hot(size_t __pyx_v_THREAD, double __pyx_v_E, dou
  */
       (__pyx_v_update_baseNode[__pyx_v_i]) = 1;
 
-      /* "hot.pyx":369
+      /* "hot.pyx":371
  *             # printf("\nExecute block 2: %d", <int>i)
  *             update_baseNode[i] = 1
  *             while vec[i] > D.p.params[i][BN[i] + 2]:             # <<<<<<<<<<<<<<
@@ -2443,7 +2439,7 @@ static double __pyx_f_3hot_eval_hot(size_t __pyx_v_THREAD, double __pyx_v_E, dou
         __pyx_t_1 = (((__pyx_v_vec[__pyx_v_i]) > ((__pyx_v_D->p->params[__pyx_v_i])[((__pyx_v_BN[__pyx_v_i]) + 2)])) != 0);
         if (!__pyx_t_1) break;
 
-        /* "hot.pyx":370
+        /* "hot.pyx":372
  *             update_baseNode[i] = 1
  *             while vec[i] > D.p.params[i][BN[i] + 2]:
  *                 if BN[i] < D.p.N[i] - 4:             # <<<<<<<<<<<<<<
@@ -2453,7 +2449,7 @@ static double __pyx_f_3hot_eval_hot(size_t __pyx_v_THREAD, double __pyx_v_E, dou
         __pyx_t_1 = (((__pyx_v_BN[__pyx_v_i]) < ((__pyx_v_D->p->N[__pyx_v_i]) - 4)) != 0);
         if (__pyx_t_1) {
 
-          /* "hot.pyx":371
+          /* "hot.pyx":373
  *             while vec[i] > D.p.params[i][BN[i] + 2]:
  *                 if BN[i] < D.p.N[i] - 4:
  *                     BN[i] += 1             # <<<<<<<<<<<<<<
@@ -2463,7 +2459,7 @@ static double __pyx_f_3hot_eval_hot(size_t __pyx_v_THREAD, double __pyx_v_E, dou
           __pyx_t_3 = __pyx_v_i;
           (__pyx_v_BN[__pyx_t_3]) = ((__pyx_v_BN[__pyx_t_3]) + 1);
 
-          /* "hot.pyx":370
+          /* "hot.pyx":372
  *             update_baseNode[i] = 1
  *             while vec[i] > D.p.params[i][BN[i] + 2]:
  *                 if BN[i] < D.p.N[i] - 4:             # <<<<<<<<<<<<<<
@@ -2473,7 +2469,7 @@ static double __pyx_f_3hot_eval_hot(size_t __pyx_v_THREAD, double __pyx_v_E, dou
           goto __pyx_L15;
         }
 
-        /* "hot.pyx":372
+        /* "hot.pyx":374
  *                 if BN[i] < D.p.N[i] - 4:
  *                     BN[i] += 1
  *                 elif vec[i] >= D.p.params[i][D.p.N[i] - 1]:             # <<<<<<<<<<<<<<
@@ -2483,7 +2479,7 @@ static double __pyx_f_3hot_eval_hot(size_t __pyx_v_THREAD, double __pyx_v_E, dou
         __pyx_t_1 = (((__pyx_v_vec[__pyx_v_i]) >= ((__pyx_v_D->p->params[__pyx_v_i])[((__pyx_v_D->p->N[__pyx_v_i]) - 1)])) != 0);
         if (__pyx_t_1) {
 
-          /* "hot.pyx":373
+          /* "hot.pyx":375
  *                     BN[i] += 1
  *                 elif vec[i] >= D.p.params[i][D.p.N[i] - 1]:
  *                     vec[i] = D.p.params[i][D.p.N[i] - 1]             # <<<<<<<<<<<<<<
@@ -2492,7 +2488,7 @@ static double __pyx_f_3hot_eval_hot(size_t __pyx_v_THREAD, double __pyx_v_E, dou
  */
           (__pyx_v_vec[__pyx_v_i]) = ((__pyx_v_D->p->params[__pyx_v_i])[((__pyx_v_D->p->N[__pyx_v_i]) - 1)]);
 
-          /* "hot.pyx":374
+          /* "hot.pyx":376
  *                 elif vec[i] >= D.p.params[i][D.p.N[i] - 1]:
  *                     vec[i] = D.p.params[i][D.p.N[i] - 1]
  *                     break             # <<<<<<<<<<<<<<
@@ -2501,7 +2497,7 @@ static double __pyx_f_3hot_eval_hot(size_t __pyx_v_THREAD, double __pyx_v_E, dou
  */
           goto __pyx_L14_break;
 
-          /* "hot.pyx":372
+          /* "hot.pyx":374
  *                 if BN[i] < D.p.N[i] - 4:
  *                     BN[i] += 1
  *                 elif vec[i] >= D.p.params[i][D.p.N[i] - 1]:             # <<<<<<<<<<<<<<
@@ -2510,7 +2506,7 @@ static double __pyx_f_3hot_eval_hot(size_t __pyx_v_THREAD, double __pyx_v_E, dou
  */
         }
 
-        /* "hot.pyx":375
+        /* "hot.pyx":377
  *                     vec[i] = D.p.params[i][D.p.N[i] - 1]
  *                     break
  *                 elif BN[i] == D.p.N[i] - 4:             # <<<<<<<<<<<<<<
@@ -2520,7 +2516,7 @@ static double __pyx_f_3hot_eval_hot(size_t __pyx_v_THREAD, double __pyx_v_E, dou
         __pyx_t_1 = (((__pyx_v_BN[__pyx_v_i]) == ((__pyx_v_D->p->N[__pyx_v_i]) - 4)) != 0);
         if (__pyx_t_1) {
 
-          /* "hot.pyx":376
+          /* "hot.pyx":378
  *                     break
  *                 elif BN[i] == D.p.N[i] - 4:
  *                     break             # <<<<<<<<<<<<<<
@@ -2529,7 +2525,7 @@ static double __pyx_f_3hot_eval_hot(size_t __pyx_v_THREAD, double __pyx_v_E, dou
  */
           goto __pyx_L14_break;
 
-          /* "hot.pyx":375
+          /* "hot.pyx":377
  *                     vec[i] = D.p.params[i][D.p.N[i] - 1]
  *                     break
  *                 elif BN[i] == D.p.N[i] - 4:             # <<<<<<<<<<<<<<
@@ -2541,7 +2537,7 @@ static double __pyx_f_3hot_eval_hot(size_t __pyx_v_THREAD, double __pyx_v_E, dou
       }
       __pyx_L14_break:;
 
-      /* "hot.pyx":378
+      /* "hot.pyx":380
  *                     break
  * 
  *             node_vals[2*i] = D.p.params[i][BN[i] + 1]             # <<<<<<<<<<<<<<
@@ -2550,7 +2546,7 @@ static double __pyx_f_3hot_eval_hot(size_t __pyx_v_THREAD, double __pyx_v_E, dou
  */
       (__pyx_v_node_vals[(2 * __pyx_v_i)]) = ((__pyx_v_D->p->params[__pyx_v_i])[((__pyx_v_BN[__pyx_v_i]) + 1)]);
 
-      /* "hot.pyx":379
+      /* "hot.pyx":381
  * 
  *             node_vals[2*i] = D.p.params[i][BN[i] + 1]
  *             node_vals[2*i + 1] = D.p.params[i][BN[i] + 2]             # <<<<<<<<<<<<<<
@@ -2559,7 +2555,7 @@ static double __pyx_f_3hot_eval_hot(size_t __pyx_v_THREAD, double __pyx_v_E, dou
  */
       (__pyx_v_node_vals[((2 * __pyx_v_i) + 1)]) = ((__pyx_v_D->p->params[__pyx_v_i])[((__pyx_v_BN[__pyx_v_i]) + 2)]);
 
-      /* "hot.pyx":365
+      /* "hot.pyx":367
  *             # printf("\nEnd Block 1: %d", <int>i)
  * 
  *         elif vec[i] > node_vals[2*i + 1] and BN[i] != D.p.N[i] - 4: # I believe this has to do with the cubic interpolation points, so this remains 4             # <<<<<<<<<<<<<<
@@ -2569,7 +2565,7 @@ static double __pyx_f_3hot_eval_hot(size_t __pyx_v_THREAD, double __pyx_v_E, dou
     }
     __pyx_L5:;
 
-    /* "hot.pyx":387
+    /* "hot.pyx":389
  *         # printf("\nTry block 3: %d", <int>i)
  * 
  *         if V_CACHE[i] != vec[i] or update_baseNode[i] == 1:             # <<<<<<<<<<<<<<
@@ -2587,7 +2583,7 @@ static double __pyx_f_3hot_eval_hot(size_t __pyx_v_THREAD, double __pyx_v_E, dou
     __pyx_L17_bool_binop_done:;
     if (__pyx_t_1) {
 
-      /* "hot.pyx":390
+      /* "hot.pyx":392
  *             # if parallel == 31:
  *             # printf("\nExecute block 3: %d", <int>i)
  *             ii = 4*i             # <<<<<<<<<<<<<<
@@ -2596,7 +2592,7 @@ static double __pyx_f_3hot_eval_hot(size_t __pyx_v_THREAD, double __pyx_v_E, dou
  */
       __pyx_v_ii = (4 * __pyx_v_i);
 
-      /* "hot.pyx":391
+      /* "hot.pyx":393
  *             # printf("\nExecute block 3: %d", <int>i)
  *             ii = 4*i
  *             DIFF[ii] = vec[i] - D.p.params[i][BN[i] + 1]             # <<<<<<<<<<<<<<
@@ -2605,7 +2601,7 @@ static double __pyx_f_3hot_eval_hot(size_t __pyx_v_THREAD, double __pyx_v_E, dou
  */
       (__pyx_v_DIFF[__pyx_v_ii]) = ((__pyx_v_vec[__pyx_v_i]) - ((__pyx_v_D->p->params[__pyx_v_i])[((__pyx_v_BN[__pyx_v_i]) + 1)]));
 
-      /* "hot.pyx":392
+      /* "hot.pyx":394
  *             ii = 4*i
  *             DIFF[ii] = vec[i] - D.p.params[i][BN[i] + 1]
  *             DIFF[ii] *= vec[i] - D.p.params[i][BN[i] + 2]             # <<<<<<<<<<<<<<
@@ -2615,7 +2611,7 @@ static double __pyx_f_3hot_eval_hot(size_t __pyx_v_THREAD, double __pyx_v_E, dou
       __pyx_t_3 = __pyx_v_ii;
       (__pyx_v_DIFF[__pyx_t_3]) = ((__pyx_v_DIFF[__pyx_t_3]) * ((__pyx_v_vec[__pyx_v_i]) - ((__pyx_v_D->p->params[__pyx_v_i])[((__pyx_v_BN[__pyx_v_i]) + 2)])));
 
-      /* "hot.pyx":393
+      /* "hot.pyx":395
  *             DIFF[ii] = vec[i] - D.p.params[i][BN[i] + 1]
  *             DIFF[ii] *= vec[i] - D.p.params[i][BN[i] + 2]
  *             DIFF[ii] *= vec[i] - D.p.params[i][BN[i] + 3]             # <<<<<<<<<<<<<<
@@ -2625,7 +2621,7 @@ static double __pyx_f_3hot_eval_hot(size_t __pyx_v_THREAD, double __pyx_v_E, dou
       __pyx_t_3 = __pyx_v_ii;
       (__pyx_v_DIFF[__pyx_t_3]) = ((__pyx_v_DIFF[__pyx_t_3]) * ((__pyx_v_vec[__pyx_v_i]) - ((__pyx_v_D->p->params[__pyx_v_i])[((__pyx_v_BN[__pyx_v_i]) + 3)])));
 
-      /* "hot.pyx":395
+      /* "hot.pyx":397
  *             DIFF[ii] *= vec[i] - D.p.params[i][BN[i] + 3]
  * 
  *             DIFF[ii + 1] = vec[i] - D.p.params[i][BN[i]]             # <<<<<<<<<<<<<<
@@ -2634,7 +2630,7 @@ static double __pyx_f_3hot_eval_hot(size_t __pyx_v_THREAD, double __pyx_v_E, dou
  */
       (__pyx_v_DIFF[(__pyx_v_ii + 1)]) = ((__pyx_v_vec[__pyx_v_i]) - ((__pyx_v_D->p->params[__pyx_v_i])[(__pyx_v_BN[__pyx_v_i])]));
 
-      /* "hot.pyx":396
+      /* "hot.pyx":398
  * 
  *             DIFF[ii + 1] = vec[i] - D.p.params[i][BN[i]]
  *             DIFF[ii + 1] *= vec[i] - D.p.params[i][BN[i] + 2]             # <<<<<<<<<<<<<<
@@ -2644,7 +2640,7 @@ static double __pyx_f_3hot_eval_hot(size_t __pyx_v_THREAD, double __pyx_v_E, dou
       __pyx_t_3 = (__pyx_v_ii + 1);
       (__pyx_v_DIFF[__pyx_t_3]) = ((__pyx_v_DIFF[__pyx_t_3]) * ((__pyx_v_vec[__pyx_v_i]) - ((__pyx_v_D->p->params[__pyx_v_i])[((__pyx_v_BN[__pyx_v_i]) + 2)])));
 
-      /* "hot.pyx":397
+      /* "hot.pyx":399
  *             DIFF[ii + 1] = vec[i] - D.p.params[i][BN[i]]
  *             DIFF[ii + 1] *= vec[i] - D.p.params[i][BN[i] + 2]
  *             DIFF[ii + 1] *= vec[i] - D.p.params[i][BN[i] + 3]             # <<<<<<<<<<<<<<
@@ -2654,7 +2650,7 @@ static double __pyx_f_3hot_eval_hot(size_t __pyx_v_THREAD, double __pyx_v_E, dou
       __pyx_t_3 = (__pyx_v_ii + 1);
       (__pyx_v_DIFF[__pyx_t_3]) = ((__pyx_v_DIFF[__pyx_t_3]) * ((__pyx_v_vec[__pyx_v_i]) - ((__pyx_v_D->p->params[__pyx_v_i])[((__pyx_v_BN[__pyx_v_i]) + 3)])));
 
-      /* "hot.pyx":399
+      /* "hot.pyx":401
  *             DIFF[ii + 1] *= vec[i] - D.p.params[i][BN[i] + 3]
  * 
  *             DIFF[ii + 2] = vec[i] - D.p.params[i][BN[i]]             # <<<<<<<<<<<<<<
@@ -2663,7 +2659,7 @@ static double __pyx_f_3hot_eval_hot(size_t __pyx_v_THREAD, double __pyx_v_E, dou
  */
       (__pyx_v_DIFF[(__pyx_v_ii + 2)]) = ((__pyx_v_vec[__pyx_v_i]) - ((__pyx_v_D->p->params[__pyx_v_i])[(__pyx_v_BN[__pyx_v_i])]));
 
-      /* "hot.pyx":400
+      /* "hot.pyx":402
  * 
  *             DIFF[ii + 2] = vec[i] - D.p.params[i][BN[i]]
  *             DIFF[ii + 2] *= vec[i] - D.p.params[i][BN[i] + 1]             # <<<<<<<<<<<<<<
@@ -2673,7 +2669,7 @@ static double __pyx_f_3hot_eval_hot(size_t __pyx_v_THREAD, double __pyx_v_E, dou
       __pyx_t_3 = (__pyx_v_ii + 2);
       (__pyx_v_DIFF[__pyx_t_3]) = ((__pyx_v_DIFF[__pyx_t_3]) * ((__pyx_v_vec[__pyx_v_i]) - ((__pyx_v_D->p->params[__pyx_v_i])[((__pyx_v_BN[__pyx_v_i]) + 1)])));
 
-      /* "hot.pyx":401
+      /* "hot.pyx":403
  *             DIFF[ii + 2] = vec[i] - D.p.params[i][BN[i]]
  *             DIFF[ii + 2] *= vec[i] - D.p.params[i][BN[i] + 1]
  *             DIFF[ii + 2] *= vec[i] - D.p.params[i][BN[i] + 3]             # <<<<<<<<<<<<<<
@@ -2683,7 +2679,7 @@ static double __pyx_f_3hot_eval_hot(size_t __pyx_v_THREAD, double __pyx_v_E, dou
       __pyx_t_3 = (__pyx_v_ii + 2);
       (__pyx_v_DIFF[__pyx_t_3]) = ((__pyx_v_DIFF[__pyx_t_3]) * ((__pyx_v_vec[__pyx_v_i]) - ((__pyx_v_D->p->params[__pyx_v_i])[((__pyx_v_BN[__pyx_v_i]) + 3)])));
 
-      /* "hot.pyx":403
+      /* "hot.pyx":405
  *             DIFF[ii + 2] *= vec[i] - D.p.params[i][BN[i] + 3]
  * 
  *             DIFF[ii + 3] = vec[i] - D.p.params[i][BN[i]]             # <<<<<<<<<<<<<<
@@ -2692,7 +2688,7 @@ static double __pyx_f_3hot_eval_hot(size_t __pyx_v_THREAD, double __pyx_v_E, dou
  */
       (__pyx_v_DIFF[(__pyx_v_ii + 3)]) = ((__pyx_v_vec[__pyx_v_i]) - ((__pyx_v_D->p->params[__pyx_v_i])[(__pyx_v_BN[__pyx_v_i])]));
 
-      /* "hot.pyx":404
+      /* "hot.pyx":406
  * 
  *             DIFF[ii + 3] = vec[i] - D.p.params[i][BN[i]]
  *             DIFF[ii + 3] *= vec[i] - D.p.params[i][BN[i] + 1]             # <<<<<<<<<<<<<<
@@ -2702,7 +2698,7 @@ static double __pyx_f_3hot_eval_hot(size_t __pyx_v_THREAD, double __pyx_v_E, dou
       __pyx_t_3 = (__pyx_v_ii + 3);
       (__pyx_v_DIFF[__pyx_t_3]) = ((__pyx_v_DIFF[__pyx_t_3]) * ((__pyx_v_vec[__pyx_v_i]) - ((__pyx_v_D->p->params[__pyx_v_i])[((__pyx_v_BN[__pyx_v_i]) + 1)])));
 
-      /* "hot.pyx":405
+      /* "hot.pyx":407
  *             DIFF[ii + 3] = vec[i] - D.p.params[i][BN[i]]
  *             DIFF[ii + 3] *= vec[i] - D.p.params[i][BN[i] + 1]
  *             DIFF[ii + 3] *= vec[i] - D.p.params[i][BN[i] + 2]             # <<<<<<<<<<<<<<
@@ -2712,7 +2708,7 @@ static double __pyx_f_3hot_eval_hot(size_t __pyx_v_THREAD, double __pyx_v_E, dou
       __pyx_t_3 = (__pyx_v_ii + 3);
       (__pyx_v_DIFF[__pyx_t_3]) = ((__pyx_v_DIFF[__pyx_t_3]) * ((__pyx_v_vec[__pyx_v_i]) - ((__pyx_v_D->p->params[__pyx_v_i])[((__pyx_v_BN[__pyx_v_i]) + 2)])));
 
-      /* "hot.pyx":410
+      /* "hot.pyx":412
  * 
  * 
  *             V_CACHE[i] = vec[i]             # <<<<<<<<<<<<<<
@@ -2721,7 +2717,7 @@ static double __pyx_f_3hot_eval_hot(size_t __pyx_v_THREAD, double __pyx_v_E, dou
  */
       (__pyx_v_V_CACHE[__pyx_v_i]) = (__pyx_v_vec[__pyx_v_i]);
 
-      /* "hot.pyx":387
+      /* "hot.pyx":389
  *         # printf("\nTry block 3: %d", <int>i)
  * 
  *         if V_CACHE[i] != vec[i] or update_baseNode[i] == 1:             # <<<<<<<<<<<<<<
@@ -2730,7 +2726,7 @@ static double __pyx_f_3hot_eval_hot(size_t __pyx_v_THREAD, double __pyx_v_E, dou
  */
     }
 
-    /* "hot.pyx":418
+    /* "hot.pyx":420
  *         #     printf("\nTry block 4: %d", <int>i)
  * 
  *         if update_baseNode[i] == 1:             # <<<<<<<<<<<<<<
@@ -2740,7 +2736,7 @@ static double __pyx_f_3hot_eval_hot(size_t __pyx_v_THREAD, double __pyx_v_E, dou
     __pyx_t_1 = (((__pyx_v_update_baseNode[__pyx_v_i]) == 1) != 0);
     if (__pyx_t_1) {
 
-      /* "hot.pyx":423
+      /* "hot.pyx":425
  *             # printf("i=%d, ", <int>i)
  *             # printf("D.p.params[i][BN[i]]: %.2e\n", D.p.params[i][BN[i]])
  *             CACHE = 1             # <<<<<<<<<<<<<<
@@ -2749,7 +2745,7 @@ static double __pyx_f_3hot_eval_hot(size_t __pyx_v_THREAD, double __pyx_v_E, dou
  */
       __pyx_v_CACHE = 1;
 
-      /* "hot.pyx":424
+      /* "hot.pyx":426
  *             # printf("D.p.params[i][BN[i]]: %.2e\n", D.p.params[i][BN[i]])
  *             CACHE = 1
  *             SPACE[ii] = 1.0 / (D.p.params[i][BN[i]] - D.p.params[i][BN[i] + 1])             # <<<<<<<<<<<<<<
@@ -2758,7 +2754,7 @@ static double __pyx_f_3hot_eval_hot(size_t __pyx_v_THREAD, double __pyx_v_E, dou
  */
       (__pyx_v_SPACE[__pyx_v_ii]) = (1.0 / (((__pyx_v_D->p->params[__pyx_v_i])[(__pyx_v_BN[__pyx_v_i])]) - ((__pyx_v_D->p->params[__pyx_v_i])[((__pyx_v_BN[__pyx_v_i]) + 1)])));
 
-      /* "hot.pyx":425
+      /* "hot.pyx":427
  *             CACHE = 1
  *             SPACE[ii] = 1.0 / (D.p.params[i][BN[i]] - D.p.params[i][BN[i] + 1])
  *             SPACE[ii] /= D.p.params[i][BN[i]] - D.p.params[i][BN[i] + 2]             # <<<<<<<<<<<<<<
@@ -2768,7 +2764,7 @@ static double __pyx_f_3hot_eval_hot(size_t __pyx_v_THREAD, double __pyx_v_E, dou
       __pyx_t_3 = __pyx_v_ii;
       (__pyx_v_SPACE[__pyx_t_3]) = ((__pyx_v_SPACE[__pyx_t_3]) / (((__pyx_v_D->p->params[__pyx_v_i])[(__pyx_v_BN[__pyx_v_i])]) - ((__pyx_v_D->p->params[__pyx_v_i])[((__pyx_v_BN[__pyx_v_i]) + 2)])));
 
-      /* "hot.pyx":426
+      /* "hot.pyx":428
  *             SPACE[ii] = 1.0 / (D.p.params[i][BN[i]] - D.p.params[i][BN[i] + 1])
  *             SPACE[ii] /= D.p.params[i][BN[i]] - D.p.params[i][BN[i] + 2]
  *             SPACE[ii] /= D.p.params[i][BN[i]] - D.p.params[i][BN[i] + 3]             # <<<<<<<<<<<<<<
@@ -2778,7 +2774,7 @@ static double __pyx_f_3hot_eval_hot(size_t __pyx_v_THREAD, double __pyx_v_E, dou
       __pyx_t_3 = __pyx_v_ii;
       (__pyx_v_SPACE[__pyx_t_3]) = ((__pyx_v_SPACE[__pyx_t_3]) / (((__pyx_v_D->p->params[__pyx_v_i])[(__pyx_v_BN[__pyx_v_i])]) - ((__pyx_v_D->p->params[__pyx_v_i])[((__pyx_v_BN[__pyx_v_i]) + 3)])));
 
-      /* "hot.pyx":428
+      /* "hot.pyx":430
  *             SPACE[ii] /= D.p.params[i][BN[i]] - D.p.params[i][BN[i] + 3]
  * 
  *             SPACE[ii + 1] = 1.0 / (D.p.params[i][BN[i] + 1] - D.p.params[i][BN[i]])             # <<<<<<<<<<<<<<
@@ -2787,7 +2783,7 @@ static double __pyx_f_3hot_eval_hot(size_t __pyx_v_THREAD, double __pyx_v_E, dou
  */
       (__pyx_v_SPACE[(__pyx_v_ii + 1)]) = (1.0 / (((__pyx_v_D->p->params[__pyx_v_i])[((__pyx_v_BN[__pyx_v_i]) + 1)]) - ((__pyx_v_D->p->params[__pyx_v_i])[(__pyx_v_BN[__pyx_v_i])])));
 
-      /* "hot.pyx":429
+      /* "hot.pyx":431
  * 
  *             SPACE[ii + 1] = 1.0 / (D.p.params[i][BN[i] + 1] - D.p.params[i][BN[i]])
  *             SPACE[ii + 1] /= D.p.params[i][BN[i] + 1] - D.p.params[i][BN[i] + 2]             # <<<<<<<<<<<<<<
@@ -2797,7 +2793,7 @@ static double __pyx_f_3hot_eval_hot(size_t __pyx_v_THREAD, double __pyx_v_E, dou
       __pyx_t_3 = (__pyx_v_ii + 1);
       (__pyx_v_SPACE[__pyx_t_3]) = ((__pyx_v_SPACE[__pyx_t_3]) / (((__pyx_v_D->p->params[__pyx_v_i])[((__pyx_v_BN[__pyx_v_i]) + 1)]) - ((__pyx_v_D->p->params[__pyx_v_i])[((__pyx_v_BN[__pyx_v_i]) + 2)])));
 
-      /* "hot.pyx":430
+      /* "hot.pyx":432
  *             SPACE[ii + 1] = 1.0 / (D.p.params[i][BN[i] + 1] - D.p.params[i][BN[i]])
  *             SPACE[ii + 1] /= D.p.params[i][BN[i] + 1] - D.p.params[i][BN[i] + 2]
  *             SPACE[ii + 1] /= D.p.params[i][BN[i] + 1] - D.p.params[i][BN[i] + 3]             # <<<<<<<<<<<<<<
@@ -2807,7 +2803,7 @@ static double __pyx_f_3hot_eval_hot(size_t __pyx_v_THREAD, double __pyx_v_E, dou
       __pyx_t_3 = (__pyx_v_ii + 1);
       (__pyx_v_SPACE[__pyx_t_3]) = ((__pyx_v_SPACE[__pyx_t_3]) / (((__pyx_v_D->p->params[__pyx_v_i])[((__pyx_v_BN[__pyx_v_i]) + 1)]) - ((__pyx_v_D->p->params[__pyx_v_i])[((__pyx_v_BN[__pyx_v_i]) + 3)])));
 
-      /* "hot.pyx":432
+      /* "hot.pyx":434
  *             SPACE[ii + 1] /= D.p.params[i][BN[i] + 1] - D.p.params[i][BN[i] + 3]
  * 
  *             SPACE[ii + 2] = 1.0 / (D.p.params[i][BN[i] + 2] - D.p.params[i][BN[i]])             # <<<<<<<<<<<<<<
@@ -2816,7 +2812,7 @@ static double __pyx_f_3hot_eval_hot(size_t __pyx_v_THREAD, double __pyx_v_E, dou
  */
       (__pyx_v_SPACE[(__pyx_v_ii + 2)]) = (1.0 / (((__pyx_v_D->p->params[__pyx_v_i])[((__pyx_v_BN[__pyx_v_i]) + 2)]) - ((__pyx_v_D->p->params[__pyx_v_i])[(__pyx_v_BN[__pyx_v_i])])));
 
-      /* "hot.pyx":433
+      /* "hot.pyx":435
  * 
  *             SPACE[ii + 2] = 1.0 / (D.p.params[i][BN[i] + 2] - D.p.params[i][BN[i]])
  *             SPACE[ii + 2] /= D.p.params[i][BN[i] + 2] - D.p.params[i][BN[i] + 1]             # <<<<<<<<<<<<<<
@@ -2826,7 +2822,7 @@ static double __pyx_f_3hot_eval_hot(size_t __pyx_v_THREAD, double __pyx_v_E, dou
       __pyx_t_3 = (__pyx_v_ii + 2);
       (__pyx_v_SPACE[__pyx_t_3]) = ((__pyx_v_SPACE[__pyx_t_3]) / (((__pyx_v_D->p->params[__pyx_v_i])[((__pyx_v_BN[__pyx_v_i]) + 2)]) - ((__pyx_v_D->p->params[__pyx_v_i])[((__pyx_v_BN[__pyx_v_i]) + 1)])));
 
-      /* "hot.pyx":434
+      /* "hot.pyx":436
  *             SPACE[ii + 2] = 1.0 / (D.p.params[i][BN[i] + 2] - D.p.params[i][BN[i]])
  *             SPACE[ii + 2] /= D.p.params[i][BN[i] + 2] - D.p.params[i][BN[i] + 1]
  *             SPACE[ii + 2] /= D.p.params[i][BN[i] + 2] - D.p.params[i][BN[i] + 3]             # <<<<<<<<<<<<<<
@@ -2836,7 +2832,7 @@ static double __pyx_f_3hot_eval_hot(size_t __pyx_v_THREAD, double __pyx_v_E, dou
       __pyx_t_3 = (__pyx_v_ii + 2);
       (__pyx_v_SPACE[__pyx_t_3]) = ((__pyx_v_SPACE[__pyx_t_3]) / (((__pyx_v_D->p->params[__pyx_v_i])[((__pyx_v_BN[__pyx_v_i]) + 2)]) - ((__pyx_v_D->p->params[__pyx_v_i])[((__pyx_v_BN[__pyx_v_i]) + 3)])));
 
-      /* "hot.pyx":436
+      /* "hot.pyx":438
  *             SPACE[ii + 2] /= D.p.params[i][BN[i] + 2] - D.p.params[i][BN[i] + 3]
  * 
  *             SPACE[ii + 3] = 1.0 / (D.p.params[i][BN[i] + 3] - D.p.params[i][BN[i]])             # <<<<<<<<<<<<<<
@@ -2845,7 +2841,7 @@ static double __pyx_f_3hot_eval_hot(size_t __pyx_v_THREAD, double __pyx_v_E, dou
  */
       (__pyx_v_SPACE[(__pyx_v_ii + 3)]) = (1.0 / (((__pyx_v_D->p->params[__pyx_v_i])[((__pyx_v_BN[__pyx_v_i]) + 3)]) - ((__pyx_v_D->p->params[__pyx_v_i])[(__pyx_v_BN[__pyx_v_i])])));
 
-      /* "hot.pyx":437
+      /* "hot.pyx":439
  * 
  *             SPACE[ii + 3] = 1.0 / (D.p.params[i][BN[i] + 3] - D.p.params[i][BN[i]])
  *             SPACE[ii + 3] /= D.p.params[i][BN[i] + 3] - D.p.params[i][BN[i] + 1]             # <<<<<<<<<<<<<<
@@ -2855,7 +2851,7 @@ static double __pyx_f_3hot_eval_hot(size_t __pyx_v_THREAD, double __pyx_v_E, dou
       __pyx_t_3 = (__pyx_v_ii + 3);
       (__pyx_v_SPACE[__pyx_t_3]) = ((__pyx_v_SPACE[__pyx_t_3]) / (((__pyx_v_D->p->params[__pyx_v_i])[((__pyx_v_BN[__pyx_v_i]) + 3)]) - ((__pyx_v_D->p->params[__pyx_v_i])[((__pyx_v_BN[__pyx_v_i]) + 1)])));
 
-      /* "hot.pyx":438
+      /* "hot.pyx":440
  *             SPACE[ii + 3] = 1.0 / (D.p.params[i][BN[i] + 3] - D.p.params[i][BN[i]])
  *             SPACE[ii + 3] /= D.p.params[i][BN[i] + 3] - D.p.params[i][BN[i] + 1]
  *             SPACE[ii + 3] /= D.p.params[i][BN[i] + 3] - D.p.params[i][BN[i] + 2]             # <<<<<<<<<<<<<<
@@ -2865,7 +2861,7 @@ static double __pyx_f_3hot_eval_hot(size_t __pyx_v_THREAD, double __pyx_v_E, dou
       __pyx_t_3 = (__pyx_v_ii + 3);
       (__pyx_v_SPACE[__pyx_t_3]) = ((__pyx_v_SPACE[__pyx_t_3]) / (((__pyx_v_D->p->params[__pyx_v_i])[((__pyx_v_BN[__pyx_v_i]) + 3)]) - ((__pyx_v_D->p->params[__pyx_v_i])[((__pyx_v_BN[__pyx_v_i]) + 2)])));
 
-      /* "hot.pyx":418
+      /* "hot.pyx":420
  *         #     printf("\nTry block 4: %d", <int>i)
  * 
  *         if update_baseNode[i] == 1:             # <<<<<<<<<<<<<<
@@ -2874,7 +2870,7 @@ static double __pyx_f_3hot_eval_hot(size_t __pyx_v_THREAD, double __pyx_v_E, dou
  */
     }
 
-    /* "hot.pyx":455
+    /* "hot.pyx":457
  *         # printf("SPACE[ii+3]: %.2e\n", SPACE[ii+3])
  * 
  *         i += 1             # <<<<<<<<<<<<<<
@@ -2884,7 +2880,7 @@ static double __pyx_f_3hot_eval_hot(size_t __pyx_v_THREAD, double __pyx_v_E, dou
     __pyx_v_i = (__pyx_v_i + 1);
   }
 
-  /* "hot.pyx":468
+  /* "hot.pyx":470
  * 
  *     cdef size_t j, k, l, m, INDEX, II, JJ, KK, LL
  *     cdef double *address = NULL             # <<<<<<<<<<<<<<
@@ -2893,44 +2889,8 @@ static double __pyx_f_3hot_eval_hot(size_t __pyx_v_THREAD, double __pyx_v_E, dou
  */
   __pyx_v_address = NULL;
 
-  /* "hot.pyx":503
- *     # printf("BN[4]: %d\n", <int>BN[4])
- * 
- *     clock_gettime(CLOCK_REALTIME, &te)             # <<<<<<<<<<<<<<
- *     t_elapsed = (te.tv_nsec - ts.tv_nsec)
- *     printf("everything before forloops in eval_hot() takes %ld ns\n", t_elapsed)
- */
-  (void)(clock_gettime(CLOCK_REALTIME, (&__pyx_v_3hot_te)));
-
-  /* "hot.pyx":504
- * 
- *     clock_gettime(CLOCK_REALTIME, &te)
- *     t_elapsed = (te.tv_nsec - ts.tv_nsec)             # <<<<<<<<<<<<<<
- *     printf("everything before forloops in eval_hot() takes %ld ns\n", t_elapsed)
- *     clock_gettime(CLOCK_REALTIME, &ts)
- */
-  __pyx_v_t_elapsed = (__pyx_v_3hot_te.tv_nsec - __pyx_v_3hot_ts.tv_nsec);
-
-  /* "hot.pyx":505
- *     clock_gettime(CLOCK_REALTIME, &te)
- *     t_elapsed = (te.tv_nsec - ts.tv_nsec)
- *     printf("everything before forloops in eval_hot() takes %ld ns\n", t_elapsed)             # <<<<<<<<<<<<<<
- *     clock_gettime(CLOCK_REALTIME, &ts)
- * 
- */
-  (void)(printf(((char const *)"everything before forloops in eval_hot() takes %ld ns\n"), __pyx_v_t_elapsed));
-
-  /* "hot.pyx":506
- *     t_elapsed = (te.tv_nsec - ts.tv_nsec)
- *     printf("everything before forloops in eval_hot() takes %ld ns\n", t_elapsed)
- *     clock_gettime(CLOCK_REALTIME, &ts)             # <<<<<<<<<<<<<<
- * 
- *     for i in range(4):
- */
-  (void)(clock_gettime(CLOCK_REALTIME, (&__pyx_v_3hot_ts)));
-
-  /* "hot.pyx":508
- *     clock_gettime(CLOCK_REALTIME, &ts)
+  /* "hot.pyx":510
+ *     # clock_gettime(CLOCK_REALTIME, &ts)
  * 
  *     for i in range(4):             # <<<<<<<<<<<<<<
  *         II = i * D.p.BLOCKS[0]
@@ -2939,7 +2899,7 @@ static double __pyx_f_3hot_eval_hot(size_t __pyx_v_THREAD, double __pyx_v_E, dou
   for (__pyx_t_3 = 0; __pyx_t_3 < 4; __pyx_t_3+=1) {
     __pyx_v_i = __pyx_t_3;
 
-    /* "hot.pyx":509
+    /* "hot.pyx":511
  * 
  *     for i in range(4):
  *         II = i * D.p.BLOCKS[0]             # <<<<<<<<<<<<<<
@@ -2948,7 +2908,7 @@ static double __pyx_f_3hot_eval_hot(size_t __pyx_v_THREAD, double __pyx_v_E, dou
  */
     __pyx_v_II = (__pyx_v_i * (__pyx_v_D->p->BLOCKS[0]));
 
-    /* "hot.pyx":510
+    /* "hot.pyx":512
  *     for i in range(4):
  *         II = i * D.p.BLOCKS[0]
  *         for j in range(4):             # <<<<<<<<<<<<<<
@@ -2958,7 +2918,7 @@ static double __pyx_f_3hot_eval_hot(size_t __pyx_v_THREAD, double __pyx_v_E, dou
     for (__pyx_t_4 = 0; __pyx_t_4 < 4; __pyx_t_4+=1) {
       __pyx_v_j = __pyx_t_4;
 
-      /* "hot.pyx":511
+      /* "hot.pyx":513
  *         II = i * D.p.BLOCKS[0]
  *         for j in range(4):
  *             JJ = j * D.p.BLOCKS[1]             # <<<<<<<<<<<<<<
@@ -2967,7 +2927,7 @@ static double __pyx_f_3hot_eval_hot(size_t __pyx_v_THREAD, double __pyx_v_E, dou
  */
       __pyx_v_JJ = (__pyx_v_j * (__pyx_v_D->p->BLOCKS[1]));
 
-      /* "hot.pyx":512
+      /* "hot.pyx":514
  *         for j in range(4):
  *             JJ = j * D.p.BLOCKS[1]
  *             for k in range(4):             # <<<<<<<<<<<<<<
@@ -2977,7 +2937,7 @@ static double __pyx_f_3hot_eval_hot(size_t __pyx_v_THREAD, double __pyx_v_E, dou
       for (__pyx_t_5 = 0; __pyx_t_5 < 4; __pyx_t_5+=1) {
         __pyx_v_k = __pyx_t_5;
 
-        /* "hot.pyx":513
+        /* "hot.pyx":515
  *             JJ = j * D.p.BLOCKS[1]
  *             for k in range(4):
  *                 KK = k * D.p.BLOCKS[2]             # <<<<<<<<<<<<<<
@@ -2986,7 +2946,7 @@ static double __pyx_f_3hot_eval_hot(size_t __pyx_v_THREAD, double __pyx_v_E, dou
  */
         __pyx_v_KK = (__pyx_v_k * (__pyx_v_D->p->BLOCKS[2]));
 
-        /* "hot.pyx":514
+        /* "hot.pyx":516
  *             for k in range(4):
  *                 KK = k * D.p.BLOCKS[2]
  *                 for l in range(4):             # <<<<<<<<<<<<<<
@@ -2996,7 +2956,7 @@ static double __pyx_f_3hot_eval_hot(size_t __pyx_v_THREAD, double __pyx_v_E, dou
         for (__pyx_t_6 = 0; __pyx_t_6 < 4; __pyx_t_6+=1) {
           __pyx_v_l = __pyx_t_6;
 
-          /* "hot.pyx":515
+          /* "hot.pyx":517
  *                 KK = k * D.p.BLOCKS[2]
  *                 for l in range(4):
  *                     LL = l * D.p.BLOCKS[3]             # <<<<<<<<<<<<<<
@@ -3005,7 +2965,7 @@ static double __pyx_f_3hot_eval_hot(size_t __pyx_v_THREAD, double __pyx_v_E, dou
  */
           __pyx_v_LL = (__pyx_v_l * (__pyx_v_D->p->BLOCKS[3]));
 
-          /* "hot.pyx":516
+          /* "hot.pyx":518
  *                 for l in range(4):
  *                     LL = l * D.p.BLOCKS[3]
  *                     for m in range(4):             # <<<<<<<<<<<<<<
@@ -3015,7 +2975,7 @@ static double __pyx_f_3hot_eval_hot(size_t __pyx_v_THREAD, double __pyx_v_E, dou
           for (__pyx_t_7 = 0; __pyx_t_7 < 4; __pyx_t_7+=1) {
             __pyx_v_m = __pyx_t_7;
 
-            /* "hot.pyx":517
+            /* "hot.pyx":519
  *                     LL = l * D.p.BLOCKS[3]
  *                     for m in range(4):
  *                         address = D.p.I + (BN[0] + i) * D.p.S[0] + (BN[1] + j) * D.p.S[1] + (BN[2] + k) * D.p.S[2] + (BN[3] + l) * D.p.S[3] + BN[4] + m             # <<<<<<<<<<<<<<
@@ -3024,7 +2984,7 @@ static double __pyx_f_3hot_eval_hot(size_t __pyx_v_THREAD, double __pyx_v_E, dou
  */
             __pyx_v_address = ((((((__pyx_v_D->p->I + (((__pyx_v_BN[0]) + __pyx_v_i) * (__pyx_v_D->p->S[0]))) + (((__pyx_v_BN[1]) + __pyx_v_j) * (__pyx_v_D->p->S[1]))) + (((__pyx_v_BN[2]) + __pyx_v_k) * (__pyx_v_D->p->S[2]))) + (((__pyx_v_BN[3]) + __pyx_v_l) * (__pyx_v_D->p->S[3]))) + (__pyx_v_BN[4])) + __pyx_v_m);
 
-            /* "hot.pyx":527
+            /* "hot.pyx":529
  * 
  * 
  *                         temp = DIFF[i] * DIFF[4 + j] * DIFF[8 + k] * DIFF[12 + l] * DIFF[16 + m]             # <<<<<<<<<<<<<<
@@ -3033,7 +2993,7 @@ static double __pyx_f_3hot_eval_hot(size_t __pyx_v_THREAD, double __pyx_v_E, dou
  */
             __pyx_v_temp = (((((__pyx_v_DIFF[__pyx_v_i]) * (__pyx_v_DIFF[(4 + __pyx_v_j)])) * (__pyx_v_DIFF[(8 + __pyx_v_k)])) * (__pyx_v_DIFF[(12 + __pyx_v_l)])) * (__pyx_v_DIFF[(16 + __pyx_v_m)]));
 
-            /* "hot.pyx":528
+            /* "hot.pyx":530
  * 
  *                         temp = DIFF[i] * DIFF[4 + j] * DIFF[8 + k] * DIFF[12 + l] * DIFF[16 + m]
  *                         temp *= SPACE[i] * SPACE[4 + j] * SPACE[8 + k] * SPACE[12 + l] * SPACE[16 + m]             # <<<<<<<<<<<<<<
@@ -3042,7 +3002,7 @@ static double __pyx_f_3hot_eval_hot(size_t __pyx_v_THREAD, double __pyx_v_E, dou
  */
             __pyx_v_temp = (__pyx_v_temp * (((((__pyx_v_SPACE[__pyx_v_i]) * (__pyx_v_SPACE[(4 + __pyx_v_j)])) * (__pyx_v_SPACE[(8 + __pyx_v_k)])) * (__pyx_v_SPACE[(12 + __pyx_v_l)])) * (__pyx_v_SPACE[(16 + __pyx_v_m)])));
 
-            /* "hot.pyx":530
+            /* "hot.pyx":532
  *                         temp *= SPACE[i] * SPACE[4 + j] * SPACE[8 + k] * SPACE[12 + l] * SPACE[16 + m]
  *                         # printf('temp:%f, ',temp)
  *                         INDEX = II + JJ + KK + LL + m             # <<<<<<<<<<<<<<
@@ -3051,7 +3011,7 @@ static double __pyx_f_3hot_eval_hot(size_t __pyx_v_THREAD, double __pyx_v_E, dou
  */
             __pyx_v_INDEX = ((((__pyx_v_II + __pyx_v_JJ) + __pyx_v_KK) + __pyx_v_LL) + __pyx_v_m);
 
-            /* "hot.pyx":531
+            /* "hot.pyx":533
  *                         # printf('temp:%f, ',temp)
  *                         INDEX = II + JJ + KK + LL + m
  *                         if CACHE == 1:             # <<<<<<<<<<<<<<
@@ -3061,7 +3021,7 @@ static double __pyx_f_3hot_eval_hot(size_t __pyx_v_THREAD, double __pyx_v_E, dou
             __pyx_t_1 = ((__pyx_v_CACHE == 1) != 0);
             if (__pyx_t_1) {
 
-              /* "hot.pyx":532
+              /* "hot.pyx":534
  *                         INDEX = II + JJ + KK + LL + m
  *                         if CACHE == 1:
  *                             I_CACHE[INDEX] = address[0]             # <<<<<<<<<<<<<<
@@ -3070,7 +3030,7 @@ static double __pyx_f_3hot_eval_hot(size_t __pyx_v_THREAD, double __pyx_v_E, dou
  */
               (__pyx_v_I_CACHE[__pyx_v_INDEX]) = (__pyx_v_address[0]);
 
-              /* "hot.pyx":531
+              /* "hot.pyx":533
  *                         # printf('temp:%f, ',temp)
  *                         INDEX = II + JJ + KK + LL + m
  *                         if CACHE == 1:             # <<<<<<<<<<<<<<
@@ -3079,7 +3039,7 @@ static double __pyx_f_3hot_eval_hot(size_t __pyx_v_THREAD, double __pyx_v_E, dou
  */
             }
 
-            /* "hot.pyx":534
+            /* "hot.pyx":536
  *                             I_CACHE[INDEX] = address[0]
  *                         # printf('%f\n', I)
  *                         I += temp * I_CACHE[INDEX]             # <<<<<<<<<<<<<<
@@ -3093,7 +3053,7 @@ static double __pyx_f_3hot_eval_hot(size_t __pyx_v_THREAD, double __pyx_v_E, dou
     }
   }
 
-  /* "hot.pyx":542
+  /* "hot.pyx":544
  *                         #printf('dI = %0.2e\n', temp * I_CACHE[INDEX])
  * 
  *     if I < 0.0:             # <<<<<<<<<<<<<<
@@ -3103,7 +3063,7 @@ static double __pyx_f_3hot_eval_hot(size_t __pyx_v_THREAD, double __pyx_v_E, dou
   __pyx_t_1 = ((__pyx_v_I < 0.0) != 0);
   if (__pyx_t_1) {
 
-    /* "hot.pyx":543
+    /* "hot.pyx":545
  * 
  *     if I < 0.0:
  *         return 0.0             # <<<<<<<<<<<<<<
@@ -3113,7 +3073,7 @@ static double __pyx_f_3hot_eval_hot(size_t __pyx_v_THREAD, double __pyx_v_E, dou
     __pyx_r = 0.0;
     goto __pyx_L0;
 
-    /* "hot.pyx":542
+    /* "hot.pyx":544
  *                         #printf('dI = %0.2e\n', temp * I_CACHE[INDEX])
  * 
  *     if I < 0.0:             # <<<<<<<<<<<<<<
@@ -3122,63 +3082,906 @@ static double __pyx_f_3hot_eval_hot(size_t __pyx_v_THREAD, double __pyx_v_E, dou
  */
   }
 
-  /* "hot.pyx":546
+  /* "hot.pyx":254
+ * #                       void *const data) nogil:
  * 
- * 
- *     clock_gettime(CLOCK_REALTIME, &te)             # <<<<<<<<<<<<<<
- *     t_elapsed = (te.tv_nsec - ts.tv_nsec)
- *     printf("eval_hot() for loops takes %ld ns\n",t_elapsed)
+ * cdef double eval_hot(size_t THREAD,             # <<<<<<<<<<<<<<
+ *                       double E,
+ *                       double mu,
  */
-  (void)(clock_gettime(CLOCK_REALTIME, (&__pyx_v_3hot_te)));
 
-  /* "hot.pyx":547
+  /* function exit code */
+  __pyx_r = 0;
+  __pyx_L0:;
+  return __pyx_r;
+}
+
+/* "hot.pyx":555
  * 
- *     clock_gettime(CLOCK_REALTIME, &te)
- *     t_elapsed = (te.tv_nsec - ts.tv_nsec)             # <<<<<<<<<<<<<<
- *     printf("eval_hot() for loops takes %ld ns\n",t_elapsed)
  * 
+ * cdef double eval_hot_faster(size_t THREAD,             # <<<<<<<<<<<<<<
+ *                       double E,
+ *                       double mu,
  */
-  __pyx_v_t_elapsed = (__pyx_v_3hot_te.tv_nsec - __pyx_v_3hot_ts.tv_nsec);
 
-  /* "hot.pyx":548
- *     clock_gettime(CLOCK_REALTIME, &te)
- *     t_elapsed = (te.tv_nsec - ts.tv_nsec)
- *     printf("eval_hot() for loops takes %ld ns\n",t_elapsed)             # <<<<<<<<<<<<<<
- * 
- *     # cdef int num1, num2, num3, num4
- */
-  (void)(printf(((char const *)"eval_hot() for loops takes %ld ns\n"), __pyx_v_t_elapsed));
+static double __pyx_f_3hot_eval_hot_faster(size_t __pyx_v_THREAD, double __pyx_v_E, double __pyx_v_mu, double __pyx_v_tau, double __pyx_v_t_bb, double __pyx_v_t_e, void *const __pyx_v_data) {
+  __pyx_t_3hot_DATA *__pyx_v_D;
+  size_t __pyx_v_i;
+  size_t __pyx_v_ii;
+  double __pyx_v_I;
+  double *__pyx_v_node_vals;
+  size_t *__pyx_v_BN;
+  double *__pyx_v_SPACE;
+  double *__pyx_v_DIFF;
+  double *__pyx_v_I_CACHE;
+  double *__pyx_v_V_CACHE;
+  double __pyx_v_vec[5];
+  int __pyx_v_update_baseNode[5];
+  int __pyx_v_CACHE;
+  size_t __pyx_v_j;
+  size_t __pyx_v_k;
+  size_t __pyx_v_l;
+  size_t __pyx_v_m;
+  double *__pyx_v_address;
+  int __pyx_v_iterator;
+  int __pyx_v_iteration_size;
+  double *__pyx_v_temp2;
+  double __pyx_r;
+  int __pyx_t_1;
+  int __pyx_t_2;
+  size_t __pyx_t_3;
+  int __pyx_t_4;
+  int __pyx_t_5;
+  int __pyx_t_6;
 
-  /* "hot.pyx":551
+  /* "hot.pyx":580
  * 
- *     # cdef int num1, num2, num3, num4
- *     cdef double I2 = 0.0             # <<<<<<<<<<<<<<
- *     cdef int iterator
- * 
- */
-  __pyx_v_I2 = 0.0;
-
-  /* "hot.pyx":554
- *     cdef int iterator
- * 
+ *     #cdef timespec ts
  *     clock_gettime(CLOCK_REALTIME, &ts)             # <<<<<<<<<<<<<<
- *     for iterator in range(1024):
- *         # printf("i:%lu, ",i)
+ * 
+ *     cdef DATA *D = <DATA*> data
  */
   (void)(clock_gettime(CLOCK_REALTIME, (&__pyx_v_3hot_ts)));
 
-  /* "hot.pyx":555
- * 
+  /* "hot.pyx":582
  *     clock_gettime(CLOCK_REALTIME, &ts)
- *     for iterator in range(1024):             # <<<<<<<<<<<<<<
+ * 
+ *     cdef DATA *D = <DATA*> data             # <<<<<<<<<<<<<<
+ * 
+ *     cdef:
+ */
+  __pyx_v_D = ((__pyx_t_3hot_DATA *)__pyx_v_data);
+
+  /* "hot.pyx":585
+ * 
+ *     cdef:
+ *         size_t i = 0, ii             # <<<<<<<<<<<<<<
+ *         double I = 0.0, temp
+ *         double *node_vals = D.acc.node_vals[THREAD]
+ */
+  __pyx_v_i = 0;
+
+  /* "hot.pyx":586
+ *     cdef:
+ *         size_t i = 0, ii
+ *         double I = 0.0, temp             # <<<<<<<<<<<<<<
+ *         double *node_vals = D.acc.node_vals[THREAD]
+ *         size_t *BN = D.acc.BN[THREAD]
+ */
+  __pyx_v_I = 0.0;
+
+  /* "hot.pyx":587
+ *         size_t i = 0, ii
+ *         double I = 0.0, temp
+ *         double *node_vals = D.acc.node_vals[THREAD]             # <<<<<<<<<<<<<<
+ *         size_t *BN = D.acc.BN[THREAD]
+ *         double *SPACE = D.acc.SPACE[THREAD]
+ */
+  __pyx_v_node_vals = (__pyx_v_D->acc.node_vals[__pyx_v_THREAD]);
+
+  /* "hot.pyx":588
+ *         double I = 0.0, temp
+ *         double *node_vals = D.acc.node_vals[THREAD]
+ *         size_t *BN = D.acc.BN[THREAD]             # <<<<<<<<<<<<<<
+ *         double *SPACE = D.acc.SPACE[THREAD]
+ *         double *DIFF = D.acc.DIFF[THREAD]
+ */
+  __pyx_v_BN = (__pyx_v_D->acc.BN[__pyx_v_THREAD]);
+
+  /* "hot.pyx":589
+ *         double *node_vals = D.acc.node_vals[THREAD]
+ *         size_t *BN = D.acc.BN[THREAD]
+ *         double *SPACE = D.acc.SPACE[THREAD]             # <<<<<<<<<<<<<<
+ *         double *DIFF = D.acc.DIFF[THREAD]
+ *         double *I_CACHE = D.acc.INTENSITY_CACHE[THREAD]
+ */
+  __pyx_v_SPACE = (__pyx_v_D->acc.SPACE[__pyx_v_THREAD]);
+
+  /* "hot.pyx":590
+ *         size_t *BN = D.acc.BN[THREAD]
+ *         double *SPACE = D.acc.SPACE[THREAD]
+ *         double *DIFF = D.acc.DIFF[THREAD]             # <<<<<<<<<<<<<<
+ *         double *I_CACHE = D.acc.INTENSITY_CACHE[THREAD]
+ *         double *V_CACHE = D.acc.VEC_CACHE[THREAD]
+ */
+  __pyx_v_DIFF = (__pyx_v_D->acc.DIFF[__pyx_v_THREAD]);
+
+  /* "hot.pyx":591
+ *         double *SPACE = D.acc.SPACE[THREAD]
+ *         double *DIFF = D.acc.DIFF[THREAD]
+ *         double *I_CACHE = D.acc.INTENSITY_CACHE[THREAD]             # <<<<<<<<<<<<<<
+ *         double *V_CACHE = D.acc.VEC_CACHE[THREAD]
+ *         double vec[5] # should be = ndims
+ */
+  __pyx_v_I_CACHE = (__pyx_v_D->acc.INTENSITY_CACHE[__pyx_v_THREAD]);
+
+  /* "hot.pyx":592
+ *         double *DIFF = D.acc.DIFF[THREAD]
+ *         double *I_CACHE = D.acc.INTENSITY_CACHE[THREAD]
+ *         double *V_CACHE = D.acc.VEC_CACHE[THREAD]             # <<<<<<<<<<<<<<
+ *         double vec[5] # should be = ndims
+ *         # double E_eff = k_B_over_keV * pow(10.0, VEC[0])
+ */
+  __pyx_v_V_CACHE = (__pyx_v_D->acc.VEC_CACHE[__pyx_v_THREAD]);
+
+  /* "hot.pyx":597
+ *         # double E_eff = k_B_over_keV * pow(10.0, Temperature)
+ *         int update_baseNode[5]  # should be = ndims
+ *         int CACHE = 0             # <<<<<<<<<<<<<<
+ * 
+ *     vec[0] = t_e
+ */
+  __pyx_v_CACHE = 0;
+
+  /* "hot.pyx":599
+ *         int CACHE = 0
+ * 
+ *     vec[0] = t_e             # <<<<<<<<<<<<<<
+ *     vec[1] = t_bb
+ *     vec[2] = tau
+ */
+  (__pyx_v_vec[0]) = __pyx_v_t_e;
+
+  /* "hot.pyx":600
+ * 
+ *     vec[0] = t_e
+ *     vec[1] = t_bb             # <<<<<<<<<<<<<<
+ *     vec[2] = tau
+ *     vec[3] = mu
+ */
+  (__pyx_v_vec[1]) = __pyx_v_t_bb;
+
+  /* "hot.pyx":601
+ *     vec[0] = t_e
+ *     vec[1] = t_bb
+ *     vec[2] = tau             # <<<<<<<<<<<<<<
+ *     vec[3] = mu
+ *     vec[4] = E
+ */
+  (__pyx_v_vec[2]) = __pyx_v_tau;
+
+  /* "hot.pyx":602
+ *     vec[1] = t_bb
+ *     vec[2] = tau
+ *     vec[3] = mu             # <<<<<<<<<<<<<<
+ *     vec[4] = E
+ * 
+ */
+  (__pyx_v_vec[3]) = __pyx_v_mu;
+
+  /* "hot.pyx":603
+ *     vec[2] = tau
+ *     vec[3] = mu
+ *     vec[4] = E             # <<<<<<<<<<<<<<
+ * 
+ * 
+ */
+  (__pyx_v_vec[4]) = __pyx_v_E;
+
+  /* "hot.pyx":641
+ *     #printf("\nVEC[1]: %f", VEC[1])
+ * 
+ *     while i < D.p.ndims:             # <<<<<<<<<<<<<<
+ *         # if parallel == 31:
+ *         # printf("\nDimension: %d", <int>i)
+ */
+  while (1) {
+    __pyx_t_1 = ((__pyx_v_i < __pyx_v_D->p->ndims) != 0);
+    if (!__pyx_t_1) break;
+
+    /* "hot.pyx":644
+ *         # if parallel == 31:
+ *         # printf("\nDimension: %d", <int>i)
+ *         update_baseNode[i] = 0             # <<<<<<<<<<<<<<
+ *         if vec[i] < node_vals[2*i] and BN[i] != 0:
+ *             # if parallel == 31:
+ */
+    (__pyx_v_update_baseNode[__pyx_v_i]) = 0;
+
+    /* "hot.pyx":645
+ *         # printf("\nDimension: %d", <int>i)
+ *         update_baseNode[i] = 0
+ *         if vec[i] < node_vals[2*i] and BN[i] != 0:             # <<<<<<<<<<<<<<
+ *             # if parallel == 31:
+ *             # printf("\nExecute block 1: %d", <int>i)
+ */
+    __pyx_t_2 = (((__pyx_v_vec[__pyx_v_i]) < (__pyx_v_node_vals[(2 * __pyx_v_i)])) != 0);
+    if (__pyx_t_2) {
+    } else {
+      __pyx_t_1 = __pyx_t_2;
+      goto __pyx_L6_bool_binop_done;
+    }
+    __pyx_t_2 = (((__pyx_v_BN[__pyx_v_i]) != 0) != 0);
+    __pyx_t_1 = __pyx_t_2;
+    __pyx_L6_bool_binop_done:;
+    if (__pyx_t_1) {
+
+      /* "hot.pyx":648
+ *             # if parallel == 31:
+ *             # printf("\nExecute block 1: %d", <int>i)
+ *             update_baseNode[i] = 1             # <<<<<<<<<<<<<<
+ *             while vec[i] < D.p.params[i][BN[i] + 1]:
+ *                 # if parallel == 31:
+ */
+      (__pyx_v_update_baseNode[__pyx_v_i]) = 1;
+
+      /* "hot.pyx":649
+ *             # printf("\nExecute block 1: %d", <int>i)
+ *             update_baseNode[i] = 1
+ *             while vec[i] < D.p.params[i][BN[i] + 1]:             # <<<<<<<<<<<<<<
+ *                 # if parallel == 31:
+ *                 #     printf("\n!")
+ */
+      while (1) {
+        __pyx_t_1 = (((__pyx_v_vec[__pyx_v_i]) < ((__pyx_v_D->p->params[__pyx_v_i])[((__pyx_v_BN[__pyx_v_i]) + 1)])) != 0);
+        if (!__pyx_t_1) break;
+
+        /* "hot.pyx":654
+ *                 #     printf("\nvec i: %.8e", vec[i])
+ *                 #     printf("\nBase node: %d", <int>BN[i])
+ *                 if BN[i] > 0:             # <<<<<<<<<<<<<<
+ *                     BN[i] -= 1
+ *                 elif vec[i] <= D.p.params[i][0]:
+ */
+        __pyx_t_1 = (((__pyx_v_BN[__pyx_v_i]) > 0) != 0);
+        if (__pyx_t_1) {
+
+          /* "hot.pyx":655
+ *                 #     printf("\nBase node: %d", <int>BN[i])
+ *                 if BN[i] > 0:
+ *                     BN[i] -= 1             # <<<<<<<<<<<<<<
+ *                 elif vec[i] <= D.p.params[i][0]:
+ *                     vec[i] = D.p.params[i][0]
+ */
+          __pyx_t_3 = __pyx_v_i;
+          (__pyx_v_BN[__pyx_t_3]) = ((__pyx_v_BN[__pyx_t_3]) - 1);
+
+          /* "hot.pyx":654
+ *                 #     printf("\nvec i: %.8e", vec[i])
+ *                 #     printf("\nBase node: %d", <int>BN[i])
+ *                 if BN[i] > 0:             # <<<<<<<<<<<<<<
+ *                     BN[i] -= 1
+ *                 elif vec[i] <= D.p.params[i][0]:
+ */
+          goto __pyx_L10;
+        }
+
+        /* "hot.pyx":656
+ *                 if BN[i] > 0:
+ *                     BN[i] -= 1
+ *                 elif vec[i] <= D.p.params[i][0]:             # <<<<<<<<<<<<<<
+ *                     vec[i] = D.p.params[i][0]
+ *                     break
+ */
+        __pyx_t_1 = (((__pyx_v_vec[__pyx_v_i]) <= ((__pyx_v_D->p->params[__pyx_v_i])[0])) != 0);
+        if (__pyx_t_1) {
+
+          /* "hot.pyx":657
+ *                     BN[i] -= 1
+ *                 elif vec[i] <= D.p.params[i][0]:
+ *                     vec[i] = D.p.params[i][0]             # <<<<<<<<<<<<<<
+ *                     break
+ *                 elif BN[i] == 0:
+ */
+          (__pyx_v_vec[__pyx_v_i]) = ((__pyx_v_D->p->params[__pyx_v_i])[0]);
+
+          /* "hot.pyx":658
+ *                 elif vec[i] <= D.p.params[i][0]:
+ *                     vec[i] = D.p.params[i][0]
+ *                     break             # <<<<<<<<<<<<<<
+ *                 elif BN[i] == 0:
+ *                     break
+ */
+          goto __pyx_L9_break;
+
+          /* "hot.pyx":656
+ *                 if BN[i] > 0:
+ *                     BN[i] -= 1
+ *                 elif vec[i] <= D.p.params[i][0]:             # <<<<<<<<<<<<<<
+ *                     vec[i] = D.p.params[i][0]
+ *                     break
+ */
+        }
+
+        /* "hot.pyx":659
+ *                     vec[i] = D.p.params[i][0]
+ *                     break
+ *                 elif BN[i] == 0:             # <<<<<<<<<<<<<<
+ *                     break
+ * 
+ */
+        __pyx_t_1 = (((__pyx_v_BN[__pyx_v_i]) == 0) != 0);
+        if (__pyx_t_1) {
+
+          /* "hot.pyx":660
+ *                     break
+ *                 elif BN[i] == 0:
+ *                     break             # <<<<<<<<<<<<<<
+ * 
+ *             node_vals[2*i] = D.p.params[i][BN[i] + 1]
+ */
+          goto __pyx_L9_break;
+
+          /* "hot.pyx":659
+ *                     vec[i] = D.p.params[i][0]
+ *                     break
+ *                 elif BN[i] == 0:             # <<<<<<<<<<<<<<
+ *                     break
+ * 
+ */
+        }
+        __pyx_L10:;
+      }
+      __pyx_L9_break:;
+
+      /* "hot.pyx":662
+ *                     break
+ * 
+ *             node_vals[2*i] = D.p.params[i][BN[i] + 1]             # <<<<<<<<<<<<<<
+ *             node_vals[2*i + 1] = D.p.params[i][BN[i] + 2]
+ * 
+ */
+      (__pyx_v_node_vals[(2 * __pyx_v_i)]) = ((__pyx_v_D->p->params[__pyx_v_i])[((__pyx_v_BN[__pyx_v_i]) + 1)]);
+
+      /* "hot.pyx":663
+ * 
+ *             node_vals[2*i] = D.p.params[i][BN[i] + 1]
+ *             node_vals[2*i + 1] = D.p.params[i][BN[i] + 2]             # <<<<<<<<<<<<<<
+ * 
+ *             # if parallel == 31:
+ */
+      (__pyx_v_node_vals[((2 * __pyx_v_i) + 1)]) = ((__pyx_v_D->p->params[__pyx_v_i])[((__pyx_v_BN[__pyx_v_i]) + 2)]);
+
+      /* "hot.pyx":645
+ *         # printf("\nDimension: %d", <int>i)
+ *         update_baseNode[i] = 0
+ *         if vec[i] < node_vals[2*i] and BN[i] != 0:             # <<<<<<<<<<<<<<
+ *             # if parallel == 31:
+ *             # printf("\nExecute block 1: %d", <int>i)
+ */
+      goto __pyx_L5;
+    }
+
+    /* "hot.pyx":668
+ *             # printf("\nEnd Block 1: %d", <int>i)
+ * 
+ *         elif vec[i] > node_vals[2*i + 1] and BN[i] != D.p.N[i] - 4: # I believe this has to do with the cubic interpolation points, so this remains 4             # <<<<<<<<<<<<<<
+ *             # if parallel == 31:
+ *             # printf("\nExecute block 2: %d", <int>i)
+ */
+    __pyx_t_2 = (((__pyx_v_vec[__pyx_v_i]) > (__pyx_v_node_vals[((2 * __pyx_v_i) + 1)])) != 0);
+    if (__pyx_t_2) {
+    } else {
+      __pyx_t_1 = __pyx_t_2;
+      goto __pyx_L11_bool_binop_done;
+    }
+    __pyx_t_2 = (((__pyx_v_BN[__pyx_v_i]) != ((__pyx_v_D->p->N[__pyx_v_i]) - 4)) != 0);
+    __pyx_t_1 = __pyx_t_2;
+    __pyx_L11_bool_binop_done:;
+    if (__pyx_t_1) {
+
+      /* "hot.pyx":671
+ *             # if parallel == 31:
+ *             # printf("\nExecute block 2: %d", <int>i)
+ *             update_baseNode[i] = 1             # <<<<<<<<<<<<<<
+ *             while vec[i] > D.p.params[i][BN[i] + 2]:
+ *                 if BN[i] < D.p.N[i] - 4:
+ */
+      (__pyx_v_update_baseNode[__pyx_v_i]) = 1;
+
+      /* "hot.pyx":672
+ *             # printf("\nExecute block 2: %d", <int>i)
+ *             update_baseNode[i] = 1
+ *             while vec[i] > D.p.params[i][BN[i] + 2]:             # <<<<<<<<<<<<<<
+ *                 if BN[i] < D.p.N[i] - 4:
+ *                     BN[i] += 1
+ */
+      while (1) {
+        __pyx_t_1 = (((__pyx_v_vec[__pyx_v_i]) > ((__pyx_v_D->p->params[__pyx_v_i])[((__pyx_v_BN[__pyx_v_i]) + 2)])) != 0);
+        if (!__pyx_t_1) break;
+
+        /* "hot.pyx":673
+ *             update_baseNode[i] = 1
+ *             while vec[i] > D.p.params[i][BN[i] + 2]:
+ *                 if BN[i] < D.p.N[i] - 4:             # <<<<<<<<<<<<<<
+ *                     BN[i] += 1
+ *                 elif vec[i] >= D.p.params[i][D.p.N[i] - 1]:
+ */
+        __pyx_t_1 = (((__pyx_v_BN[__pyx_v_i]) < ((__pyx_v_D->p->N[__pyx_v_i]) - 4)) != 0);
+        if (__pyx_t_1) {
+
+          /* "hot.pyx":674
+ *             while vec[i] > D.p.params[i][BN[i] + 2]:
+ *                 if BN[i] < D.p.N[i] - 4:
+ *                     BN[i] += 1             # <<<<<<<<<<<<<<
+ *                 elif vec[i] >= D.p.params[i][D.p.N[i] - 1]:
+ *                     vec[i] = D.p.params[i][D.p.N[i] - 1]
+ */
+          __pyx_t_3 = __pyx_v_i;
+          (__pyx_v_BN[__pyx_t_3]) = ((__pyx_v_BN[__pyx_t_3]) + 1);
+
+          /* "hot.pyx":673
+ *             update_baseNode[i] = 1
+ *             while vec[i] > D.p.params[i][BN[i] + 2]:
+ *                 if BN[i] < D.p.N[i] - 4:             # <<<<<<<<<<<<<<
+ *                     BN[i] += 1
+ *                 elif vec[i] >= D.p.params[i][D.p.N[i] - 1]:
+ */
+          goto __pyx_L15;
+        }
+
+        /* "hot.pyx":675
+ *                 if BN[i] < D.p.N[i] - 4:
+ *                     BN[i] += 1
+ *                 elif vec[i] >= D.p.params[i][D.p.N[i] - 1]:             # <<<<<<<<<<<<<<
+ *                     vec[i] = D.p.params[i][D.p.N[i] - 1]
+ *                     break
+ */
+        __pyx_t_1 = (((__pyx_v_vec[__pyx_v_i]) >= ((__pyx_v_D->p->params[__pyx_v_i])[((__pyx_v_D->p->N[__pyx_v_i]) - 1)])) != 0);
+        if (__pyx_t_1) {
+
+          /* "hot.pyx":676
+ *                     BN[i] += 1
+ *                 elif vec[i] >= D.p.params[i][D.p.N[i] - 1]:
+ *                     vec[i] = D.p.params[i][D.p.N[i] - 1]             # <<<<<<<<<<<<<<
+ *                     break
+ *                 elif BN[i] == D.p.N[i] - 4:
+ */
+          (__pyx_v_vec[__pyx_v_i]) = ((__pyx_v_D->p->params[__pyx_v_i])[((__pyx_v_D->p->N[__pyx_v_i]) - 1)]);
+
+          /* "hot.pyx":677
+ *                 elif vec[i] >= D.p.params[i][D.p.N[i] - 1]:
+ *                     vec[i] = D.p.params[i][D.p.N[i] - 1]
+ *                     break             # <<<<<<<<<<<<<<
+ *                 elif BN[i] == D.p.N[i] - 4:
+ *                     break
+ */
+          goto __pyx_L14_break;
+
+          /* "hot.pyx":675
+ *                 if BN[i] < D.p.N[i] - 4:
+ *                     BN[i] += 1
+ *                 elif vec[i] >= D.p.params[i][D.p.N[i] - 1]:             # <<<<<<<<<<<<<<
+ *                     vec[i] = D.p.params[i][D.p.N[i] - 1]
+ *                     break
+ */
+        }
+
+        /* "hot.pyx":678
+ *                     vec[i] = D.p.params[i][D.p.N[i] - 1]
+ *                     break
+ *                 elif BN[i] == D.p.N[i] - 4:             # <<<<<<<<<<<<<<
+ *                     break
+ * 
+ */
+        __pyx_t_1 = (((__pyx_v_BN[__pyx_v_i]) == ((__pyx_v_D->p->N[__pyx_v_i]) - 4)) != 0);
+        if (__pyx_t_1) {
+
+          /* "hot.pyx":679
+ *                     break
+ *                 elif BN[i] == D.p.N[i] - 4:
+ *                     break             # <<<<<<<<<<<<<<
+ * 
+ *             node_vals[2*i] = D.p.params[i][BN[i] + 1]
+ */
+          goto __pyx_L14_break;
+
+          /* "hot.pyx":678
+ *                     vec[i] = D.p.params[i][D.p.N[i] - 1]
+ *                     break
+ *                 elif BN[i] == D.p.N[i] - 4:             # <<<<<<<<<<<<<<
+ *                     break
+ * 
+ */
+        }
+        __pyx_L15:;
+      }
+      __pyx_L14_break:;
+
+      /* "hot.pyx":681
+ *                     break
+ * 
+ *             node_vals[2*i] = D.p.params[i][BN[i] + 1]             # <<<<<<<<<<<<<<
+ *             node_vals[2*i + 1] = D.p.params[i][BN[i] + 2]
+ * 
+ */
+      (__pyx_v_node_vals[(2 * __pyx_v_i)]) = ((__pyx_v_D->p->params[__pyx_v_i])[((__pyx_v_BN[__pyx_v_i]) + 1)]);
+
+      /* "hot.pyx":682
+ * 
+ *             node_vals[2*i] = D.p.params[i][BN[i] + 1]
+ *             node_vals[2*i + 1] = D.p.params[i][BN[i] + 2]             # <<<<<<<<<<<<<<
+ * 
+ *             # if parallel == 31:
+ */
+      (__pyx_v_node_vals[((2 * __pyx_v_i) + 1)]) = ((__pyx_v_D->p->params[__pyx_v_i])[((__pyx_v_BN[__pyx_v_i]) + 2)]);
+
+      /* "hot.pyx":668
+ *             # printf("\nEnd Block 1: %d", <int>i)
+ * 
+ *         elif vec[i] > node_vals[2*i + 1] and BN[i] != D.p.N[i] - 4: # I believe this has to do with the cubic interpolation points, so this remains 4             # <<<<<<<<<<<<<<
+ *             # if parallel == 31:
+ *             # printf("\nExecute block 2: %d", <int>i)
+ */
+    }
+    __pyx_L5:;
+
+    /* "hot.pyx":690
+ *         # printf("\nTry block 3: %d", <int>i)
+ * 
+ *         if V_CACHE[i] != vec[i] or update_baseNode[i] == 1:             # <<<<<<<<<<<<<<
+ *             # if parallel == 31:
+ *             # printf("\nExecute block 3: %d", <int>i)
+ */
+    __pyx_t_2 = (((__pyx_v_V_CACHE[__pyx_v_i]) != (__pyx_v_vec[__pyx_v_i])) != 0);
+    if (!__pyx_t_2) {
+    } else {
+      __pyx_t_1 = __pyx_t_2;
+      goto __pyx_L17_bool_binop_done;
+    }
+    __pyx_t_2 = (((__pyx_v_update_baseNode[__pyx_v_i]) == 1) != 0);
+    __pyx_t_1 = __pyx_t_2;
+    __pyx_L17_bool_binop_done:;
+    if (__pyx_t_1) {
+
+      /* "hot.pyx":693
+ *             # if parallel == 31:
+ *             # printf("\nExecute block 3: %d", <int>i)
+ *             ii = 4*i             # <<<<<<<<<<<<<<
+ *             DIFF[ii] = vec[i] - D.p.params[i][BN[i] + 1]
+ *             DIFF[ii] *= vec[i] - D.p.params[i][BN[i] + 2]
+ */
+      __pyx_v_ii = (4 * __pyx_v_i);
+
+      /* "hot.pyx":694
+ *             # printf("\nExecute block 3: %d", <int>i)
+ *             ii = 4*i
+ *             DIFF[ii] = vec[i] - D.p.params[i][BN[i] + 1]             # <<<<<<<<<<<<<<
+ *             DIFF[ii] *= vec[i] - D.p.params[i][BN[i] + 2]
+ *             DIFF[ii] *= vec[i] - D.p.params[i][BN[i] + 3]
+ */
+      (__pyx_v_DIFF[__pyx_v_ii]) = ((__pyx_v_vec[__pyx_v_i]) - ((__pyx_v_D->p->params[__pyx_v_i])[((__pyx_v_BN[__pyx_v_i]) + 1)]));
+
+      /* "hot.pyx":695
+ *             ii = 4*i
+ *             DIFF[ii] = vec[i] - D.p.params[i][BN[i] + 1]
+ *             DIFF[ii] *= vec[i] - D.p.params[i][BN[i] + 2]             # <<<<<<<<<<<<<<
+ *             DIFF[ii] *= vec[i] - D.p.params[i][BN[i] + 3]
+ * 
+ */
+      __pyx_t_3 = __pyx_v_ii;
+      (__pyx_v_DIFF[__pyx_t_3]) = ((__pyx_v_DIFF[__pyx_t_3]) * ((__pyx_v_vec[__pyx_v_i]) - ((__pyx_v_D->p->params[__pyx_v_i])[((__pyx_v_BN[__pyx_v_i]) + 2)])));
+
+      /* "hot.pyx":696
+ *             DIFF[ii] = vec[i] - D.p.params[i][BN[i] + 1]
+ *             DIFF[ii] *= vec[i] - D.p.params[i][BN[i] + 2]
+ *             DIFF[ii] *= vec[i] - D.p.params[i][BN[i] + 3]             # <<<<<<<<<<<<<<
+ * 
+ *             DIFF[ii + 1] = vec[i] - D.p.params[i][BN[i]]
+ */
+      __pyx_t_3 = __pyx_v_ii;
+      (__pyx_v_DIFF[__pyx_t_3]) = ((__pyx_v_DIFF[__pyx_t_3]) * ((__pyx_v_vec[__pyx_v_i]) - ((__pyx_v_D->p->params[__pyx_v_i])[((__pyx_v_BN[__pyx_v_i]) + 3)])));
+
+      /* "hot.pyx":698
+ *             DIFF[ii] *= vec[i] - D.p.params[i][BN[i] + 3]
+ * 
+ *             DIFF[ii + 1] = vec[i] - D.p.params[i][BN[i]]             # <<<<<<<<<<<<<<
+ *             DIFF[ii + 1] *= vec[i] - D.p.params[i][BN[i] + 2]
+ *             DIFF[ii + 1] *= vec[i] - D.p.params[i][BN[i] + 3]
+ */
+      (__pyx_v_DIFF[(__pyx_v_ii + 1)]) = ((__pyx_v_vec[__pyx_v_i]) - ((__pyx_v_D->p->params[__pyx_v_i])[(__pyx_v_BN[__pyx_v_i])]));
+
+      /* "hot.pyx":699
+ * 
+ *             DIFF[ii + 1] = vec[i] - D.p.params[i][BN[i]]
+ *             DIFF[ii + 1] *= vec[i] - D.p.params[i][BN[i] + 2]             # <<<<<<<<<<<<<<
+ *             DIFF[ii + 1] *= vec[i] - D.p.params[i][BN[i] + 3]
+ * 
+ */
+      __pyx_t_3 = (__pyx_v_ii + 1);
+      (__pyx_v_DIFF[__pyx_t_3]) = ((__pyx_v_DIFF[__pyx_t_3]) * ((__pyx_v_vec[__pyx_v_i]) - ((__pyx_v_D->p->params[__pyx_v_i])[((__pyx_v_BN[__pyx_v_i]) + 2)])));
+
+      /* "hot.pyx":700
+ *             DIFF[ii + 1] = vec[i] - D.p.params[i][BN[i]]
+ *             DIFF[ii + 1] *= vec[i] - D.p.params[i][BN[i] + 2]
+ *             DIFF[ii + 1] *= vec[i] - D.p.params[i][BN[i] + 3]             # <<<<<<<<<<<<<<
+ * 
+ *             DIFF[ii + 2] = vec[i] - D.p.params[i][BN[i]]
+ */
+      __pyx_t_3 = (__pyx_v_ii + 1);
+      (__pyx_v_DIFF[__pyx_t_3]) = ((__pyx_v_DIFF[__pyx_t_3]) * ((__pyx_v_vec[__pyx_v_i]) - ((__pyx_v_D->p->params[__pyx_v_i])[((__pyx_v_BN[__pyx_v_i]) + 3)])));
+
+      /* "hot.pyx":702
+ *             DIFF[ii + 1] *= vec[i] - D.p.params[i][BN[i] + 3]
+ * 
+ *             DIFF[ii + 2] = vec[i] - D.p.params[i][BN[i]]             # <<<<<<<<<<<<<<
+ *             DIFF[ii + 2] *= vec[i] - D.p.params[i][BN[i] + 1]
+ *             DIFF[ii + 2] *= vec[i] - D.p.params[i][BN[i] + 3]
+ */
+      (__pyx_v_DIFF[(__pyx_v_ii + 2)]) = ((__pyx_v_vec[__pyx_v_i]) - ((__pyx_v_D->p->params[__pyx_v_i])[(__pyx_v_BN[__pyx_v_i])]));
+
+      /* "hot.pyx":703
+ * 
+ *             DIFF[ii + 2] = vec[i] - D.p.params[i][BN[i]]
+ *             DIFF[ii + 2] *= vec[i] - D.p.params[i][BN[i] + 1]             # <<<<<<<<<<<<<<
+ *             DIFF[ii + 2] *= vec[i] - D.p.params[i][BN[i] + 3]
+ * 
+ */
+      __pyx_t_3 = (__pyx_v_ii + 2);
+      (__pyx_v_DIFF[__pyx_t_3]) = ((__pyx_v_DIFF[__pyx_t_3]) * ((__pyx_v_vec[__pyx_v_i]) - ((__pyx_v_D->p->params[__pyx_v_i])[((__pyx_v_BN[__pyx_v_i]) + 1)])));
+
+      /* "hot.pyx":704
+ *             DIFF[ii + 2] = vec[i] - D.p.params[i][BN[i]]
+ *             DIFF[ii + 2] *= vec[i] - D.p.params[i][BN[i] + 1]
+ *             DIFF[ii + 2] *= vec[i] - D.p.params[i][BN[i] + 3]             # <<<<<<<<<<<<<<
+ * 
+ *             DIFF[ii + 3] = vec[i] - D.p.params[i][BN[i]]
+ */
+      __pyx_t_3 = (__pyx_v_ii + 2);
+      (__pyx_v_DIFF[__pyx_t_3]) = ((__pyx_v_DIFF[__pyx_t_3]) * ((__pyx_v_vec[__pyx_v_i]) - ((__pyx_v_D->p->params[__pyx_v_i])[((__pyx_v_BN[__pyx_v_i]) + 3)])));
+
+      /* "hot.pyx":706
+ *             DIFF[ii + 2] *= vec[i] - D.p.params[i][BN[i] + 3]
+ * 
+ *             DIFF[ii + 3] = vec[i] - D.p.params[i][BN[i]]             # <<<<<<<<<<<<<<
+ *             DIFF[ii + 3] *= vec[i] - D.p.params[i][BN[i] + 1]
+ *             DIFF[ii + 3] *= vec[i] - D.p.params[i][BN[i] + 2]
+ */
+      (__pyx_v_DIFF[(__pyx_v_ii + 3)]) = ((__pyx_v_vec[__pyx_v_i]) - ((__pyx_v_D->p->params[__pyx_v_i])[(__pyx_v_BN[__pyx_v_i])]));
+
+      /* "hot.pyx":707
+ * 
+ *             DIFF[ii + 3] = vec[i] - D.p.params[i][BN[i]]
+ *             DIFF[ii + 3] *= vec[i] - D.p.params[i][BN[i] + 1]             # <<<<<<<<<<<<<<
+ *             DIFF[ii + 3] *= vec[i] - D.p.params[i][BN[i] + 2]
+ * 
+ */
+      __pyx_t_3 = (__pyx_v_ii + 3);
+      (__pyx_v_DIFF[__pyx_t_3]) = ((__pyx_v_DIFF[__pyx_t_3]) * ((__pyx_v_vec[__pyx_v_i]) - ((__pyx_v_D->p->params[__pyx_v_i])[((__pyx_v_BN[__pyx_v_i]) + 1)])));
+
+      /* "hot.pyx":708
+ *             DIFF[ii + 3] = vec[i] - D.p.params[i][BN[i]]
+ *             DIFF[ii + 3] *= vec[i] - D.p.params[i][BN[i] + 1]
+ *             DIFF[ii + 3] *= vec[i] - D.p.params[i][BN[i] + 2]             # <<<<<<<<<<<<<<
+ * 
+ *             # printf("\nupdating V_CACHE")
+ */
+      __pyx_t_3 = (__pyx_v_ii + 3);
+      (__pyx_v_DIFF[__pyx_t_3]) = ((__pyx_v_DIFF[__pyx_t_3]) * ((__pyx_v_vec[__pyx_v_i]) - ((__pyx_v_D->p->params[__pyx_v_i])[((__pyx_v_BN[__pyx_v_i]) + 2)])));
+
+      /* "hot.pyx":713
+ * 
+ * 
+ *             V_CACHE[i] = vec[i]             # <<<<<<<<<<<<<<
+ * 
+ *             # if parallel == 31:
+ */
+      (__pyx_v_V_CACHE[__pyx_v_i]) = (__pyx_v_vec[__pyx_v_i]);
+
+      /* "hot.pyx":690
+ *         # printf("\nTry block 3: %d", <int>i)
+ * 
+ *         if V_CACHE[i] != vec[i] or update_baseNode[i] == 1:             # <<<<<<<<<<<<<<
+ *             # if parallel == 31:
+ *             # printf("\nExecute block 3: %d", <int>i)
+ */
+    }
+
+    /* "hot.pyx":721
+ *         #     printf("\nTry block 4: %d", <int>i)
+ * 
+ *         if update_baseNode[i] == 1:             # <<<<<<<<<<<<<<
+ *             # if parallel == 31:
+ *             # printf("\nExecute block 4: %d", <int>i)
+ */
+    __pyx_t_1 = (((__pyx_v_update_baseNode[__pyx_v_i]) == 1) != 0);
+    if (__pyx_t_1) {
+
+      /* "hot.pyx":726
+ *             # printf("i=%d, ", <int>i)
+ *             # printf("D.p.params[i][BN[i]]: %.2e\n", D.p.params[i][BN[i]])
+ *             CACHE = 1             # <<<<<<<<<<<<<<
+ *             SPACE[ii] = 1.0 / (D.p.params[i][BN[i]] - D.p.params[i][BN[i] + 1])
+ *             SPACE[ii] /= D.p.params[i][BN[i]] - D.p.params[i][BN[i] + 2]
+ */
+      __pyx_v_CACHE = 1;
+
+      /* "hot.pyx":727
+ *             # printf("D.p.params[i][BN[i]]: %.2e\n", D.p.params[i][BN[i]])
+ *             CACHE = 1
+ *             SPACE[ii] = 1.0 / (D.p.params[i][BN[i]] - D.p.params[i][BN[i] + 1])             # <<<<<<<<<<<<<<
+ *             SPACE[ii] /= D.p.params[i][BN[i]] - D.p.params[i][BN[i] + 2]
+ *             SPACE[ii] /= D.p.params[i][BN[i]] - D.p.params[i][BN[i] + 3]
+ */
+      (__pyx_v_SPACE[__pyx_v_ii]) = (1.0 / (((__pyx_v_D->p->params[__pyx_v_i])[(__pyx_v_BN[__pyx_v_i])]) - ((__pyx_v_D->p->params[__pyx_v_i])[((__pyx_v_BN[__pyx_v_i]) + 1)])));
+
+      /* "hot.pyx":728
+ *             CACHE = 1
+ *             SPACE[ii] = 1.0 / (D.p.params[i][BN[i]] - D.p.params[i][BN[i] + 1])
+ *             SPACE[ii] /= D.p.params[i][BN[i]] - D.p.params[i][BN[i] + 2]             # <<<<<<<<<<<<<<
+ *             SPACE[ii] /= D.p.params[i][BN[i]] - D.p.params[i][BN[i] + 3]
+ * 
+ */
+      __pyx_t_3 = __pyx_v_ii;
+      (__pyx_v_SPACE[__pyx_t_3]) = ((__pyx_v_SPACE[__pyx_t_3]) / (((__pyx_v_D->p->params[__pyx_v_i])[(__pyx_v_BN[__pyx_v_i])]) - ((__pyx_v_D->p->params[__pyx_v_i])[((__pyx_v_BN[__pyx_v_i]) + 2)])));
+
+      /* "hot.pyx":729
+ *             SPACE[ii] = 1.0 / (D.p.params[i][BN[i]] - D.p.params[i][BN[i] + 1])
+ *             SPACE[ii] /= D.p.params[i][BN[i]] - D.p.params[i][BN[i] + 2]
+ *             SPACE[ii] /= D.p.params[i][BN[i]] - D.p.params[i][BN[i] + 3]             # <<<<<<<<<<<<<<
+ * 
+ *             SPACE[ii + 1] = 1.0 / (D.p.params[i][BN[i] + 1] - D.p.params[i][BN[i]])
+ */
+      __pyx_t_3 = __pyx_v_ii;
+      (__pyx_v_SPACE[__pyx_t_3]) = ((__pyx_v_SPACE[__pyx_t_3]) / (((__pyx_v_D->p->params[__pyx_v_i])[(__pyx_v_BN[__pyx_v_i])]) - ((__pyx_v_D->p->params[__pyx_v_i])[((__pyx_v_BN[__pyx_v_i]) + 3)])));
+
+      /* "hot.pyx":731
+ *             SPACE[ii] /= D.p.params[i][BN[i]] - D.p.params[i][BN[i] + 3]
+ * 
+ *             SPACE[ii + 1] = 1.0 / (D.p.params[i][BN[i] + 1] - D.p.params[i][BN[i]])             # <<<<<<<<<<<<<<
+ *             SPACE[ii + 1] /= D.p.params[i][BN[i] + 1] - D.p.params[i][BN[i] + 2]
+ *             SPACE[ii + 1] /= D.p.params[i][BN[i] + 1] - D.p.params[i][BN[i] + 3]
+ */
+      (__pyx_v_SPACE[(__pyx_v_ii + 1)]) = (1.0 / (((__pyx_v_D->p->params[__pyx_v_i])[((__pyx_v_BN[__pyx_v_i]) + 1)]) - ((__pyx_v_D->p->params[__pyx_v_i])[(__pyx_v_BN[__pyx_v_i])])));
+
+      /* "hot.pyx":732
+ * 
+ *             SPACE[ii + 1] = 1.0 / (D.p.params[i][BN[i] + 1] - D.p.params[i][BN[i]])
+ *             SPACE[ii + 1] /= D.p.params[i][BN[i] + 1] - D.p.params[i][BN[i] + 2]             # <<<<<<<<<<<<<<
+ *             SPACE[ii + 1] /= D.p.params[i][BN[i] + 1] - D.p.params[i][BN[i] + 3]
+ * 
+ */
+      __pyx_t_3 = (__pyx_v_ii + 1);
+      (__pyx_v_SPACE[__pyx_t_3]) = ((__pyx_v_SPACE[__pyx_t_3]) / (((__pyx_v_D->p->params[__pyx_v_i])[((__pyx_v_BN[__pyx_v_i]) + 1)]) - ((__pyx_v_D->p->params[__pyx_v_i])[((__pyx_v_BN[__pyx_v_i]) + 2)])));
+
+      /* "hot.pyx":733
+ *             SPACE[ii + 1] = 1.0 / (D.p.params[i][BN[i] + 1] - D.p.params[i][BN[i]])
+ *             SPACE[ii + 1] /= D.p.params[i][BN[i] + 1] - D.p.params[i][BN[i] + 2]
+ *             SPACE[ii + 1] /= D.p.params[i][BN[i] + 1] - D.p.params[i][BN[i] + 3]             # <<<<<<<<<<<<<<
+ * 
+ *             SPACE[ii + 2] = 1.0 / (D.p.params[i][BN[i] + 2] - D.p.params[i][BN[i]])
+ */
+      __pyx_t_3 = (__pyx_v_ii + 1);
+      (__pyx_v_SPACE[__pyx_t_3]) = ((__pyx_v_SPACE[__pyx_t_3]) / (((__pyx_v_D->p->params[__pyx_v_i])[((__pyx_v_BN[__pyx_v_i]) + 1)]) - ((__pyx_v_D->p->params[__pyx_v_i])[((__pyx_v_BN[__pyx_v_i]) + 3)])));
+
+      /* "hot.pyx":735
+ *             SPACE[ii + 1] /= D.p.params[i][BN[i] + 1] - D.p.params[i][BN[i] + 3]
+ * 
+ *             SPACE[ii + 2] = 1.0 / (D.p.params[i][BN[i] + 2] - D.p.params[i][BN[i]])             # <<<<<<<<<<<<<<
+ *             SPACE[ii + 2] /= D.p.params[i][BN[i] + 2] - D.p.params[i][BN[i] + 1]
+ *             SPACE[ii + 2] /= D.p.params[i][BN[i] + 2] - D.p.params[i][BN[i] + 3]
+ */
+      (__pyx_v_SPACE[(__pyx_v_ii + 2)]) = (1.0 / (((__pyx_v_D->p->params[__pyx_v_i])[((__pyx_v_BN[__pyx_v_i]) + 2)]) - ((__pyx_v_D->p->params[__pyx_v_i])[(__pyx_v_BN[__pyx_v_i])])));
+
+      /* "hot.pyx":736
+ * 
+ *             SPACE[ii + 2] = 1.0 / (D.p.params[i][BN[i] + 2] - D.p.params[i][BN[i]])
+ *             SPACE[ii + 2] /= D.p.params[i][BN[i] + 2] - D.p.params[i][BN[i] + 1]             # <<<<<<<<<<<<<<
+ *             SPACE[ii + 2] /= D.p.params[i][BN[i] + 2] - D.p.params[i][BN[i] + 3]
+ * 
+ */
+      __pyx_t_3 = (__pyx_v_ii + 2);
+      (__pyx_v_SPACE[__pyx_t_3]) = ((__pyx_v_SPACE[__pyx_t_3]) / (((__pyx_v_D->p->params[__pyx_v_i])[((__pyx_v_BN[__pyx_v_i]) + 2)]) - ((__pyx_v_D->p->params[__pyx_v_i])[((__pyx_v_BN[__pyx_v_i]) + 1)])));
+
+      /* "hot.pyx":737
+ *             SPACE[ii + 2] = 1.0 / (D.p.params[i][BN[i] + 2] - D.p.params[i][BN[i]])
+ *             SPACE[ii + 2] /= D.p.params[i][BN[i] + 2] - D.p.params[i][BN[i] + 1]
+ *             SPACE[ii + 2] /= D.p.params[i][BN[i] + 2] - D.p.params[i][BN[i] + 3]             # <<<<<<<<<<<<<<
+ * 
+ *             SPACE[ii + 3] = 1.0 / (D.p.params[i][BN[i] + 3] - D.p.params[i][BN[i]])
+ */
+      __pyx_t_3 = (__pyx_v_ii + 2);
+      (__pyx_v_SPACE[__pyx_t_3]) = ((__pyx_v_SPACE[__pyx_t_3]) / (((__pyx_v_D->p->params[__pyx_v_i])[((__pyx_v_BN[__pyx_v_i]) + 2)]) - ((__pyx_v_D->p->params[__pyx_v_i])[((__pyx_v_BN[__pyx_v_i]) + 3)])));
+
+      /* "hot.pyx":739
+ *             SPACE[ii + 2] /= D.p.params[i][BN[i] + 2] - D.p.params[i][BN[i] + 3]
+ * 
+ *             SPACE[ii + 3] = 1.0 / (D.p.params[i][BN[i] + 3] - D.p.params[i][BN[i]])             # <<<<<<<<<<<<<<
+ *             SPACE[ii + 3] /= D.p.params[i][BN[i] + 3] - D.p.params[i][BN[i] + 1]
+ *             SPACE[ii + 3] /= D.p.params[i][BN[i] + 3] - D.p.params[i][BN[i] + 2]
+ */
+      (__pyx_v_SPACE[(__pyx_v_ii + 3)]) = (1.0 / (((__pyx_v_D->p->params[__pyx_v_i])[((__pyx_v_BN[__pyx_v_i]) + 3)]) - ((__pyx_v_D->p->params[__pyx_v_i])[(__pyx_v_BN[__pyx_v_i])])));
+
+      /* "hot.pyx":740
+ * 
+ *             SPACE[ii + 3] = 1.0 / (D.p.params[i][BN[i] + 3] - D.p.params[i][BN[i]])
+ *             SPACE[ii + 3] /= D.p.params[i][BN[i] + 3] - D.p.params[i][BN[i] + 1]             # <<<<<<<<<<<<<<
+ *             SPACE[ii + 3] /= D.p.params[i][BN[i] + 3] - D.p.params[i][BN[i] + 2]
+ * 
+ */
+      __pyx_t_3 = (__pyx_v_ii + 3);
+      (__pyx_v_SPACE[__pyx_t_3]) = ((__pyx_v_SPACE[__pyx_t_3]) / (((__pyx_v_D->p->params[__pyx_v_i])[((__pyx_v_BN[__pyx_v_i]) + 3)]) - ((__pyx_v_D->p->params[__pyx_v_i])[((__pyx_v_BN[__pyx_v_i]) + 1)])));
+
+      /* "hot.pyx":741
+ *             SPACE[ii + 3] = 1.0 / (D.p.params[i][BN[i] + 3] - D.p.params[i][BN[i]])
+ *             SPACE[ii + 3] /= D.p.params[i][BN[i] + 3] - D.p.params[i][BN[i] + 1]
+ *             SPACE[ii + 3] /= D.p.params[i][BN[i] + 3] - D.p.params[i][BN[i] + 2]             # <<<<<<<<<<<<<<
+ * 
+ *             # if parallel == 31:
+ */
+      __pyx_t_3 = (__pyx_v_ii + 3);
+      (__pyx_v_SPACE[__pyx_t_3]) = ((__pyx_v_SPACE[__pyx_t_3]) / (((__pyx_v_D->p->params[__pyx_v_i])[((__pyx_v_BN[__pyx_v_i]) + 3)]) - ((__pyx_v_D->p->params[__pyx_v_i])[((__pyx_v_BN[__pyx_v_i]) + 2)])));
+
+      /* "hot.pyx":721
+ *         #     printf("\nTry block 4: %d", <int>i)
+ * 
+ *         if update_baseNode[i] == 1:             # <<<<<<<<<<<<<<
+ *             # if parallel == 31:
+ *             # printf("\nExecute block 4: %d", <int>i)
+ */
+    }
+
+    /* "hot.pyx":758
+ *         # printf("SPACE[ii+3]: %.2e\n", SPACE[ii+3])
+ * 
+ *         i += 1             # <<<<<<<<<<<<<<
+ * 
+ *     # printf("Diagnostics: 2\n")
+ */
+    __pyx_v_i = (__pyx_v_i + 1);
+  }
+
+  /* "hot.pyx":771
+ * 
+ *     cdef size_t j, k, l, m, INDEX, II, JJ, KK, LL
+ *     cdef double *address = NULL             # <<<<<<<<<<<<<<
+ * 
+ *     # (4) Here again, I need to iterate over an additional dimension.
+ */
+  __pyx_v_address = NULL;
+
+  /* "hot.pyx":809
+ *     # cdef double I2 = 0.0
+ *     cdef int iterator
+ *     cdef int iteration_size = 1024             # <<<<<<<<<<<<<<
+ *     cdef double* temp2 = <double*>malloc(iteration_size * sizeof(double))
+ *     # cdef double* INDEX = <double*>malloc(iteration_size * sizeof(double))
+ */
+  __pyx_v_iteration_size = 0x400;
+
+  /* "hot.pyx":810
+ *     cdef int iterator
+ *     cdef int iteration_size = 1024
+ *     cdef double* temp2 = <double*>malloc(iteration_size * sizeof(double))             # <<<<<<<<<<<<<<
+ *     # cdef double* INDEX = <double*>malloc(iteration_size * sizeof(double))
+ * 
+ */
+  __pyx_v_temp2 = ((double *)malloc((__pyx_v_iteration_size * (sizeof(double)))));
+
+  /* "hot.pyx":815
+ *     # clock_gettime(CLOCK_REALTIME, &ts)
+ *     # printf('here is new eval_hot().\n')
+ *     for iterator in range(iteration_size):             # <<<<<<<<<<<<<<
  *         # printf("i:%lu, ",i)
  *         m = iterator % 4
  */
-  for (__pyx_t_8 = 0; __pyx_t_8 < 0x400; __pyx_t_8+=1) {
-    __pyx_v_iterator = __pyx_t_8;
+  __pyx_t_4 = __pyx_v_iteration_size;
+  __pyx_t_5 = __pyx_t_4;
+  for (__pyx_t_6 = 0; __pyx_t_6 < __pyx_t_5; __pyx_t_6+=1) {
+    __pyx_v_iterator = __pyx_t_6;
 
-    /* "hot.pyx":557
- *     for iterator in range(1024):
+    /* "hot.pyx":817
+ *     for iterator in range(iteration_size):
  *         # printf("i:%lu, ",i)
  *         m = iterator % 4             # <<<<<<<<<<<<<<
  *         l = iterator / 4 % 4
@@ -3186,7 +3989,7 @@ static double __pyx_f_3hot_eval_hot(size_t __pyx_v_THREAD, double __pyx_v_E, dou
  */
     __pyx_v_m = (__pyx_v_iterator % 4);
 
-    /* "hot.pyx":558
+    /* "hot.pyx":818
  *         # printf("i:%lu, ",i)
  *         m = iterator % 4
  *         l = iterator / 4 % 4             # <<<<<<<<<<<<<<
@@ -3195,7 +3998,7 @@ static double __pyx_f_3hot_eval_hot(size_t __pyx_v_THREAD, double __pyx_v_E, dou
  */
     __pyx_v_l = ((__pyx_v_iterator / 4) % 4);
 
-    /* "hot.pyx":559
+    /* "hot.pyx":819
  *         m = iterator % 4
  *         l = iterator / 4 % 4
  *         k = iterator / 16 % 4             # <<<<<<<<<<<<<<
@@ -3204,7 +4007,7 @@ static double __pyx_f_3hot_eval_hot(size_t __pyx_v_THREAD, double __pyx_v_E, dou
  */
     __pyx_v_k = ((__pyx_v_iterator / 16) % 4);
 
-    /* "hot.pyx":560
+    /* "hot.pyx":820
  *         l = iterator / 4 % 4
  *         k = iterator / 16 % 4
  *         j = iterator / 64 % 4             # <<<<<<<<<<<<<<
@@ -3213,44 +4016,93 @@ static double __pyx_f_3hot_eval_hot(size_t __pyx_v_THREAD, double __pyx_v_E, dou
  */
     __pyx_v_j = ((__pyx_v_iterator / 64) % 4);
 
-    /* "hot.pyx":561
+    /* "hot.pyx":821
  *         k = iterator / 16 % 4
  *         j = iterator / 64 % 4
  *         i = iterator / 256 % 4             # <<<<<<<<<<<<<<
  * 
- *         # printf("i:%lu, ",i)
+ * 
  */
     __pyx_v_i = ((__pyx_v_iterator / 0x100) % 4);
 
-    /* "hot.pyx":569
- *         # printf("m:%lu\n",m)
+    /* "hot.pyx":824
+ * 
  * 
  *         address = D.p.I + (BN[0] + i) * D.p.S[0] + (BN[1] + j) * D.p.S[1] + (BN[2] + k) * D.p.S[2] + (BN[3] + l) * D.p.S[3] + BN[4] + m             # <<<<<<<<<<<<<<
- *         temp = DIFF[i] * DIFF[4 + j] * DIFF[8 + k] * DIFF[12 + l] * DIFF[16 + m] * SPACE[i] * SPACE[4 + j] * SPACE[8 + k] * SPACE[12 + l] * SPACE[16 + m]
- *         # printf('temp:%f, ',temp)
+ * 
+ * 
  */
     __pyx_v_address = ((((((__pyx_v_D->p->I + (((__pyx_v_BN[0]) + __pyx_v_i) * (__pyx_v_D->p->S[0]))) + (((__pyx_v_BN[1]) + __pyx_v_j) * (__pyx_v_D->p->S[1]))) + (((__pyx_v_BN[2]) + __pyx_v_k) * (__pyx_v_D->p->S[2]))) + (((__pyx_v_BN[3]) + __pyx_v_l) * (__pyx_v_D->p->S[3]))) + (__pyx_v_BN[4])) + __pyx_v_m);
+  }
 
-    /* "hot.pyx":570
- * 
- *         address = D.p.I + (BN[0] + i) * D.p.S[0] + (BN[1] + j) * D.p.S[1] + (BN[2] + k) * D.p.S[2] + (BN[3] + l) * D.p.S[3] + BN[4] + m
- *         temp = DIFF[i] * DIFF[4 + j] * DIFF[8 + k] * DIFF[12 + l] * DIFF[16 + m] * SPACE[i] * SPACE[4 + j] * SPACE[8 + k] * SPACE[12 + l] * SPACE[16 + m]             # <<<<<<<<<<<<<<
- *         # printf('temp:%f, ',temp)
- *         INDEX = i * D.p.BLOCKS[0] + j * D.p.BLOCKS[1] + k * D.p.BLOCKS[2] + l * D.p.BLOCKS[3] + m
+  /* "hot.pyx":836
+ *     # printf("new eval_hot() for loops 2 takes %ld ns\n",t_elapsed)
+ *     # clock_gettime(CLOCK_REALTIME, &ts)
+ *     for iterator in range(iteration_size):             # <<<<<<<<<<<<<<
+ *         # printf("i:%lu, ",i)
+ *         m = iterator % 4
  */
-    __pyx_v_temp = ((((((((((__pyx_v_DIFF[__pyx_v_i]) * (__pyx_v_DIFF[(4 + __pyx_v_j)])) * (__pyx_v_DIFF[(8 + __pyx_v_k)])) * (__pyx_v_DIFF[(12 + __pyx_v_l)])) * (__pyx_v_DIFF[(16 + __pyx_v_m)])) * (__pyx_v_SPACE[__pyx_v_i])) * (__pyx_v_SPACE[(4 + __pyx_v_j)])) * (__pyx_v_SPACE[(8 + __pyx_v_k)])) * (__pyx_v_SPACE[(12 + __pyx_v_l)])) * (__pyx_v_SPACE[(16 + __pyx_v_m)]));
+  __pyx_t_4 = __pyx_v_iteration_size;
+  __pyx_t_5 = __pyx_t_4;
+  for (__pyx_t_6 = 0; __pyx_t_6 < __pyx_t_5; __pyx_t_6+=1) {
+    __pyx_v_iterator = __pyx_t_6;
 
-    /* "hot.pyx":572
- *         temp = DIFF[i] * DIFF[4 + j] * DIFF[8 + k] * DIFF[12 + l] * DIFF[16 + m] * SPACE[i] * SPACE[4 + j] * SPACE[8 + k] * SPACE[12 + l] * SPACE[16 + m]
- *         # printf('temp:%f, ',temp)
- *         INDEX = i * D.p.BLOCKS[0] + j * D.p.BLOCKS[1] + k * D.p.BLOCKS[2] + l * D.p.BLOCKS[3] + m             # <<<<<<<<<<<<<<
- * 
- *         #printf("%f,",address[0])
+    /* "hot.pyx":838
+ *     for iterator in range(iteration_size):
+ *         # printf("i:%lu, ",i)
+ *         m = iterator % 4             # <<<<<<<<<<<<<<
+ *         l = iterator / 4 % 4
+ *         k = iterator / 16 % 4
  */
-    __pyx_v_INDEX = (((((__pyx_v_i * (__pyx_v_D->p->BLOCKS[0])) + (__pyx_v_j * (__pyx_v_D->p->BLOCKS[1]))) + (__pyx_v_k * (__pyx_v_D->p->BLOCKS[2]))) + (__pyx_v_l * (__pyx_v_D->p->BLOCKS[3]))) + __pyx_v_m);
+    __pyx_v_m = (__pyx_v_iterator % 4);
 
-    /* "hot.pyx":576
- *         #printf("%f,",address[0])
+    /* "hot.pyx":839
+ *         # printf("i:%lu, ",i)
+ *         m = iterator % 4
+ *         l = iterator / 4 % 4             # <<<<<<<<<<<<<<
+ *         k = iterator / 16 % 4
+ *         j = iterator / 64 % 4
+ */
+    __pyx_v_l = ((__pyx_v_iterator / 4) % 4);
+
+    /* "hot.pyx":840
+ *         m = iterator % 4
+ *         l = iterator / 4 % 4
+ *         k = iterator / 16 % 4             # <<<<<<<<<<<<<<
+ *         j = iterator / 64 % 4
+ *         i = iterator / 256 % 4
+ */
+    __pyx_v_k = ((__pyx_v_iterator / 16) % 4);
+
+    /* "hot.pyx":841
+ *         l = iterator / 4 % 4
+ *         k = iterator / 16 % 4
+ *         j = iterator / 64 % 4             # <<<<<<<<<<<<<<
+ *         i = iterator / 256 % 4
+ * 
+ */
+    __pyx_v_j = ((__pyx_v_iterator / 64) % 4);
+
+    /* "hot.pyx":842
+ *         k = iterator / 16 % 4
+ *         j = iterator / 64 % 4
+ *         i = iterator / 256 % 4             # <<<<<<<<<<<<<<
+ * 
+ *         temp2[iterator] = DIFF[i] * DIFF[4 + j] * DIFF[8 + k] * DIFF[12 + l] * DIFF[16 + m] * SPACE[i] * SPACE[4 + j] * SPACE[8 + k] * SPACE[12 + l] * SPACE[16 + m]
+ */
+    __pyx_v_i = ((__pyx_v_iterator / 0x100) % 4);
+
+    /* "hot.pyx":844
+ *         i = iterator / 256 % 4
+ * 
+ *         temp2[iterator] = DIFF[i] * DIFF[4 + j] * DIFF[8 + k] * DIFF[12 + l] * DIFF[16 + m] * SPACE[i] * SPACE[4 + j] * SPACE[8 + k] * SPACE[12 + l] * SPACE[16 + m]             # <<<<<<<<<<<<<<
+ *         # INDEX = i * D.p.BLOCKS[0] + j * D.p.BLOCKS[1] + k * D.p.BLOCKS[2] + l * D.p.BLOCKS[3] + m
+ *         # printf('INDEX: %lu\n', INDEX)
+ */
+    (__pyx_v_temp2[__pyx_v_iterator]) = ((((((((((__pyx_v_DIFF[__pyx_v_i]) * (__pyx_v_DIFF[(4 + __pyx_v_j)])) * (__pyx_v_DIFF[(8 + __pyx_v_k)])) * (__pyx_v_DIFF[(12 + __pyx_v_l)])) * (__pyx_v_DIFF[(16 + __pyx_v_m)])) * (__pyx_v_SPACE[__pyx_v_i])) * (__pyx_v_SPACE[(4 + __pyx_v_j)])) * (__pyx_v_SPACE[(8 + __pyx_v_k)])) * (__pyx_v_SPACE[(12 + __pyx_v_l)])) * (__pyx_v_SPACE[(16 + __pyx_v_m)]));
+
+    /* "hot.pyx":861
+ *     #     i = iterator / 256 % 4
  * 
  *         if CACHE == 1:             # <<<<<<<<<<<<<<
  *             # printf('replace %f ',I_CACHE[INDEX])
@@ -3259,17 +4111,17 @@ static double __pyx_f_3hot_eval_hot(size_t __pyx_v_THREAD, double __pyx_v_E, dou
     __pyx_t_1 = ((__pyx_v_CACHE == 1) != 0);
     if (__pyx_t_1) {
 
-      /* "hot.pyx":579
+      /* "hot.pyx":864
  *             # printf('replace %f ',I_CACHE[INDEX])
  *             # printf('with %f\n', address[0])
- *             I_CACHE[INDEX] = address[0]             # <<<<<<<<<<<<<<
+ *             I_CACHE[iterator] = address[0]             # <<<<<<<<<<<<<<
  *         # printf('%f\n', I2)
- *         I2 += temp *  I_CACHE[INDEX]
+ *         I += temp2[iterator] *  I_CACHE[iterator]
  */
-      (__pyx_v_I_CACHE[__pyx_v_INDEX]) = (__pyx_v_address[0]);
+      (__pyx_v_I_CACHE[__pyx_v_iterator]) = (__pyx_v_address[0]);
 
-      /* "hot.pyx":576
- *         #printf("%f,",address[0])
+      /* "hot.pyx":861
+ *     #     i = iterator / 256 % 4
  * 
  *         if CACHE == 1:             # <<<<<<<<<<<<<<
  *             # printf('replace %f ',I_CACHE[INDEX])
@@ -3277,57 +4129,68 @@ static double __pyx_f_3hot_eval_hot(size_t __pyx_v_THREAD, double __pyx_v_E, dou
  */
     }
 
-    /* "hot.pyx":581
- *             I_CACHE[INDEX] = address[0]
+    /* "hot.pyx":866
+ *             I_CACHE[iterator] = address[0]
  *         # printf('%f\n', I2)
- *         I2 += temp *  I_CACHE[INDEX]             # <<<<<<<<<<<<<<
- * 
- *     # if I2 < 0.0:
+ *         I += temp2[iterator] *  I_CACHE[iterator]             # <<<<<<<<<<<<<<
+ *         # I2 += temp *  I_CACHE[iterator]
+ *         # printf('I2: %f\n',I2)
  */
-    __pyx_v_I2 = (__pyx_v_I2 + (__pyx_v_temp * (__pyx_v_I_CACHE[__pyx_v_INDEX])));
+    __pyx_v_I = (__pyx_v_I + ((__pyx_v_temp2[__pyx_v_iterator]) * (__pyx_v_I_CACHE[__pyx_v_iterator])));
   }
 
-  /* "hot.pyx":586
- *     #     return 0.0
+  /* "hot.pyx":875
  * 
- *     clock_gettime(CLOCK_REALTIME, &te)             # <<<<<<<<<<<<<<
- *     t_elapsed = (te.tv_nsec - ts.tv_nsec)
- *     printf("new eval_hot() for loops takes %ld ns\n",t_elapsed)
+ * 
+ *     free(temp2)             # <<<<<<<<<<<<<<
+ * 
+ *     if I < 0.0:
  */
-  (void)(clock_gettime(CLOCK_REALTIME, (&__pyx_v_3hot_te)));
+  free(__pyx_v_temp2);
 
-  /* "hot.pyx":587
+  /* "hot.pyx":877
+ *     free(temp2)
  * 
- *     clock_gettime(CLOCK_REALTIME, &te)
- *     t_elapsed = (te.tv_nsec - ts.tv_nsec)             # <<<<<<<<<<<<<<
- *     printf("new eval_hot() for loops takes %ld ns\n",t_elapsed)
- * 
- */
-  __pyx_v_t_elapsed = (__pyx_v_3hot_te.tv_nsec - __pyx_v_3hot_ts.tv_nsec);
-
-  /* "hot.pyx":588
- *     clock_gettime(CLOCK_REALTIME, &te)
- *     t_elapsed = (te.tv_nsec - ts.tv_nsec)
- *     printf("new eval_hot() for loops takes %ld ns\n",t_elapsed)             # <<<<<<<<<<<<<<
- * 
+ *     if I < 0.0:             # <<<<<<<<<<<<<<
+ *          return 0.0
  * 
  */
-  (void)(printf(((char const *)"new eval_hot() for loops takes %ld ns\n"), __pyx_v_t_elapsed));
+  __pyx_t_1 = ((__pyx_v_I < 0.0) != 0);
+  if (__pyx_t_1) {
 
-  /* "hot.pyx":651
+    /* "hot.pyx":878
+ * 
+ *     if I < 0.0:
+ *          return 0.0             # <<<<<<<<<<<<<<
  * 
  * 
- *     return I2             # <<<<<<<<<<<<<<
+ */
+    __pyx_r = 0.0;
+    goto __pyx_L0;
+
+    /* "hot.pyx":877
+ *     free(temp2)
+ * 
+ *     if I < 0.0:             # <<<<<<<<<<<<<<
+ *          return 0.0
+ * 
+ */
+  }
+
+  /* "hot.pyx":943
+ * 
+ * 
+ *     return I             # <<<<<<<<<<<<<<
  * 
  * cdef double eval_hot_norm() nogil:
  */
-  __pyx_r = __pyx_v_I2;
+  __pyx_r = __pyx_v_I;
   goto __pyx_L0;
 
-  /* "hot.pyx":252
- * #                       void *const data) nogil:
+  /* "hot.pyx":555
  * 
- * cdef double eval_hot(size_t THREAD,             # <<<<<<<<<<<<<<
+ * 
+ * cdef double eval_hot_faster(size_t THREAD,             # <<<<<<<<<<<<<<
  *                       double E,
  *                       double mu,
  */
@@ -3337,8 +4200,8 @@ static double __pyx_f_3hot_eval_hot(size_t __pyx_v_THREAD, double __pyx_v_E, dou
   return __pyx_r;
 }
 
-/* "hot.pyx":653
- *     return I2
+/* "hot.pyx":945
+ *     return I
  * 
  * cdef double eval_hot_norm() nogil:             # <<<<<<<<<<<<<<
  *     # Source radiation field normalisation which is independent of the
@@ -3348,7 +4211,7 @@ static double __pyx_f_3hot_eval_hot(size_t __pyx_v_THREAD, double __pyx_v_E, dou
 static double __pyx_f_3hot_eval_hot_norm(void) {
   double __pyx_r;
 
-  /* "hot.pyx":661
+  /* "hot.pyx":953
  *     # The units of the specific intensity need to be J/cm^2/s/keV/steradian.
  * 
  *     return erg / 4.135667662e-18             # <<<<<<<<<<<<<<
@@ -3358,8 +4221,8 @@ static double __pyx_f_3hot_eval_hot_norm(void) {
   __pyx_r = (__pyx_v_3hot_erg / 4.135667662e-18);
   goto __pyx_L0;
 
-  /* "hot.pyx":653
- *     return I2
+  /* "hot.pyx":945
+ *     return I
  * 
  * cdef double eval_hot_norm() nogil:             # <<<<<<<<<<<<<<
  *     # Source radiation field normalisation which is independent of the
@@ -3368,105 +4231,6 @@ static double __pyx_f_3hot_eval_hot_norm(void) {
 
   /* function exit code */
   __pyx_L0:;
-  return __pyx_r;
-}
-
-/* "hot.pyx":664
- * 
- * 
- * cdef vector[double] multiply_vectors(int length, vector[double] vexy, vector[double] vex, vector[double] vey):             # <<<<<<<<<<<<<<
- *     # for i in range(length):
- *     #     vexy[i] = vex[i] + vey[i]
- */
-
-static std::vector<double>  __pyx_f_3hot_multiply_vectors(CYTHON_UNUSED int __pyx_v_length, std::vector<double>  __pyx_v_vexy, CYTHON_UNUSED std::vector<double>  __pyx_v_vex, CYTHON_UNUSED std::vector<double>  __pyx_v_vey) {
-  std::vector<double>  __pyx_r;
-  __Pyx_RefNannyDeclarations
-  __Pyx_RefNannySetupContext("multiply_vectors", 0);
-
-  /* "hot.pyx":668
- *     #     vexy[i] = vex[i] + vey[i]
- *     # return vexy
- *     vexy[0]=0             # <<<<<<<<<<<<<<
- * 
- * 
- */
-  (__pyx_v_vexy[0]) = 0.0;
-
-  /* "hot.pyx":664
- * 
- * 
- * cdef vector[double] multiply_vectors(int length, vector[double] vexy, vector[double] vex, vector[double] vey):             # <<<<<<<<<<<<<<
- *     # for i in range(length):
- *     #     vexy[i] = vex[i] + vey[i]
- */
-
-  /* function exit code */
-  __Pyx_pretend_to_initialize(&__pyx_r);
-  __Pyx_RefNannyFinishContext();
-  return __pyx_r;
-}
-
-/* "hot.pyx":671
- * 
- * 
- * cdef double* multiply_pointers(double* vencxy, double* vencx, double* vency, int length):             # <<<<<<<<<<<<<<
- *     for i in range(length):
- *         vencxy[i] = vencx[i] * vency[i]
- */
-
-static double *__pyx_f_3hot_multiply_pointers(double *__pyx_v_vencxy, double *__pyx_v_vencx, double *__pyx_v_vency, int __pyx_v_length) {
-  int __pyx_v_i;
-  double *__pyx_r;
-  __Pyx_RefNannyDeclarations
-  int __pyx_t_1;
-  int __pyx_t_2;
-  int __pyx_t_3;
-  __Pyx_RefNannySetupContext("multiply_pointers", 0);
-
-  /* "hot.pyx":672
- * 
- * cdef double* multiply_pointers(double* vencxy, double* vencx, double* vency, int length):
- *     for i in range(length):             # <<<<<<<<<<<<<<
- *         vencxy[i] = vencx[i] * vency[i]
- *     return vencxy
- */
-  __pyx_t_1 = __pyx_v_length;
-  __pyx_t_2 = __pyx_t_1;
-  for (__pyx_t_3 = 0; __pyx_t_3 < __pyx_t_2; __pyx_t_3+=1) {
-    __pyx_v_i = __pyx_t_3;
-
-    /* "hot.pyx":673
- * cdef double* multiply_pointers(double* vencxy, double* vencx, double* vency, int length):
- *     for i in range(length):
- *         vencxy[i] = vencx[i] * vency[i]             # <<<<<<<<<<<<<<
- *     return vencxy
- * 
- */
-    (__pyx_v_vencxy[__pyx_v_i]) = ((__pyx_v_vencx[__pyx_v_i]) * (__pyx_v_vency[__pyx_v_i]));
-  }
-
-  /* "hot.pyx":674
- *     for i in range(length):
- *         vencxy[i] = vencx[i] * vency[i]
- *     return vencxy             # <<<<<<<<<<<<<<
- * 
- * 
- */
-  __pyx_r = __pyx_v_vencxy;
-  goto __pyx_L0;
-
-  /* "hot.pyx":671
- * 
- * 
- * cdef double* multiply_pointers(double* vencxy, double* vencx, double* vency, int length):             # <<<<<<<<<<<<<<
- *     for i in range(length):
- *         vencxy[i] = vencx[i] * vency[i]
- */
-
-  /* function exit code */
-  __pyx_L0:;
-  __Pyx_RefNannyFinishContext();
   return __pyx_r;
 }
 
@@ -3570,8 +4334,7 @@ static int __Pyx_modinit_function_export_code(void) {
   if (__Pyx_ExportFunction("eval_hot_norm", (void (*)(void))__pyx_f_3hot_eval_hot_norm, "double (void)") < 0) __PYX_ERR(0, 1, __pyx_L1_error)
   if (__Pyx_ExportFunction("init_hot", (void (*)(void))__pyx_f_3hot_init_hot, "void *(size_t, __pyx_t_7preload__preloaded const *const )") < 0) __PYX_ERR(0, 1, __pyx_L1_error)
   if (__Pyx_ExportFunction("free_hot", (void (*)(void))__pyx_f_3hot_free_hot, "int (size_t, void *const )") < 0) __PYX_ERR(0, 1, __pyx_L1_error)
-  if (__Pyx_ExportFunction("multiply_vectors", (void (*)(void))__pyx_f_3hot_multiply_vectors, "std::vector<double>  (int, std::vector<double> , std::vector<double> , std::vector<double> )") < 0) __PYX_ERR(0, 1, __pyx_L1_error)
-  if (__Pyx_ExportFunction("multiply_pointers", (void (*)(void))__pyx_f_3hot_multiply_pointers, "double *(double *, double *, double *, int)") < 0) __PYX_ERR(0, 1, __pyx_L1_error)
+  if (__Pyx_ExportFunction("eval_hot_faster", (void (*)(void))__pyx_f_3hot_eval_hot_faster, "double (size_t, double, double, double, double, double, void *const )") < 0) __PYX_ERR(0, 1, __pyx_L1_error)
   __Pyx_RefNannyFinishContext();
   return 0;
   __pyx_L1_error:;

@@ -128,6 +128,7 @@ if __name__ == '__main__':
             if 'gcc' in os.environ['CC']:
                 extra_compile_args=['-fopenmp',
                                     # '-fopt-info-vec-all', #vectorization info
+                                    '-mavx',
                                     '-march=native',
                                     '-O3',
                                     '-funroll-loops',

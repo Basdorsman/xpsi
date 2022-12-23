@@ -22,6 +22,7 @@ import sys
 sys.path.append('../')
 from custom_tools import CustomInstrument, CustomHotRegion, CustomHotRegion_Accreting, CustomPhotosphere_BB, CustomPhotosphere_4D, CustomPhotosphere_5D, CustomPhotosphere_Bobrikova, CustomSignal, CustomPrior, CustomPrior_NoSecondary, plot_2D_pulse
 
+import time
 
 np.random.seed(xpsi._rank+10)
 print('Rank reporting: %d' % xpsi._rank)
@@ -29,17 +30,21 @@ print('Rank reporting: %d' % xpsi._rank)
 ################################ OPTIONS ###############################
 second = False
 atmosphere = 'accreting' #'blackbody', 'numerical'
+n_params_numerical = "4"
 
 try: #try to get parameters from shell input
     os.environ.get('n_params')
     n_params = os.environ['n_params']
     if n_params=='B': atmosphere = 'blackbody'
-    elif n_params=='4' or '5': atmosphere = 'numerical'
+    elif n_params=='4' or n_params=='5': atmosphere = 'numerical'
     elif n_params=='A': atmosphere = 'accreting'
 except:
     if atmosphere=='accreting': n_params = "A"
-    elif atmosphere=='numerical': n_params = "5" #4 doesn't work right now
+    elif atmosphere=='numerical': n_params = n_params_numerical
     elif atmosphere=='blackbody': n_params = "B"
+    
+print('atmosphere:', atmosphere)
+print('n_params:', n_params)
 
 ##################################### DATA ####################################
 settings = dict(counts = np.loadtxt('../model_data/example_synthetic_realisation.dat', dtype=np.double),
@@ -101,25 +106,46 @@ if atmosphere=='accreting':
        	                    num_rays=200,
        	                    prefix='p')
 elif atmosphere=='numerical':
-    bounds = dict(super_colatitude = (None, None),
-                  super_radius = (None, None),
-                  phase_shift = (0.0, 0.1),
-                  super_temperature = (5.1, 6.8),
-                  super_modulator = (-0.3, 0.3))
-
-    primary = CustomHotRegion(bounds=bounds,
-       	                    values={},
-       	                    symmetry=False, #call general integrator instead of for azimuthal invariance
-       	                    omit=False,
-       	                    cede=False,
-       	                    concentric=False,
-       	                    sqrt_num_cells=32,
-       	                    min_sqrt_num_cells=10,
-       	                    max_sqrt_num_cells=64,
-       	                    num_leaves=100,
-       	                    num_rays=200,
-                            modulated = True, #modulation flag
-       	                    prefix='p')
+    if n_params=='4':
+        bounds = dict(super_colatitude = (None, None),
+                      super_radius = (None, None),
+                      phase_shift = (0.0, 0.1),
+                      super_temperature = (5.1, 6.8))#,
+                      #super_modulator = (-0.3, 0.3))
+    
+        primary = xpsi.HotRegion(bounds=bounds,
+           	                    values={},
+           	                    symmetry=False, #call general integrator instead of for azimuthal invariance
+           	                    omit=False,
+           	                    cede=False,
+           	                    concentric=False,
+           	                    sqrt_num_cells=32,
+           	                    min_sqrt_num_cells=10,
+           	                    max_sqrt_num_cells=64,
+           	                    num_leaves=100,
+           	                    num_rays=200,
+                                #modulated = True, #modulation flag
+           	                    prefix='p')
+    elif n_params=='5':
+        bounds = dict(super_colatitude = (None, None),
+                      super_radius = (None, None),
+                      phase_shift = (0.0, 0.1),
+                      super_temperature = (5.1, 6.8),
+                      super_modulator = (-0.3, 0.3))
+    
+        primary = CustomHotRegion(bounds=bounds,
+           	                    values={},
+           	                    symmetry=False, #call general integrator instead of for azimuthal invariance
+           	                    omit=False,
+           	                    cede=False,
+           	                    concentric=False,
+           	                    sqrt_num_cells=32,
+           	                    min_sqrt_num_cells=10,
+           	                    max_sqrt_num_cells=64,
+           	                    num_leaves=100,
+           	                    num_rays=200,
+                                modulated = True, #modulation flag
+           	                    prefix='p')
 
 elif atmosphere=='blackbody':
     bounds = dict(super_colatitude = (None, None),
@@ -143,7 +169,7 @@ elif atmosphere=='blackbody':
 
 
 ###################################### SECONDARY ##############################
-if second:
+if second: # 4 doesn't work for secondary
     # If you derive bounds for a secondary hotspots, you cannot also define bounds
     # (above). You must set them to "None" to avoid some conflict. 
 
@@ -254,7 +280,7 @@ elif not second:
 ################################ ATMOSPHERE ################################### 
       
 
-print("n_params: ",n_params)
+# print("n_params: ",n_params)
 
 if n_params == "4":   
     photosphere = CustomPhotosphere_4D(hot = hot, elsewhere = None,
@@ -358,16 +384,28 @@ elif atmosphere=='numerical':
               0.025
               ]
     elif not second:
-        p = [1.6, #1.4, #grav mass
-              14.0,#12.5, #coordinate equatorial radius
-              0.2, # earth distance kpc
-              math.cos(1.25), #cosine of earth inclination
-              0.0, #phase of hotregoin
-              1.0, #colatitude of centre of superseding region
-              0.075,  #angular radius superceding region
-              p_temperature, #primary temperature
-              modulator #modulator
-              ]
+        if n_params=='5':
+            p = [1.6, #1.4, #grav mass
+                  14.0,#12.5, #coordinate equatorial radius
+                  0.2, # earth distance kpc
+                  math.cos(1.25), #cosine of earth inclination
+                  0.0, #phase of hotregoin
+                  1.0, #colatitude of centre of superseding region
+                  0.075,  #angular radius superceding region
+                  p_temperature, #primary temperature
+                  modulator #modulator
+                  ]
+        elif n_params=='4':
+            p = [1.6, #1.4, #grav mass
+                  14.0,#12.5, #coordinate equatorial radius
+                  0.2, # earth distance kpc
+                  math.cos(1.25), #cosine of earth inclination
+                  0.0, #phase of hotregoin
+                  1.0, #colatitude of centre of superseding region
+                  0.075,  #angular radius superceding region
+                  p_temperature, #primary temperature
+                  #modulator #modulator
+                  ]
         
 elif atmosphere=='blackbody':
     p_temperature=6.2
@@ -488,7 +526,12 @@ print(star.params)
 ######### PHOTOSPHERE INTEGRATE #####################
 print('photosphere integrating')
 energies=np.logspace(-1.0,np.log10(3.0), 128, base=10.0)
+
+st = time.time()
 photosphere.integrate(energies, threads=8)
+et = time.time()
+elapsed_time = et - st
+print('Photosphere integration time:', elapsed_time,'seconds')
 
 # ################################### PLOTS #####################################
 
@@ -529,8 +572,12 @@ if atmosphere=='accreting':
     ax.set_title('atmosphere={} te={:.2e} [keV], tbb={:.2e} [keV], tau={:.2e} [-]'.format(n_params, te*0.511, tbb*511, tau), loc='center') #unit conversion te and tbb is different due to a cluster leftover according to Anna B.
     figstring = 'plots/pulses_atm={}_sec={}_te={:.2e}_tbb={:.2e}_tau={:.2e}.png'.format(atmosphere, second, te, tbb, tau)
 elif atmosphere=='numerical':
-    ax.set_title('atmosphere={} p_temperature={} modulator={}'.format(n_params, p_temperature, modulator))
-    figstring='plots/pulses_atm={}_sec={}_p_temperature={}_modulator={}.png'.format(atmosphere, second, p_temperature, modulator)
+    if n_params=="5":
+        ax.set_title('atmosphere={} p_temperature={} modulator={}'.format(n_params, p_temperature, modulator))
+        figstring='plots/5D_pulses_atm={}_sec={}_p_temperature={}_modulator={}.png'.format(atmosphere, second, p_temperature, modulator)
+    elif n_params=="4":
+        ax.set_title('atmosphere={} p_temperature={}'.format(n_params, p_temperature))
+        figstring='plots/4D_pulses_atm={}_sec={}_p_temperature={}.png'.format(atmosphere, second, p_temperature)
 elif atmosphere=='blackbody':
     ax.set_title('atmosphere={} p_temperature={}'.format(n_params, p_temperature))
     figstring='plots/pulses_atm={}_sec={}_p_temperature={}.png'.format(atmosphere, second, p_temperature)

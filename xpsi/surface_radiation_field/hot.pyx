@@ -5,7 +5,7 @@
 
 from libc.math cimport M_PI, sqrt, sin, cos, acos, log10, pow, exp, fabs
 from libc.stdio cimport printf, fopen, fclose, fread, FILE
-#from GSL cimport gsl_isnan, gsl_isinf
+from GSL cimport gsl_isnan, gsl_isinf
 from libc.stdlib cimport malloc, free
 
 from xpsi.global_imports import _keV, _k_B
@@ -125,13 +125,6 @@ cdef void* init_hot(size_t numThreads, const _preloaded *const preloaded) nogil:
             D.acc.DIFF[T][j + 3] = D.acc.VEC_CACHE[T][i] - D.p.params[i][0]
             D.acc.DIFF[T][j + 3] *= D.acc.VEC_CACHE[T][i] - D.p.params[i][1]
             D.acc.DIFF[T][j + 3] *= D.acc.VEC_CACHE[T][i] - D.p.params[i][2]
-    
-        # printf("diagnostics for initialization\n")
-        # for i in range(D.p.ndims):
-        #     printf("i=%d, ", <int>i)
-        #     printf("D.p.params[i][0]: %.2e\n", D.p.params[i][0])
-        #     printf("VEC_CACHE[T][i]: %.2e\n", D.acc.VEC_CACHE[T][i])
-        
 
     cdef double *address = NULL
     # Cache intensity
@@ -213,20 +206,16 @@ cdef int free_hot(size_t numThreads, void *const data) nogil:
 # >>> Improve acceleration properties... i.e. do not recompute numerical
 # ... weights or re-read intensities if not necessary.
 #----------------------------------------------------------------------->>>
-
-# cdef double eval_hot(size_t THREAD,
-#                       double E,
-#                       double mu,
-#                       double tau,
-#                       double t_bb,
-#                       double t_e,
-#                       void *const data) nogil:
-    
 cdef double eval_hot(size_t THREAD,
                      double E,
                      double mu,
                      const double *const VEC,
                      void *const data) nogil:
+
+    cdef double g, mod, Temperature
+    Temperature = VEC[0]
+    modulator = VEC[1]
+    g = VEC[2]
     
     # Arguments:
     # E = photon energy in keV
@@ -247,40 +236,39 @@ cdef double eval_hot(size_t THREAD,
         double *V_CACHE = D.acc.VEC_CACHE[THREAD]
         double vec[5] # should be = ndims
         # double E_eff = k_B_over_keV * pow(10.0, VEC[0])
-        # double E_eff = k_B_over_keV * pow(10.0, Temperature)
+        double E_eff = k_B_over_keV * pow(10.0, Temperature)
         int update_baseNode[5]  # should be = ndims
         int CACHE = 0
 
-    cdef double te, tbb, tau
-    te = VEC[0]
-    tbb = VEC[1]
-    tau = VEC[2]
+    # (3) add my modulator variable. I don't know yet how to tunnel this from
+    # the front end, so I won't. I am choosing value 5, which is in the middle of the range.
+    # vec[0] = VEC[0]
+    # vec[1] = VEC[1]
+    # vec[2] = mu
+    # vec[3] = log10(E / E_eff)
     
-    cdef double evere = 0.5109989e6 # electron volts in elecron rest energy
+    
+    vec[0] = modulator #0 # THIS IS MY CUSTOM VARIABLE: MODULATES INTENSITY BY A FACTOR x10^-0.3-x10^0.3 #x1-10
+    vec[1] = Temperature
+    vec[2] = g
+    vec[3] = mu
+    vec[4] = log10(E / E_eff)
+    
 
-    # take into account the order of *._hot_atmosphere
-    vec[0] = te
-    vec[1] = tbb
-    vec[2] = tau
-    vec[3] = mu #0.5  # mu
-    vec[4] = E*1e3/evere #1.01088  # E
+    # printf("\nvec[0]: %.2e, vec[1]: %.2e, vec[2]: %.2e, vec[3]: %.2e, vec[4]: %.2e", vec[0], vec[1], vec[2], vec[3], vec[4])
+
     
-    # printf("Bobrikova atmosphere interpolator")
-    
-    # printf("diagnostics 0:\n")
-    # printf("E: %.2e, ", E)
-    # printf("Temperature: %.2e, ", Temperature)
-    # printf("k_B_over_keV: %.2e, ", k_B_over_keV)
-    # printf("E_eff: %.2e, ", E_eff)
-    # printf("vec[4]: %.2e\n", vec[4])
-    
+    # printf("diagnostics 1:\n") # using i breaks next code block
+    # for i in range(D.p.ndims):
+    #     printf("i=%d, ", <int>i)
+    #     printf("vec[i]: %.2e\n", vec[i])
+    # cdef size_t test 
 
     # printf("\nvec[0]: %.8e, ", vec[0])
     # printf("vec[1]: %.8e, ", vec[1])
     # printf("vec[2]: %.8e, ", vec[2])
     # printf("vec[3]: %.8e, ", vec[3])
     # printf("vec[4]: %.8e, ", vec[4])
-    
     
     #printf("\neval_hot() called")
     #printf("\nVEC[0]: %f", VEC[0])
@@ -357,7 +345,6 @@ cdef double eval_hot(size_t THREAD,
 
             # printf("\nupdating V_CACHE")
 
-
             V_CACHE[i] = vec[i]
 
             # if parallel == 31:
@@ -396,7 +383,6 @@ cdef double eval_hot(size_t THREAD,
         # printf("DIFF[ii+1]: %.2e, ", DIFF[ii+1])
         # printf("DIFF[ii+2]: %.2e, ", DIFF[ii+2])
         # printf("DIFF[ii+3]: %.2e\n", DIFF[ii+3])
-        
         
         # printf("SPACE[ii]: %.2e, ", SPACE[ii])
         # printf("SPACE[ii+1]: %.2e, ", SPACE[ii+1])
@@ -454,32 +440,40 @@ cdef double eval_hot(size_t THREAD,
     
     for i in range(4):
         II = i * D.p.BLOCKS[0]
-        for j in range(4):
-            JJ = j * D.p.BLOCKS[1]
-            for k in range(4):
-                KK = k * D.p.BLOCKS[2]
-                for l in range(4):
-                    LL = l * D.p.BLOCKS[3]
-                    for m in range(4):
-                        address = D.p.I + (BN[0] + i) * D.p.S[0]
-                        address += (BN[1] + j) * D.p.S[1]
-                        address += (BN[2] + k) * D.p.S[2]
-                        address += (BN[3] + l) * D.p.S[3]
-                        address += BN[4] + m
-    
-                        temp = DIFF[i] * DIFF[4 + j] * DIFF[8 + k] * DIFF[12 + l] * DIFF[16 + m]
-                        temp *= SPACE[i] * SPACE[4 + j] * SPACE[8 + k] * SPACE[12 + l] * SPACE[16 + m]
-                        INDEX = II + JJ + KK + LL + m
-                        if CACHE == 1:
-                            I_CACHE[INDEX] = address[0]
-
-                        I += temp * I_CACHE[INDEX]
-                        
-                        #printf('i=%d,j=%d,k=%d,l=%d,m=%d, ', <int>i, <int>j, <int>k, <int>l, <int>m)
-                        #printf('address = %d, ', <int>(address-D.p.I))   
-                        #printf('I_CACHE[INDEX] = %d, ', <int>I_CACHE[INDEX])
-                        #printf('temp = %0.2e, ', temp)                         
-                        #printf('dI = %0.2e\n', temp * I_CACHE[INDEX])
+        if DIFF[i] != 0.0:
+            for j in range(4):
+                JJ = j * D.p.BLOCKS[1]
+                if DIFF[4+j] != 0.0:
+                    for k in range(4):
+                        KK = k * D.p.BLOCKS[2]
+                        for l in range(4):
+                            LL = l * D.p.BLOCKS[3]
+                            for m in range(4):
+                                address = D.p.I + (BN[0] + i) * D.p.S[0]
+                                address += (BN[1] + j) * D.p.S[1]
+                                address += (BN[2] + k) * D.p.S[2]
+                                address += (BN[3] + l) * D.p.S[3]
+                                address += BN[4] + m
+            
+                                temp = DIFF[i] * DIFF[4 + j] * DIFF[8 + k] * DIFF[12 + l] * DIFF[16 + m]
+                                temp *= SPACE[i] * SPACE[4 + j] * SPACE[8 + k] * SPACE[12 + l] * SPACE[16 + m]
+                                INDEX = II + JJ + KK + LL + m
+                                
+                                # if temp == 0.0:
+                                #     printf('\ntemp is zero! ')
+                                #     printf('INDEX: %lu, ', INDEX)
+                                #     if DIFF[8+k] == 0.0: printf('DIFF[8+k] is zero')
+                                
+                                if CACHE == 1:
+                                    I_CACHE[INDEX] = address[0]
+        
+                                I += temp * I_CACHE[INDEX]
+                            
+                            # printf('i=%d,j=%d,k=%d,l=%d,m=%d, ', <int>i, <int>j, <int>k, <int>l, <int>m)
+                            # printf('address = %d, ', <int>(address-D.p.I))   
+                            # printf('I_CACHE[INDEX] = %d, ', <int>I_CACHE[INDEX])
+                            # printf('temp = %0.2e, ', temp)                         
+                            # printf('dI = %0.2e\n', temp * I_CACHE[INDEX])
 
     #if gsl_isnan(I) == 1:
         #printf("\nIntensity: NaN; Index [%d,%d,%d,%d] ",
@@ -492,9 +486,8 @@ cdef double eval_hot(size_t THREAD,
         return 0.0
     # Vec here should be the temperature!
     # printf(" I_out: %.8e, ", I * pow(10.0, 3.0 * vec[1]))
-    # printf("\nI:  %.8e", I)
-    #return I * pow(10.0, 3.0 * Temperature)
-    return I
+    return I * pow(10.0, 3.0 * Temperature)
+
 
 cdef double eval_hot_norm() nogil:
     # Source radiation field normalisation which is independent of the

@@ -263,8 +263,9 @@ cdef double eval_hot(size_t THREAD,
     vec[1] = tbb
     vec[2] = tau
     vec[3] = mu #0.5  # mu
-    vec[4] = E*1e3/evere #1.01088  # E
     
+    vec[4] = E*1e3/evere #1.01088  # required if E input is in units of keV
+    #vec[4] = E
     # printf("Bobrikova atmosphere interpolator")
     
     # printf("diagnostics 0:\n")
@@ -497,11 +498,13 @@ cdef double eval_hot(size_t THREAD,
     #printf("\nBase-nodes [%d,%d,%d,%d] ",
                 #<int>BN[0], <int>BN[1], <int>BN[2], <int>BN[3])
 
+    # printf("\nI:  %.8e", I)
+
     if I < 0.0:
         return 0.0
     # Vec here should be the temperature!
     # printf(" I_out: %.8e, ", I * pow(10.0, 3.0 * vec[1]))
-    # printf("\nI:  %.8e", I)
+    
     #return I * pow(10.0, 3.0 * Temperature)
     return I
 
@@ -557,7 +560,6 @@ cdef double eval_hot_faster(size_t THREAD,
     vec[2] = tau
     vec[3] = mu #0.5  # mu
     vec[4] = E*1e3/evere #1.01088  # E
-    
     # printf("Bobrikova atmosphere interpolator")
     
     # printf("diagnostics 0:\n")

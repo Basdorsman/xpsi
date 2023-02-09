@@ -127,6 +127,8 @@ if __name__ == '__main__':
         try:
             if 'gcc' in os.environ['CC']:
                 extra_compile_args=['-fopenmp',
+                                    # '-fopt-info-vec-all', #vectorization info
+                                    '-mavx',
                                     '-march=native',
                                     '-O3',
                                     '-funroll-loops',
@@ -193,7 +195,7 @@ if __name__ == '__main__':
 
         return Extension(modname,
                          [pathname + file_extension],
-                         language = 'c',
+                         language = 'c++', #'c',
                          libraries = libraries,
                          library_dirs = library_dirs,
                          include_dirs = include_dirs,

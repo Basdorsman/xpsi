@@ -34,6 +34,7 @@ from xpsi.surface_radiation_field.hot cimport (init_hot,
                                                eval_hot,
                                                eval_hot_norm,
                                                free_hot)
+                                               #eval_hot_faster)
 
 from xpsi.surface_radiation_field.elsewhere cimport (init_elsewhere,
                                                      free_elsewhere,
@@ -597,6 +598,7 @@ def integrate(size_t numThreads,
                                         # printf("srcCellParams[i,j,0]: %.8e, ", srcCellParams[i,j,0])
                                         # printf("srcCellParams[i,j,1]: %.8e, ", srcCellParams[i,j,1])
                                         # printf('call eval_hot')
+                                        # I_E = eval_hot_faster(T,
                                         I_E = eval_hot(T,
                                                        E_prime,
                                                        __ABB,

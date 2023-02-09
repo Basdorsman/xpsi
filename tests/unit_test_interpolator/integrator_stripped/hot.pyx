@@ -5,8 +5,13 @@
 
 from libc.math cimport M_PI, sqrt, sin, cos, acos, log10, pow, exp, fabs
 from libc.stdio cimport printf, fopen, fclose, fread, FILE
-#from GSL cimport gsl_isnan, gsl_isinf
+# from GSL cimport gsl_isnan, gsl_isinf
 from libc.stdlib cimport malloc, free
+# from libcpp.vector cimport vector
+from libcpp cimport bool
+
+# from libc.time cimport time, time_t, clock, clock_t
+from posix.time cimport clock_gettime, timespec, CLOCK_REALTIME
 
 from xpsi.global_imports import _keV, _k_B
 
@@ -36,6 +41,12 @@ ctypedef struct DATA:
     const _preloaded *p
     ACCELERATE acc
 
+
+cdef:
+    timespec ts, te
+    long int t_elapsed
+
+
 #----------------------------------------------------------------------->>>
 # >>> User modifiable functions.
 # >>> Note that the user is entirely free to wrap thread-safe and
@@ -49,7 +60,10 @@ cdef void* init_hot(size_t numThreads, const _preloaded *const preloaded) nogil:
     # the user's responsibility to manage.
     # Return NULL if dynamic memory is not required for the model
 
-    #printf("inside init_hot()")
+    # printf("inside init_hot()")
+    
+    clock_gettime(CLOCK_REALTIME, &ts)
+    
     cdef DATA *D = <DATA*> malloc(sizeof(DATA))
     D.p = preloaded
     
@@ -151,6 +165,12 @@ cdef void* init_hot(size_t numThreads, const _preloaded *const preloaded) nogil:
     #                     address += D.acc.BN[T][3] + l
     #                     D.acc.INTENSITY_CACHE[T][i * D.p.BLOCKS[0] + j * D.p.BLOCKS[1] + k * D.p.BLOCKS[2] + l] = address[0]
 
+    clock_gettime(CLOCK_REALTIME, &te)
+    t_elapsed = (te.tv_nsec - ts.tv_nsec)
+    printf("everything before forloops init_hot() takes %ld ns\n", t_elapsed)
+    clock_gettime(CLOCK_REALTIME, &ts)
+    
+
     for T in range(numThreads):
         for i in range(4):
             for j in range(4):
@@ -163,6 +183,12 @@ cdef void* init_hot(size_t numThreads, const _preloaded *const preloaded) nogil:
                             address += (D.acc.BN[T][3] + l) * D.p.S[3]
                             address += D.acc.BN[T][4] + m
                             D.acc.INTENSITY_CACHE[T][i * D.p.BLOCKS[0] + j * D.p.BLOCKS[1] + k * D.p.BLOCKS[2] + l * D.p.BLOCKS[3] + m] = address[0]
+
+
+
+    clock_gettime(CLOCK_REALTIME, &te)
+    t_elapsed = (te.tv_nsec - ts.tv_nsec)
+    printf("init_hot() forloops takes %ld ns\n", t_elapsed)
 
 
     # Cast for generalised usage in integration routines
@@ -181,6 +207,7 @@ cdef int free_hot(size_t numThreads, void *const data) nogil:
     # because data is expected to be NULL in this case
 
     # printf("inside free_hot()")
+    clock_gettime(CLOCK_REALTIME, &ts)
 
     cdef DATA *D = <DATA*> data
 
@@ -205,6 +232,12 @@ cdef int free_hot(size_t numThreads, void *const data) nogil:
 
     # printf("freeing D...")
     free(D)
+    
+    
+    
+    clock_gettime(CLOCK_REALTIME, &te)
+    t_elapsed = (te.tv_nsec - ts.tv_nsec)
+    printf("free_hot() takes %ld ns\n", t_elapsed)
 
     return SUCCESS
 
@@ -232,6 +265,20 @@ cdef double eval_hot(size_t THREAD,
     # VEC = variables such as temperature, effective gravity, ...
     # data = numerical model data required for intensity evaluation
     # This function must cast the void pointer appropriately for use.
+    
+    #printf("inside eval_hot()")
+    
+    # timing definitions
+    # cdef:
+    #     clock_t time1, time2
+    #     double cpu_time_used
+
+    #time1 = clock()
+    #printf("Starting Time:%g\n", (double) time1)
+    
+    #cdef timespec ts
+    # clock_gettime(CLOCK_REALTIME, &ts)
+    
     cdef DATA *D = <DATA*> data
 
     cdef:
@@ -248,7 +295,6 @@ cdef double eval_hot(size_t THREAD,
         # double E_eff = k_B_over_keV * pow(10.0, Temperature)
         int update_baseNode[5]  # should be = ndims
         int CACHE = 0
-
 
     vec[0] = t_e
     vec[1] = t_bb
@@ -276,22 +322,17 @@ cdef double eval_hot(size_t THREAD,
     # printf("E_eff: %.2e, ", E_eff)
     # printf("vec[4]: %.2e\n", vec[4])
     
-    
     # printf("diagnostics 1:\n") # using i breaks next code block
     # for i in range(D.p.ndims):
     #     printf("i=%d, ", <int>i)
     #     printf("vec[i]: %.2e\n", vec[i])
     # cdef size_t test 
 
-
-
-    
     # printf("\nvec[0]: %.8e, ", vec[0])
     # printf("vec[1]: %.8e, ", vec[1])
     # printf("vec[2]: %.8e, ", vec[2])
     # printf("vec[3]: %.8e, ", vec[3])
     # printf("vec[4]: %.8e, ", vec[4])
-    
     
     #printf("\neval_hot() called")
     #printf("\nVEC[0]: %f", VEC[0])
@@ -462,49 +503,312 @@ cdef double eval_hot(size_t THREAD,
     # printf("BN[3]: %d\n", <int>BN[3])
     # printf("BN[4]: %d\n", <int>BN[4])
         
+    # clock_gettime(CLOCK_REALTIME, &te)
+    # t_elapsed = (te.tv_nsec - ts.tv_nsec)
+    # printf("everything before forloops in eval_hot() takes %ld ns\n", t_elapsed)
+    # clock_gettime(CLOCK_REALTIME, &ts)
     
     for i in range(4):
         II = i * D.p.BLOCKS[0]
-        for j in range(4):
-            JJ = j * D.p.BLOCKS[1]
-            for k in range(4):
-                KK = k * D.p.BLOCKS[2]
-                for l in range(4):
-                    LL = l * D.p.BLOCKS[3]
-                    for m in range(4):
-                        address = D.p.I + (BN[0] + i) * D.p.S[0]
-                        address += (BN[1] + j) * D.p.S[1]
-                        address += (BN[2] + k) * D.p.S[2]
-                        address += (BN[3] + l) * D.p.S[3]
-                        address += BN[4] + m
-    
-                        temp = DIFF[i] * DIFF[4 + j] * DIFF[8 + k] * DIFF[12 + l] * DIFF[16 + m]
-                        temp *= SPACE[i] * SPACE[4 + j] * SPACE[8 + k] * SPACE[12 + l] * SPACE[16 + m]
-                        INDEX = II + JJ + KK + LL + m
-                        if CACHE == 1:
-                            I_CACHE[INDEX] = address[0]
-
-                        I += temp * I_CACHE[INDEX]
-                        
-                        #printf('i=%d,j=%d,k=%d,l=%d,m=%d, ', <int>i, <int>j, <int>k, <int>l, <int>m)
-                        #printf('address = %d, ', <int>(address-D.p.I))   
-                        #printf('I_CACHE[INDEX] = %d, ', <int>I_CACHE[INDEX])
-                        #printf('temp = %0.2e, ', temp)                         
-                        #printf('dI = %0.2e\n', temp * I_CACHE[INDEX])
-
-    #if gsl_isnan(I) == 1:
-        #printf("\nIntensity: NaN; Index [%d,%d,%d,%d] ",
-                #<int>BN[0], <int>BN[1], <int>BN[2], <int>BN[3])
-
-    #printf("\nBase-nodes [%d,%d,%d,%d] ",
-                #<int>BN[0], <int>BN[1], <int>BN[2], <int>BN[3])
-
+        if DIFF[i] != 0.0:
+            for j in range(4):
+                JJ = j * D.p.BLOCKS[1]
+                # if DIFF[j+4] != 0.0:
+                for k in range(4):
+                    KK = k * D.p.BLOCKS[2]
+                    for l in range(4):
+                        LL = l * D.p.BLOCKS[3]
+                        for m in range(4):
+                            address = D.p.I + (BN[0] + i) * D.p.S[0] + (BN[1] + j) * D.p.S[1] + (BN[2] + k) * D.p.S[2] + (BN[3] + l) * D.p.S[3] + BN[4] + m
+                            
+                            # printf("address %p\n", address)
+                            # printf("i:%lu, ",i)
+                            # printf("j:%lu, ",j)
+                            # printf("k:%lu, ",k)
+                            # printf("l:%lu, ",l)
+                            # printf("m:%lu\n",m)
+                            
+        
+                            temp = DIFF[i] * DIFF[4 + j] * DIFF[8 + k] * DIFF[12 + l] * DIFF[16 + m]
+                            temp *= SPACE[i] * SPACE[4 + j] * SPACE[8 + k] * SPACE[12 + l] * SPACE[16 + m]
+                            # if temp == 0.0: printf('temp is zero!')
+                            
+                            INDEX = II + JJ + KK + LL + m
+                            # printf('\nINDEX: %lu', INDEX)
+                            if CACHE == 1:
+                                I_CACHE[INDEX] = address[0]
+                            # printf('%f\n', I)
+                            I += temp * I_CACHE[INDEX]
+                            
+                            #printf('i=%d,j=%d,k=%d,l=%d,m=%d, ', <int>i, <int>j, <int>k, <int>l, <int>m)
+                            #printf('address = %d, ', <int>(address-D.p.I))   
+                            #printf('I_CACHE[INDEX] = %d, ', <int>I_CACHE[INDEX])
+                            #printf('temp = %0.2e, ', temp)                         
+                            #printf('dI = %0.2e\n', temp * I_CACHE[INDEX])
+            
     if I < 0.0:
         return 0.0
-    # Vec here should be the temperature!
-    # printf(" I_out: %.8e, ", I * pow(10.0, 3.0 * vec[1]))
-    #return I * pow(10.0, 3.0 * Temperature)
+    
+    
     return I
+
+
+
+ctypedef struct mystruct:
+    double* temp2
+    double* I_CACHE
+    double* I_temp
+    
+
+cdef mystruct eval_hot_seploops(size_t THREAD,
+                      double E,
+                      double mu,
+                      double tau,
+                      double t_bb,
+                      double t_e,
+                      void *const data):
+    
+    clock_gettime(CLOCK_REALTIME, &ts)
+    # printf('\ninside eval_hot_seploops: %lu',ts.tv_nsec)
+    # Arguments:
+    # E = photon energy in keV
+    # mu = cosine of ray zenith angle (i.e., angle to surface normal)
+    # VEC = variables such as temperature, effective gravity, ...
+    # data = numerical model data required for intensity evaluation
+    # This function must cast the void pointer appropriately for use.
+    
+    cdef DATA *D = <DATA*> data
+
+    cdef:
+        size_t i = 0, ii
+        double I = 0.0, temp
+        double *node_vals = D.acc.node_vals[THREAD]
+        size_t *BN = D.acc.BN[THREAD]
+        double *SPACE = D.acc.SPACE[THREAD]
+        double *DIFF = D.acc.DIFF[THREAD]
+        double *I_CACHE = D.acc.INTENSITY_CACHE[THREAD]
+        double *V_CACHE = D.acc.VEC_CACHE[THREAD]
+        double vec[5] # should be = ndims
+        int update_baseNode[5]  # should be = ndims
+        int CACHE = 0
+
+    vec[0] = t_e
+    vec[1] = t_bb
+    vec[2] = tau
+    vec[3] = mu
+    vec[4] = E
+    
+
+    while i < D.p.ndims:
+
+        update_baseNode[i] = 0
+        if vec[i] < node_vals[2*i] and BN[i] != 0:
+
+            update_baseNode[i] = 1
+            while vec[i] < D.p.params[i][BN[i] + 1]:
+
+                if BN[i] > 0:
+                    BN[i] -= 1
+                elif vec[i] <= D.p.params[i][0]:
+                    vec[i] = D.p.params[i][0]
+                    break
+                elif BN[i] == 0:
+                    break
+
+            node_vals[2*i] = D.p.params[i][BN[i] + 1]
+            node_vals[2*i + 1] = D.p.params[i][BN[i] + 2]
+
+
+
+        elif vec[i] > node_vals[2*i + 1] and BN[i] != D.p.N[i] - 4: # I believe this has to do with the cubic interpolation points, so this remains 4
+
+            update_baseNode[i] = 1
+            while vec[i] > D.p.params[i][BN[i] + 2]:
+                if BN[i] < D.p.N[i] - 4:
+                    BN[i] += 1
+                elif vec[i] >= D.p.params[i][D.p.N[i] - 1]:
+                    vec[i] = D.p.params[i][D.p.N[i] - 1]
+                    break
+                elif BN[i] == D.p.N[i] - 4:
+                    break
+
+            node_vals[2*i] = D.p.params[i][BN[i] + 1]
+            node_vals[2*i + 1] = D.p.params[i][BN[i] + 2]
+
+
+        if V_CACHE[i] != vec[i] or update_baseNode[i] == 1:
+
+            ii = 4*i
+            DIFF[ii] = vec[i] - D.p.params[i][BN[i] + 1]
+            DIFF[ii] *= vec[i] - D.p.params[i][BN[i] + 2]
+            DIFF[ii] *= vec[i] - D.p.params[i][BN[i] + 3]
+
+            DIFF[ii + 1] = vec[i] - D.p.params[i][BN[i]]
+            DIFF[ii + 1] *= vec[i] - D.p.params[i][BN[i] + 2]
+            DIFF[ii + 1] *= vec[i] - D.p.params[i][BN[i] + 3]
+
+            DIFF[ii + 2] = vec[i] - D.p.params[i][BN[i]]
+            DIFF[ii + 2] *= vec[i] - D.p.params[i][BN[i] + 1]
+            DIFF[ii + 2] *= vec[i] - D.p.params[i][BN[i] + 3]
+
+            DIFF[ii + 3] = vec[i] - D.p.params[i][BN[i]]
+            DIFF[ii + 3] *= vec[i] - D.p.params[i][BN[i] + 1]
+            DIFF[ii + 3] *= vec[i] - D.p.params[i][BN[i] + 2]
+
+            V_CACHE[i] = vec[i]
+
+
+
+        if update_baseNode[i] == 1:
+
+            CACHE = 1
+            SPACE[ii] = 1.0 / (D.p.params[i][BN[i]] - D.p.params[i][BN[i] + 1])
+            SPACE[ii] /= D.p.params[i][BN[i]] - D.p.params[i][BN[i] + 2]
+            SPACE[ii] /= D.p.params[i][BN[i]] - D.p.params[i][BN[i] + 3]
+
+            SPACE[ii + 1] = 1.0 / (D.p.params[i][BN[i] + 1] - D.p.params[i][BN[i]])
+            SPACE[ii + 1] /= D.p.params[i][BN[i] + 1] - D.p.params[i][BN[i] + 2]
+            SPACE[ii + 1] /= D.p.params[i][BN[i] + 1] - D.p.params[i][BN[i] + 3]
+
+            SPACE[ii + 2] = 1.0 / (D.p.params[i][BN[i] + 2] - D.p.params[i][BN[i]])
+            SPACE[ii + 2] /= D.p.params[i][BN[i] + 2] - D.p.params[i][BN[i] + 1]
+            SPACE[ii + 2] /= D.p.params[i][BN[i] + 2] - D.p.params[i][BN[i] + 3]
+
+            SPACE[ii + 3] = 1.0 / (D.p.params[i][BN[i] + 3] - D.p.params[i][BN[i]])
+            SPACE[ii + 3] /= D.p.params[i][BN[i] + 3] - D.p.params[i][BN[i] + 1]
+            SPACE[ii + 3] /= D.p.params[i][BN[i] + 3] - D.p.params[i][BN[i] + 2]
+
+
+        i += 1
+
+
+
+    cdef size_t j, k, l, m, INDEX, II, JJ, KK, LL
+    cdef double *address = NULL
+
+    cdef int iterator
+    cdef int iteration_size = 1024
+    cdef double* temp2 = <double*>malloc(iteration_size * sizeof(double))
+    cdef double* I_temp = <double*>malloc(iteration_size * sizeof(double))
+    cdef double* value = NULL 
+    
+    # cdef double *address = NULL
+    cdef double** address2 = <double**>malloc(iteration_size * sizeof(double*))
+
+    # cdef int repeat = 10
+    
+    cdef mystruct temps
+
+    clock_gettime(CLOCK_REALTIME, &te)
+    t_elapsed = (te.tv_nsec - ts.tv_nsec)# / repeat
+    printf("\nnew eval_hot() pre loops takes %ld ns",t_elapsed) 
+    clock_gettime(CLOCK_REALTIME, &ts)
+
+    for iterator in range(iteration_size):
+        m = iterator % 4
+        l = iterator / 4 % 4
+        k = iterator / 16 % 4
+        j = iterator / 64 % 4
+        i = iterator / 256 % 4
+        
+        address2[iterator] = D.p.I + (BN[0] + i) * D.p.S[0] + (BN[1] + j) * D.p.S[1] + (BN[2] + k) * D.p.S[2] + (BN[3] + l) * D.p.S[3] + BN[4] + m
+
+    clock_gettime(CLOCK_REALTIME, &te)
+    t_elapsed = (te.tv_nsec - ts.tv_nsec)# / repeat
+    printf("\nnew eval_hot() for loops 1 takes %ld ns",t_elapsed) 
+    clock_gettime(CLOCK_REALTIME, &ts)
+
+
+    for iterator in range(iteration_size):
+        m = iterator % 4
+        l = iterator / 4 % 4
+        k = iterator / 16 % 4
+        j = iterator / 64 % 4
+        i = iterator / 256 % 4
+    
+        temp2[iterator] = DIFF[i] * DIFF[4 + j] * DIFF[8 + k] * DIFF[12 + l] * DIFF[16 + m] * SPACE[i] * SPACE[4 + j] * SPACE[8 + k] * SPACE[12 + l] * SPACE[16 + m]
+
+    clock_gettime(CLOCK_REALTIME, &te)
+    t_elapsed = (te.tv_nsec - ts.tv_nsec)# / repeat
+    printf("\nnew eval_hot() for loops 2 takes %ld ns",t_elapsed) 
+    clock_gettime(CLOCK_REALTIME, &ts)
+
+    I = 0.0
+    for iterator in range(1024):
+        m = iterator % 4
+        l = iterator / 4 % 4
+        k = iterator / 16 % 4
+        j = iterator / 64 % 4
+        i = iterator / 256 % 4
+
+        if CACHE == 1:
+            I_CACHE[iterator] = address[0]
+        I_temp[iterator] = temp2[iterator] * I_CACHE[iterator]
+        I += I_temp[iterator]
+
+
+    # if I < 0.0:
+    #      return 0.0
+     
+    clock_gettime(CLOCK_REALTIME, &te)
+    # printf('\nexiting eval_hot_seploops: %lu',te.tv_nsec)
+    t_elapsed = (te.tv_nsec - ts.tv_nsec)# / repeat
+    printf("\nnew eval_hot() for loops 3 takes %ld ns",t_elapsed) 
+
+
+    # cdef float[1024] storage
+    
+    # for iterator in range(iteration_size):
+    #     storage[iterator]=temp2[iterator]
+        # printf('\n%0.12e',storage[iterator])
+
+    # return [x for x in storage[:iteration_size]]
+    temps.temp2 = temp2
+    temps.I_CACHE = I_CACHE
+    temps.I_temp = I_temp
+    
+    return temps
+
+    
+    # clock_gettime(CLOCK_REALTIME, &te)
+    # t_elapsed = (te.tv_nsec - ts.tv_nsec)
+    # printf("eval_hot() for loops takes %ld ns\n",t_elapsed)
+
+    # vector multiplication stuff
+    # printf("testing vector multiplication speed")
+
+    # cdef int length=1000
+
+    # cdef vector[double] vecx
+    # cdef vector[double] vecy
+    # cdef vector[double] vecxy
+    
+    # vecx = vector[double](length)
+    # vecy = vector[double](length)
+    # vecxy = vector[double](length)
+        
+    # for i in range(length):
+    #     vecx[i]=i
+    #     vecy[i]=i
+
+    
+    # cdef:
+    #     long int t_forloop, t_function, t_function_here
+    
+    # clock_gettime(CLOCK_REALTIME, &ts)
+    # for i in range(length):
+    #     vecxy[i] = vecx[i] * vecy[i]
+    # clock_gettime(CLOCK_REALTIME, &te)
+    
+    # t_forloop = (te.tv_nsec - ts.tv_nsec)
+    # printf("multiplication in forloop takes %ld ns\n",t_forloop)
+    
+    # clock_gettime(CLOCK_REALTIME, &ts)
+    # vecxy = multiply_vectors(vecxy, vecx, vecy, length)
+    # clock_gettime(CLOCK_REALTIME, &te)
+    
+    # t_function = (te.tv_nsec - ts.tv_nsec)
+    # printf("multiplication in function takes %ld ns\n",t_function)
 
 cdef double eval_hot_norm() nogil:
     # Source radiation field normalisation which is independent of the
@@ -515,4 +819,43 @@ cdef double eval_hot_norm() nogil:
     # The units of the specific intensity need to be J/cm^2/s/keV/steradian.
 
     return erg / 4.135667662e-18
+
+# cdef extern from "immintrin.h":
+#     ctypedef float __m128
+#     __m128 _mm_load_ps(float*__P) nogil
+#     __m128 _mm_add_ps(__m128 __A, __m128 __B) nogil
+#     void _mm_store_ps(float* __P, __m128 __A) nogil
+
+# cdef void simd_add(float[:] a, float[:] b, float[:] c) nogil:
+#     cdef __m128 ma, mb, mtemp
+#     cdef int i
+#     for i in range(0, len(a), 4):
+#         ma = _mm_load_ps(&a[i])
+#         mb = _mm_load_ps(&b[i]) 
+#         mtemp = _mm_add_ps(ma, mb)
+#         _mm_store_ps(&c[i], mtemp)
+
+
+# cdef vector[double] multiply_vectors(int length, vector[double] vexy, vector[double] vex, vector[double] vey):
+#     for i in range(length):
+#         vexy[i] = vex[i] + vey[i]
+#     return vexy
+    # vexy[0]=0
+
+
+# cdef double* multiply_pointers(double* vencxy, double* vencx, double* vency, int length):
+#     for i in range(length):
+#         vencxy[i] = vencx[i] * vency[i]
+#     return vencxy
+
+# cdef double* add_pointers(double* vencxy, double* vencx, double* vency, int length):
+#     for i in range(length):
+#         vencxy[i] = vencx[i] + vency[i]
+#     return vencxy
+
+# cdef bint compare_double(double x, double y, double epsilon = 1.0e-12) nogil:
+#     if(fabs(x - y) < epsilon):    
+#         return True    
+#     else:           
+#         return False
 

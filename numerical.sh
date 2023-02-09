@@ -1,4 +1,6 @@
 cp xpsi/surface_radiation_field/archive/hot/numerical_${n_params}D.pyx  xpsi/surface_radiation_field/hot.pyx
+cp xpsi/surface_radiation_field/archive/hot/numerical_${n_params}D.pxd  xpsi/surface_radiation_field/hot.pxd
+
 # cp xpsi/surface_radiation_field/archive/hot/numerical_5D.pyx  xpsi/surface_radiation_field/hot.pyx
 #cp xpsi/surface_radiation_field/archive/elsewhere/numerical.pyx  xpsi/surface_radiation_field/elsewhere.pyx
 CC=gcc python setup.py install #--user

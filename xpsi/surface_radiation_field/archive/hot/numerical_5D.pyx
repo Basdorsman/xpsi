@@ -255,11 +255,8 @@ cdef double eval_hot(size_t THREAD,
     vec[4] = log10(E / E_eff)
     
 
-    # printf("vec[0]: %.2e\n", vec[0])
-    # printf("vec[1]: %.2e\n", vec[1])
-    # printf("vec[2]: %.2e\n", vec[2])    
-    # printf("vec[3]: %.2e\n", vec[3])
-    # printf("vec[4]: %.2e\n", vec[4])
+    # printf("\nvec[0]: %.2e, vec[1]: %.2e, vec[2]: %.2e, vec[3]: %.2e, vec[4]: %.2e", vec[0], vec[1], vec[2], vec[3], vec[4])
+
     
     # printf("diagnostics 1:\n") # using i breaks next code block
     # for i in range(D.p.ndims):
@@ -443,32 +440,40 @@ cdef double eval_hot(size_t THREAD,
     
     for i in range(4):
         II = i * D.p.BLOCKS[0]
-        for j in range(4):
-            JJ = j * D.p.BLOCKS[1]
-            for k in range(4):
-                KK = k * D.p.BLOCKS[2]
-                for l in range(4):
-                    LL = l * D.p.BLOCKS[3]
-                    for m in range(4):
-                        address = D.p.I + (BN[0] + i) * D.p.S[0]
-                        address += (BN[1] + j) * D.p.S[1]
-                        address += (BN[2] + k) * D.p.S[2]
-                        address += (BN[3] + l) * D.p.S[3]
-                        address += BN[4] + m
-    
-                        temp = DIFF[i] * DIFF[4 + j] * DIFF[8 + k] * DIFF[12 + l] * DIFF[16 + m]
-                        temp *= SPACE[i] * SPACE[4 + j] * SPACE[8 + k] * SPACE[12 + l] * SPACE[16 + m]
-                        INDEX = II + JJ + KK + LL + m
-                        if CACHE == 1:
-                            I_CACHE[INDEX] = address[0]
-
-                        I += temp * I_CACHE[INDEX]
-                        
-                        # printf('i=%d,j=%d,k=%d,l=%d,m=%d, ', <int>i, <int>j, <int>k, <int>l, <int>m)
-                        # printf('address = %d, ', <int>(address-D.p.I))   
-                        # printf('I_CACHE[INDEX] = %d, ', <int>I_CACHE[INDEX])
-                        # printf('temp = %0.2e, ', temp)                         
-                        # printf('dI = %0.2e\n', temp * I_CACHE[INDEX])
+        if DIFF[i] != 0.0:
+            for j in range(4):
+                JJ = j * D.p.BLOCKS[1]
+                if DIFF[4+j] != 0.0:
+                    for k in range(4):
+                        KK = k * D.p.BLOCKS[2]
+                        for l in range(4):
+                            LL = l * D.p.BLOCKS[3]
+                            for m in range(4):
+                                address = D.p.I + (BN[0] + i) * D.p.S[0]
+                                address += (BN[1] + j) * D.p.S[1]
+                                address += (BN[2] + k) * D.p.S[2]
+                                address += (BN[3] + l) * D.p.S[3]
+                                address += BN[4] + m
+            
+                                temp = DIFF[i] * DIFF[4 + j] * DIFF[8 + k] * DIFF[12 + l] * DIFF[16 + m]
+                                temp *= SPACE[i] * SPACE[4 + j] * SPACE[8 + k] * SPACE[12 + l] * SPACE[16 + m]
+                                INDEX = II + JJ + KK + LL + m
+                                
+                                # if temp == 0.0:
+                                #     printf('\ntemp is zero! ')
+                                #     printf('INDEX: %lu, ', INDEX)
+                                #     if DIFF[8+k] == 0.0: printf('DIFF[8+k] is zero')
+                                
+                                if CACHE == 1:
+                                    I_CACHE[INDEX] = address[0]
+        
+                                I += temp * I_CACHE[INDEX]
+                            
+                            # printf('i=%d,j=%d,k=%d,l=%d,m=%d, ', <int>i, <int>j, <int>k, <int>l, <int>m)
+                            # printf('address = %d, ', <int>(address-D.p.I))   
+                            # printf('I_CACHE[INDEX] = %d, ', <int>I_CACHE[INDEX])
+                            # printf('temp = %0.2e, ', temp)                         
+                            # printf('dI = %0.2e\n', temp * I_CACHE[INDEX])
 
     #if gsl_isnan(I) == 1:
         #printf("\nIntensity: NaN; Index [%d,%d,%d,%d] ",

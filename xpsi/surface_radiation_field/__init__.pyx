@@ -74,6 +74,9 @@ from cython.parallel cimport *
 import numpy as np
 cimport numpy as np
 
+from libc.stdio cimport printf
+
+
 from ..global_imports import _keV
 
 cdef double keV = _keV
@@ -221,7 +224,7 @@ def intensity(double[::1] energies,
 
         T = threadid()
         i = <size_t> ii
-
+        #printf("\nenergies[i]: %.8e, ", energies[i])
         intensities[i] = eval_ptr(T,
                                   energies[i],
                                   mu[i],
@@ -230,6 +233,99 @@ def intensity(double[::1] energies,
 
         # get photon specific intensity
         intensities[i] *= norm_ptr() / (energies[i] * keV)
+
+    if atmosphere:
+        free_preload(preloaded)
+
+    free_ptr(numTHREADS, data)
+
+    return np.asarray(intensities, dtype = np.double, order = 'C')
+
+def intensity_no_norm(double[::1] energies,
+              double[::1] mu,
+              double[:,::1] local_variables,
+              atmosphere = None,
+              extension = 'hot',
+              size_t numTHREADS = 1):
+    """
+    Same as "intensity" but gives intensities as given in the atmosphere data. 
+
+    Parameters
+    ----------
+    double[ : :1] energies
+        DESCRIPTION.
+    double[ : :1] mu
+        DESCRIPTION.
+    double[ : ,::1] local_variables
+        DESCRIPTION.
+    atmosphere : TYPE, optional
+        DESCRIPTION. The default is None.
+    extension : TYPE, optional
+        DESCRIPTION. The default is 'hot'.
+    size_t numTHREADS : TYPE, optional
+        DESCRIPTION. The default is 1.
+
+    Raises
+    ------
+    ValueError
+        DESCRIPTION.
+
+    Returns
+    -------
+    TYPE
+        DESCRIPTION.
+
+    """
+    cdef fptr_init init_ptr = NULL
+    cdef fptr_free free_ptr = NULL
+    cdef fptr_eval eval_ptr = NULL
+    cdef fptr_norm norm_ptr = NULL
+
+    if extension == 'hot':
+        init_ptr = init_hot
+        free_ptr = free_hot
+        eval_ptr = eval_hot
+        norm_ptr = eval_hot_norm
+    elif extension == 'elsewhere':
+        init_ptr = init_elsewhere
+        free_ptr = free_elsewhere
+        eval_ptr = eval_elsewhere
+        norm_ptr = eval_elsewhere_norm
+    else:
+        raise ValueError("Extension module must be 'hot' or 'elsewhere'.")
+
+    # initialise the source radiation field
+    cdef _preloaded *preloaded = NULL
+    cdef void *data = NULL
+
+    if atmosphere:
+        preloaded = init_preload(atmosphere)
+        data = init_ptr(numTHREADS, preloaded)
+    else:
+        data = init_ptr(numTHREADS, NULL)
+
+    cdef double[::1] intensities = np.zeros(energies.shape[0],
+                                            dtype = np.double)
+
+    cdef size_t i, T
+    cdef signed int ii
+    for ii in prange(<signed int>energies.shape[0],
+                     nogil = True,
+                     schedule = 'static',
+                     num_threads = <size_t> numTHREADS,
+                     chunksize = 1):
+
+        T = threadid()
+        i = <size_t> ii
+
+        intensities[i] = eval_ptr(T,
+                                  energies[i],
+                                  mu[i],
+                                  &(local_variables[i,0]),
+                                  data)
+
+        # get photon specific intensity
+        #intensities[i] *= norm_ptr() / (energies[i] * keV)
 
     if atmosphere:
         free_preload(preloaded)

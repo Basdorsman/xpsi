@@ -43,7 +43,7 @@ except:
     elif atmosphere=='numerical': n_params = n_params_numerical
     elif atmosphere=='blackbody': n_params = "B"
     
-print('atmosphere:', atmosphere)
+print('atmosphere type:', atmosphere)
 print('n_params:', n_params)
 
 ##################################### DATA ####################################
@@ -325,8 +325,6 @@ star = xpsi.Star(spacetime = spacetime, photospheres = photosphere)
 # star['s__super_radius'] = 0.025
 
 
-# with modulator
-
 
 if atmosphere=='accreting':
     # Compton slab model parameters
@@ -446,46 +444,46 @@ print(star.params)
 
 #################################### SIGNAL ###################################
 
-# signal = CustomSignal(data = data,
-#                         instrument = NICER,
-#                         background = None,
-#                         interstellar = None,
-#                         workspace_intervals = 1000,
-#                         cache = True,
-#                         epsrel = 1.0e-8,
-#                         epsilon = 1.0e-3,
-#                         sigmas = 10.0,
-#                         support = None)
+signal = CustomSignal(data = data,
+                        instrument = NICER,
+                        background = None,
+                        interstellar = None,
+                        workspace_intervals = 1000,
+                        cache = True,
+                        epsrel = 1.0e-8,
+                        epsilon = 1.0e-3,
+                        sigmas = 10.0,
+                        support = None)
 
 
+
+##################################### PRIOR ##############################
+
+if second:
+    prior = CustomPrior()
+elif not second:
+    prior = CustomPrior_NoSecondary()
 
 ##################################### LIKELIHOOD ##############################
 
-# if second:
-#     prior = CustomPrior()
-# elif not second:
-#     prior = CustomPrior_NoSecondary()
+# print('define likelihood')
+likelihood = xpsi.Likelihood(star = star, signals = signal,
+                              num_energies=128,
+                              threads=1,
+                              prior=prior,
+                              externally_updated=True)
 
-# # print('define likelihood')
-# likelihood = xpsi.Likelihood(star = star, signals = signal,
-#                              num_energies=128,
-#                              threads=1,
-#                              prior=prior,
-#                              externally_updated=True)
+# print('define wrapped_params')
+wrapped_params = [0]*len(likelihood)
+wrapped_params[likelihood.index('p__phase_shift')] = 1
+if second:
+    wrapped_params[likelihood.index('s__phase_shift')] = 1
 
-
-
-# # print('define wrapped_params')
-# wrapped_params = [0]*len(likelihood)
-# wrapped_params[likelihood.index('p__phase_shift')] = 1
-# if second:
-#     wrapped_params[likelihood.index('s__phase_shift')] = 1
-
-# try: 
-#     os.makedirs("run")
-# except OSError:
-#     if not os.path.isdir("run"):
-#         raise
+try: 
+    os.makedirs("run")
+except OSError:
+    if not os.path.isdir("run"):
+        raise
 
 # runtime_params = {'resume': False,
 #                   'importance_nested_sampling': False,
@@ -501,37 +499,57 @@ print(star.params)
 #                   'seed': 7,
 #                   'max_iter': 1000, # manual termination condition for short test
 #                   'verbose': True}
-                  
-# print("likelihood check but no sampling")
 
-# try:
-#     true_logl = -7.94188579e+89 #-1.15566075e+05
-#     # print('about to evaluate likelihood')
-#     print("Compute likelikihood(p) once so the check passes. Likelihood = ", likelihood(p)) 
+runtime_params = {'resume': False,
+                  'importance_nested_sampling': False,
+                  'multimodal': False,
+                  'n_clustering_params': None,
+                  'outputfiles_basename': './run/run_Num', 
+                  'n_iter_before_update': 100,
+                  'n_live_points': 4000,
+                  'sampling_efficiency': 0.1,
+                  'const_efficiency_mode': False,
+                  'wrapped_params': wrapped_params,
+                  'evidence_tolerance': 0.1,
+                  'seed': 7,
+                  'max_iter': -1, # manual termination condition for short test
+                  'verbose': True}
 
-#     likelihood.check(None, [true_logl], 1.0e-6,physical_points=[p])
-#     #print(likelihood(p))
-# except:
-#     print("Likelihood check did not pass. Checking if wrong atmosphere model installed.")
-#     true_logl = -3.27536126e+04
-#     print(likelihood(p))
-#     try:
-#         likelihood.check(None, [true_logl], 1.0e-6,physical_points=[p])
-#         print("Seems that blacbkody atmosphere extension was used instead of numerical.")
-#         print("Please re-install X-PSI using numerical atmosphere extension if want to use this test run.")
-#     except:
-#         print("Seems that neither of the likelihood checks passed, so something must be wrong.")
 
+
+
+
+try:
+    true_logl = -7.94188579e+89 #-1.15566075e+05
+    # print('about to evaluate likelihood')
+    print("Compute likelikihood(p) once so the check passes. Likelihood = ", likelihood(p)) 
+
+    likelihood.check(None, [true_logl], 1.0e-6,physical_points=[p])
+    #print(likelihood(p))
+except:
+    print("Likelihood check did not pass. Checking if wrong atmosphere model installed.")
+    true_logl = -3.27536126e+04
+    print(likelihood(p))
+    try:
+        likelihood.check(None, [true_logl], 1.0e-6,physical_points=[p])
+        print("Seems that blacbkody atmosphere extension was used instead of numerical.")
+        print("Please re-install X-PSI using numerical atmosphere extension if want to use this test run.")
+    except:
+        print("Seems that neither of the likelihood checks passed, so something must be wrong.")
+
+
+print("sampling starts ...")
+xpsi.Sample.nested(likelihood, prior,**runtime_params)
 
 ######### PHOTOSPHERE INTEGRATE #####################
-print('photosphere integrating')
-energies=np.logspace(-1.0,np.log10(3.0), 128, base=10.0)
+# print('photosphere integrating')
+# energies=np.logspace(-1.0,np.log10(3.0), 128, base=10.0)
 
-st = time.time()
-photosphere.integrate(energies, threads=8)
-et = time.time()
-elapsed_time = et - st
-print('Photosphere integration time:', elapsed_time,'seconds')
+# st = time.time()
+# photosphere.integrate(energies, threads=8)
+# et = time.time()
+# elapsed_time = et - st
+# print('Photosphere integration time:', elapsed_time,'seconds')
 
 # ################################### PLOTS #####################################
 
@@ -543,30 +561,36 @@ print('plotting...')
 rcParams['text.usetex'] = False
 rcParams['font.size'] = 14.0
 
-# if second:
-#     ax = plot_2D_pulse((photosphere.signal[0][0], photosphere.signal[1][0]),
-#                   x=signal.phases[0],
-#                   shift=signal.shifts,
-#                   y=signal.energies,
-#                   ylabel=r'Energy (keV)')
-# if not second:
-#     ax = plot_2D_pulse((photosphere.signal[0][0],),
-#                   x=signal.phases[0],
-#                   shift=signal.shifts,
-#                   y=signal.energies,
-#                   ylabel=r'Energy (keV)')
-
 # Photosphere.intergrate and plot
+# if not second:    
+#     #plt.plot(hot.phases_in_cycles[0],photosphere.signal[0][0][87])
+#     ax = plot_2D_pulse((photosphere.signal[0][0],),
+#                       x=hot.phases_in_cycles[0],
+#                       shift=[hot['p__phase_shift'],],
+#                       y=energies,
+#                       ylabel=r'Energy (keV)')
 
-
-
-if not second:    
-    #plt.plot(hot.phases_in_cycles[0],photosphere.signal[0][0][87])
+# Likelihood check and plot
+if second:
+    ax = plot_2D_pulse((photosphere.signal[0][0], photosphere.signal[1][0]),
+                  x=signal.phases[0],
+                  shift=signal.shifts,
+                  y=signal.energies,
+                  ylabel=r'Energy (keV)')
+if not second:
     ax = plot_2D_pulse((photosphere.signal[0][0],),
-                      x=hot.phases_in_cycles[0],
-                      shift=[hot['p__phase_shift'],],
-                      y=energies,
-                      ylabel=r'Energy (keV)')
+                  x=signal.phases[0],
+                  shift=signal.shifts,
+                  y=signal.energies,
+                  ylabel=r'Energy (keV)')
+
+
+try: 
+    os.makedirs("plots")
+except OSError:
+    if not os.path.isdir("plots"):
+        raise
+
 
 if atmosphere=='accreting':
     ax.set_title('atmosphere={} te={:.2e} [keV], tbb={:.2e} [keV], tau={:.2e} [-]'.format(n_params, te*0.511, tbb*511, tau), loc='center') #unit conversion te and tbb is different due to a cluster leftover according to Anna B.

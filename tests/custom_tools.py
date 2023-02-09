@@ -780,7 +780,7 @@ class CustomPrior_NoSecondary(xpsi.Prior):
             hypercube = np.random.rand(len(self))
 
         # the base method is useful, so to avoid writing that code again:
-        _ = super(CustomPrior, self).inverse_sample(hypercube)
+        _ = super(CustomPrior_NoSecondary, self).inverse_sample(hypercube)
 
         ref = self.parameters # shortcut
 

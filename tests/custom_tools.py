@@ -870,7 +870,7 @@ def veneer(x, y, axes, lw=1.0, length=8):
     plt.setp(axes.spines.values(), linewidth=lw, color='black')
 
 def plot_2D_pulse(z, x, shift, y, ylabel,
-                  num_rotations=5.0, res=5000, figsize=(12,6),
+                  num_rotations=5.0, res=1000, figsize=(12,6),
                   cm=cm.viridis):
     """ Helper function to plot a phase-energy pulse.
 
@@ -917,7 +917,7 @@ def plot_2D_pulse(z, x, shift, y, ylabel,
     ax.set_xlabel(r'Phase')
     veneer((0.1, 0.5), (None,None), ax)
 
-    cb = plt.colorbar(profile, cax = ax_cb) #ticks = MultipleLocator(0.2)
+    cb = plt.colorbar(profile, cax = ax_cb)#, ticks = MultipleLocator(0.2))
 
     cb.set_label(label=r'Signal (arbitrary units)', labelpad=25)
     cb.solids.set_edgecolor('face')

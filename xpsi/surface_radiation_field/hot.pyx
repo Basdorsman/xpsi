@@ -3,8 +3,10 @@
 #cython: nonecheck=False
 #cython: wraparound=False
 
-from libc.math cimport exp, pow
-from libc.stdio cimport printf
+from libc.math cimport M_PI, sqrt, sin, cos, acos, log10, pow, exp, fabs
+from libc.stdio cimport printf, fopen, fclose, fread, FILE
+#from GSL cimport gsl_isnan, gsl_isinf
+from libc.stdlib cimport malloc, free
 
 from xpsi.global_imports import _keV, _k_B
 
@@ -166,11 +168,6 @@ cdef void* init_hot(size_t numThreads, const _preloaded *const preloaded) nogil:
     # Cast for generalised usage in integration routines
     return <void*> D
 
-    if preloaded != NULL :
-        printf("WARNING: Numerical atmosphere data were preloaded, even though those are not used by this atmosphere extension.\n") 
-    
-    # Return NULL if dynamic memory is not required for the model.
-    return NULL
 
 cdef int free_hot(size_t numThreads, void *const data) nogil:
     # This function must match the initialisation routine init_hot()

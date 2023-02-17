@@ -561,7 +561,8 @@ rcParams['font.size'] = 14.0
 
 
 if not second:    
-    #plt.plot(hot.phases_in_cycles[0],photosphere.signal[0][0][87])
+    #fig, ax = plt.subplots()
+    #ax.plot(hot.phases_in_cycles[0],photosphere.signal[0][0][87])
     ax = plot_2D_pulse((photosphere.signal[0][0],),
                       x=hot.phases_in_cycles[0],
                       shift=[hot['p__phase_shift'],],
@@ -582,6 +583,8 @@ elif atmosphere=='blackbody':
     ax.set_title('atmosphere={} p_temperature={}'.format(n_params, p_temperature))
     figstring='plots/pulses_atm={}_sec={}_p_temperature={}.png'.format(atmosphere, second, p_temperature)
 
+#plt.savefig(figstring)
+#plt.savefig(figstring)
 
-plt.savefig(figstring)
+#plt.savefig('plots/testfig.pdf')
 print('figure saved in {}'.format(figstring))

@@ -1,12 +1,3 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-"""
-Created on Thu Jun 16 10:35:05 2022
-
-@author: bas
-"""
-# from __future__ import print_function, division
-
 import os
 import numpy as np
 import math
@@ -38,8 +29,9 @@ second = False
 #     if n_params=='B': atmosphere = 'blackbody'
 #     elif n_params=='4' or n_params=='5': atmosphere = 'numerical'
 #     elif n_params=='A': atmosphere = 'accreting'
+#     elif n_params=='A4': atmosphere = 'accreting'
 # except:
-#     if atmosphere=='accreting': n_params = "A"
+#     if atmosphere=='accreting': n_params = "A4"
 #     elif atmosphere=='numerical': n_params = n_params_numerical
 #     elif atmosphere=='blackbody': n_params = "B"
     
@@ -53,17 +45,17 @@ try: #try to get parameters from shell input
     n_params = os.environ['n_params']
 except:
     atmosphere_type = "A"
-    atmosphere_type = "5"
+    n_params = "4"
 
 print("atmosphere_type:", atmosphere_type)
 print("n_params:", n_params)
 
 ##################################### DATA ####################################
-settings = dict(counts = np.loadtxt('../model_data/example_synthetic_realisation.dat', dtype=np.double),
+settings = dict(counts = np.loadtxt('../synthesise_pulse_data/data/{}{}_synthetic_realisation.dat'.format(atmosphere_type, n_params), dtype=np.double),  # np.loadtxt('../model_data/example_synthetic_realisation.dat', dtype=np.double),
         channels=np.arange(20,201), #201
         phases=np.linspace(0.0, 1.0, 33),
         first=0, last=180,
-        exposure_time=984307.6661)
+        exposure_time=1000)#984307.6661)
 data = xpsi.Data(**settings)
 
 ################################## INSTRUMENT #################################
@@ -81,7 +73,6 @@ except:
 
 ################################## SPACETIME ##################################
 
-# spacetime = xpsi.Spacetime.fixed_spin(300.0)
 
 
 bounds = dict(distance = (0.1, 1.0),                     # (Earth) distance
@@ -197,7 +188,6 @@ elif atmosphere_type=='B':
     	                    num_leaves=100,
     	                    num_rays=200,
     	                    prefix='p') 	
-
     
 
 
@@ -302,9 +292,9 @@ if second: # 4 doesn't work for secondary
          	                      is_antiphased=True,
                                   modulated=True,
          	                      prefix='s')
-
-
-
+    
+    
+    
     
     hot = HotRegions((primary, secondary))
     # h = hot.objects[0]
@@ -317,8 +307,6 @@ elif not second:
     
 ################################ ATMOSPHERE ################################### 
       
-
-# print("n_params: ",n_params)
 if atmosphere_type=='A':
     if n_params== "5":
         photosphere = CustomPhotosphere_Accreting(hot = hot, elsewhere = None,
@@ -349,7 +337,7 @@ elif atmosphere_type=="B":
 
 
 else:
-    print("no dimensionality provided!")
+    print("no atmosphere_type provided!")
 
 ################################### STAR ######################################
 
@@ -413,7 +401,7 @@ if atmosphere_type=='A':
     elif n_params=='4':
         # Compton slab model parameters
         tbb=0.001
-        te=40. # not actually using this here
+        #te=200.
         tau=0.5
     
         if second:
@@ -517,43 +505,70 @@ elif atmosphere_type=='B':
               ]
         
         
+    
 star(p)
 star.update() 
-
-print("printing Parameters of the star:")
-print(star.params)
 
 
 
 #################################### SIGNAL ###################################
 
-# signal = CustomSignal(data = data,
-#                         instrument = NICER,
-#                         background = None,
-#                         interstellar = None,
-#                         workspace_intervals = 1000,
-#                         cache = True,
-#                         epsrel = 1.0e-8,
-#                         epsilon = 1.0e-3,
-#                         sigmas = 10.0,
-#                         support = None)
+signal = CustomSignal(data = data,
+                        instrument = NICER,
+                        background = None,
+                        interstellar = None,
+                        workspace_intervals = 1000,
+                        cache = True,
+                        epsrel = 1.0e-8,
+                        epsilon = 1.0e-3,
+                        sigmas = 10.0,
+                        support = None)
 
 
 
 ##################################### LIKELIHOOD ##############################
 
-# if second:
-#     prior = CustomPrior()
-# elif not second:
-#     prior = CustomPrior_NoSecondary()
+if second:
+    prior = CustomPrior()
+elif not second:
+    prior = CustomPrior_NoSecondary()
 
-# # print('define likelihood')
-# likelihood = xpsi.Likelihood(star = star, signals = signal,
-#                              num_energies=128,
-#                              threads=1,
-#                              prior=prior,
-#                              externally_updated=True)
+# print('define likelihood')
+likelihood = xpsi.Likelihood(star = star, signals = signal,
+                              num_energies=128,
+                              threads=1,
+                              prior=prior,
+                              externally_updated=False)
 
+sample_size = 10
+
+p_samples = [p,] #first sample is my sample above
+
+for sample in range(sample_size):
+    p_samples.append(likelihood.prior.inverse_sample())
+
+
+likelihood_samples = []
+for sample in p_samples:
+    print('\n')
+    print("The parameter vector for which likelihood will be computed is ", sample)
+    t_likelihood_start = time.perf_counter() 
+    likelihood_value = likelihood(sample)
+    t_likelihood_end = time.perf_counter()
+    print("The value of likelihood is ", likelihood_value)
+    # likelihood_samples.append(likelihood_evaluation)
+    t_likelihood = (t_likelihood_end - t_likelihood_start)#/len(p_samples)
+    print('computed in {:.2f}s'.format(t_likelihood))
+    print('\n')
+
+# print("... report ...")
+
+# for sample, likelihood_sample in zip(p_samples, likelihood_samples): 
+#     print('p_sample:', sample)
+#     print('likelihood sample:', likelihood_sample)
+
+# print('atmosphere: {}{}'.format(atmosphere_type, n_params))
+# print('repeats: ', len(p_samples))
 
 
 # # print('define wrapped_params')
@@ -605,24 +620,24 @@ print(star.params)
 
 
 ######### PHOTOSPHERE INTEGRATE #####################
-print('photosphere integrating')
-energies=np.logspace(-1.0,np.log10(3.0), 128, base=10.0)
+# print('photosphere integrating')
+# energies=np.logspace(-1.0,np.log10(3.0), 128, base=10.0)
 
-st = time.time()
-photosphere.integrate(energies, threads=8)
-et = time.time()
-elapsed_time = et - st
-print('Photosphere integration time:', elapsed_time,'seconds')
+# st = time.time()
+# photosphere.integrate(energies, threads=8)
+# et = time.time()
+# elapsed_time = et - st
+# print('Photosphere integration time:', elapsed_time,'seconds')
 
 # ################################### PLOTS #####################################
 
 
 
-print('plotting...')
+# print('plotting...')
 
 
-rcParams['text.usetex'] = False
-rcParams['font.size'] = 14.0
+# rcParams['text.usetex'] = False
+# rcParams['font.size'] = 14.0
 
 # if second:
 #     ax = plot_2D_pulse((photosphere.signal[0][0], photosphere.signal[1][0]),
@@ -641,40 +656,31 @@ rcParams['font.size'] = 14.0
 
 
 
-if not second:
-    #fig, ax = plt.subplots()
-    #ax.plot(hot.phases_in_cycles[0],photosphere.signal[0][0][87])
-    ax = plot_2D_pulse((photosphere.signal[0][0],),
-                      x=hot.phases_in_cycles[0],
-                      shift=[hot['p__phase_shift'],],
-                      y=energies,
-                      ylabel=r'Energy (keV)')
+# if not second:    
+#     #fig, ax = plt.subplots()
+#     #ax.plot(hot.phases_in_cycles[0],photosphere.signal[0][0][87])
+#     ax = plot_2D_pulse((photosphere.signal[0][0],),
+#                       x=hot.phases_in_cycles[0],
+#                       shift=[hot['p__phase_shift'],],
+#                       y=energies,
+#                       ylabel=r'Energy (keV)')
 
-print('photosphere signal: ',photosphere.signal[0][0])
-print('sum photosphere signal:', sum(photosphere.signal[0][0]))
+# if atmosphere=='accreting':
+#     ax.set_title('atmosphere={} te={:.2e} [keV], tbb={:.2e} [keV], tau={:.2e} [-]'.format(n_params, te*0.511, tbb*511, tau), loc='center') #unit conversion te and tbb is different due to a cluster leftover according to Anna B.
+#     figstring = 'plots/pulses_atm={}_sec={}_te={:.2e}_tbb={:.2e}_tau={:.2e}.png'.format(atmosphere, second, te, tbb, tau)
+# elif atmosphere=='numerical':
+#     if n_params=="5":
+#         ax.set_title('atmosphere={} p_temperature={} modulator={}'.format(n_params, p_temperature, modulator))
+#         figstring='plots/5D_pulses_atm={}_sec={}_p_temperature={}_modulator={}.png'.format(atmosphere, second, p_temperature, modulator)
+#     elif n_params=="4":
+#         ax.set_title('atmosphere={} p_temperature={}'.format(n_params, p_temperature))
+#         figstring='plots/4D_pulses_atm={}_sec={}_p_temperature={}.png'.format(atmosphere, second, p_temperature)
+# elif atmosphere=='blackbody':
+#     ax.set_title('atmosphere={} p_temperature={}'.format(n_params, p_temperature))
+#     figstring='plots/pulses_atm={}_sec={}_p_temperature={}.png'.format(atmosphere, second, p_temperature)
 
-if atmosphere_type=='A':
-    if n_params=='5':
-        ax.set_title('atmosphere={} te={:.2e} [keV], tbb={:.2e} [keV], tau={:.2e} [-]'.format(n_params, te*0.511, tbb*511, tau), loc='center') #unit conversion te and tbb is different due to a cluster leftover according to Anna B.
-        figstring = 'plots/pulses_atm={}{}_sec={}_te={:.2e}_tbb={:.2e}_tau={:.2e}.png'.format(atmosphere_type, n_params, second, te, tbb, tau)
-    elif n_params=='4':
-        ax.set_title('atmosphere={} te={:.2e} [keV], tbb={:.2e} [keV], tau={:.2e} [-]'.format(n_params, te*0.511, tbb*511, tau), loc='center') #unit conversion te and tbb is different due to a cluster leftover according to Anna B.
-        figstring = 'plots/pulses_atm={}{}_sec={}_te={:.2e}_tbb={:.2e}_tau={:.2e}.png'.format(atmosphere_type, n_params, second, te, tbb, tau)
+# #plt.savefig(figstring)
+# #plt.savefig(figstring)
 
-elif atmosphere_type=='N':
-    if n_params=="5":
-        ax.set_title('atmosphere={} p_temperature={} modulator={}'.format(n_params, p_temperature, modulator))
-        figstring='plots/5D_pulses_atm={}_sec={}_p_temperature={}_modulator={}.png'.format(atmosphere_type, second, p_temperature, modulator)
-    elif n_params=="4":
-        ax.set_title('atmosphere={} p_temperature={}'.format(n_params, p_temperature))
-        figstring='plots/4D_pulses_atm={}_sec={}_p_temperature={}.png'.format(atmosphere_type, second, p_temperature)
-elif atmosphere_type=='B':
-    ax.set_title('atmosphere={} p_temperature={}'.format(n_params, p_temperature))
-    figstring='plots/pulses_atm={}_sec={}_p_temperature={}.png'.format(atmosphere_type, second, p_temperature)
-
-# plt.show()
-
-# plt.savefig(figstring)
-#plt.savefig('plots/testfig.pdf')
-
+# #plt.savefig('plots/testfig.pdf')
 # print('figure saved in {}'.format(figstring))

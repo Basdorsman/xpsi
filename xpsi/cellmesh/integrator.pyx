@@ -12,6 +12,7 @@ from cython.parallel cimport *
 from libc.math cimport M_PI, sqrt, sin, cos, acos, log10, pow, exp, fabs, ceil, log
 from libc.stdlib cimport malloc, free
 from libc.stdio cimport printf
+from libc.time cimport time, time_t, clock, clock_t, CLOCKS_PER_SEC
 import xpsi
 
 cdef double _pi = M_PI
@@ -72,7 +73,7 @@ def integrate(size_t numThreads,
               elsewhere_atmosphere,
               image_order_limit = None):
 
-    # printf("inside cellmesh/integrator")
+    #printf("inside cellmesh - integrator")
     # check for rayXpanda explicitly in case of some linker issue
     cdef double rayXpanda_defl_lim
     cdef bint _use_rayXpanda
@@ -99,6 +100,12 @@ def integrate(size_t numThreads,
     # >>>
     #----------------------------------------------------------------------->>>
     cdef:
+        double secs_per_clock = 1/CLOCKS_PER_SEC
+        int interpolations = 0
+        #time_t t_start, t_end #, elapsed_time
+        clock_t t_start, t_end, t_eval_start, t_eval_end #, elapsed_time    
+        double elapsed_time = 0.
+        double t_eval_sum = 0.
         signed int ii
         size_t i, j, k, ks, _kdx, m, p # Array indexing
         size_t T, twoT # Used globally to represent thread index
@@ -264,6 +271,9 @@ def integrate(size_t numThreads,
     # >>> Integrate.
     # >>>
     #----------------------------------------------------------------------->>>
+    # printf("\nfor ii in prange(<signed int>cellArea.shape[0]")
+    t_start = clock()#time(NULL)
+
     for ii in prange(<signed int>cellArea.shape[0],
                      nogil = True,
                      schedule = 'static',
@@ -326,6 +336,7 @@ def integrate(size_t numThreads,
             # explanation: image_order = 1 means primary image only
         else:
             _IO = image_order
+        # printf("\nfor I in range(_IO)")
         for I in range(_IO):
             InvisFlag[T] = 2
             correction_I_E = 0.0
@@ -564,6 +575,9 @@ def integrate(size_t numThreads,
                     gsl_interp_init(interp_GEOM[T], phase_ptr, GEOM_ptr, N_L)
 
                     j = 0
+                    # printf("\nWhile loop for geometric interps starts here.")
+                    interpolations+=1
+                    
                     while j < cellArea.shape[1] and terminate[T] == 0:
                         if CELL_RADIATES[i,j] == 1:
                             phi_shift = phi[i,j]
@@ -590,6 +604,8 @@ def integrate(size_t numThreads,
                                     __Z = gsl_interp_eval(interp_Z[T], phase_ptr, Z_ptr, __PHASE_plusShift, accel_Z[T])
                                     __ABB = gsl_interp_eval(interp_ABB[T], phase_ptr, ABB_ptr, __PHASE_plusShift, accel_ABB[T])
 
+                                    #printf("\nInterpolation for-loop starts here.")
+                                    t_eval_start = clock()
                                     for p in range(N_E):
                                         E_prime = energies[p] / __Z
                                         # printf("\ninput parameters reporting:")
@@ -599,12 +615,14 @@ def integrate(size_t numThreads,
                                         # printf("srcCellParams[i,j,1]: %.8e, ", srcCellParams[i,j,1])
                                         # printf('call eval_hot')
                                         # I_E = eval_hot_faster(T,
+                                        
+                                        #time the interpolations
+                                        
                                         I_E = eval_hot(T,
                                                        E_prime,
                                                        __ABB,
                                                        &(srcCellParams[i,j,0]),
                                                        hot_data)
-
                                         I_E = I_E * eval_hot_norm()
 
                                         if perform_correction == 1:
@@ -617,6 +635,8 @@ def integrate(size_t numThreads,
                                             correction_I_E = correction_I_E * eval_elsewhere_norm()
 
                                         privateFlux[T,k,p] += cellArea[i,j] * (I_E - correction_I_E) * __GEOM
+                                    t_eval_end = clock()
+                                    t_eval_sum += <double>(t_eval_end - t_eval_start) / CLOCKS_PER_SEC
                         j = j + 1
             if terminate[T] == 1:
                 break # out of image loop
@@ -624,7 +644,13 @@ def integrate(size_t numThreads,
             gsl_interp_free(interp_alpha_alt[T])
         if terminate[T] == 1:
            break # out of colatitude loop
-
+    
+    t_end = clock()  # time(NULL)
+    elapsed_time = <double>(t_end - t_start) / CLOCKS_PER_SEC
+    printf("interpolations: %d\n", interpolations)
+    printf("Time taken for eval_hot and norm: %.6f seconds\n", t_eval_sum)
+    printf("Time taken for geometrical interpolations: %.6f seconds\n", elapsed_time)
+    
     for i in range(N_E):
         for T in range(N_T):
             for k in range(N_P):

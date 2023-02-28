@@ -370,6 +370,156 @@ class CustomHotRegion_Accreting(xpsi.HotRegion):
         #     for i in range(self._cede_cellParamVecs.shape[1]):
         #         self._cede_cellParamVecs[:,i,-1] *= self._cede_effGrav
 
+class CustomHotRegion_Accreting_te_const(xpsi.HotRegion):
+    """Custom implementation of HotRegion. Accreting Atmosphere model by 
+    Anna Bobrikova. The parameters are ordered I(E < mu < tau < tbb < te).
+    
+    E is energy.
+    mu is cos of zenith angle.
+    tau is the optical depth of the comptom slab.
+    tbb is the black body temperature.
+    te is temperature of the electron gas.
+    """
+
+    required_names = ['super_colatitude',
+                      'super_radius',
+                      'phase_shift',
+                      'super_tbb',
+                      'super_tau'] #te is gone!
+    optional_names = ['omit_colatitude',
+                      'omit_radius',
+                      'omit_azimuth',
+                      'cede_colatitude',
+                      'cede_radius',
+                      'cede_azimuth',
+                      'cede_temperature']
+    
+    def __init__(self,
+            bounds,
+            values,
+            symmetry = True,
+            omit = False,
+            cede = False,
+            concentric = False,
+            sqrt_num_cells = 32,
+            min_sqrt_num_cells = 10,
+            max_sqrt_num_cells = 80,
+            num_rays = 200,
+            num_leaves = 64,
+            num_phases = None,
+            phases = None,
+            do_fast = False,
+            fast_sqrt_num_cells = 16,
+            fast_min_sqrt_num_cells = 4,
+            fast_max_sqrt_num_cells = 16,
+            fast_num_rays = 100,
+            fast_num_leaves = 32,
+            fast_num_phases = None,
+            fast_phases = None,
+            is_antiphased = False,
+            custom = None,
+            image_order_limit = None,
+            **kwargs
+            ):
+
+        doc = """
+        tbb
+        """
+        super_tbb = Parameter('super_tbb',
+  		    strict_bounds = (0.00015, 0.003), # this one is non-physical, we went for way_to_low Tbbs here, I will most probably delete results from too small Tbbs. This is Tbb(keV)/511keV, so these correspond to 0.07 - 1.5 keV, but our calculations don't work correctly for Tbb<<0.5 keV
+  		    bounds = bounds.get('super_tbb', None),
+  		    doc = doc,
+  		    symbol = r'tbb',
+  		    value = values.get('super_tbb', None))
+
+        # doc = """
+        # te
+        # """
+        # super_te = Parameter('super_te',
+        #             strict_bounds = (40., 200.), #actual range is 40-200 imaginaty units, ~20-100 keV (Te(keV)*1000/511keV is here)
+        #             bounds = bounds.get('super_te', None),
+        #             doc = doc,
+        #             symbol = r'te',
+        #             value = values.get('super_te', None))
+        
+        doc = """
+        tau
+        """
+        super_tau = Parameter('super_tau',
+                    strict_bounds = (0.5, 3.5),
+                    bounds = bounds.get('super_tau', None),
+                    doc = doc,
+                    symbol = r'tau',
+                    value = values.get('super_tau', None))
+        
+
+        custom = [super_tbb, super_tau] #[super_tbb, super_te, super_tau]
+        
+
+        super(CustomHotRegion_Accreting_te_const, self).__init__(
+                bounds,
+                values,
+                symmetry = symmetry,
+                omit = omit,
+                cede = cede,
+                concentric = concentric,
+                sqrt_num_cells = sqrt_num_cells,
+                min_sqrt_num_cells = min_sqrt_num_cells,
+                max_sqrt_num_cells = max_sqrt_num_cells,
+                num_rays = num_rays,
+                num_leaves = num_leaves,
+                num_phases = num_phases,
+                phases = phases,
+                do_fast = do_fast,
+                fast_sqrt_num_cells = fast_sqrt_num_cells,
+                fast_min_sqrt_num_cells = fast_min_sqrt_num_cells,
+                fast_max_sqrt_num_cells = fast_max_sqrt_num_cells,
+                fast_num_rays = fast_num_rays,
+                fast_num_leaves = fast_num_leaves,
+                fast_num_phases = fast_num_phases,
+                fast_phases = fast_phases,
+                is_antiphased = is_antiphased,
+                custom = custom,
+                image_order_limit = image_order_limit,
+                **kwargs
+                )        
+        
+    
+    def _HotRegion__compute_cellParamVecs(self):
+        self._super_radiates = _np.greater(self._super_cellArea, 0.0).astype(_np.int32)
+        self._super_cellParamVecs = _np.ones((self._super_radiates.shape[0],
+                                      self._super_radiates.shape[1],
+                                      2),
+                                     dtype=_np.double)
+        
+        #self._super_cellParamVecs[...,:-1] *= self['super_temperature']
+        
+        # self._super_cellParamVecs[...,0] *= self['super_te']
+        # self._super_cellParamVecs[...,1] *= self['super_tbb']
+        # self._super_cellParamVecs[...,2] *= self['super_tau']
+        
+        self._super_cellParamVecs[...,0] *= self['super_tbb']
+        self._super_cellParamVecs[...,1] *= self['super_tau']
+        
+        
+        # for i in range(self._super_cellParamVecs.shape[1]):
+        #     self._super_cellParamVecs[:,i,-1] *= self._super_effGrav
+        
+        # try:
+        #     self._cede_radiates = _np.greater(self._cede_cellArea, 0.0).astype(_np.int32)
+        # except AttributeError:
+        #     pass
+        # else:
+        #     self._cede_cellParamVecs = _np.ones((self._cede_radiates.shape[0],
+        #                                  self._cede_radiates.shape[1],
+        #                                  2), dtype=_np.double)
+        
+        #     self._cede_cellParamVecs[...,:-1] *= self['cede_temperature']
+        
+        #     for i in range(self._cede_cellParamVecs.shape[1]):
+        #         self._cede_cellParamVecs[:,i,-1] *= self._cede_effGrav
+
+
 class CustomPhotosphere_BB(xpsi.Photosphere):
     """ Implement method for imaging."""
     @property
@@ -448,7 +598,7 @@ class CustomPhotosphere_5D(xpsi.Photosphere):
 
         self._hot_atmosphere = (modulator, logT_opt, logg_opt, _mu_opt, logE_opt, buf_opt)
 
-class CustomPhotosphere_Bobrikova(xpsi.Photosphere):
+class CustomPhotosphere_Accreting(xpsi.Photosphere):
     """ A photosphere extension to preload the numerical atmosphere NSX. """
 
     @xpsi.Photosphere.hot_atmosphere.setter
@@ -467,6 +617,26 @@ class CustomPhotosphere_Bobrikova(xpsi.Photosphere):
         intensities = np.ascontiguousarray(NSX[:,5])
 
         self._hot_atmosphere = (t_e, t_bb, tau, cos_zenith, Energy, intensities)
+        
+class CustomPhotosphere_Accreting_te_const(xpsi.Photosphere):
+    """ A photosphere extension to preload the numerical atmosphere NSX. """
+
+    @xpsi.Photosphere.hot_atmosphere.setter
+    def hot_atmosphere(self, path):
+        size = (150, 9, 31, 11)#, 41) te is the 41
+
+        with np.load(path, allow_pickle=True) as data_dictionary:
+            NSX = data_dictionary['arr_0.npy']
+
+        Energy = np.ascontiguousarray(NSX[0:size[0],0])
+        cos_zenith = np.ascontiguousarray([NSX[i*size[0],1] for i in range(size[1])])
+        tau = np.ascontiguousarray([NSX[i*size[0]*size[1],2] for i in range(size[2])])
+        t_bb = np.ascontiguousarray([NSX[i*size[0]*size[1]*size[2],3] for i in range(size[3])])
+        #t_e = np.ascontiguousarray([NSX[i*size[0]*size[1]*size[2]*size[3],4] for i in range(size[4])])
+        te_step_size = size[0]*size[1]*size[2]*size[3]
+        intensities = np.ascontiguousarray(NSX[0:te_step_size,5])
+
+        self._hot_atmosphere = (t_bb, tau, cos_zenith, Energy, intensities)
 
 from xpsi.likelihoods.default_background_marginalisation import eval_marginal_likelihood
 from xpsi.likelihoods.default_background_marginalisation import precomputation
@@ -697,22 +867,22 @@ class CustomPrior_NoSecondary(xpsi.Prior):
 
     __derived_names__ = ['compactness', 'phase_separation',]
 
-    def __init__(self):
-        """ Nothing to be done.
+    # def __init__(self):
+    #     """ Nothing to be done.
 
-        A direct reference to the spacetime object could be put here
-        for use in __call__:
+    #     A direct reference to the spacetime object could be put here
+    #     for use in __call__:
 
-        .. code-block::
+    #     .. code-block::
 
-            self.spacetime = ref
+    #         self.spacetime = ref
 
-        Instead we get a reference to the spacetime object through the
-        a reference to a likelihood object which encapsulates a
-        reference to the spacetime object.
+    #     Instead we get a reference to the spacetime object through the
+    #     a reference to a likelihood object which encapsulates a
+    #     reference to the spacetime object.
 
-        """
-        super(CustomPrior_NoSecondary, self).__init__() # not strictly required if no hyperparameters
+    #     """
+    #     super(CustomPrior_NoSecondary, self).__init__() # not strictly required if no hyperparameters
 
     def __call__(self, p = None):
         """ Evaluate distribution at ``p``.
@@ -904,7 +1074,7 @@ def plot_2D_pulse(z, x, shift, y, ylabel,
 
     profile = ax.pcolormesh(new_phases,
                              y,
-                             interpolated, #/np.max(interpolated),
+                             interpolated/np.max(interpolated),
                              cmap = cm,
                              linewidth = 0,
                              rasterized = True)
@@ -917,7 +1087,7 @@ def plot_2D_pulse(z, x, shift, y, ylabel,
     ax.set_xlabel(r'Phase')
     veneer((0.1, 0.5), (None,None), ax)
 
-    cb = plt.colorbar(profile, cax = ax_cb)#, ticks = MultipleLocator(0.2))
+    cb = plt.colorbar(profile, cax = ax_cb, ticks = MultipleLocator(0.2))
 
     cb.set_label(label=r'Signal (arbitrary units)', labelpad=25)
     cb.solids.set_edgecolor('face')
@@ -926,3 +1096,54 @@ def plot_2D_pulse(z, x, shift, y, ylabel,
     cb.outline.set_linewidth(1.0)
     
     return ax
+
+class CustomBackground(xpsi.Background):
+    """ The background injected to generate synthetic data. """
+
+    def __init__(self, bounds=None, value=None):
+
+        # first the parameters that are fundemental to this class
+        doc = """
+        Powerlaw spectral index.
+        """
+        index = xpsi.Parameter('powerlaw_index',
+                                strict_bounds = (-4.0, -1.01),
+                                bounds = bounds,
+                                doc = doc,
+                                symbol = r'$\Gamma$',
+                                value = value)
+
+        super(CustomBackground, self).__init__(index)
+
+    def __call__(self, energy_edges, phases):
+        """ Evaluate the incident background field. """
+
+        G = self['powerlaw_index']
+
+        temp = np.zeros((energy_edges.shape[0] - 1, phases.shape[0]))
+
+        temp[:,0] = (energy_edges[1:]**(G + 1.0) - energy_edges[:-1]**(G + 1.0)) / (G + 1.0)
+
+        for i in range(phases.shape[0]):
+            temp[:,i] = temp[:,0]
+
+        self._incident_background= temp
+        
+class SynthesiseData(xpsi.Data):
+    """ Custom data container to enable synthesis. """
+
+    def __init__(self, channels, phases, first, last):
+
+        self.channels = channels
+        # print(channels)
+        # print(len(channels))
+        self._phases = phases
+
+        try:
+            self._first = int(first)
+            self._last = int(last)
+        except TypeError:
+            raise TypeError('The first and last channels must be integers.')
+        if self._first >= self._last:
+            raise ValueError('The first channel number must be lower than the '
+                             'the last channel number.')

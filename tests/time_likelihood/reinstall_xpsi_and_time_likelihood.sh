@@ -14,6 +14,6 @@ then
 source blackbody.sh
 fi
 
-cd tests/plot_pulses/
+cd tests/time_likelihood/
 export n_params
-python plot_pulses.py
+python time_likelihood.py

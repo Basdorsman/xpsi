@@ -316,30 +316,30 @@ cdef double eval_hot(size_t THREAD,
     
     for i in range(4):
         II = i * D.p.BLOCKS[0]
-        if DIFF[i] != 0.0:
-            for j in range(4):
-                JJ = j * D.p.BLOCKS[1]
-                for k in range(4):
-                    KK = k * D.p.BLOCKS[2]
-                    for l in range(4):
-                        address = D.p.I + (BN[0] + i) * D.p.S[0]
-                        address += (BN[1] + j) * D.p.S[1]
-                        address += (BN[2] + k) * D.p.S[2]
-                        address += BN[3] + l
-    
-                        temp = DIFF[i] * DIFF[4 + j] * DIFF[8 + k] * DIFF[12 + l]
-                        temp *= SPACE[i] * SPACE[4 + j] * SPACE[8 + k] * SPACE[12 + l]
-                        
-                        
-                        INDEX = II + JJ + KK + l
-                        # if temp == 0.0:
-                        #     printf('\ntemp is zero! ')
-                        #     printf('INDEX: %lu, ', INDEX)
-                            # if DIFF[i] == 0.0: printf('DIFF[i] is zero')
-    
-                        if CACHE == 1:
-                            I_CACHE[INDEX] = address[0]
-                        I += temp * I_CACHE[INDEX]
+        #if DIFF[i] != 0.0:
+        for j in range(4):
+            JJ = j * D.p.BLOCKS[1]
+            for k in range(4):
+                KK = k * D.p.BLOCKS[2]
+                for l in range(4):
+                    address = D.p.I + (BN[0] + i) * D.p.S[0]
+                    address += (BN[1] + j) * D.p.S[1]
+                    address += (BN[2] + k) * D.p.S[2]
+                    address += BN[3] + l
+
+                    temp = DIFF[i] * DIFF[4 + j] * DIFF[8 + k] * DIFF[12 + l]
+                    temp *= SPACE[i] * SPACE[4 + j] * SPACE[8 + k] * SPACE[12 + l]
+                    
+                    
+                    INDEX = II + JJ + KK + l
+                    # if temp == 0.0:
+                    #     printf('\ntemp is zero! ')
+                    #     printf('INDEX: %lu, ', INDEX)
+                        # if DIFF[i] == 0.0: printf('DIFF[i] is zero')
+
+                    if CACHE == 1:
+                        I_CACHE[INDEX] = address[0]
+                    I += temp * I_CACHE[INDEX]
 
     #if gsl_isnan(I) == 1:
         #printf("\nIntensity: NaN; Index [%d,%d,%d,%d] ",

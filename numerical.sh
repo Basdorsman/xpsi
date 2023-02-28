@@ -6,4 +6,4 @@
 
 # Python 3
 
-CC=gcc python setup.py install --Num${n_params}DHot
+CC=gcc python setup.py install --${atmosphere_type}${n_params}Hot

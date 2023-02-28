@@ -342,7 +342,7 @@ class Likelihood(ParameterSubspace):
 
         # register the signals by operating with the instrument response
         for signals, photosphere in zip(self._signals, self._star.photospheres):
-            print("register the signals by operating with the instrument response")
+            #print("register the signals by operating with the instrument response")
             for signal in signals:
                 if star_updated or signal.needs_update:
                     signal.register(tuple(

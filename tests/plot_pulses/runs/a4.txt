@@ -1,0 +1,423 @@
+atmosphere type: N for NSX, A for accreting, B for blackbody
+number of parameters in atmosphere: choose 4 or 5 for NSX or accreting atmosphere
+Copying Compton emission model for the hot region(s)
+Operating system: linux
+GSL version: 2.7.1
+Warning: the rayXpanda package cannot be imported. Using fallback implementation.
+NOOPENMP = False
+Cython.__version__ == 0.29.32
+Using Cython to build extension from .pyx files...
+running install
+running bdist_egg
+running egg_info
+writing xpsi.egg-info/PKG-INFO
+writing dependency_links to xpsi.egg-info/dependency_links.txt
+writing requirements to xpsi.egg-info/requires.txt
+writing top-level names to xpsi.egg-info/top_level.txt
+reading manifest file 'xpsi.egg-info/SOURCES.txt'
+reading manifest template 'MANIFEST.in'
+adding license file 'LICENSE'
+adding license file 'COPYING'
+writing manifest file 'xpsi.egg-info/SOURCES.txt'
+installing library code to build/bdist.linux-x86_64/egg
+running install_lib
+running build_py
+copying xpsi/include/rayXpanda/deflection.o -> build/lib.linux-x86_64-cpython-310/xpsi/include/rayXpanda
+copying xpsi/include/rayXpanda/inversion.o -> build/lib.linux-x86_64-cpython-310/xpsi/include/rayXpanda
+copying xpsi/surface_radiation_field/elsewhere.pyx -> build/lib.linux-x86_64-cpython-310/xpsi/surface_radiation_field
+copying xpsi/surface_radiation_field/hot.pyx -> build/lib.linux-x86_64-cpython-310/xpsi/surface_radiation_field
+running build_ext
+skipping 'xpsi/surface_radiation_field/effective_gravity_universal.c' Cython extension (up-to-date)
+skipping 'xpsi/cellmesh/mesh_tools.c' Cython extension (up-to-date)
+skipping 'xpsi/cellmesh/mesh.c' Cython extension (up-to-date)
+skipping 'xpsi/cellmesh/polar_mesh.c' Cython extension (up-to-date)
+skipping 'xpsi/cellmesh/global_mesh.c' Cython extension (up-to-date)
+skipping 'xpsi/cellmesh/rays.c' Cython extension (up-to-date)
+skipping 'xpsi/tools/energy_interpolator.c' Cython extension (up-to-date)
+skipping 'xpsi/tools/energy_integrator.c' Cython extension (up-to-date)
+skipping 'xpsi/tools/phase_integrator.c' Cython extension (up-to-date)
+skipping 'xpsi/tools/phase_interpolator.c' Cython extension (up-to-date)
+skipping 'xpsi/tools/synthesise.c' Cython extension (up-to-date)
+skipping 'xpsi/tools/__init__.c' Cython extension (up-to-date)
+skipping 'xpsi/likelihoods/default_background_marginalisation.c' Cython extension (up-to-date)
+skipping 'xpsi/likelihoods/_poisson_likelihood_given_background.c' Cython extension (up-to-date)
+skipping 'xpsi/surface_radiation_field/__init__.c' Cython extension (up-to-date)
+skipping 'xpsi/surface_radiation_field/preload.c' Cython extension (up-to-date)
+cythoning xpsi/surface_radiation_field/hot.pyx to xpsi/surface_radiation_field/hot.c
+cythoning xpsi/surface_radiation_field/elsewhere.pyx to xpsi/surface_radiation_field/elsewhere.c
+skipping 'xpsi/cellmesh/integrator.c' Cython extension (up-to-date)
+skipping 'xpsi/cellmesh/integrator_for_azimuthal_invariance.c' Cython extension (up-to-date)
+skipping 'xpsi/cellmesh/integrator_for_time_invariance.c' Cython extension (up-to-date)
+skipping 'xpsi/pixelmesh/METRIC_qK.c' Cython extension (up-to-date)
+skipping 'xpsi/pixelmesh/RODES_qK.c' Cython extension (up-to-date)
+skipping 'xpsi/pixelmesh/BOUNDARY_CONDITIONS.c' Cython extension (up-to-date)
+skipping 'xpsi/pixelmesh/surfaceBisection.c' Cython extension (up-to-date)
+skipping 'xpsi/pixelmesh/coordinateTransformation.c' Cython extension (up-to-date)
+skipping 'xpsi/pixelmesh/RK_IP2S_tracer.c' Cython extension (up-to-date)
+skipping 'xpsi/pixelmesh/get_IP_radius.c' Cython extension (up-to-date)
+skipping 'xpsi/pixelmesh/globalRayMap.c' Cython extension (up-to-date)
+skipping 'xpsi/surface_radiation_field/local_variables.c' Cython extension (up-to-date)
+skipping 'xpsi/pixelmesh/integrator.c' Cython extension (up-to-date)
+building 'xpsi.surface_radiation_field.hot' extension
+gcc -Wno-unused-result -Wsign-compare -DNDEBUG -fwrapv -O2 -Wall -fPIC -O2 -isystem /home/bas/anaconda3/envs/xpsi_py3/include -fPIC -O2 -isystem /home/bas/anaconda3/envs/xpsi_py3/include -fPIC -I/home/bas/gsl/include -I/home/bas/anaconda3/envs/xpsi_py3/lib/python3.10/site-packages/numpy/core/include -I/home/bas/Documents/Projects/x-psi/xpsi-bas-fork/xpsi/include -I/home/bas/anaconda3/envs/xpsi_py3/include/python3.10 -c xpsi/surface_radiation_field/hot.c -o build/temp.linux-x86_64-cpython-310/xpsi/surface_radiation_field/hot.o -fopenmp -march=native -O3 -funroll-loops -Wno-unused-function -Wno-uninitialized -Wno-cpp
+gcc -shared -Wl,-rpath,/home/bas/anaconda3/envs/xpsi_py3/lib -Wl,-rpath-link,/home/bas/anaconda3/envs/xpsi_py3/lib -L/home/bas/anaconda3/envs/xpsi_py3/lib -Wl,-rpath,/home/bas/anaconda3/envs/xpsi_py3/lib -Wl,-rpath-link,/home/bas/anaconda3/envs/xpsi_py3/lib -L/home/bas/anaconda3/envs/xpsi_py3/lib build/temp.linux-x86_64-cpython-310/xpsi/surface_radiation_field/hot.o -L/home/bas/gsl/lib -L/home/bas/Documents/Projects/x-psi/xpsi-bas-fork/xpsi/include/rayXpanda -lgsl -lgslcblas -lm -l:inversion.o -l:deflection.o -o build/lib.linux-x86_64-cpython-310/xpsi/surface_radiation_field/hot.cpython-310-x86_64-linux-gnu.so -Wl,-rpath,/home/bas/gsl/lib -Wl,-rpath,/home/bas/Documents/Projects/x-psi/xpsi-bas-fork/xpsi/include/rayXpanda -fopenmp
+building 'xpsi.surface_radiation_field.elsewhere' extension
+gcc -Wno-unused-result -Wsign-compare -DNDEBUG -fwrapv -O2 -Wall -fPIC -O2 -isystem /home/bas/anaconda3/envs/xpsi_py3/include -fPIC -O2 -isystem /home/bas/anaconda3/envs/xpsi_py3/include -fPIC -I/home/bas/gsl/include -I/home/bas/anaconda3/envs/xpsi_py3/lib/python3.10/site-packages/numpy/core/include -I/home/bas/Documents/Projects/x-psi/xpsi-bas-fork/xpsi/include -I/home/bas/anaconda3/envs/xpsi_py3/include/python3.10 -c xpsi/surface_radiation_field/elsewhere.c -o build/temp.linux-x86_64-cpython-310/xpsi/surface_radiation_field/elsewhere.o -fopenmp -march=native -O3 -funroll-loops -Wno-unused-function -Wno-uninitialized -Wno-cpp
+gcc -shared -Wl,-rpath,/home/bas/anaconda3/envs/xpsi_py3/lib -Wl,-rpath-link,/home/bas/anaconda3/envs/xpsi_py3/lib -L/home/bas/anaconda3/envs/xpsi_py3/lib -Wl,-rpath,/home/bas/anaconda3/envs/xpsi_py3/lib -Wl,-rpath-link,/home/bas/anaconda3/envs/xpsi_py3/lib -L/home/bas/anaconda3/envs/xpsi_py3/lib build/temp.linux-x86_64-cpython-310/xpsi/surface_radiation_field/elsewhere.o -L/home/bas/gsl/lib -L/home/bas/Documents/Projects/x-psi/xpsi-bas-fork/xpsi/include/rayXpanda -lgsl -lgslcblas -lm -l:inversion.o -l:deflection.o -o build/lib.linux-x86_64-cpython-310/xpsi/surface_radiation_field/elsewhere.cpython-310-x86_64-linux-gnu.so -Wl,-rpath,/home/bas/gsl/lib -Wl,-rpath,/home/bas/Documents/Projects/x-psi/xpsi-bas-fork/xpsi/include/rayXpanda -fopenmp
+creating build/bdist.linux-x86_64/egg
+creating build/bdist.linux-x86_64/egg/xpsi
+copying build/lib.linux-x86_64-cpython-310/xpsi/Photosphere.py -> build/bdist.linux-x86_64/egg/xpsi
+copying build/lib.linux-x86_64-cpython-310/xpsi/Spacetime.py -> build/bdist.linux-x86_64/egg/xpsi
+copying build/lib.linux-x86_64-cpython-310/xpsi/Posterior.py -> build/bdist.linux-x86_64/egg/xpsi
+copying build/lib.linux-x86_64-cpython-310/xpsi/TwoHotRegions.py -> build/bdist.linux-x86_64/egg/xpsi
+copying build/lib.linux-x86_64-cpython-310/xpsi/ParameterSubspace.py -> build/bdist.linux-x86_64/egg/xpsi
+copying build/lib.linux-x86_64-cpython-310/xpsi/__init__.py -> build/bdist.linux-x86_64/egg/xpsi
+creating build/bdist.linux-x86_64/egg/xpsi/pixelmesh
+copying build/lib.linux-x86_64-cpython-310/xpsi/pixelmesh/METRIC_qK.pyx -> build/bdist.linux-x86_64/egg/xpsi/pixelmesh
+copying build/lib.linux-x86_64-cpython-310/xpsi/pixelmesh/RODES_qK.pyx -> build/bdist.linux-x86_64/egg/xpsi/pixelmesh
+copying build/lib.linux-x86_64-cpython-310/xpsi/pixelmesh/surfaceBisection.cpython-310-x86_64-linux-gnu.so -> build/bdist.linux-x86_64/egg/xpsi/pixelmesh
+copying build/lib.linux-x86_64-cpython-310/xpsi/pixelmesh/integrator.cpython-310-x86_64-linux-gnu.so -> build/bdist.linux-x86_64/egg/xpsi/pixelmesh
+copying build/lib.linux-x86_64-cpython-310/xpsi/pixelmesh/get_IP_radius.pyx -> build/bdist.linux-x86_64/egg/xpsi/pixelmesh
+copying build/lib.linux-x86_64-cpython-310/xpsi/pixelmesh/__init__.py -> build/bdist.linux-x86_64/egg/xpsi/pixelmesh
+copying build/lib.linux-x86_64-cpython-310/xpsi/pixelmesh/RK_IP2S_tracer.cpython-310-x86_64-linux-gnu.so -> build/bdist.linux-x86_64/egg/xpsi/pixelmesh
+copying build/lib.linux-x86_64-cpython-310/xpsi/pixelmesh/RODES_qK.cpython-310-x86_64-linux-gnu.so -> build/bdist.linux-x86_64/egg/xpsi/pixelmesh
+copying build/lib.linux-x86_64-cpython-310/xpsi/pixelmesh/integrator.pyx -> build/bdist.linux-x86_64/egg/xpsi/pixelmesh
+copying build/lib.linux-x86_64-cpython-310/xpsi/pixelmesh/BOUNDARY_CONDITIONS.cpython-310-x86_64-linux-gnu.so -> build/bdist.linux-x86_64/egg/xpsi/pixelmesh
+copying build/lib.linux-x86_64-cpython-310/xpsi/pixelmesh/globalRayMap.pyx -> build/bdist.linux-x86_64/egg/xpsi/pixelmesh
+copying build/lib.linux-x86_64-cpython-310/xpsi/pixelmesh/METRIC_qK.cpython-310-x86_64-linux-gnu.so -> build/bdist.linux-x86_64/egg/xpsi/pixelmesh
+copying build/lib.linux-x86_64-cpython-310/xpsi/pixelmesh/RK_IP2S_tracer.pyx -> build/bdist.linux-x86_64/egg/xpsi/pixelmesh
+copying build/lib.linux-x86_64-cpython-310/xpsi/pixelmesh/coordinateTransformation.cpython-310-x86_64-linux-gnu.so -> build/bdist.linux-x86_64/egg/xpsi/pixelmesh
+copying build/lib.linux-x86_64-cpython-310/xpsi/pixelmesh/BOUNDARY_CONDITIONS.pyx -> build/bdist.linux-x86_64/egg/xpsi/pixelmesh
+copying build/lib.linux-x86_64-cpython-310/xpsi/pixelmesh/surfaceBisection.pyx -> build/bdist.linux-x86_64/egg/xpsi/pixelmesh
+copying build/lib.linux-x86_64-cpython-310/xpsi/pixelmesh/globalRayMap.cpython-310-x86_64-linux-gnu.so -> build/bdist.linux-x86_64/egg/xpsi/pixelmesh
+copying build/lib.linux-x86_64-cpython-310/xpsi/pixelmesh/coordinateTransformation.pyx -> build/bdist.linux-x86_64/egg/xpsi/pixelmesh
+copying build/lib.linux-x86_64-cpython-310/xpsi/pixelmesh/get_IP_radius.cpython-310-x86_64-linux-gnu.so -> build/bdist.linux-x86_64/egg/xpsi/pixelmesh
+copying build/lib.linux-x86_64-cpython-310/xpsi/NestedSampler.py -> build/bdist.linux-x86_64/egg/xpsi
+copying build/lib.linux-x86_64-cpython-310/xpsi/EnsembleSampler.py -> build/bdist.linux-x86_64/egg/xpsi
+creating build/bdist.linux-x86_64/egg/xpsi/tools
+copying build/lib.linux-x86_64-cpython-310/xpsi/tools/phase_integrator.pyx -> build/bdist.linux-x86_64/egg/xpsi/tools
+copying build/lib.linux-x86_64-cpython-310/xpsi/tools/energy_integrator.pyx -> build/bdist.linux-x86_64/egg/xpsi/tools
+copying build/lib.linux-x86_64-cpython-310/xpsi/tools/__init__.pyx -> build/bdist.linux-x86_64/egg/xpsi/tools
+copying build/lib.linux-x86_64-cpython-310/xpsi/tools/phase_interpolator.pyx -> build/bdist.linux-x86_64/egg/xpsi/tools
+copying build/lib.linux-x86_64-cpython-310/xpsi/tools/synthesise.pyx -> build/bdist.linux-x86_64/egg/xpsi/tools
+copying build/lib.linux-x86_64-cpython-310/xpsi/tools/phase_interpolator.cpython-310-x86_64-linux-gnu.so -> build/bdist.linux-x86_64/egg/xpsi/tools
+copying build/lib.linux-x86_64-cpython-310/xpsi/tools/energy_integrator.cpython-310-x86_64-linux-gnu.so -> build/bdist.linux-x86_64/egg/xpsi/tools
+copying build/lib.linux-x86_64-cpython-310/xpsi/tools/energy_interpolator.pyx -> build/bdist.linux-x86_64/egg/xpsi/tools
+copying build/lib.linux-x86_64-cpython-310/xpsi/tools/phase_integrator.cpython-310-x86_64-linux-gnu.so -> build/bdist.linux-x86_64/egg/xpsi/tools
+copying build/lib.linux-x86_64-cpython-310/xpsi/tools/energy_interpolator.cpython-310-x86_64-linux-gnu.so -> build/bdist.linux-x86_64/egg/xpsi/tools
+copying build/lib.linux-x86_64-cpython-310/xpsi/tools/synthesise.cpython-310-x86_64-linux-gnu.so -> build/bdist.linux-x86_64/egg/xpsi/tools
+copying build/lib.linux-x86_64-cpython-310/xpsi/tools/__init__.cpython-310-x86_64-linux-gnu.so -> build/bdist.linux-x86_64/egg/xpsi/tools
+creating build/bdist.linux-x86_64/egg/xpsi/surface_radiation_field
+copying build/lib.linux-x86_64-cpython-310/xpsi/surface_radiation_field/effective_gravity_universal.pyx -> build/bdist.linux-x86_64/egg/xpsi/surface_radiation_field
+copying build/lib.linux-x86_64-cpython-310/xpsi/surface_radiation_field/elsewhere.cpython-310-x86_64-linux-gnu.so -> build/bdist.linux-x86_64/egg/xpsi/surface_radiation_field
+copying build/lib.linux-x86_64-cpython-310/xpsi/surface_radiation_field/__init__.pyx -> build/bdist.linux-x86_64/egg/xpsi/surface_radiation_field
+copying build/lib.linux-x86_64-cpython-310/xpsi/surface_radiation_field/preload.cpython-310-x86_64-linux-gnu.so -> build/bdist.linux-x86_64/egg/xpsi/surface_radiation_field
+copying build/lib.linux-x86_64-cpython-310/xpsi/surface_radiation_field/local_variables.cpython-310-x86_64-linux-gnu.so -> build/bdist.linux-x86_64/egg/xpsi/surface_radiation_field
+copying build/lib.linux-x86_64-cpython-310/xpsi/surface_radiation_field/preload.pyx -> build/bdist.linux-x86_64/egg/xpsi/surface_radiation_field
+copying build/lib.linux-x86_64-cpython-310/xpsi/surface_radiation_field/elsewhere.pyx -> build/bdist.linux-x86_64/egg/xpsi/surface_radiation_field
+copying build/lib.linux-x86_64-cpython-310/xpsi/surface_radiation_field/hot.cpython-310-x86_64-linux-gnu.so -> build/bdist.linux-x86_64/egg/xpsi/surface_radiation_field
+copying build/lib.linux-x86_64-cpython-310/xpsi/surface_radiation_field/local_variables.pyx -> build/bdist.linux-x86_64/egg/xpsi/surface_radiation_field
+copying build/lib.linux-x86_64-cpython-310/xpsi/surface_radiation_field/effective_gravity_universal.cpython-310-x86_64-linux-gnu.so -> build/bdist.linux-x86_64/egg/xpsi/surface_radiation_field
+copying build/lib.linux-x86_64-cpython-310/xpsi/surface_radiation_field/hot.pyx -> build/bdist.linux-x86_64/egg/xpsi/surface_radiation_field
+copying build/lib.linux-x86_64-cpython-310/xpsi/surface_radiation_field/__init__.cpython-310-x86_64-linux-gnu.so -> build/bdist.linux-x86_64/egg/xpsi/surface_radiation_field
+copying build/lib.linux-x86_64-cpython-310/xpsi/global_imports.py -> build/bdist.linux-x86_64/egg/xpsi
+copying build/lib.linux-x86_64-cpython-310/xpsi/Everywhere.py -> build/bdist.linux-x86_64/egg/xpsi
+creating build/bdist.linux-x86_64/egg/xpsi/include
+copying build/lib.linux-x86_64-cpython-310/xpsi/include/GSL.pxd -> build/bdist.linux-x86_64/egg/xpsi/include
+creating build/bdist.linux-x86_64/egg/xpsi/include/rayXpanda
+copying build/lib.linux-x86_64-cpython-310/xpsi/include/rayXpanda/deflection.h -> build/bdist.linux-x86_64/egg/xpsi/include/rayXpanda
+copying build/lib.linux-x86_64-cpython-310/xpsi/include/rayXpanda/inversion.c -> build/bdist.linux-x86_64/egg/xpsi/include/rayXpanda
+copying build/lib.linux-x86_64-cpython-310/xpsi/include/rayXpanda/deflection.o -> build/bdist.linux-x86_64/egg/xpsi/include/rayXpanda
+copying build/lib.linux-x86_64-cpython-310/xpsi/include/rayXpanda/inversion.o -> build/bdist.linux-x86_64/egg/xpsi/include/rayXpanda
+copying build/lib.linux-x86_64-cpython-310/xpsi/include/rayXpanda/inversion.h -> build/bdist.linux-x86_64/egg/xpsi/include/rayXpanda
+copying build/lib.linux-x86_64-cpython-310/xpsi/include/rayXpanda/deflection.c -> build/bdist.linux-x86_64/egg/xpsi/include/rayXpanda
+copying build/lib.linux-x86_64-cpython-310/xpsi/Instrument.py -> build/bdist.linux-x86_64/egg/xpsi
+copying build/lib.linux-x86_64-cpython-310/xpsi/HotRegions.py -> build/bdist.linux-x86_64/egg/xpsi
+copying build/lib.linux-x86_64-cpython-310/xpsi/Background.py -> build/bdist.linux-x86_64/egg/xpsi
+copying build/lib.linux-x86_64-cpython-310/xpsi/HotRegion.py -> build/bdist.linux-x86_64/egg/xpsi
+copying build/lib.linux-x86_64-cpython-310/xpsi/Data.py -> build/bdist.linux-x86_64/egg/xpsi
+copying build/lib.linux-x86_64-cpython-310/xpsi/Sample.py -> build/bdist.linux-x86_64/egg/xpsi
+copying build/lib.linux-x86_64-cpython-310/xpsi/Prior.py -> build/bdist.linux-x86_64/egg/xpsi
+copying build/lib.linux-x86_64-cpython-310/xpsi/Elsewhere.py -> build/bdist.linux-x86_64/egg/xpsi
+copying build/lib.linux-x86_64-cpython-310/xpsi/Likelihood.py -> build/bdist.linux-x86_64/egg/xpsi
+creating build/bdist.linux-x86_64/egg/xpsi/PostProcessing
+copying build/lib.linux-x86_64-cpython-310/xpsi/PostProcessing/_pulse.py -> build/bdist.linux-x86_64/egg/xpsi/PostProcessing
+copying build/lib.linux-x86_64-cpython-310/xpsi/PostProcessing/_global_imports.py -> build/bdist.linux-x86_64/egg/xpsi/PostProcessing
+copying build/lib.linux-x86_64-cpython-310/xpsi/PostProcessing/_runs.py -> build/bdist.linux-x86_64/egg/xpsi/PostProcessing
+copying build/lib.linux-x86_64-cpython-310/xpsi/PostProcessing/_cache.py -> build/bdist.linux-x86_64/egg/xpsi/PostProcessing
+copying build/lib.linux-x86_64-cpython-310/xpsi/PostProcessing/_backends.py -> build/bdist.linux-x86_64/egg/xpsi/PostProcessing
+copying build/lib.linux-x86_64-cpython-310/xpsi/PostProcessing/__init__.py -> build/bdist.linux-x86_64/egg/xpsi/PostProcessing
+copying build/lib.linux-x86_64-cpython-310/xpsi/PostProcessing/_nestcheck_modifications.py -> build/bdist.linux-x86_64/egg/xpsi/PostProcessing
+copying build/lib.linux-x86_64-cpython-310/xpsi/PostProcessing/_postprocessor.py -> build/bdist.linux-x86_64/egg/xpsi/PostProcessing
+copying build/lib.linux-x86_64-cpython-310/xpsi/PostProcessing/_signalplotter.py -> build/bdist.linux-x86_64/egg/xpsi/PostProcessing
+copying build/lib.linux-x86_64-cpython-310/xpsi/PostProcessing/_metadata.py -> build/bdist.linux-x86_64/egg/xpsi/PostProcessing
+copying build/lib.linux-x86_64-cpython-310/xpsi/PostProcessing/_signalplot.py -> build/bdist.linux-x86_64/egg/xpsi/PostProcessing
+copying build/lib.linux-x86_64-cpython-310/xpsi/PostProcessing/_run.py -> build/bdist.linux-x86_64/egg/xpsi/PostProcessing
+copying build/lib.linux-x86_64-cpython-310/xpsi/PostProcessing/_corner.py -> build/bdist.linux-x86_64/egg/xpsi/PostProcessing
+copying build/lib.linux-x86_64-cpython-310/xpsi/PostProcessing/_spectrum.py -> build/bdist.linux-x86_64/egg/xpsi/PostProcessing
+copying build/lib.linux-x86_64-cpython-310/xpsi/PostProcessing/_residual.py -> build/bdist.linux-x86_64/egg/xpsi/PostProcessing
+copying build/lib.linux-x86_64-cpython-310/xpsi/Star.py -> build/bdist.linux-x86_64/egg/xpsi
+copying build/lib.linux-x86_64-cpython-310/xpsi/module_generator.py -> build/bdist.linux-x86_64/egg/xpsi
+copying build/lib.linux-x86_64-cpython-310/xpsi/Interstellar.py -> build/bdist.linux-x86_64/egg/xpsi
+copying build/lib.linux-x86_64-cpython-310/xpsi/Signal.py -> build/bdist.linux-x86_64/egg/xpsi
+copying build/lib.linux-x86_64-cpython-310/xpsi/utils.py -> build/bdist.linux-x86_64/egg/xpsi
+creating build/bdist.linux-x86_64/egg/xpsi/utilities
+copying build/lib.linux-x86_64-cpython-310/xpsi/utilities/__init__.py -> build/bdist.linux-x86_64/egg/xpsi/utilities
+copying build/lib.linux-x86_64-cpython-310/xpsi/utilities/ImportanceSample.py -> build/bdist.linux-x86_64/egg/xpsi/utilities
+copying build/lib.linux-x86_64-cpython-310/xpsi/utilities/ProjectionTool.py -> build/bdist.linux-x86_64/egg/xpsi/utilities
+creating build/bdist.linux-x86_64/egg/xpsi/cellmesh
+copying build/lib.linux-x86_64-cpython-310/xpsi/cellmesh/integrator_for_azimuthal_invariance.pyx -> build/bdist.linux-x86_64/egg/xpsi/cellmesh
+copying build/lib.linux-x86_64-cpython-310/xpsi/cellmesh/integrator_for_time_invariance.pyx -> build/bdist.linux-x86_64/egg/xpsi/cellmesh
+copying build/lib.linux-x86_64-cpython-310/xpsi/cellmesh/integrator.cpython-310-x86_64-linux-gnu.so -> build/bdist.linux-x86_64/egg/xpsi/cellmesh
+copying build/lib.linux-x86_64-cpython-310/xpsi/cellmesh/integrator_for_azimuthal_invariance.cpython-310-x86_64-linux-gnu.so -> build/bdist.linux-x86_64/egg/xpsi/cellmesh
+copying build/lib.linux-x86_64-cpython-310/xpsi/cellmesh/__init__.py -> build/bdist.linux-x86_64/egg/xpsi/cellmesh
+copying build/lib.linux-x86_64-cpython-310/xpsi/cellmesh/mesh_tools.cpython-310-x86_64-linux-gnu.so -> build/bdist.linux-x86_64/egg/xpsi/cellmesh
+copying build/lib.linux-x86_64-cpython-310/xpsi/cellmesh/integrator.pyx -> build/bdist.linux-x86_64/egg/xpsi/cellmesh
+copying build/lib.linux-x86_64-cpython-310/xpsi/cellmesh/integrator_for_time_invariance.cpython-310-x86_64-linux-gnu.so -> build/bdist.linux-x86_64/egg/xpsi/cellmesh
+copying build/lib.linux-x86_64-cpython-310/xpsi/cellmesh/mesh.cpython-310-x86_64-linux-gnu.so -> build/bdist.linux-x86_64/egg/xpsi/cellmesh
+copying build/lib.linux-x86_64-cpython-310/xpsi/cellmesh/rays.cpython-310-x86_64-linux-gnu.so -> build/bdist.linux-x86_64/egg/xpsi/cellmesh
+copying build/lib.linux-x86_64-cpython-310/xpsi/cellmesh/mesh.pyx -> build/bdist.linux-x86_64/egg/xpsi/cellmesh
+copying build/lib.linux-x86_64-cpython-310/xpsi/cellmesh/global_mesh.cpython-310-x86_64-linux-gnu.so -> build/bdist.linux-x86_64/egg/xpsi/cellmesh
+copying build/lib.linux-x86_64-cpython-310/xpsi/cellmesh/mesh_tools.pyx -> build/bdist.linux-x86_64/egg/xpsi/cellmesh
+copying build/lib.linux-x86_64-cpython-310/xpsi/cellmesh/polar_mesh.cpython-310-x86_64-linux-gnu.so -> build/bdist.linux-x86_64/egg/xpsi/cellmesh
+copying build/lib.linux-x86_64-cpython-310/xpsi/cellmesh/polar_mesh.pyx -> build/bdist.linux-x86_64/egg/xpsi/cellmesh
+copying build/lib.linux-x86_64-cpython-310/xpsi/cellmesh/global_mesh.pyx -> build/bdist.linux-x86_64/egg/xpsi/cellmesh
+copying build/lib.linux-x86_64-cpython-310/xpsi/cellmesh/rays.pyx -> build/bdist.linux-x86_64/egg/xpsi/cellmesh
+creating build/bdist.linux-x86_64/egg/xpsi/likelihoods
+copying build/lib.linux-x86_64-cpython-310/xpsi/likelihoods/_poisson_likelihood_given_background.cpython-310-x86_64-linux-gnu.so -> build/bdist.linux-x86_64/egg/xpsi/likelihoods
+copying build/lib.linux-x86_64-cpython-310/xpsi/likelihoods/__init__.py -> build/bdist.linux-x86_64/egg/xpsi/likelihoods
+copying build/lib.linux-x86_64-cpython-310/xpsi/likelihoods/_poisson_likelihood_given_background.pyx -> build/bdist.linux-x86_64/egg/xpsi/likelihoods
+copying build/lib.linux-x86_64-cpython-310/xpsi/likelihoods/default_background_marginalisation.cpython-310-x86_64-linux-gnu.so -> build/bdist.linux-x86_64/egg/xpsi/likelihoods
+copying build/lib.linux-x86_64-cpython-310/xpsi/likelihoods/default_background_marginalisation.pyx -> build/bdist.linux-x86_64/egg/xpsi/likelihoods
+copying build/lib.linux-x86_64-cpython-310/xpsi/Parameter.py -> build/bdist.linux-x86_64/egg/xpsi
+byte-compiling build/bdist.linux-x86_64/egg/xpsi/Photosphere.py to Photosphere.cpython-310.pyc
+byte-compiling build/bdist.linux-x86_64/egg/xpsi/Spacetime.py to Spacetime.cpython-310.pyc
+byte-compiling build/bdist.linux-x86_64/egg/xpsi/Posterior.py to Posterior.cpython-310.pyc
+byte-compiling build/bdist.linux-x86_64/egg/xpsi/TwoHotRegions.py to TwoHotRegions.cpython-310.pyc
+byte-compiling build/bdist.linux-x86_64/egg/xpsi/ParameterSubspace.py to ParameterSubspace.cpython-310.pyc
+byte-compiling build/bdist.linux-x86_64/egg/xpsi/__init__.py to __init__.cpython-310.pyc
+byte-compiling build/bdist.linux-x86_64/egg/xpsi/pixelmesh/__init__.py to __init__.cpython-310.pyc
+byte-compiling build/bdist.linux-x86_64/egg/xpsi/NestedSampler.py to NestedSampler.cpython-310.pyc
+byte-compiling build/bdist.linux-x86_64/egg/xpsi/EnsembleSampler.py to EnsembleSampler.cpython-310.pyc
+byte-compiling build/bdist.linux-x86_64/egg/xpsi/global_imports.py to global_imports.cpython-310.pyc
+byte-compiling build/bdist.linux-x86_64/egg/xpsi/Everywhere.py to Everywhere.cpython-310.pyc
+byte-compiling build/bdist.linux-x86_64/egg/xpsi/Instrument.py to Instrument.cpython-310.pyc
+byte-compiling build/bdist.linux-x86_64/egg/xpsi/HotRegions.py to HotRegions.cpython-310.pyc
+byte-compiling build/bdist.linux-x86_64/egg/xpsi/Background.py to Background.cpython-310.pyc
+byte-compiling build/bdist.linux-x86_64/egg/xpsi/HotRegion.py to HotRegion.cpython-310.pyc
+byte-compiling build/bdist.linux-x86_64/egg/xpsi/Data.py to Data.cpython-310.pyc
+byte-compiling build/bdist.linux-x86_64/egg/xpsi/Sample.py to Sample.cpython-310.pyc
+byte-compiling build/bdist.linux-x86_64/egg/xpsi/Prior.py to Prior.cpython-310.pyc
+byte-compiling build/bdist.linux-x86_64/egg/xpsi/Elsewhere.py to Elsewhere.cpython-310.pyc
+byte-compiling build/bdist.linux-x86_64/egg/xpsi/Likelihood.py to Likelihood.cpython-310.pyc
+byte-compiling build/bdist.linux-x86_64/egg/xpsi/PostProcessing/_pulse.py to _pulse.cpython-310.pyc
+byte-compiling build/bdist.linux-x86_64/egg/xpsi/PostProcessing/_global_imports.py to _global_imports.cpython-310.pyc
+byte-compiling build/bdist.linux-x86_64/egg/xpsi/PostProcessing/_runs.py to _runs.cpython-310.pyc
+byte-compiling build/bdist.linux-x86_64/egg/xpsi/PostProcessing/_cache.py to _cache.cpython-310.pyc
+byte-compiling build/bdist.linux-x86_64/egg/xpsi/PostProcessing/_backends.py to _backends.cpython-310.pyc
+byte-compiling build/bdist.linux-x86_64/egg/xpsi/PostProcessing/__init__.py to __init__.cpython-310.pyc
+byte-compiling build/bdist.linux-x86_64/egg/xpsi/PostProcessing/_nestcheck_modifications.py to _nestcheck_modifications.cpython-310.pyc
+byte-compiling build/bdist.linux-x86_64/egg/xpsi/PostProcessing/_postprocessor.py to _postprocessor.cpython-310.pyc
+byte-compiling build/bdist.linux-x86_64/egg/xpsi/PostProcessing/_signalplotter.py to _signalplotter.cpython-310.pyc
+byte-compiling build/bdist.linux-x86_64/egg/xpsi/PostProcessing/_metadata.py to _metadata.cpython-310.pyc
+byte-compiling build/bdist.linux-x86_64/egg/xpsi/PostProcessing/_signalplot.py to _signalplot.cpython-310.pyc
+byte-compiling build/bdist.linux-x86_64/egg/xpsi/PostProcessing/_run.py to _run.cpython-310.pyc
+byte-compiling build/bdist.linux-x86_64/egg/xpsi/PostProcessing/_corner.py to _corner.cpython-310.pyc
+byte-compiling build/bdist.linux-x86_64/egg/xpsi/PostProcessing/_spectrum.py to _spectrum.cpython-310.pyc
+byte-compiling build/bdist.linux-x86_64/egg/xpsi/PostProcessing/_residual.py to _residual.cpython-310.pyc
+byte-compiling build/bdist.linux-x86_64/egg/xpsi/Star.py to Star.cpython-310.pyc
+byte-compiling build/bdist.linux-x86_64/egg/xpsi/module_generator.py to module_generator.cpython-310.pyc
+byte-compiling build/bdist.linux-x86_64/egg/xpsi/Interstellar.py to Interstellar.cpython-310.pyc
+byte-compiling build/bdist.linux-x86_64/egg/xpsi/Signal.py to Signal.cpython-310.pyc
+byte-compiling build/bdist.linux-x86_64/egg/xpsi/utils.py to utils.cpython-310.pyc
+byte-compiling build/bdist.linux-x86_64/egg/xpsi/utilities/__init__.py to __init__.cpython-310.pyc
+byte-compiling build/bdist.linux-x86_64/egg/xpsi/utilities/ImportanceSample.py to ImportanceSample.cpython-310.pyc
+byte-compiling build/bdist.linux-x86_64/egg/xpsi/utilities/ProjectionTool.py to ProjectionTool.cpython-310.pyc
+byte-compiling build/bdist.linux-x86_64/egg/xpsi/cellmesh/__init__.py to __init__.cpython-310.pyc
+byte-compiling build/bdist.linux-x86_64/egg/xpsi/likelihoods/__init__.py to __init__.cpython-310.pyc
+byte-compiling build/bdist.linux-x86_64/egg/xpsi/Parameter.py to Parameter.cpython-310.pyc
+creating stub loader for xpsi/surface_radiation_field/effective_gravity_universal.cpython-310-x86_64-linux-gnu.so
+creating stub loader for xpsi/cellmesh/mesh_tools.cpython-310-x86_64-linux-gnu.so
+creating stub loader for xpsi/cellmesh/mesh.cpython-310-x86_64-linux-gnu.so
+creating stub loader for xpsi/cellmesh/polar_mesh.cpython-310-x86_64-linux-gnu.so
+creating stub loader for xpsi/cellmesh/global_mesh.cpython-310-x86_64-linux-gnu.so
+creating stub loader for xpsi/cellmesh/rays.cpython-310-x86_64-linux-gnu.so
+creating stub loader for xpsi/tools/energy_interpolator.cpython-310-x86_64-linux-gnu.so
+creating stub loader for xpsi/tools/energy_integrator.cpython-310-x86_64-linux-gnu.so
+creating stub loader for xpsi/tools/phase_integrator.cpython-310-x86_64-linux-gnu.so
+creating stub loader for xpsi/tools/phase_interpolator.cpython-310-x86_64-linux-gnu.so
+creating stub loader for xpsi/tools/synthesise.cpython-310-x86_64-linux-gnu.so
+creating stub loader for xpsi/tools/__init__.cpython-310-x86_64-linux-gnu.so
+creating stub loader for xpsi/likelihoods/default_background_marginalisation.cpython-310-x86_64-linux-gnu.so
+creating stub loader for xpsi/likelihoods/_poisson_likelihood_given_background.cpython-310-x86_64-linux-gnu.so
+creating stub loader for xpsi/surface_radiation_field/__init__.cpython-310-x86_64-linux-gnu.so
+creating stub loader for xpsi/surface_radiation_field/preload.cpython-310-x86_64-linux-gnu.so
+creating stub loader for xpsi/surface_radiation_field/hot.cpython-310-x86_64-linux-gnu.so
+creating stub loader for xpsi/surface_radiation_field/elsewhere.cpython-310-x86_64-linux-gnu.so
+creating stub loader for xpsi/cellmesh/integrator.cpython-310-x86_64-linux-gnu.so
+creating stub loader for xpsi/cellmesh/integrator_for_azimuthal_invariance.cpython-310-x86_64-linux-gnu.so
+creating stub loader for xpsi/cellmesh/integrator_for_time_invariance.cpython-310-x86_64-linux-gnu.so
+creating stub loader for xpsi/pixelmesh/METRIC_qK.cpython-310-x86_64-linux-gnu.so
+creating stub loader for xpsi/pixelmesh/RODES_qK.cpython-310-x86_64-linux-gnu.so
+creating stub loader for xpsi/pixelmesh/BOUNDARY_CONDITIONS.cpython-310-x86_64-linux-gnu.so
+creating stub loader for xpsi/pixelmesh/surfaceBisection.cpython-310-x86_64-linux-gnu.so
+creating stub loader for xpsi/pixelmesh/coordinateTransformation.cpython-310-x86_64-linux-gnu.so
+creating stub loader for xpsi/pixelmesh/RK_IP2S_tracer.cpython-310-x86_64-linux-gnu.so
+creating stub loader for xpsi/pixelmesh/get_IP_radius.cpython-310-x86_64-linux-gnu.so
+creating stub loader for xpsi/pixelmesh/globalRayMap.cpython-310-x86_64-linux-gnu.so
+creating stub loader for xpsi/surface_radiation_field/local_variables.cpython-310-x86_64-linux-gnu.so
+creating stub loader for xpsi/pixelmesh/integrator.cpython-310-x86_64-linux-gnu.so
+byte-compiling build/bdist.linux-x86_64/egg/xpsi/surface_radiation_field/effective_gravity_universal.py to effective_gravity_universal.cpython-310.pyc
+byte-compiling build/bdist.linux-x86_64/egg/xpsi/cellmesh/mesh_tools.py to mesh_tools.cpython-310.pyc
+byte-compiling build/bdist.linux-x86_64/egg/xpsi/cellmesh/mesh.py to mesh.cpython-310.pyc
+byte-compiling build/bdist.linux-x86_64/egg/xpsi/cellmesh/polar_mesh.py to polar_mesh.cpython-310.pyc
+byte-compiling build/bdist.linux-x86_64/egg/xpsi/cellmesh/global_mesh.py to global_mesh.cpython-310.pyc
+byte-compiling build/bdist.linux-x86_64/egg/xpsi/cellmesh/rays.py to rays.cpython-310.pyc
+byte-compiling build/bdist.linux-x86_64/egg/xpsi/tools/energy_interpolator.py to energy_interpolator.cpython-310.pyc
+byte-compiling build/bdist.linux-x86_64/egg/xpsi/tools/energy_integrator.py to energy_integrator.cpython-310.pyc
+byte-compiling build/bdist.linux-x86_64/egg/xpsi/tools/phase_integrator.py to phase_integrator.cpython-310.pyc
+byte-compiling build/bdist.linux-x86_64/egg/xpsi/tools/phase_interpolator.py to phase_interpolator.cpython-310.pyc
+byte-compiling build/bdist.linux-x86_64/egg/xpsi/tools/synthesise.py to synthesise.cpython-310.pyc
+byte-compiling build/bdist.linux-x86_64/egg/xpsi/tools/__init__.py to __init__.cpython-310.pyc
+byte-compiling build/bdist.linux-x86_64/egg/xpsi/likelihoods/default_background_marginalisation.py to default_background_marginalisation.cpython-310.pyc
+byte-compiling build/bdist.linux-x86_64/egg/xpsi/likelihoods/_poisson_likelihood_given_background.py to _poisson_likelihood_given_background.cpython-310.pyc
+byte-compiling build/bdist.linux-x86_64/egg/xpsi/surface_radiation_field/__init__.py to __init__.cpython-310.pyc
+byte-compiling build/bdist.linux-x86_64/egg/xpsi/surface_radiation_field/preload.py to preload.cpython-310.pyc
+byte-compiling build/bdist.linux-x86_64/egg/xpsi/surface_radiation_field/hot.py to hot.cpython-310.pyc
+byte-compiling build/bdist.linux-x86_64/egg/xpsi/surface_radiation_field/elsewhere.py to elsewhere.cpython-310.pyc
+byte-compiling build/bdist.linux-x86_64/egg/xpsi/cellmesh/integrator.py to integrator.cpython-310.pyc
+byte-compiling build/bdist.linux-x86_64/egg/xpsi/cellmesh/integrator_for_azimuthal_invariance.py to integrator_for_azimuthal_invariance.cpython-310.pyc
+byte-compiling build/bdist.linux-x86_64/egg/xpsi/cellmesh/integrator_for_time_invariance.py to integrator_for_time_invariance.cpython-310.pyc
+byte-compiling build/bdist.linux-x86_64/egg/xpsi/pixelmesh/METRIC_qK.py to METRIC_qK.cpython-310.pyc
+byte-compiling build/bdist.linux-x86_64/egg/xpsi/pixelmesh/RODES_qK.py to RODES_qK.cpython-310.pyc
+byte-compiling build/bdist.linux-x86_64/egg/xpsi/pixelmesh/BOUNDARY_CONDITIONS.py to BOUNDARY_CONDITIONS.cpython-310.pyc
+byte-compiling build/bdist.linux-x86_64/egg/xpsi/pixelmesh/surfaceBisection.py to surfaceBisection.cpython-310.pyc
+byte-compiling build/bdist.linux-x86_64/egg/xpsi/pixelmesh/coordinateTransformation.py to coordinateTransformation.cpython-310.pyc
+byte-compiling build/bdist.linux-x86_64/egg/xpsi/pixelmesh/RK_IP2S_tracer.py to RK_IP2S_tracer.cpython-310.pyc
+byte-compiling build/bdist.linux-x86_64/egg/xpsi/pixelmesh/get_IP_radius.py to get_IP_radius.cpython-310.pyc
+byte-compiling build/bdist.linux-x86_64/egg/xpsi/pixelmesh/globalRayMap.py to globalRayMap.cpython-310.pyc
+byte-compiling build/bdist.linux-x86_64/egg/xpsi/surface_radiation_field/local_variables.py to local_variables.cpython-310.pyc
+byte-compiling build/bdist.linux-x86_64/egg/xpsi/pixelmesh/integrator.py to integrator.cpython-310.pyc
+creating build/bdist.linux-x86_64/egg/EGG-INFO
+copying xpsi.egg-info/PKG-INFO -> build/bdist.linux-x86_64/egg/EGG-INFO
+copying xpsi.egg-info/SOURCES.txt -> build/bdist.linux-x86_64/egg/EGG-INFO
+copying xpsi.egg-info/dependency_links.txt -> build/bdist.linux-x86_64/egg/EGG-INFO
+copying xpsi.egg-info/not-zip-safe -> build/bdist.linux-x86_64/egg/EGG-INFO
+copying xpsi.egg-info/requires.txt -> build/bdist.linux-x86_64/egg/EGG-INFO
+copying xpsi.egg-info/top_level.txt -> build/bdist.linux-x86_64/egg/EGG-INFO
+writing build/bdist.linux-x86_64/egg/EGG-INFO/native_libs.txt
+creating 'dist/xpsi-2.0.0-py3.10-linux-x86_64.egg' and adding 'build/bdist.linux-x86_64/egg' to it
+removing 'build/bdist.linux-x86_64/egg' (and everything under it)
+Processing xpsi-2.0.0-py3.10-linux-x86_64.egg
+removing '/home/bas/anaconda3/envs/xpsi_py3/lib/python3.10/site-packages/xpsi-2.0.0-py3.10-linux-x86_64.egg' (and everything under it)
+creating /home/bas/anaconda3/envs/xpsi_py3/lib/python3.10/site-packages/xpsi-2.0.0-py3.10-linux-x86_64.egg
+Extracting xpsi-2.0.0-py3.10-linux-x86_64.egg to /home/bas/anaconda3/envs/xpsi_py3/lib/python3.10/site-packages
+xpsi 2.0.0 is already the active version in easy-install.pth
+
+Installed /home/bas/anaconda3/envs/xpsi_py3/lib/python3.10/site-packages/xpsi-2.0.0-py3.10-linux-x86_64.egg
+Processing dependencies for xpsi==2.0.0
+Searching for numpy==1.22.3
+Best match: numpy 1.22.3
+Adding numpy 1.22.3 to easy-install.pth file
+Installing f2py script to /home/bas/anaconda3/envs/xpsi_py3/bin
+Installing f2py3 script to /home/bas/anaconda3/envs/xpsi_py3/bin
+Installing f2py3.10 script to /home/bas/anaconda3/envs/xpsi_py3/bin
+
+Using /home/bas/anaconda3/envs/xpsi_py3/lib/python3.10/site-packages
+Finished processing dependencies for xpsi==2.0.0
+/=============================================\
+| X-PSI: X-ray Pulse Simulation and Inference |
+|---------------------------------------------|
+|                Version: 2.0.0               |
+|---------------------------------------------|
+|      https://xpsi-group.github.io/xpsi      |
+\=============================================/
+
+Imported GetDist version: 1.4
+Imported nestcheck version: 0.2.1
+Rank reporting: 0
+atmosphere_type: A
+n_params: 4
+Setting channels for event data...
+Channels set.
+Setting channels for loaded instrument response (sub)matrix...
+Channels set.
+No parameters supplied... empty subspace created.
+Creating parameter:
+    > Named "frequency" with fixed value 3.000e+02.
+    > Spin frequency [Hz].
+Creating parameter:
+    > Named "mass" with bounds [1.000e+00, 3.000e+00].
+    > Gravitational mass [solar masses].
+Creating parameter:
+    > Named "radius" with bounds [4.430e+00, 1.600e+01].
+    > Coordinate equatorial radius [km].
+Creating parameter:
+    > Named "distance" with bounds [1.000e-01, 1.000e+00].
+    > Earth distance [kpc].
+Creating parameter:
+    > Named "cos_inclination" with bounds [0.000e+00, 1.000e+00].
+    > Cosine of Earth inclination to rotation axis.
+hotregions
+Creating parameter:
+    > Named "super_tbb" with bounds [1.500e-04, 3.000e-03].
+    > tbb.
+Creating parameter:
+    > Named "super_tau" with bounds [5.000e-01, 3.500e+00].
+    > tau.
+Creating parameter:
+    > Named "super_colatitude" with bounds [0.000e+00, 3.142e+00].
+    > The colatitude of the centre of the superseding region [radians].
+Creating parameter:
+    > Named "super_radius" with bounds [0.000e+00, 1.571e+00].
+    > The angular radius of the (circular) superseding region [radians].
+Creating parameter:
+    > Named "phase_shift" with bounds [0.000e+00, 1.000e-01].
+    > The phase of the hot region, a periodic parameter [cycles].
+Creating parameter:
+    > Named "mode_frequency" with fixed value 3.000e+02.
+    > Coordinate frequency of the mode of radiative asymmetry in the
+photosphere that is assumed to generate the pulsed signal [Hz].
+printing Parameters of the star:
+[Gravitational mass [solar masses] = 1.600e+00, Coordinate equatorial radius [km] = 1.400e+01, Earth distance [kpc] = 2.000e-01, Cosine of Earth inclination to rotation axis = 3.153e-01, The phase of the hot region, a periodic parameter [cycles] = 0.000e+00, The colatitude of the centre of the superseding region [radians] = 1.000e+00, The angular radius of the (circular) superseding region [radians] = 7.500e-02, tbb = 1.000e-03, tau = 5.000e-01]
+photosphere integrating
+Photosphere integration time: 1.250917911529541 seconds
+plotting...
+photosphere signal:  [[2.86046029e+36 2.82865849e+36 2.78979314e+36 ... 2.90112641e+36
+  2.88478347e+36 2.86046029e+36]
+ [2.94154537e+36 2.90853247e+36 2.86830378e+36 ... 2.98411649e+36
+  2.96691337e+36 2.94154537e+36]
+ [3.02263569e+36 2.98844680e+36 2.94689058e+36 ... 3.06705332e+36
+  3.04901664e+36 3.02263569e+36]
+ ...
+ [8.13085742e+35 7.86595846e+35 7.59578401e+35 ... 8.63468227e+35
+  8.38798721e+35 8.13085742e+35]
+ [7.24352405e+35 7.00451846e+35 6.76139209e+35 ... 7.70015252e+35
+  7.47618933e+35 7.24352405e+35]
+ [6.43210599e+35 6.21742017e+35 5.99960520e+35 ... 6.84416125e+35
+  6.64170346e+35 6.43210599e+35]]
+sum photosphere signal: [7.33953114e+38 7.22248273e+38 7.08965640e+38 6.94239890e+38
+ 6.78223303e+38 6.61056901e+38 6.42874552e+38 6.23802473e+38
+ 6.03958359e+38 5.83450946e+38 5.62380044e+38 5.40833442e+38
+ 5.18883789e+38 4.96611594e+38 4.74102912e+38 4.51436177e+38
+ 4.28682435e+38 4.05917995e+38 3.83222771e+38 3.60657087e+38
+ 3.38265540e+38 3.16103295e+38 2.94231543e+38 2.72713957e+38
+ 2.51616155e+38 2.31004258e+38 2.10944838e+38 1.91506001e+38
+ 1.72748661e+38 1.54668872e+38 1.37323377e+38 1.20859227e+38
+ 1.05448194e+38 9.11549140e+37 7.79304639e+37 6.57152628e+37
+ 5.45926738e+37 4.46939027e+37 3.60642872e+37 2.85686064e+37
+ 2.20301728e+37 1.62566364e+37 1.10579489e+37 6.77005248e+36
+ 3.68562447e+36 1.72386090e+36 6.34844573e+35 1.48070491e+35
+ 1.06277774e+34 5.54773962e+29 0.00000000e+00 0.00000000e+00
+ 0.00000000e+00 0.00000000e+00 0.00000000e+00 1.80453893e+31
+ 2.14360572e+34 2.41096832e+35 1.00638903e+36 2.76249764e+36
+ 6.03991745e+36 1.13849676e+37 1.91448687e+37 2.89814706e+37
+ 4.08346635e+37 5.53160028e+37 7.29212642e+37 9.36953474e+37
+ 1.17469774e+38 1.44049215e+38 1.73431989e+38 2.05248092e+38
+ 2.38899124e+38 2.73888615e+38 3.09912902e+38 3.46575487e+38
+ 3.83438313e+38 4.20082271e+38 4.56114524e+38 4.91177653e+38
+ 5.24972029e+38 5.57227125e+38 5.87675174e+38 6.16071307e+38
+ 6.42226961e+38 6.65981547e+38 6.87225903e+38 7.05902151e+38
+ 7.21975191e+38 7.35421654e+38 7.46238663e+38 7.54443029e+38
+ 7.60070641e+38 7.63175929e+38 7.63831186e+38 7.62126376e+38
+ 7.58162055e+38 7.52060624e+38 7.43943207e+38 7.33953114e+38]

@@ -19,13 +19,14 @@ desc = '''Options to choose the blackbody (default) or numerical atmosphere surf
           for the hot region and the rest of the surface'''
 parser = argparse.ArgumentParser(description=desc)
 
-print('print for trying')
+#print('print for trying')
 try:
-    parser.add_argument('--NumHot', help="Numerical atmosphere for the hot region(s)", default=False, action="store_true")
+    parser.add_argument('--N5Hot', help="Numerical atmosphere for the hot region(s)", default=False, action="store_true")
     parser.add_argument('--NumElse', help="Numerical atmosphere for the rest of the surface", default=False, action="store_true")
     parser.add_argument('--NumHotBeam',help="Numerical atmosphere for the hot region(s) including free beaming", default=False, action="store_true")
     parser.add_argument('--noopenmp', help="Ignore the openmp install options", default=False, action="store_true")
-    parser.add_argument('--NumADHot', help="Compton emission model for the hot region(s)", default=False, action="store_true")
+    parser.add_argument('--A5Hot', help="Compton emission model for the hot region(s)", default=False, action="store_true")
+    parser.add_argument('--A4Hot', help="Compton emission model for the hot region(s)", default=False, action="store_true")
     # parser.add_argument('--ComptElse', help="Compton emission model for the rest of the surface", default=False, action="store_true")
     if '--help' in sys.argv:
         print(parser.print_help())
@@ -36,28 +37,32 @@ try:
     shutil.copy('xpsi/surface_radiation_field/archive/elsewhere/blackbody.pyx', 'xpsi/surface_radiation_field/elsewhere.pyx')
 
     # Copying the Numerical 'Hot' and 'Elsewhere' if user selected
-    if '--Num4DHot' in sys.argv:
+    if '--N4Hot' in sys.argv:
         print("Copying numerical atmosphere for the hot region(s)")
-        shutil.copy('xpsi/surface_radiation_field/archive/hot/numerical_4D.pyx', 'xpsi/surface_radiation_field/hot.pyx')
-        sys.argv.remove("--Num4DHot")
-    if '--Num4DElse' in sys.argv:
+        shutil.copy('xpsi/surface_radiation_field/archive/hot/N4.pyx', 'xpsi/surface_radiation_field/hot.pyx')
+        sys.argv.remove("--N4Hot")
+    if '--N5Else' in sys.argv:
         print("Copying numerical atmosphere for the rest of the surface")
-        shutil.copy('xpsi/surface_radiation_field/archive/elsewhere/numerical_4D.pyx', 'xpsi/surface_radiation_field/elsewhere.pyx')
-        sys.argv.remove("--Num4DElse")
+        shutil.copy('xpsi/surface_radiation_field/archive/elsewhere/N4.pyx', 'xpsi/surface_radiation_field/elsewhere.pyx')
+        sys.argv.remove("--N5Else")
     if '--NumHotBeam' in sys.argv:
         print("Copying numerical atmosphere for the hot region(s)")
         shutil.copy('xpsi/surface_radiation_field/archive/hot/numerical_fbeam.pyx', 'xpsi/surface_radiation_field/hot.pyx')
         sys.argv.remove("--NumHotBeam")
     # 4D numerical atmosphere with 5 parameter (modulator)
-    if '--Num5DHot' in sys.argv:
+    if '--N5Hot' in sys.argv:
         print("Copying numerical atmosphere for the hot region(s)")
-        shutil.copy('xpsi/surface_radiation_field/archive/hot/numerical_5D.pyx', 'xpsi/surface_radiation_field/hot.pyx')
-        sys.argv.remove("--Num5DHot")
+        shutil.copy('xpsi/surface_radiation_field/archive/hot/N5.pyx', 'xpsi/surface_radiation_field/hot.pyx')
+        sys.argv.remove("--N5Hot")
     # compton model
-    if '--NumADHot' in sys.argv:
+    if '--A5Hot' in sys.argv:
         print("Copying Compton emission model for the hot region(s)")
-        shutil.copy('xpsi/surface_radiation_field/archive/hot/numerical_AD.pyx', 'xpsi/surface_radiation_field/hot.pyx')
-        sys.argv.remove("--NumADHot")
+        shutil.copy('xpsi/surface_radiation_field/archive/hot/A5.pyx', 'xpsi/surface_radiation_field/hot.pyx')
+        sys.argv.remove("--A5Hot")
+    if '--A4Hot' in sys.argv:
+        print("Copying Compton emission model for the hot region(s)")
+        shutil.copy('xpsi/surface_radiation_field/archive/hot/A4.pyx', 'xpsi/surface_radiation_field/hot.pyx')
+        sys.argv.remove("--A4Hot")
     # if '--CompElse' in sys.argv:
     #     print("Copying Compton emission model for the rest of the surface")
     #     shutil.copy('xpsi/surface_radiation_field/archive/elsewhere/compton.pyx', 'xpsi/surface_radiation_field/elsewhere.pyx')

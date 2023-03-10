@@ -15,5 +15,5 @@ source blackbody.sh
 fi
 
 cd tests/time_likelihood/
-export n_params
+export atmosphere_type n_params
 python time_likelihood.py

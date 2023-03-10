@@ -3,7 +3,7 @@
 """
 __all__ = ["Likelihood"]
 
-from xpsi import _rank
+from xpsi import _rank, _comm, _size
 from xpsi.utils import make_verbose
 
 from xpsi.global_imports import *
@@ -14,6 +14,8 @@ from xpsi.Prior import Prior
 from xpsi.ParameterSubspace import ParameterSubspace
 from xpsi import HotRegion
 from xpsi import Elsewhere
+
+# from mpi4py import MPI
 
 class Likelihood(ParameterSubspace):
     """ A container for all objects related to likelihood evaluation.
@@ -301,7 +303,7 @@ class Likelihood(ParameterSubspace):
                 else:
                     fast_total_counts = tuple(signal.fast_total_counts for\
                                                         signal in self._signals)
-
+                # print('attempting to star.update. threads: ', self.threads)
                 self._star.update(fast_total_counts, self.threads,force_update=force_update)
             except xpsiError as e:
                 if isinstance(e, HotRegion.RayError):
@@ -320,7 +322,7 @@ class Likelihood(ParameterSubspace):
                         energies = signals[0].fast_energies
                     else:
                         energies = signals[0].energies
-                    # print("attempting to integrate")
+                    # print("attempting to photosphere.integrate. threads: ", self.threads)
                     photosphere.integrate(energies, self.threads)
                     # print("photosphere.integrate(energies, self.threads)")
                 except xpsiError as e:
@@ -419,7 +421,9 @@ class Likelihood(ParameterSubspace):
         :returns: The logarithm of the likelihood.
 
         """
-        # print("likelihood __call__ called")
+        # print("likelihood __call__ called. rank:", _rank,"comm: ", _comm,"size: ", _size)
+        # print("mpi rank: ", MPI.COMM_WORLD.rank)
+
         if reinitialise: # for safety if settings have been changed
             self.reinitialise() # do setup again given exisiting object refs
             self.clear_cache() # clear cache and values

@@ -127,7 +127,7 @@ prior = CustomPrior()
 
 likelihood = xpsi.Likelihood(star = star, signals = signal,
                              num_energies = 128,
-                             threads = 1,
+                             threads = 2,
                              externally_updated = True,
                              prior = prior)
 
@@ -162,4 +162,4 @@ if __name__ == '__main__':
 
     xpsi.Sample.nested(likelihood, prior, **runtime_params)
 
-    print('Sampling took', (time.time()-start)/60, 'minutes')
+    print('Sampling took {:.3f} minutes'.format((time.time()-start)/60))

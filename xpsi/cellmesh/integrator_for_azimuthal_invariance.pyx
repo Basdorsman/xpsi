@@ -190,6 +190,7 @@ def integrate(size_t numThreads,
         interp_alpha_alt = <interp**> malloc(N_T * sizeof(interp*))
 
     for T in range(N_T):
+        # printf('integrate on thread: %ld\n', T)
         terminate[T] = 0
         accel_alpha[T] = gsl_interp_accel_alloc()
         interp_alpha[T] = gsl_interp_alloc(gsl_interp_steffen, N_R)

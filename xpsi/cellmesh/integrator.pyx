@@ -190,6 +190,7 @@ def integrate(size_t numThreads,
         interp_alpha_alt = <interp**> malloc(N_T * sizeof(interp*))
 
     for T in range(N_T):
+        printf('thread %ld', T)
         terminate[T] = 0
         accel_alpha[T] = gsl_interp_accel_alloc()
         interp_alpha[T] = gsl_interp_alloc(gsl_interp_steffen, N_R)
@@ -646,6 +647,7 @@ def integrate(size_t numThreads,
            break # out of colatitude loop
     
     t_end = clock()  # time(NULL)
+    printf('clockcycles: %ld', t_end)
     elapsed_time = <double>(t_end - t_start) / CLOCKS_PER_SEC
     printf("interpolations: %d\n", interpolations)
     printf("Time taken for eval_hot and norm: %.6f seconds\n", t_eval_sum)

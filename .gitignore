@@ -167,3 +167,7 @@ tests/model_data/
 
 # plots
 plots/
+
+#outputs from examples
+examples/examples_fast/Outputs/*
+

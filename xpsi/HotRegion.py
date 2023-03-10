@@ -1053,7 +1053,7 @@ class HotRegion(ParameterSubspace):
                             integration.
 
         """
-        # print("inside hot.integrate")
+        # print("inside hot.integrate. threads:", self.threads)
         if self.fast_mode and not self.do_fast:
             try:
                 if self.cede:
@@ -1108,7 +1108,7 @@ class HotRegion(ParameterSubspace):
         # print(self._image_order_limit)
         # print("all variables ok")
 
-        # print("attempting super_pulse") 
+        # print("self.integrator in hotregion. threads:", self.threads) 
         super_pulse = self._integrator(threads,
                                        st.R,
                                        st.Omega,

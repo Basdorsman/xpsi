@@ -29,6 +29,7 @@ cdef void* init_hot(size_t numThreads, const _preloaded *const preloaded) nogil:
     # in terms of freeing dynamically allocated memory. This is entirely
     # the user's responsibility to manage.
 
+    # printf('number of threads in init hot: %ld\n', numThreads)
     if preloaded != NULL :
         printf("WARNING: Numerical atmosphere data were preloaded, even though those are not used by this atmosphere extension.\n") 
     

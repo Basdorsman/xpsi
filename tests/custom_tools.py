@@ -10,7 +10,6 @@ from xpsi.global_imports import *
 from xpsi.global_imports import _c, _G, _dpr, gravradius, _csq, _km, _2pi
 from xpsi.Parameter import Parameter
 
-
 import numpy as np
 import math
 
@@ -536,7 +535,7 @@ class CustomPhotosphere_BB(xpsi.Photosphere):
                           ])
 
 
-class CustomPhotosphere_4D(xpsi.Photosphere):
+class CustomPhotosphere_N4(xpsi.Photosphere):
     """ A photosphere extension to preload the numerical atmosphere NSX. """
 
     @xpsi.Photosphere.hot_atmosphere.setter
@@ -567,7 +566,7 @@ class CustomPhotosphere_4D(xpsi.Photosphere):
         self._hot_atmosphere = (logT_opt, logg_opt, _mu_opt, logE_opt, buf_opt)
         
 
-class CustomPhotosphere_5D(xpsi.Photosphere):
+class CustomPhotosphere_N5(xpsi.Photosphere):
     """ A photosphere extension to preload the numerical atmosphere NSX. """
 
     @xpsi.Photosphere.hot_atmosphere.setter
@@ -598,7 +597,7 @@ class CustomPhotosphere_5D(xpsi.Photosphere):
 
         self._hot_atmosphere = (modulator, logT_opt, logg_opt, _mu_opt, logE_opt, buf_opt)
 
-class CustomPhotosphere_Accreting(xpsi.Photosphere):
+class CustomPhotosphere_A5(xpsi.Photosphere):
     """ A photosphere extension to preload the numerical atmosphere NSX. """
 
     @xpsi.Photosphere.hot_atmosphere.setter
@@ -618,7 +617,7 @@ class CustomPhotosphere_Accreting(xpsi.Photosphere):
 
         self._hot_atmosphere = (t_e, t_bb, tau, cos_zenith, Energy, intensities)
         
-class CustomPhotosphere_Accreting_te_const(xpsi.Photosphere):
+class CustomPhotosphere_A4(xpsi.Photosphere):
     """ A photosphere extension to preload the numerical atmosphere NSX. """
 
     @xpsi.Photosphere.hot_atmosphere.setter
@@ -1147,3 +1146,171 @@ class SynthesiseData(xpsi.Data):
         if self._first >= self._last:
             raise ValueError('The first channel number must be lower than the '
                              'the last channel number.')
+            
+import time
+from xpsi.Signal import Signal, LikelihoodError, construct_energy_array
+
+class CustomLikelihood(xpsi.Likelihood):
+    """Custom likelihood to output some extra diagnostics. """
+    
+    def __init__(self, star, signals,
+                 num_energies = 128,
+                 fast_rel_num_energies = 0.25,
+                 threads = 1, llzero = -1.0e90,
+                 externally_updated = False,
+                 prior = None,
+                 max_energy = None):
+
+        self.lcallcounter = 0
+        self.ldict = {}
+        self.star = star
+        self.signals = signals
+
+        self._do_fast = False
+
+        self._num_energies = num_energies
+        self._fast_rel_num_energies = fast_rel_num_energies
+
+        for photosphere, signals in zip(star.photospheres, self._signals):
+            try:
+                for signal in signals:
+                    assert photosphere.prefix == signal.photosphere, \
+                        'Each signal subspace must have a photosphere \
+                         attribute that matches the identification prefix \
+                         of a photosphere object, by convention, and the order \
+                         of the list of signal-object lists must match the \
+                         order of the list of photosphere objects.'
+            except AttributeError:
+                pass # quietly assume one photosphere object
+
+            energies = construct_energy_array(num_energies,
+                                              list(signals),
+                                              max_energy)
+            num = int( fast_rel_num_energies * num_energies )
+            fast_energies = construct_energy_array(num,
+                                                   list(signals),
+                                                   max_energy)
+
+            for signal in signals:
+                signal.energies = energies
+                signal.phases = photosphere.hot.phases_in_cycles
+
+                if photosphere.hot.do_fast:
+                    signal.fast_energies = fast_energies
+                    signal.fast_phases = photosphere.hot.fast_phases_in_cycles
+                    self._do_fast = True
+
+        self.threads = threads
+
+        self.llzero = llzero
+
+        self.externally_updated = externally_updated
+
+        if prior is not None:
+            self.prior = prior
+
+        # merge subspaces
+        super(xpsi.Likelihood, self).__init__(self._star, *(self._signals + [prior]))
+ 
+    def __call__(self, p = None, reinitialise = False, force = False):
+        """
+        Such a nice docstring. wow.
+
+        """
+        # print("likelihood __call__ called. rank:", _rank,"comm: ", _comm,"size: ", _size)
+        tmpdict = {}
+        
+        self.lcallcounter += 1
+        callcount = self.lcallcounter
+        tmpdict['likelihood call count'] = callcount
+        tmpdict['xpsi._rank'] = xpsi._rank
+        tmpdict['p'] = p
+        tmpdict['starttime'] = time.time()
+        # print('counting likelihood calls: ', self.lcallcounter)
+        # print("custom likelihood xpsi rank: ", xpsi._rank)
+        # print("parameter vector:", p)
+        # start = time.time()
+
+        if reinitialise: # for safety if settings have been changed
+            # print('reinitialise')
+            self.reinitialise() # do setup again given exisiting object refs
+            self.clear_cache() # clear cache and values
+        elif force: # no need to reinitialise, just clear cache and values
+            # print('force')
+            self.clear_cache()
+
+        if not self.externally_updated: # do not safely assume already handled
+            # print('not externally updated')
+            if p is None: # expected a vector of values instead of nothing
+                raise TypeError('Parameter values have not been updated.')
+            super(xpsi.Likelihood, self).__call__(p) # update free parameters
+
+        if self.needs_update or force:
+            # print('needs_update or force')
+            try:
+                logprior = self._prior(p) # pass vector just in case wanted
+            except AttributeError:
+                pass
+            else:
+                if not _np.isfinite(logprior):
+                    # print("if not _np.isfinite(logprior):")
+                    # we need to restore due to premature return
+                    super(xpsi.Likelihood, self).__call__(self.cached)
+                    # print("super(Likelihood, self).__call__(self.cached)")
+                    # print('likelihood -inf due to outside of prior')
+                    return self.less_than_llzero
+
+            if self._do_fast:
+                # print('do fast')
+                # perform a low-resolution precomputation to direct cell
+                # allocation
+                x = self._driver(fast_mode=True,force_update=force)
+                if not isinstance(x, bool):
+                    super(xpsi.Likelihood, self).__call__(self.cached) # restore
+                    return x
+                elif x:
+                    x = self._driver(force_update=force)
+                    if not isinstance(x, bool):
+                        super(xpsi.Likelihood, self).__call__(self.cached) # restore
+                        return x
+            else:
+                # print('I need to go to driver')
+                # print('self.cached: ', self.cached)
+                # print('customlikelihood x = self._driver(force_update=force)')
+                x = self._driver(force_update=force)
+                # print('done with driver')
+                if not isinstance(x, bool):
+                    # print('not isinstance(x, bool)')
+                    super(xpsi.Likelihood, self).__call__(self.cached) # restore
+                    return x
+
+            # memoization: update parameter value caches
+            # print('Customlikelihood super(CustomLikelihood, self).__call__(self.vector)')
+            # print('self.vector: ', self.vector)
+            super(xpsi.Likelihood, self).__call__(self.vector)
+            # print('done with update parameter value caches')
+        
+        tmpdict['endtime'] = time.time()
+        tmpdict['deltatime'] = tmpdict['endtime'] - tmpdict['starttime'] 
+        # print('Likelihood evaluation took {:.3f} seconds'.format((time.time()-start)))
+        
+        loglikelihood = 0.0
+        for signals in self._signals:
+            for signal in signals:
+                try:
+                    loglikelihood += signal.loglikelihood
+                    tmpdict['loglikelihood'] = signal.loglikelihood
+                    # print('Computed loglikelihood: ', loglikelihood)
+                except AttributeError as e:
+                    print("ERROR: It looks like X-PSI falsely thought that the signal does not need to be updated and thus skipped an essential part of the calculation. If not sampling, please use ``force=True`` or ``force_update=True`` option for the likelihood evaluation, or if sampling please set ``likelihood.externally_updated = True``")
+                    raise
+
+        self.ldict[callcount] = tmpdict
+
+        if loglikelihood <= self.llzero:
+            return self.random_near_llzero
+
+        try:
+            return loglikelihood + logprior
+        except NameError:
+            return loglikelihood

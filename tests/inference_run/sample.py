@@ -20,7 +20,9 @@ from xpsi.global_imports import gravradius
 
 import sys
 sys.path.append('../')
-from custom_tools import CustomInstrument, CustomHotRegion, CustomHotRegion_Accreting, CustomPhotosphere_BB, CustomPhotosphere_4D, CustomPhotosphere_5D, CustomPhotosphere_Bobrikova, CustomSignal, CustomPrior, CustomPrior_NoSecondary, plot_2D_pulse
+from custom_tools import CustomInstrument, CustomHotRegion, CustomHotRegion_Accreting
+from custom_tools import CustomPhotosphere_BB, CustomPhotosphere_N4, CustomPhotosphere_N5, CustomPhotosphere_A5
+from custom_tools import CustomSignal, CustomPrior, CustomPrior_NoSecondary, plot_2D_pulse, CustomLikelihood
 
 import time
 
@@ -29,19 +31,27 @@ print('Rank reporting: %d' % xpsi._rank)
 
 ################################ OPTIONS ###############################
 second = False
-atmosphere = 'accreting' #'blackbody', 'numerical'
-n_params_numerical = "4"
+
 
 try: #try to get parameters from shell input
+    os.environ.get('atmosphere_type')
+    atmosphere_type = os.environ('atmosphere_type')
+    #     if n_params=='B': atmosphere = 'blackbody'
+    #     elif n_params=='4' or n_params=='5': atmosphere = 'numerical'
+    #     elif n_params=='A': atmosphere = 'accreting'
+    
     os.environ.get('n_params')
     n_params = os.environ['n_params']
-    if n_params=='B': atmosphere = 'blackbody'
-    elif n_params=='4' or n_params=='5': atmosphere = 'numerical'
-    elif n_params=='A': atmosphere = 'accreting'
-except:
-    if atmosphere=='accreting': n_params = "A"
-    elif atmosphere=='numerical': n_params = n_params_numerical
-    elif atmosphere=='blackbody': n_params = "B"
+except: # if that fails input them here.
+    atmosphere = 'accreting' #'blackbody', 'numerical'
+    n_params = "4"
+#     if n_params=='B': atmosphere = 'blackbody'
+#     elif n_params=='4' or n_params=='5': atmosphere = 'numerical'
+#     elif n_params=='A': atmosphere = 'accreting'
+# except:
+#     if atmosphere=='accreting': n_params = "A"
+#     elif atmosphere=='numerical': n_params = n_params_numerical
+#     elif atmosphere=='blackbody': n_params = "B"
     
 print('atmosphere type:', atmosphere)
 print('n_params:', n_params)
@@ -283,19 +293,19 @@ elif not second:
 # print("n_params: ",n_params)
 
 if n_params == "4":   
-    photosphere = CustomPhotosphere_4D(hot = hot, elsewhere = None,
+    photosphere = CustomPhotosphere_N4(hot = hot, elsewhere = None,
                                     values=dict(mode_frequency = spacetime['frequency']))
     photosphere.hot_atmosphere = '/home/bas/Documents/Projects/x-psi/model_datas/model_data/H-atmosphere_Spectra_fully_ionized/NSX_H-atmosphere_Spectra/nsx_H_v171019.npz'
 
 elif n_params== "5":
-    photosphere = CustomPhotosphere_5D(hot = hot, elsewhere = None,
+    photosphere = CustomPhotosphere_N5(hot = hot, elsewhere = None,
                                     values=dict(mode_frequency = spacetime['frequency']))
     # photosphere.hot_atmosphere = '/home/bas/Documents/Projects/x-psi/model_datas/model_data/H-atmosphere_Spectra_fully_ionized/NSX_H-atmosphere_Spectra/nsx_H_v171019_5D_no_effect.npz'
     photosphere.hot_atmosphere = '/home/bas/Documents/Projects/x-psi/model_datas/model_data/H-atmosphere_Spectra_fully_ionized/NSX_H-atmosphere_Spectra/nsx_H_v171019_modulated_0dot5_to_2.npz'
     # photosphere.hot_atmosphere = '/home/bas/Documents/Projects/x-psi/model_datas/Bobrikova_compton_slab.npz'
 
 elif n_params== "A":
-    photosphere = CustomPhotosphere_Bobrikova(hot = hot, elsewhere = None,
+    photosphere = CustomPhotosphere_A5(hot = hot, elsewhere = None,
                                     values=dict(mode_frequency = spacetime['frequency']))
     photosphere.hot_atmosphere = '/home/bas/Documents/Projects/x-psi/model_datas/bobrikova/Bobrikova_compton_slab.npz'
 
@@ -466,8 +476,8 @@ elif not second:
 
 ##################################### LIKELIHOOD ##############################
 
-# print('define likelihood')
-likelihood = xpsi.Likelihood(star = star, signals = signal,
+print('use custom likelihood')
+likelihood = CustomLikelihood(star = star, signals = signal,
                               num_energies=128,
                               threads=1,
                               prior=prior,
@@ -506,17 +516,17 @@ runtime_params = {'resume': False,
                   'n_clustering_params': None,
                   'outputfiles_basename': './run/run_Num', 
                   'n_iter_before_update': 100,
-                  'n_live_points': 4000,
+                  'n_live_points': 2,#4000,
                   'sampling_efficiency': 0.1,
                   'const_efficiency_mode': False,
                   'wrapped_params': wrapped_params,
                   'evidence_tolerance': 0.1,
                   'seed': 7,
-                  'max_iter': -1, # manual termination condition for short test
+                  'max_iter': 2, #-1, # manual termination condition for short test
                   'verbose': True}
 
 
-
+# print(runtime_params)
 
 
 try:
@@ -541,6 +551,9 @@ except:
 print("sampling starts ...")
 xpsi.Sample.nested(likelihood, prior,**runtime_params)
 
+
+print(likelihood.ldict)
+
 ######### PHOTOSPHERE INTEGRATE #####################
 # print('photosphere integrating')
 # energies=np.logspace(-1.0,np.log10(3.0), 128, base=10.0)
@@ -555,11 +568,11 @@ xpsi.Sample.nested(likelihood, prior,**runtime_params)
 
 
 
-print('plotting...')
+# print('plotting...')
 
 
-rcParams['text.usetex'] = False
-rcParams['font.size'] = 14.0
+# rcParams['text.usetex'] = False
+# rcParams['font.size'] = 14.0
 
 # Photosphere.intergrate and plot
 # if not second:    
@@ -571,41 +584,41 @@ rcParams['font.size'] = 14.0
 #                       ylabel=r'Energy (keV)')
 
 # Likelihood check and plot
-if second:
-    ax = plot_2D_pulse((photosphere.signal[0][0], photosphere.signal[1][0]),
-                  x=signal.phases[0],
-                  shift=signal.shifts,
-                  y=signal.energies,
-                  ylabel=r'Energy (keV)')
-if not second:
-    ax = plot_2D_pulse((photosphere.signal[0][0],),
-                  x=signal.phases[0],
-                  shift=signal.shifts,
-                  y=signal.energies,
-                  ylabel=r'Energy (keV)')
+# if second:
+#     ax = plot_2D_pulse((photosphere.signal[0][0], photosphere.signal[1][0]),
+#                   x=signal.phases[0],
+#                   shift=signal.shifts,
+#                   y=signal.energies,
+#                   ylabel=r'Energy (keV)')
+# if not second:
+#     ax = plot_2D_pulse((photosphere.signal[0][0],),
+#                   x=signal.phases[0],
+#                   shift=signal.shifts,
+#                   y=signal.energies,
+#                   ylabel=r'Energy (keV)')
 
 
-try: 
-    os.makedirs("plots")
-except OSError:
-    if not os.path.isdir("plots"):
-        raise
+# try: 
+#     os.makedirs("plots")
+# except OSError:
+#     if not os.path.isdir("plots"):
+#         raise
 
 
-if atmosphere=='accreting':
-    ax.set_title('atmosphere={} te={:.2e} [keV], tbb={:.2e} [keV], tau={:.2e} [-]'.format(n_params, te*0.511, tbb*511, tau), loc='center') #unit conversion te and tbb is different due to a cluster leftover according to Anna B.
-    figstring = 'plots/pulses_atm={}_sec={}_te={:.2e}_tbb={:.2e}_tau={:.2e}.png'.format(atmosphere, second, te, tbb, tau)
-elif atmosphere=='numerical':
-    if n_params=="5":
-        ax.set_title('atmosphere={} p_temperature={} modulator={}'.format(n_params, p_temperature, modulator))
-        figstring='plots/5D_pulses_atm={}_sec={}_p_temperature={}_modulator={}.png'.format(atmosphere, second, p_temperature, modulator)
-    elif n_params=="4":
-        ax.set_title('atmosphere={} p_temperature={}'.format(n_params, p_temperature))
-        figstring='plots/4D_pulses_atm={}_sec={}_p_temperature={}.png'.format(atmosphere, second, p_temperature)
-elif atmosphere=='blackbody':
-    ax.set_title('atmosphere={} p_temperature={}'.format(n_params, p_temperature))
-    figstring='plots/pulses_atm={}_sec={}_p_temperature={}.png'.format(atmosphere, second, p_temperature)
+# if atmosphere=='accreting':
+#     ax.set_title('atmosphere={} te={:.2e} [keV], tbb={:.2e} [keV], tau={:.2e} [-]'.format(n_params, te*0.511, tbb*511, tau), loc='center') #unit conversion te and tbb is different due to a cluster leftover according to Anna B.
+#     figstring = 'plots/pulses_atm={}_sec={}_te={:.2e}_tbb={:.2e}_tau={:.2e}.png'.format(atmosphere, second, te, tbb, tau)
+# elif atmosphere=='numerical':
+#     if n_params=="5":
+#         ax.set_title('atmosphere={} p_temperature={} modulator={}'.format(n_params, p_temperature, modulator))
+#         figstring='plots/5D_pulses_atm={}_sec={}_p_temperature={}_modulator={}.png'.format(atmosphere, second, p_temperature, modulator)
+#     elif n_params=="4":
+#         ax.set_title('atmosphere={} p_temperature={}'.format(n_params, p_temperature))
+#         figstring='plots/4D_pulses_atm={}_sec={}_p_temperature={}.png'.format(atmosphere, second, p_temperature)
+# elif atmosphere=='blackbody':
+#     ax.set_title('atmosphere={} p_temperature={}'.format(n_params, p_temperature))
+#     figstring='plots/pulses_atm={}_sec={}_p_temperature={}.png'.format(atmosphere, second, p_temperature)
 
 
-plt.savefig(figstring)
-print('figure saved in {}'.format(figstring))
+# plt.savefig(figstring)
+# print('figure saved in {}'.format(figstring))

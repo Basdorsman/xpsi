@@ -316,6 +316,8 @@ class Likelihood(ParameterSubspace):
 
             for photosphere, signals in zip(self._star.photospheres, self._signals):
                 #print("for photosphere, signals in zip(self._star.photospheres, self._signals):")
+                # print('photosphere.integrate for:', photosphere, signals)
+                # print('Parameter vector in driver: ', super(Likelihood,self).__call__())
                 try:
                     #print("setting energies")
                     if fast_mode:
@@ -451,6 +453,7 @@ class Likelihood(ParameterSubspace):
             if self._do_fast:
                 # perform a low-resolution precomputation to direct cell
                 # allocation
+                # print('likelihood call: do fast')
                 x = self._driver(fast_mode=True,force_update=force)
                 if not isinstance(x, bool):
                     super(Likelihood, self).__call__(self.cached) # restore
@@ -461,12 +464,14 @@ class Likelihood(ParameterSubspace):
                         super(Likelihood, self).__call__(self.cached) # restore
                         return x
             else:
+                # print('parent likelihood x = self._driver(force_update=force)')
                 x = self._driver(force_update=force)
                 if not isinstance(x, bool):
                     super(Likelihood, self).__call__(self.cached) # restore
                     return x
 
             # memoization: update parameter value caches
+            # print('parent likelihood super(Likelihood, self).__call__(self.vector)')
             super(Likelihood, self).__call__(self.vector)
 
         loglikelihood = 0.0
@@ -683,6 +688,7 @@ class Likelihood(ParameterSubspace):
             if self._do_fast:
                 # perform a low-resolution precomputation to direct cell
                 # allocation
+                # print('likelihood synthesize: do fast')
                 x = self._driver(fast_mode=True,force_update=force)
                 if not isinstance(x, bool):
                     super(Likelihood, self).__call__(self.cached) # restore

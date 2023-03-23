@@ -633,7 +633,7 @@ class CustomPhotosphere_A4(xpsi.Photosphere):
         t_bb = np.ascontiguousarray([NSX[i*size[0]*size[1]*size[2],3] for i in range(size[3])])
         #t_e = np.ascontiguousarray([NSX[i*size[0]*size[1]*size[2]*size[3],4] for i in range(size[4])])
         te_step_size = size[0]*size[1]*size[2]*size[3]
-        intensities = np.ascontiguousarray(NSX[0:te_step_size,5])
+        intensities = np.ascontiguousarray(NSX[0:te_step_size,5]) #change the value of te here, it is now 40
 
         self._hot_atmosphere = (t_bb, tau, cos_zenith, Energy, intensities)
 
@@ -1078,6 +1078,8 @@ def plot_2D_pulse(z, x, shift, y, ylabel,
                              linewidth = 0,
                              rasterized = True)
 
+    # print('interpolated:', interpolated)
+    
     profile.set_edgecolor('face')
 
     ax.set_xlim([0.0, num_rotations])

@@ -38,7 +38,7 @@ try:
 
     # Copying the Numerical 'Hot' and 'Elsewhere' if user selected
     if '--N4Hot' in sys.argv:
-        print("Copying numerical atmosphere for the hot region(s)")
+        print("Installing NSX 4 Parameters")
         shutil.copy('xpsi/surface_radiation_field/archive/hot/N4.pyx', 'xpsi/surface_radiation_field/hot.pyx')
         sys.argv.remove("--N4Hot")
     if '--N5Else' in sys.argv:
@@ -51,16 +51,16 @@ try:
         sys.argv.remove("--NumHotBeam")
     # 4D numerical atmosphere with 5 parameter (modulator)
     if '--N5Hot' in sys.argv:
-        print("Copying numerical atmosphere for the hot region(s)")
+        print("Installing NSX 5 Parameters")
         shutil.copy('xpsi/surface_radiation_field/archive/hot/N5.pyx', 'xpsi/surface_radiation_field/hot.pyx')
         sys.argv.remove("--N5Hot")
     # compton model
     if '--A5Hot' in sys.argv:
-        print("Copying Compton emission model for the hot region(s)")
+        print("Installing Accreting 5 Parameters")
         shutil.copy('xpsi/surface_radiation_field/archive/hot/A5.pyx', 'xpsi/surface_radiation_field/hot.pyx')
         sys.argv.remove("--A5Hot")
     if '--A4Hot' in sys.argv:
-        print("Copying Compton emission model for the hot region(s)")
+        print("Installing Accreting 4 Parameters")
         shutil.copy('xpsi/surface_radiation_field/archive/hot/A4.pyx', 'xpsi/surface_radiation_field/hot.pyx')
         sys.argv.remove("--A4Hot")
     # if '--CompElse' in sys.argv:

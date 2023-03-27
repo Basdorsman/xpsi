@@ -171,3 +171,5 @@ plots/
 #outputs from examples
 examples/examples_fast/Outputs/*
 
+#tests/inference runs
+tests/inference_run/run*

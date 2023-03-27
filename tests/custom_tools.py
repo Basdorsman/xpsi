@@ -623,7 +623,9 @@ class CustomPhotosphere_A4(xpsi.Photosphere):
     @xpsi.Photosphere.hot_atmosphere.setter
     def hot_atmosphere(self, path):
         size = (150, 9, 31, 11)#, 41) te is the 41
-
+        
+        te_index = self.te_index
+    
         with np.load(path, allow_pickle=True) as data_dictionary:
             NSX = data_dictionary['arr_0.npy']
 
@@ -631,9 +633,15 @@ class CustomPhotosphere_A4(xpsi.Photosphere):
         cos_zenith = np.ascontiguousarray([NSX[i*size[0],1] for i in range(size[1])])
         tau = np.ascontiguousarray([NSX[i*size[0]*size[1],2] for i in range(size[2])])
         t_bb = np.ascontiguousarray([NSX[i*size[0]*size[1]*size[2],3] for i in range(size[3])])
-        #t_e = np.ascontiguousarray([NSX[i*size[0]*size[1]*size[2]*size[3],4] for i in range(size[4])])
+        
         te_step_size = size[0]*size[1]*size[2]*size[3]
-        intensities = np.ascontiguousarray(NSX[0:te_step_size,5]) #change the value of te here, it is now 40
+        # given that t__e = np.arange(40.0, 202.0, 4.0), there are 40.5 values (I expect that means 40). 
+        # The first value is 40:
+        #te_index = 0
+        # we can also go for 40+20*4 = 120
+        # te_indexs = 20
+        intensities = np.ascontiguousarray(NSX[te_step_size*te_index:te_step_size*(te_index+1),5]) #change the value of te here, it is now 40
+
 
         self._hot_atmosphere = (t_bb, tau, cos_zenith, Energy, intensities)
 

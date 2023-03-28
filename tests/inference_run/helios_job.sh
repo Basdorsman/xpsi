@@ -22,7 +22,7 @@ export MKL_NUM_THREADS=1
 export LD_LIBRARY_PATH=$HOME/multinest/MultiNest_v3.12_CMake/multinest/lib/:$LD_LIBRARY_PATH
 export PATH=$HOME/gsl/bin:$PATH
 
-export JOB_DIR=$HOME/xpsi/tests/inference_run
+export JOB_DIR=$HOME/xpsi-bas/tests/inference_run
 export OUTPUT_FOLDER=$(mktemp -d -p /hddstore/$USER)
 echo $OUTPUT_FOLDER $SLURMD_NODENAME
 mkdir $OUTPUT_FOLDER/run

@@ -53,14 +53,15 @@ print('n_params:', n_params)
 ##################################### DATA ####################################
 
 if atmosphere_type=='A':
-        datastring = f'../synthesise_pulse_data/data/A{n_params}_synthetic_realisation.dat'
+        #datastring = f'../synthesise_pulse_data/data/A{n_params}_synthetic_realisation.dat'
+        datastring=f'model_data/A{n_params}_synthetic_realisation.dat'
         settings = dict(counts = np.loadtxt(datastring, dtype=np.double),
                 channels=np.arange(20,201), #201
                 phases=np.linspace(0.0, 1.0, 33),
                 first=0, last=180,
                 exposure_time=1000.)
 elif atmosphere_type=='N':
-        datastring = '../model_data/example_synthetic_realisation.dat'
+        #datastring = '../model_data/example_synthetic_realisation.dat'
         settings = dict(counts = np.loadtxt(datastring, dtype=np.double),
                 channels=np.arange(20,201), #201
                 phases=np.linspace(0.0, 1.0, 33),
@@ -71,11 +72,11 @@ data = xpsi.Data(**settings)
 
 ################################## INSTRUMENT #################################
 try:
-    NICER = CustomInstrument.from_response_files(ARF = '../model_data/nicer_v1.01_arf.txt',
-                                             RMF = '../model_data/nicer_v1.01_rmf_matrix.txt',
+    NICER = CustomInstrument.from_response_files(ARF = 'model_data/nicer_v1.01_arf.txt',
+                                             RMF = 'model_data/nicer_v1.01_rmf_matrix.txt',
                                              max_input = 500, #500
                                              min_input = 0,
-                                             channel_edges = '../model_data/nicer_v1.01_rmf_energymap.txt')
+                                             channel_edges = 'model_data/nicer_v1.01_rmf_energymap.txt')
 except:
     print("ERROR: You might miss one of the following files (check Modeling tutorial or the link below how to find them): \n model_data/nicer_v1.01_arf.tx, model_data/nicer_v1.01_rmf_matrix.txt, model_data/nicer_v1.01_rmf_energymap.txt")
     print("https://github.com/ThomasEdwardRiley/xpsi_workshop.git")
@@ -321,12 +322,15 @@ if atmosphere_type == 'A':
         photosphere = CustomPhotosphere_A4(hot = hot, elsewhere = None,
                                         values=dict(mode_frequency = spacetime['frequency']))
         
-        photosphere.te_index = 0
-        photosphere.hot_atmosphere = '/home/bas/Documents/Projects/x-psi/model_datas/bobrikova/Bobrikova_compton_slab.npz'
+        photosphere.te_index = te_index
+        #photosphere.hot_atmosphere = '/home/bas/Documents/Projects/x-psi/model_datas/bobrikova/Bobrikova_compton_slab.npz'
+        photosphere.hot_atmosphere = 'model_data/Bobrikova_compton_slab.npz'
+
     elif n_params == '5':
         photosphere = CustomPhotosphere_A5(hot = hot, elsewhere = None,
                                         values=dict(mode_frequency = spacetime['frequency']))
-        photosphere.hot_atmosphere = '/home/bas/Documents/Projects/x-psi/model_datas/bobrikova/Bobrikova_compton_slab.npz'
+        # photosphere.hot_atmosphere = '/home/bas/Documents/Projects/x-psi/model_datas/bobrikova/Bobrikova_compton_slab.npz'
+        photosphere.hot_atmosphere = 'model_data/Bobrikova_compton_slab.npz'
 
 elif atmosphere_type == 'N':
     if n_params == "4":   

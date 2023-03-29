@@ -17,8 +17,8 @@ module load openmpi/3.1.6
 
 export atmosphere_type="A"
 export n_params="5"
-export JOBNAME='time_likelihood'
 
+export JOBNAME='time_likelihood'
 export RUN="run_${atmosphere_type}${n_params}" 
 export OMP_NUM_THREADS=1
 export OPENBLAS_NUM_THREADS=1
@@ -29,6 +29,17 @@ export PATH=$HOME/gsl/bin:$PATH
 
 export JOB_DIR=$HOME/xpsi-bas/tests/inference_run
 export OUTPUT_FOLDER=$(mktemp -d -p /hddstore/$USER)
+
+# INSTALL X-PSI
+cd $HOME/xpsi-bas
+if [ $atmosphere_type == "N" ] || [ $atmosphere_type == "A" ]
+then
+source numerical.sh atmosphere_type n_params
+elif [ $atmosphere_type == "B" ]
+then
+source blackbody.sh
+fi
+
 echo $OUTPUT_FOLDER $SLURMD_NODENAME
 mkdir $OUTPUT_FOLDER/$RUN
 cd $OUTPUT_FOLDER

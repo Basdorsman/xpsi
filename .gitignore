@@ -173,3 +173,5 @@ examples/examples_fast/Outputs/*
 
 #tests/inference runs
 tests/inference_run/run*
+tests/inference_run/archive/*
+tests/inference_run/model_data/*

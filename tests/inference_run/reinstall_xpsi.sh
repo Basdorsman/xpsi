@@ -14,7 +14,6 @@ then
 source blackbody.sh
 fi
 
-
 cd tests/inference_run/
-export atmosphere_type n_params
-python sample.py
+#export atmosphere_type n_params
+#python sample.py

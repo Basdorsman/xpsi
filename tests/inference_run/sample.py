@@ -567,13 +567,13 @@ runtime_params = {'resume': False,
                   'n_clustering_params': None,
                   'outputfiles_basename': f'./{folderstring}/run_Num', 
                   'n_iter_before_update': 100,
-                  'n_live_points': 100,#2,#4000,
+                  'n_live_points': 2,#2,#4000,
                   'sampling_efficiency': 0.1,
                   'const_efficiency_mode': False,
                   'wrapped_params': wrapped_params,
                   'evidence_tolerance': 0.1,
                   'seed': 7,
-                  'max_iter': 1, #-1, # manual termination condition for short test
+                  'max_iter': 2, #-1, # manual termination condition for short test
                   'verbose': True}
 
 
@@ -649,7 +649,8 @@ print('figure saved in {}'.format(figstring))
 print("sampling starts ...")
 xpsi.Sample.nested(likelihood, prior,**runtime_params)
 print("... sampling done")
-likelihood.ldict['num_energies']=num_energies
+# likelihood.ldict['num_energies']=num_energies
+likelihood.ldict['runtime_params']=runtime_params
 # print(likelihood.ldict)
 
 import dill as pickle

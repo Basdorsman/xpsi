@@ -1,9 +1,11 @@
 import dill as pickle
 
 numenergies=32
+n_params=4
 
-with open(f'run_A5/LikelihoodDiagnostics_numenergies={numenergies}.pkl', 'rb') as file:
+with open(f'run_A{n_params}/LikelihoodDiagnostics_numenergies={numenergies}.pkl', 'rb') as file:
      ldict = pickle.load(file)
+     ldict.popitem()
      
 for key in ldict:
     if isinstance(ldict[key], dict):

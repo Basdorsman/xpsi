@@ -19,7 +19,7 @@ from xpsi.global_imports import gravradius
 
 
 import sys
-sys.path.append('../')
+sys.path.append('/home/bdorsma/xpsi-bas/tests/')
 from custom_tools import CustomInstrument, CustomHotRegion, CustomHotRegion_Accreting, CustomHotRegion_Accreting_te_const
 from custom_tools import CustomPhotosphere_BB, CustomPhotosphere_N4, CustomPhotosphere_N5, CustomPhotosphere_A5, CustomPhotosphere_A4
 from custom_tools import CustomSignal, CustomPrior, CustomPrior_NoSecondary, plot_2D_pulse, CustomLikelihood
@@ -567,13 +567,13 @@ runtime_params = {'resume': False,
                   'n_clustering_params': None,
                   'outputfiles_basename': f'./{folderstring}/run_Num', 
                   'n_iter_before_update': 100,
-                  'n_live_points': 2,#2,#4000,
+                  'n_live_points': 50,#2,#4000,
                   'sampling_efficiency': 0.1,
                   'const_efficiency_mode': False,
                   'wrapped_params': wrapped_params,
                   'evidence_tolerance': 0.1,
                   'seed': 7,
-                  'max_iter': 2, #-1, # manual termination condition for short test
+                  'max_iter': 100, #-1, # manual termination condition for short test
                   'verbose': True}
 
 

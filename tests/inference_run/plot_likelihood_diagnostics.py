@@ -10,90 +10,95 @@ import dill as pickle
 import matplotlib.pyplot as plt
 
 numenergies=32
+atmosphere_type = 'A'
+n_params = 4
+xpsi_size = 4
 
-with open(f'run_A5/LikelihoodDiagnostics_numenergies={numenergies}.pkl', 'rb') as file:
-     ldict = pickle.load(file)
-     ldict.popitem()
+ldict = {}
 
-# reduce time
-diff =  ldict[1]['starttime']
-for i in ldict:
-    ldict[i]['starttime'] =  ldict[i]['starttime'] - diff
-    ldict[i]['endtime']   =  ldict[i]['endtime'] - diff
+folderstring = f'run_{atmosphere_type}{n_params}'
 
+fig, axes = plt.subplots(nrows=xpsi_size, ncols=1, figsize=(20, 2*xpsi_size), sharex=True)
+for ax, rank in zip(axes, range(xpsi_size)):
+    with open(f'{folderstring}/LikelihoodDiagnostics_ne={numenergies}_rank={rank}.pkl', 'rb') as file:
+         (ldict[rank], runtime_params) = pickle.load(file)
 
-# Extract start and end times
-start_times = [ldict[i]['starttime'] for i in ldict]
-end_times = [ldict[i]['endtime'] for i in ldict]
+    tmpdict = ldict[rank]
 
-# Create a list of time points where the likelihood is being computed
-times = []
-for i in range(len(start_times)):
-    times.append(start_times[i])
-    times.append(end_times[i])
-
-times.sort()  # sort the times in ascending order
-
-# Create a list of values for the y-axis
-y = []
-for i in range(len(times)):
-    if i % 2 == 0:
-        y.append(1)  # likelihood is being computed
-    else:
-        y.append(0)  # likelihood is not being computed
+    # reduce time
+    diff =  tmpdict[0]['starttime']
+    start_times = []
+    end_times=[]
+    times = []
+    for call in tmpdict:
+        tmpdict[call]['starttime'] =  tmpdict[call]['starttime'] - diff
+        tmpdict[call]['endtime']   =  tmpdict[call]['endtime'] - diff
 
 
-# Create the plot
-fig, ax = plt.subplots(figsize=(12, 6))
-ax.step(times, y, where='post')
-ax.set_xlabel('Time')
-ax.set_ylabel('Likelihood')
-ax.set_ylim(-0.1, 1.1)  # set y-axis limits to be slightly larger than 0 and 1
+        # Extract start and end times
+        start_times.append(tmpdict[call]['starttime']) 
+        end_times.append(tmpdict[call]['endtime'])
 
-# Label the plot with the appropriate key for each likelihood evaluation
-for i, t in enumerate(times):
-    if i % 2 == 0:
-        key = [k for k, v in ldict.items() if v['starttime'] == t][0]
-        ax.annotate(str(key), xy=(t, y[i]), xytext=(t, 1.1), ha='center', va='bottom', fontsize=8,
-                    bbox=dict(boxstyle='square,pad=0.2', fc='white', ec='black', lw=0.5))
-        
-plt.show()
+        # Create a list of time points where the likelihood is being computed
+        times.append(start_times[call])
+        times.append(end_times[call])
 
-# print time between likelihood evals
-# prev_endtime = None
-# for key in sorted(ldict.keys()):
-#     if prev_endtime is not None:
-#         delta_time = ldict[key]['starttime'] - prev_endtime
-#         print(f'Time between likelihood {key-1} and {key}: {delta_time:.3f}')
-#     prev_endtime = ldict[key]['endtime']
+    times.sort()  # sort the times in ascending order
+
+    # Create a list of values for the y-axis
+    y = []
+    for i in range(len(times)):
+        if i % 2 == 0:
+            y.append(1)  # likelihood is being computed
+        else:
+            y.append(0)  # likelihood is not being computed
+
+
+    # Create the plot
+    ax.step(times, y, where='post')
+    ax.set_xlabel('Time')
+    ax.set_ylabel('Likelihood')
+    ax.set_ylim(-0.1, 1.1)  # set y-axis limits to be slightly larger than 0 and 1
+
+    # Label the plot with the appropriate key for each likelihood evaluation
+    for i, t in enumerate(times):
+        if i % 2 == 0:
+            key = [k for k, v in tmpdict.items() if v['starttime'] == t][0]
+            ax.annotate(str(key), xy=(t, y[i]), xytext=(t, 1.1), ha='center', va='top', fontsize=5,
+                        bbox=dict(boxstyle='square,pad=0.2', fc='white', ec='black', lw=0.5))
+
+    # Title with percentage time calculating likelihoods
+    # Start after gap at the start (not part of sampling)
+    keys = sorted(tmpdict.keys())
+    max_gap = 0
+    n = None
+    for i in range(len(keys)-1):
+        if 'endtime' in tmpdict[keys[i]] and 'starttime' in tmpdict[keys[i+1]]:
+            gap = tmpdict[keys[i+1]]['starttime'] - tmpdict[keys[i]]['endtime']
+            if gap > max_gap:
+                max_gap = gap
+                n = i+1
+    if n is None:
+        n = 0
+    total_time = tmpdict[keys[-1]]['endtime'] - tmpdict[keys[n]]['starttime']
+    likelihood_time = 0
+    for i in range(len(keys)-1):
+        if i >= n:
+            if 'deltatime' in tmpdict[keys[i+1]]:
+                if 'endtime' in tmpdict[keys[i]] and 'starttime' in tmpdict[keys[i+1]]:
+                    likelihood_time += tmpdict[keys[i+1]]['deltatime']
+                elif 'starttime' in tmpdict[keys[i+1]]:
+                    prev_endtime = tmpdict[keys[i+1]]['starttime']
+                    for j in range(i, -1, -1):
+                        if 'endtime' in tmpdict[keys[j]]:
+                            prev_endtime = tmpdict[keys[j]]['endtime']
+                            break
+                    gap = tmpdict[keys[i+1]]['starttime'] - prev_endtime
+                    if gap > 0:
+                        likelihood_time += tmpdict[keys[i+1]]['deltatime']
+    percentage_likelihood = 100 * likelihood_time / total_time
     
-keys = sorted(ldict.keys())
-max_gap = 0
-n = None
-for i in range(len(keys)-1):
-    if 'endtime' in ldict[keys[i]] and 'starttime' in ldict[keys[i+1]]:
-        gap = ldict[keys[i+1]]['starttime'] - ldict[keys[i]]['endtime']
-        if gap > max_gap:
-            max_gap = gap
-            n = i+1
-if n is None:
-    n = 0
-total_time = ldict[keys[-1]]['endtime'] - ldict[keys[n]]['starttime']
-likelihood_time = 0
-for i in range(len(keys)-1):
-    if i >= n:
-        if 'deltatime' in ldict[keys[i+1]]:
-            if 'endtime' in ldict[keys[i]] and 'starttime' in ldict[keys[i+1]]:
-                likelihood_time += ldict[keys[i+1]]['deltatime']
-            elif 'starttime' in ldict[keys[i+1]]:
-                prev_endtime = ldict[keys[i+1]]['starttime']
-                for j in range(i, -1, -1):
-                    if 'endtime' in ldict[keys[j]]:
-                        prev_endtime = ldict[keys[j]]['endtime']
-                        break
-                gap = ldict[keys[i+1]]['starttime'] - prev_endtime
-                if gap > 0:
-                    likelihood_time += ldict[keys[i+1]]['deltatime']
-percentage_likelihood = 100 * likelihood_time / total_time
-print(f"The nth iteration is {n}")
-print(f"Percentage of time spent doing likelihood computations after the {n-1}th iteration: {percentage_likelihood:.2f}%")
+    ax.set_title(f"Percentage of time spent doing likelihood computations starting at n={n}: {percentage_likelihood:.2f}%")
+
+fig.tight_layout()
+fig.savefig(f'{folderstring}/diagnostics_{atmosphere_type}{n_params}_size={xpsi_size}.png',dpi=300)

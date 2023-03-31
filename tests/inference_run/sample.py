@@ -19,7 +19,8 @@ from xpsi.global_imports import gravradius
 
 
 import sys
-sys.path.append('/home/bdorsma/xpsi-bas/tests/')
+#sys.path.append('/home/bdorsma/xpsi-bas/tests/')
+sys.path.append('/home/bas/Documents/Projects/x-psi/xpsi-bas-fork/tests/')
 from custom_tools import CustomInstrument, CustomHotRegion, CustomHotRegion_Accreting, CustomHotRegion_Accreting_te_const
 from custom_tools import CustomPhotosphere_BB, CustomPhotosphere_N4, CustomPhotosphere_N5, CustomPhotosphere_A5, CustomPhotosphere_A4
 from custom_tools import CustomSignal, CustomPrior, CustomPrior_NoSecondary, plot_2D_pulse, CustomLikelihood
@@ -41,7 +42,7 @@ n_params = os.environ.get('n_params')
 if isinstance(os.environ.get('atmosphere_type'),type(None)) or isinstance(os.environ.get('n_params'),type(None)): # if that fails input them here.
     print('E: failed to import OS environment variables, using defaults.')    
     atmosphere_type = 'A' #'blackbody', 'numerical'
-    n_params = "5"
+    n_params = "4"
 
 if atmosphere_type == 'A': atmosphere = 'accreting'
 elif atmosphere_type == 'N': atmosphere = 'numerical'
@@ -573,7 +574,7 @@ runtime_params = {'resume': False,
                   'wrapped_params': wrapped_params,
                   'evidence_tolerance': 0.1,
                   'seed': 7,
-                  'max_iter': 10000, #-1, # manual termination condition for short test
+                  'max_iter': 10, #-1, # manual termination condition for short test
                   'verbose': True}
 
 
@@ -650,11 +651,29 @@ print("sampling starts ...")
 xpsi.Sample.nested(likelihood, prior,**runtime_params)
 print("... sampling done")
 # likelihood.ldict['num_energies']=num_energies
-likelihood.ldict['runtime_params']=runtime_params
-# print(likelihood.ldict)
+
+# for i in range(xpsi._size):
+    # likelihood.ldict[f"{i}"] = getattr(likelihood, f"ldict{i}", None)
+    # if xpsi._rank == i:
+        # setattr(likelihood, f"tmpdict{xpsi._rank}", likelihood.tmpdict)
+        # likelihood.ldict[i] = likelihood.tmpdict
+        # print(f"xpsi._rank: {xpsi._rank}, tmpdict: {likelihood.tmpdict}")
+        
+# likelihood.ldict['runtime_params']=runtime_params
+
+# save options
+runtime_params['xpsi_size']=xpsi._size
+runtime_params['atmosphere_type']=atmosphere_type 
+runtime_params['n_params']=n_params 
+runtime_params['second']=second 
+runtime_params['num_energies']=num_energies 
+runtime_params['te_index']=te_index 
+
+likelihood.runtime_params = runtime_params
 
 import dill as pickle
 
-with open(f'{folderstring}/LikelihoodDiagnostics_numenergies={likelihood._num_energies}.pkl', 'wb') as file:
+with open(f'{folderstring}/LikelihoodDiagnostics_ne={likelihood._num_energies}_rank={xpsi._rank}.pkl', 'wb') as file:
       #file.write(pickle.dumps(likelihood.ldict)) # use `pickle.loads` to do the reverse
-      pickle.dump(likelihood.ldict, file)
+      pickle.dump((likelihood.ldict, likelihood.runtime_params), file)
+      

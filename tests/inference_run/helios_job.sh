@@ -7,7 +7,7 @@
 #SBATCH -e output/time_likelihood_%j.err
 #SBATCH --partition=neutron-star
 #SBATCH --mem 160000
-#SBATCH --mail-user=
+#SBATCH --mail-user=b.dorsman@uva.nl
 #SBATCH --mail-type=END
 
 module purge

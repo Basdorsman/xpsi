@@ -31,7 +31,7 @@ from xpsi.global_imports import _c, _G, _dpr, gravradius, _csq, _km, _2pi
 
 import sys
 sys.path.append('../')
-from custom_tools import CustomInstrument, CustomHotRegion, CustomHotRegion_Accreting, CustomHotRegion_Accreting_te_const, CustomPhotosphere_BB, CustomPhotosphere_4D, CustomPhotosphere_5D, CustomPhotosphere_Accreting, CustomPhotosphere_Accreting_te_const, CustomSignal, CustomPrior, CustomPrior_NoSecondary, plot_2D_pulse, CustomBackground, SynthesiseData
+from custom_tools import CustomInstrument, CustomHotRegion, CustomHotRegion_Accreting, CustomHotRegion_Accreting_te_const, CustomPhotosphere_BB, CustomPhotosphere_N4, CustomPhotosphere_N5, CustomPhotosphere_A5, CustomPhotosphere_A4, CustomSignal, CustomPrior, CustomPrior_NoSecondary, plot_2D_pulse, CustomBackground, SynthesiseData
 
 ################################## SETTINGS ###################################
 
@@ -43,7 +43,7 @@ try: #try to get parameters from shell input
     os.environ.get('n_params')
     n_params = os.environ['n_params']
 except:
-    atmosphere_type = "A"
+    atmosphere_type = "N"
     n_params = "5"
 
 print("atmosphere_type:", atmosphere_type)
@@ -191,12 +191,12 @@ if atmosphere_type=='A':
 
 elif atmosphere_type=='N':
     if n_params == "4":   
-        photosphere = CustomPhotosphere_4D(hot = hot, elsewhere = None,
+        photosphere = CustomPhotosphere_N4(hot = hot, elsewhere = None,
                                         values=dict(mode_frequency = spacetime['frequency']))
         photosphere.hot_atmosphere = '/home/bas/Documents/Projects/x-psi/model_datas/model_data/H-atmosphere_Spectra_fully_ionized/NSX_H-atmosphere_Spectra/nsx_H_v171019.npz'
     
     elif n_params== "5":
-        photosphere = CustomPhotosphere_5D(hot = hot, elsewhere = None,
+        photosphere = CustomPhotosphere_N5(hot = hot, elsewhere = None,
                                         values=dict(mode_frequency = spacetime['frequency']))
         # photosphere.hot_atmosphere = '/home/bas/Documents/Projects/x-psi/model_datas/model_data/H-atmosphere_Spectra_fully_ionized/NSX_H-atmosphere_Spectra/nsx_H_v171019_5D_no_effect.npz'
         photosphere.hot_atmosphere = '/home/bas/Documents/Projects/x-psi/model_datas/model_data/H-atmosphere_Spectra_fully_ionized/NSX_H-atmosphere_Spectra/nsx_H_v171019_modulated_0dot5_to_2.npz'
@@ -457,7 +457,7 @@ elif atmosphere_type=='B':
 
 p.append(-2)        # Background sprectral index : gamma (E^gamma) 
 
-Instrument_kwargs = dict(exposure_time=1000.0,              
+Instrument_kwargs = dict(exposure_time=50000.0,              
                          expected_background_counts=0., #10000.0,
                          name='{}{}_synthetic'.format(atmosphere_type, n_params),
                          directory='./data/')

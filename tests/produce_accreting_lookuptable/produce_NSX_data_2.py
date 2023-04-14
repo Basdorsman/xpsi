@@ -92,7 +92,8 @@ mu = init_mu(9)
 
 INDEX = 0
 intensities_size = 1
-for shape in I_mighty.shape:
+shapes = list(I_mighty.shape)
+for shape in shapes:
     intensities_size *= shape
 
 NSX = np.empty((intensities_size,6))
@@ -118,4 +119,40 @@ for m in range(len(t__e)):
 
 
 path_save='/home/bas/Documents/Projects/x-psi/model_datas/bobrikova/'
-#np.savez_compressed(path_save+'Bobrikova_compton_slab.npz', NSX)
+np.savez_compressed(path_save+'Bobrikova_compton_slab.npz', NSX=NSX, size=shapes)
+
+
+#%% REDUCE SIZE
+
+reduction = 2
+
+INDEX = 0
+intensities_size = 1
+
+
+shapes = list(I_mighty.shape)
+shapes[3] = int(I_mighty.shape[3]/2)
+
+for shape in shapes:
+    intensities_size *= shape
+
+
+NSX2 = np.empty((intensities_size,6))
+
+for m in range(len(t__e)):
+    for l in range(len(t__bb)):
+        for k in range(len(tau__t)):
+            for j in range(len(mu)):
+                for i in range(int(len(Energy)/reduction)):
+                        NSX2[INDEX,0] = Energy[i*reduction]
+                        NSX2[INDEX,1] = mu[j]
+                        NSX2[INDEX,2] = tau__t[k]
+                        NSX2[INDEX,3] = t__bb[l]
+                        NSX2[INDEX,4] = t__e[m]
+                        NSX2[INDEX,5] = I_mighty[m,l,k,i*reduction,j]
+                        INDEX += 1
+
+path_save='/home/bas/Documents/Projects/x-psi/model_datas/bobrikova/'
+np.savez_compressed(path_save+f'Bobrikova_compton_slab_reduced={reduction}.npz', NSX=NSX2, size=shapes)
+
+

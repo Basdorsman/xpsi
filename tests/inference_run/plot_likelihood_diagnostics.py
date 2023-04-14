@@ -9,28 +9,40 @@ Created on Tue Mar 28 15:20:05 2023
 import dill as pickle
 import matplotlib.pyplot as plt
 
+
+
 numenergies=32
-atmosphere_type = 'A'
-n_params = 4
-xpsi_size = 4
+atmosphere_type = 'N'
+n_params = 5
+
 
 ldict = {}
 
-folderstring = f'run_{atmosphere_type}{n_params}'
+folderstring = f'local_runs/run_{atmosphere_type}{n_params}'
+
+# job_id = 304399
+# folderstring = f'helios_runs/run_{atmosphere_type}{n_params}/{job_id}/run_{atmosphere_type}{n_params}'
+
+with open(f'{folderstring}/LikelihoodDiagnostics_ne={numenergies}_rank=0.pkl', 'rb') as file:
+     (temporary, runtime_params) = pickle.load(file)
+
+xpsi_size = runtime_params['xpsi_size']
 
 fig, axes = plt.subplots(nrows=xpsi_size, ncols=1, figsize=(20, 2*xpsi_size), sharex=True)
 for ax, rank in zip(axes, range(xpsi_size)):
+    print('rank:', rank)
+    
     with open(f'{folderstring}/LikelihoodDiagnostics_ne={numenergies}_rank={rank}.pkl', 'rb') as file:
-         (ldict[rank], runtime_params) = pickle.load(file)
+          (ldict[rank], runtime_params) = pickle.load(file)
 
     tmpdict = ldict[rank]
 
     # reduce time
-    diff =  tmpdict[0]['starttime']
+    diff =  tmpdict[1]['starttime']
     start_times = []
     end_times=[]
     times = []
-    for call in tmpdict:
+    for call, i in zip(tmpdict, range(len(tmpdict))):
         tmpdict[call]['starttime'] =  tmpdict[call]['starttime'] - diff
         tmpdict[call]['endtime']   =  tmpdict[call]['endtime'] - diff
 
@@ -40,8 +52,8 @@ for ax, rank in zip(axes, range(xpsi_size)):
         end_times.append(tmpdict[call]['endtime'])
 
         # Create a list of time points where the likelihood is being computed
-        times.append(start_times[call])
-        times.append(end_times[call])
+        times.append(start_times[i])
+        times.append(end_times[i])
 
     times.sort()  # sort the times in ascending order
 
@@ -53,6 +65,7 @@ for ax, rank in zip(axes, range(xpsi_size)):
         else:
             y.append(0)  # likelihood is not being computed
 
+#%%
 
     # Create the plot
     ax.step(times, y, where='post')
@@ -101,4 +114,4 @@ for ax, rank in zip(axes, range(xpsi_size)):
     ax.set_title(f"Percentage of time spent doing likelihood computations starting at n={n}: {percentage_likelihood:.2f}%")
 
 fig.tight_layout()
-fig.savefig(f'{folderstring}/diagnostics_{atmosphere_type}{n_params}_size={xpsi_size}.png',dpi=300)
+fig.savefig(f'{folderstring}/diagnostics_{atmosphere_type}{n_params}_size={xpsi_size}.png',dpi=200)

@@ -602,11 +602,14 @@ class CustomPhotosphere_A5(xpsi.Photosphere):
 
     @xpsi.Photosphere.hot_atmosphere.setter
     def hot_atmosphere(self, path):
-        #size = (150, 9, 31, 20, 41)
-        size = (150, 9, 31, 11, 41)
-
         with np.load(path, allow_pickle=True) as data_dictionary:
-            NSX = data_dictionary['arr_0.npy']
+            NSX = data_dictionary['NSX.npy']
+            size_reorderme = data_dictionary['size.npy']
+            print(size_reorderme)
+        
+        #size = (150, 9, 31, 11, 41)
+        size = [size_reorderme[3], size_reorderme[4], size_reorderme[2], size_reorderme[1], size_reorderme[0]]
+
 
         Energy = np.ascontiguousarray(NSX[0:size[0],0])
         cos_zenith = np.ascontiguousarray([NSX[i*size[0],1] for i in range(size[1])])
@@ -622,13 +625,15 @@ class CustomPhotosphere_A4(xpsi.Photosphere):
 
     @xpsi.Photosphere.hot_atmosphere.setter
     def hot_atmosphere(self, path):
-        size = (150, 9, 31, 11)#, 41) te is the 41
+        with np.load(path, allow_pickle=True) as data_dictionary:
+            NSX = data_dictionary['NSX.npy']
+            size_reorderme = data_dictionary['size.npy']
+        
+            size = (150, 9, 31, 11)#, 41) te is the 41
+            size = [size_reorderme[3], size_reorderme[4], size_reorderme[2], size_reorderme[1]]
+        
         
         te_index = self.te_index
-    
-        with np.load(path, allow_pickle=True) as data_dictionary:
-            NSX = data_dictionary['arr_0.npy']
-
         Energy = np.ascontiguousarray(NSX[0:size[0],0])
         cos_zenith = np.ascontiguousarray([NSX[i*size[0],1] for i in range(size[1])])
         tau = np.ascontiguousarray([NSX[i*size[0]*size[1],2] for i in range(size[2])])
@@ -706,7 +711,8 @@ class CustomSignal(xpsi.Signal):
                                           self._epsrel,
                                           self._epsilon,
                                           self._sigmas,
-                                          kwargs.get('llzero'))
+                                          kwargs.get('llzero'),
+                                          slim=-1.0) #no 10^89s
 
 from scipy.stats import truncnorm
 class CustomPrior(xpsi.Prior):
@@ -872,7 +878,7 @@ class CustomPrior_NoSecondary(xpsi.Prior):
 
     """
 
-    __derived_names__ = ['compactness', 'phase_separation',]
+    __derived_names__ = ['compactness']#, 'phase_separation',]
 
     # def __init__(self):
     #     """ Nothing to be done.
@@ -985,7 +991,7 @@ class CustomPrior_NoSecondary(xpsi.Prior):
         return self.parameters.vector
 
     def transform(self, p, **kwargs):
-        """ A transformation for post-processing. """
+        """ Add compactness. """
 
         p = list(p) # copy
 
@@ -995,23 +1001,23 @@ class CustomPrior_NoSecondary(xpsi.Prior):
         # compactness ratio M/R_eq
         p += [gravradius(ref['mass']) / ref['radius']]
 
-        # phase separation between hot regions
-        # first some temporary variables:
-        if ref['p__phase_shift'] < 0.0:
-            temp_p = ref['p__phase_shift'] + 1.0
-        else:
-            temp_p = ref['p__phase_shift']
+        # # phase separation between hot regions
+        # # first some temporary variables:
+        # if ref['p__phase_shift'] < 0.0:
+        #     temp_p = ref['p__phase_shift'] + 1.0
+        # else:
+        #     temp_p = ref['p__phase_shift']
 
-        temp_s = 0.5 + ref['s__phase_shift']
+        # temp_s = 0.5 + ref['s__phase_shift']
 
-        if temp_s > 1.0:
-            temp_s = temp_s - 1.0
+        # if temp_s > 1.0:
+        #     temp_s = temp_s - 1.0
 
-        # now append:
-        if temp_s >= temp_p:
-            p += [temp_s - temp_p]
-        else:
-            p += [1.0 - temp_p + temp_s]
+        # # now append:
+        # if temp_s >= temp_p:
+        #     p += [temp_s - temp_p]
+        # else:
+        #     p += [1.0 - temp_p + temp_s]
 
         return p
 
@@ -1172,7 +1178,11 @@ class CustomLikelihood(xpsi.Likelihood):
                  max_energy = None):
 
         self.lcallcounter = 0
-        self.ldict = {}
+        # self.tmpdict={}
+        self.ldict = {} 
+        # print('initing likelihood, resetting ldict')
+        # for i in range(xpsi._size):
+        #     setattr(self, f"tmpdict{i}", {})
         self.star = star
         self.signals = signals
 
@@ -1229,14 +1239,12 @@ class CustomLikelihood(xpsi.Likelihood):
         """
         # print("likelihood __call__ called. rank:", _rank,"comm: ", _comm,"size: ", _size)
         tmpdict = {}
-        
-        self.lcallcounter += 1
         callcount = self.lcallcounter
+        # tmpdict['xpsi._rank'] = xpsi._rank
+        #tmpdict['likelihood call count'] = callcount
         tmpdict['likelihood call count'] = callcount
-        tmpdict['xpsi._rank'] = xpsi._rank
         tmpdict['p'] = p
         tmpdict['starttime'] = time.time()
-        # print('counting likelihood calls: ', self.lcallcounter)
         # print("custom likelihood xpsi rank: ", xpsi._rank)
         # print("parameter vector:", p)
         # start = time.time()
@@ -1303,6 +1311,15 @@ class CustomLikelihood(xpsi.Likelihood):
         tmpdict['endtime'] = time.time()
         tmpdict['deltatime'] = tmpdict['endtime'] - tmpdict['starttime'] 
         # print('Likelihood evaluation took {:.3f} seconds'.format((time.time()-start)))
+        # print('current ldict: ', self.ldict)
+        # print("adding likelihood to dictionary. xpsi rank: ", xpsi._rank, "callcount: ", callcount)
+        # self.ldict[xpsi._rank][callcount] = tmpdict
+        self.ldict[callcount] = tmpdict
+        self.lcallcounter += 1
+        # setattr(self, f"ldict{xpsi._rank}", self.ldict)
+        
+        
+        # print('updated ldict: ', self.ldict)
         
         loglikelihood = 0.0
         for signals in self._signals:
@@ -1315,7 +1332,7 @@ class CustomLikelihood(xpsi.Likelihood):
                     print("ERROR: It looks like X-PSI falsely thought that the signal does not need to be updated and thus skipped an essential part of the calculation. If not sampling, please use ``force=True`` or ``force_update=True`` option for the likelihood evaluation, or if sampling please set ``likelihood.externally_updated = True``")
                     raise
 
-        self.ldict[callcount] = tmpdict
+        
 
         if loglikelihood <= self.llzero:
             return self.random_near_llzero

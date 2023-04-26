@@ -65,24 +65,26 @@ if __name__ == '__main__':
             raise
 
         try:
-            gsl_version = sub.check_output(['gsl-config','--version'])[:-1]
-            gsl_prefix = sub.check_output(['gsl-config','--prefix'])[:-1]
+            gsl_version = sub.check_output(['gsl-config','--version'])[:-1] # str(sub.check_output(['gsl-config','--version'])[:-1],"utf-8")
+            #print('GSL version: ' + str(gsl_version))
+            gsl_prefix = sub.check_output(['gsl-config','--prefix'])[:-1] # str(sub.check_output(['gsl-config','--prefix'])[:-1],"utf-8")
+            #print('GSL prefix: ' + str(gsl_prefix))
         except Exception:
             print('GNU Scientific Library cannot be located.')
             raise
         else:
-            print('GSL version: ' + gsl_version)
+            print('GSL version: ' + str(gsl_version))
             libraries = ['gsl','gslcblas','m'] # default BLAS interface for gsl
-            library_dirs = [gsl_prefix + '/lib']
+            library_dirs = [str(gsl_prefix) + '/lib']
             _src_dir = os.path.dirname(os.path.abspath(__file__))
-            include_dirs = [gsl_prefix + '/include',
+            include_dirs = [str(gsl_prefix) + '/include',
                             numpy.get_include(),
                             join(_src_dir, '')]
 
             # point to shared library at compile time so runtime resolution
             # is not affected by environment variables, but is determined
             # by the binary itself
-            extra_link_args = ['-Wl,-rpath,%s'%(gsl_prefix+'/lib')]
+            extra_link_args = ['-Wl,-rpath,%s'%(str(gsl_prefix)+'/lib')]
 
         # try to get the rayXpanda library:
         # please modify these compilation steps it does not work for your

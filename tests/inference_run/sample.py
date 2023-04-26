@@ -5,7 +5,7 @@ Created on Thu Jun 16 10:35:05 2022
 
 @author: bas
 """
-from __future__ import print_function, division
+# from __future__ import print_function, division
 
 import os
 import numpy as np
@@ -49,7 +49,7 @@ n_params = os.environ.get('n_params')
 if isinstance(os.environ.get('atmosphere_type'),type(None)) or isinstance(os.environ.get('n_params'),type(None)): # if that fails input them here.
     print('E: failed to import OS environment variables, using defaults.')    
     atmosphere_type = 'A' #A, N, B
-    n_params = '5' #4, 5
+    n_params = '4' #4, 5
 
 if atmosphere_type == 'A': atmosphere = 'accreting'
 elif atmosphere_type == 'N': atmosphere = 'numerical'
@@ -573,9 +573,9 @@ except OSError:
         raise
 
 if machine == 'local':
-    sampling_efficiency = 0.1
-    n_live_points = 1
-    max_iter = 1
+    sampling_efficiency = 0.3
+    n_live_points = 25
+    max_iter = 3
     runtime_params = {'resume': False,
                       'importance_nested_sampling': False,
                       'multimodal': False,

@@ -611,11 +611,11 @@ def integrate(size_t numThreads,
                                     # t_eval_start = clock()
                                     for p in range(N_E):
                                         E_prime = energies[p] / __Z
-                                        # printf("\ninput parameters reporting:")
-                                        # printf("E_prime: %.8e, ", E_prime)
-                                        # printf("__ABB: %.8e, ", __ABB)
-                                        # printf("srcCellParams[i,j,0]: %.8e, ", srcCellParams[i,j,0])
-                                        # printf("srcCellParams[i,j,1]: %.8e, ", srcCellParams[i,j,1])
+                                        printf("\ninput parameters reporting:")
+                                        printf("E_prime: %.8e, ", E_prime)
+                                        printf("__ABB: %.8e, ", __ABB)
+                                        printf("srcCellParams[i,j,0]: %.8e, ", srcCellParams[i,j,0])
+                                        printf("srcCellParams[i,j,1]: %.8e, ", srcCellParams[i,j,1])
                                         # printf('call eval_hot')
                                         # I_E = eval_hot_faster(T,
                                         

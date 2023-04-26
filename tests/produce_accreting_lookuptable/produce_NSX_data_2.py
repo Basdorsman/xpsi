@@ -118,8 +118,8 @@ for m in range(len(t__e)):
                     INDEX += 1
 
 
-path_save='/home/bas/Documents/Projects/x-psi/model_datas/bobrikova/'
-np.savez_compressed(path_save+'Bobrikova_compton_slab.npz', NSX=NSX, size=shapes)
+# path_save='/home/bas/Documents/Projects/x-psi/model_datas/bobrikova/'
+# np.savez_compressed(path_save+'Bobrikova_compton_slab.npz', NSX=NSX, size=shapes)
 
 
 #%% REDUCE SIZE

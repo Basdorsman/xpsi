@@ -20,7 +20,7 @@ from xpsi.global_imports import gravradius
 
 import sys
 sys.path.append('../')
-from custom_tools import CustomInstrument, CustomHotRegion, CustomHotRegion_Accreting, CustomHotRegion_Accreting_te_const, CustomPhotosphere_BB, CustomPhotosphere_4D, CustomPhotosphere_5D, CustomPhotosphere_Accreting, CustomPhotosphere_Accreting_te_const, CustomSignal, CustomPrior, CustomPrior_NoSecondary, plot_2D_pulse
+from custom_tools import CustomInstrument, CustomHotRegion, CustomHotRegion_Accreting, CustomHotRegion_Accreting_te_const, CustomPhotosphere_BB, CustomPhotosphere_N4, CustomPhotosphere_N5, CustomPhotosphere_A5, CustomPhotosphere_A4, CustomSignal, CustomPrior, CustomPrior_NoSecondary, plot_2D_pulse
 
 import time
 
@@ -52,8 +52,9 @@ try: #try to get parameters from shell input
     os.environ.get('n_params')
     n_params = os.environ['n_params']
 except:
+    print("W: no parameters in os environment, using defaults.")
     atmosphere_type = "A"
-    atmosphere_type = "5"
+    n_params = "4"
 
 print("atmosphere_type:", atmosphere_type)
 print("n_params:", n_params)
@@ -321,23 +322,23 @@ elif not second:
 # print("n_params: ",n_params)
 if atmosphere_type=='A':
     if n_params== "5":
-        photosphere = CustomPhotosphere_Accreting(hot = hot, elsewhere = None,
+        photosphere = CustomPhotosphere_A5(hot = hot, elsewhere = None,
                                         values=dict(mode_frequency = spacetime['frequency']))
         photosphere.hot_atmosphere = '/home/bas/Documents/Projects/x-psi/model_datas/bobrikova/Bobrikova_compton_slab.npz'
 
     elif n_params== "4":
-        photosphere = CustomPhotosphere_Accreting_te_const(hot = hot, elsewhere = None,
+        photosphere = CustomPhotosphere_A4(hot = hot, elsewhere = None,
                                         values=dict(mode_frequency = spacetime['frequency']))
         photosphere.hot_atmosphere = '/home/bas/Documents/Projects/x-psi/model_datas/bobrikova/Bobrikova_compton_slab.npz'
 
 elif atmosphere_type=='N':
     if n_params == "4":   
-        photosphere = CustomPhotosphere_4D(hot = hot, elsewhere = None,
+        photosphere = CustomPhotosphere_N4(hot = hot, elsewhere = None,
                                         values=dict(mode_frequency = spacetime['frequency']))
         photosphere.hot_atmosphere = '/home/bas/Documents/Projects/x-psi/model_datas/model_data/H-atmosphere_Spectra_fully_ionized/NSX_H-atmosphere_Spectra/nsx_H_v171019.npz'
     
     elif n_params== "5":
-        photosphere = CustomPhotosphere_5D(hot = hot, elsewhere = None,
+        photosphere = CustomPhotosphere_N5(hot = hot, elsewhere = None,
                                         values=dict(mode_frequency = spacetime['frequency']))
         # photosphere.hot_atmosphere = '/home/bas/Documents/Projects/x-psi/model_datas/model_data/H-atmosphere_Spectra_fully_ionized/NSX_H-atmosphere_Spectra/nsx_H_v171019_5D_no_effect.npz'
         photosphere.hot_atmosphere = '/home/bas/Documents/Projects/x-psi/model_datas/model_data/H-atmosphere_Spectra_fully_ionized/NSX_H-atmosphere_Spectra/nsx_H_v171019_modulated_0dot5_to_2.npz'
@@ -609,7 +610,7 @@ print('photosphere integrating')
 energies=np.logspace(-1.0,np.log10(3.0), 128, base=10.0)
 
 st = time.time()
-photosphere.integrate(energies, threads=8)
+photosphere.integrate(energies, threads=1)
 et = time.time()
 elapsed_time = et - st
 print('Photosphere integration time:', elapsed_time,'seconds')

@@ -14,6 +14,7 @@ then
 source blackbody.sh
 fi
 
-cd tests/plot_pulses/
+
+cd tests/interpolation_kernel/
 export atmosphere_type n_params
-python plot_pulses.py
+python interpolate.py

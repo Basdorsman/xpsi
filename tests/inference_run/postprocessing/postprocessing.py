@@ -52,7 +52,7 @@ import sample as ST
 # Settings names, bounds and labels
 
 ST.names=['mass','radius','distance','cos_inclination','p__phase_shift',
-          'p__super_colatitude','p__super_radius','p__super_tbb','p__super_te','p__super_tau']
+          'p__super_colatitude','p__super_radius','p__super_tbb','p__super_tau']#'p__super_te','p__super_tau']
 
 # We will use the same bounds used during sampling
 ST.bounds = {'mass':(1.0,3.0),
@@ -63,7 +63,7 @@ ST.bounds = {'mass':(1.0,3.0),
              'p__super_colatitude':(0.001, math.pi/2 - 0.001),
              'p__super_radius':(0.001, math.pi/2.0 - 0.001),
              'p__super_tbb':(0.00015, 0.003), 
-             'p__super_te': (40., 200.),
+             #'p__super_te': (40., 200.),
              'p__super_tau': (0.5, 3.5)}
 
 
@@ -76,7 +76,7 @@ ST.labels = {'mass': r"M\;\mathrm{[M}_{\odot}\mathrm{]}",
               'p__super_colatitude': r"\Theta_{spot}\;\mathrm{[rad]}",
               'p__super_radius': r"\zeta_{spot}\;\mathrm{[rad]}",
               'p__super_tbb': r"t_{bb} data units",
-              'p__super_te': r"t_e data units",
+              #'p__super_te': r"t_e data units",
               'p__super_tau': r"\tau data units"}
 
 ST.truths={'mass': 1.6,                               # Mass in solar Mass
@@ -87,7 +87,7 @@ ST.truths={'mass': 1.6,                               # Mass in solar Mass
           'p__super_colatitude': 1.,                # Colatitude of the centre of the superseding region
           'p__super_radius': 0.075,                 # Angular radius of the (circular) superseding region
           'p__super_tbb': 0.001,                      # Blackbody temperature
-          'p__super_te': 40,                          # Electorn temperature
+          #'p__super_te': 40,                          # Electron temperature
           'p__super_tau': 0.5}                        # Optical depth
 
 ST.truths['compactness']=gravradius(ST.truths['mass'])/ST.truths['radius']
@@ -114,10 +114,15 @@ getdist_kde_settings = {'ignore_rows': 0,
                         'fine_bins_2D': 512,
                         'num_bins_2D': 40}
 
+print('names',ST.names)
+print('likelihood:', ST.likelihood)
+
 ST.runs = xpsi.Runs.load_runs(ID='ST',
                                run_IDs=['run'],
-                               roots=['run_Num'],
-                               base_dirs=['/home/bas/Documents/Projects/x-psi/xpsi-bas-fork/tests/inference_run/helios_runs/run_A5/304399/run_A5'],
+                               roots=['run_se=0.3_lp=10_atm=A4_ne=32_mi=100'],
+                               base_dirs=['/home/bas/Documents/Projects/x-psi/xpsi-bas-fork/tests/inference_run/local_runs/run_A4/'],
+                               # base_dirs=['/home/bas/Documents/Projects/x-psi/xpsi-bas-fork/tests/inference_run/helios_runs/run_A4/304400/run_A4'],
+                               # base_dirs=['/home/bas/Documents/Projects/x-psi/xpsi-bas-fork/tests/inference_run/helios_runs/run_A5/304399/run_A5'],
                                use_nestcheck=[False],
                                kde_settings=getdist_kde_settings,
                                likelihood=ST.likelihood,
@@ -132,9 +137,8 @@ ST.runs = xpsi.Runs.load_runs(ID='ST',
 pp = xpsi.PostProcessing.CornerPlotter([ST.runs])
 fig = pp.plot(
      params=ST.names,
-
      IDs=OrderedDict([('ST', ['run',]),]),
-     prior_density=True,
+     prior_density=False,
      KL_divergence=True,
      ndraws=5e4,
      combine=False, combine_all=True, only_combined=False, overwrite_combined=True,
@@ -178,8 +182,21 @@ fig = pp.plot(
      embolden=1.0,
      nx=500)
 
+pp = xpsi.SignalPlotter([ST.runs])
+pp.plot(IDs=OrderedDict([('ST', ['run']),
+                        ]),
+        combine=False, # use these controls if more than one run for a posterior
+        combine_all=False,
+        force_combine=False,
+        only_combined=False,
+        force_cache=True,
+        nsamples=3,
+        plots = {'ST': xpsi.ResidualPlot()})
+
+pp.plots["ST"].fig
+
 
 #%%
 
-plt.savefig('./corner_A5.png')
+plt.savefig('./corner_A4.png')
 

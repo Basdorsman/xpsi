@@ -31,7 +31,7 @@ try: #try to get parameters from shell input
     os.environ.get('n_params')
     n_params = os.environ['n_params']
 except:
-    atmosphere_type = "N"
+    atmosphere_type = "A"
     n_params = "4"
 
 print("atmosphere_type:", atmosphere_type)
@@ -530,8 +530,10 @@ likelihood = CustomLikelihood(star = star, signals = signal,
                               prior=prior,
                               externally_updated=False)
 
+# likelihood(p)
 
 
+#%% Run many likelihood evaluations
 
 sample_size = 10
 p_samples = [p,] #first sample is my sample above
@@ -541,7 +543,7 @@ for sample in range(sample_size):
 
 
 
-ne_list = [5, 7, 10, 13, 16, 20, 24, 28, 32]
+ne_list = [16,]#[5, 7, 10, 13, 16, 20, 24, 28, 32]
 ldict = {}
 delta_time_avg = []
     
@@ -555,30 +557,41 @@ for num_energy in ne_list:
     
     likelihood_samples = []
     for sample in p_samples:
-        # print('\n')
-        # print("The parameter vector for which likelihood will be computed is ", sample)
-        # t_likelihood_start = time.perf_counter() 
-        # likelihood_value = likelihood(sample)
-        # t_likelihood_end = time.perf_counter()
-        # print("The value of likelihood is ", likelihood_value)
+        print('\n')
+        print("The parameter vector for which likelihood will be computed is ", sample)
+        t_likelihood_start = time.perf_counter() 
+        likelihood_value = likelihood(sample)
+        t_likelihood_end = time.perf_counter()
+        print("The value of likelihood is ", likelihood_value)
         # # likelihood_samples.append(likelihood_evaluation)
-        # t_likelihood = (t_likelihood_end - t_likelihood_start)#/len(p_samples)
-        # print('computed in {:.2f}s'.format(t_likelihood))
-        # print('\n')
-        likelihood(sample)
-    ldict[num_energy] = likelihood.ldict
+        t_likelihood = (t_likelihood_end - t_likelihood_start)#/len(p_samples)
+        print('computed likelihood in {:.2f}s'.format(t_likelihood))
+        print('\n')
+        
+        # likelihood(sample)
+    print('done with evaluations')
+    
+    # ldict[num_energy] = likelihood.ldict
 
-    delta_time_avg.append(np.mean([likelihood.ldict[call]['deltatime'] for call in likelihood.ldict]))
+    # delta_time_avg.append(np.mean([likelihood.ldict[call]['deltatime'] for call in likelihood.ldict]))
+
+
+
+
+
+# import dill as pickle
+
+# with open(f'timed_likelihood_{atmosphere_type}{n_params}.pkl', 'wb') as file:
+#       #file.write(pickle.dumps(likelihood.ldict)) # use `pickle.loads` to do the reverse
+#       pickle.dump((ldict, delta_time_avg, ne_list), file)
+
+
+
 
 
 #%%
 
 
-import dill as pickle
-
-with open(f'timed_likelihood_{atmosphere_type}{n_params}.pkl', 'wb') as file:
-      #file.write(pickle.dumps(likelihood.ldict)) # use `pickle.loads` to do the reverse
-      pickle.dump((ldict, delta_time_avg, ne_list), file)
 
 
 # lastdict = ldict[ne_list[-1]]

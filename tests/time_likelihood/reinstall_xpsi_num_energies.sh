@@ -16,4 +16,4 @@ fi
 
 cd tests/time_likelihood/
 export atmosphere_type n_params
-python time_likelihood.py
+python time_num_energies.py

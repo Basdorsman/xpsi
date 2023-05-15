@@ -12,7 +12,7 @@ from cython.parallel cimport *
 from libc.math cimport M_PI, sqrt, sin, cos, acos, log10, pow, exp, fabs, ceil, log
 from libc.stdlib cimport malloc, free
 from libc.stdio cimport printf
-# from libc.time cimport time, time_t, clock, clock_t, CLOCKS_PER_SEC
+from libc.time cimport time, time_t, clock, clock_t, CLOCKS_PER_SEC
 import xpsi
 
 
@@ -101,12 +101,12 @@ def integrate(size_t numThreads,
     # >>>
     #----------------------------------------------------------------------->>>
     cdef:
-        # double secs_per_clock = 1/CLOCKS_PER_SEC
-        # int interpolations = 0
-        #time_t t_start, t_end #, elapsed_time # I was using clock_t (one line below) most recently
-        # clock_t t_start, t_end, t_eval_start, t_eval_end #, elapsed_time    
-        # double elapsed_time = 0.
-        # double t_eval_sum = 0.
+        double secs_per_clock = 1/CLOCKS_PER_SEC
+        int interpolations = 0
+        # time_t t_start, t_end #, elapsed_time # I was using clock_t (one line below) most recently
+        clock_t t_start, t_end, t_eval_start, t_eval_end #, elapsed_time    
+        double elapsed_time = 0.
+        double t_eval_sum = 0.
         signed int ii
         size_t i, j, k, ks, _kdx, m, p # Array indexing
         size_t T, twoT # Used globally to represent thread index
@@ -275,7 +275,7 @@ def integrate(size_t numThreads,
     # >>>
     #----------------------------------------------------------------------->>>
     # printf("\nfor ii in prange(<signed int>cellArea.shape[0]")
-    # t_start = clock()#time(NULL)
+    t_start = clock()#time(NULL)
 
     for ii in prange(<signed int>cellArea.shape[0],
                      nogil = True,
@@ -579,7 +579,7 @@ def integrate(size_t numThreads,
 
                     j = 0
                     # printf("\nWhile loop for geometric interps starts here.")
-                    # interpolations+=1
+                    interpolations+=1
                     
                     while j < cellArea.shape[1] and terminate[T] == 0:
                         if CELL_RADIATES[i,j] == 1:
@@ -608,7 +608,7 @@ def integrate(size_t numThreads,
                                     __ABB = gsl_interp_eval(interp_ABB[T], phase_ptr, ABB_ptr, __PHASE_plusShift, accel_ABB[T])
 
                                     #printf("\nInterpolation for-loop starts here.")
-                                    # t_eval_start = clock()
+                                    t_eval_start = clock()
                                     for p in range(N_E):
                                         E_prime = energies[p] / __Z
                                         # printf("\ninput parameters reporting:")
@@ -637,8 +637,8 @@ def integrate(size_t numThreads,
                                             correction_I_E = correction_I_E * eval_elsewhere_norm()
 
                                         privateFlux[T,k,p] += cellArea[i,j] * (I_E - correction_I_E) * __GEOM
-                                    # t_eval_end = clock()
-                                    # t_eval_sum += <double>(t_eval_end - t_eval_start) / CLOCKS_PER_SEC
+                                    t_eval_end = clock()
+                                    t_eval_sum += <double>(t_eval_end - t_eval_start) / CLOCKS_PER_SEC
                         j = j + 1
             if terminate[T] == 1:
                 break # out of image loop
@@ -647,12 +647,12 @@ def integrate(size_t numThreads,
         if terminate[T] == 1:
            break # out of colatitude loop
     
-    # t_end = clock()  # time(NULL)
-    # printf('clockcycles: %ld\n', t_end)
-    # elapsed_time = <double>(t_end - t_start) / CLOCKS_PER_SEC
-    # printf("interpolations: %d\n", interpolations)
-    # printf("Time taken for eval_hot and norm: %.6f seconds\n", t_eval_sum)
-    # printf("Time taken for geometrical interpolations: %.6f seconds\n", elapsed_time)
+    t_end = clock()  # time(NULL)
+    printf('clockcycles: %ld\n', t_end)
+    elapsed_time = <double>(t_end - t_start) / CLOCKS_PER_SEC
+    printf("interpolations: %d\n", interpolations)
+    printf("Time taken for eval_hot and norm: %.6f seconds\n", t_eval_sum)
+    printf("Time taken for geometrical interpolations: %.6f seconds\n", elapsed_time)
     
     for i in range(N_E):
         for T in range(N_T):

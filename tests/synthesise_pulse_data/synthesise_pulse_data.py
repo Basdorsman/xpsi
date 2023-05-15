@@ -180,7 +180,7 @@ hot = HotRegions((primary,))
       
 if atmosphere_type=='A':
     if n_params== "5":
-        photosphere = CustomPhotosphere_A5g(hot = hot, elsewhere = None,
+        photosphere = CustomPhotosphere_A5(hot = hot, elsewhere = None,
                                         values=dict(mode_frequency = spacetime['frequency']))
         photosphere.hot_atmosphere = '/home/bas/Documents/Projects/x-psi/model_datas/bobrikova/Bobrikova_compton_slab.npz'
 

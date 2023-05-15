@@ -162,7 +162,7 @@ venv.bak/
 .idea/
 
 # model data, runs
-tests/model_data/
+AMXPs/model_data/
 */run/
 
 # plots
@@ -172,8 +172,8 @@ plots/
 examples/examples_fast/Outputs/*
 
 #tests/inference runs
-tests/inference_run/run*
-tests/inference_run/archive/*
-tests/inference_run/model_data/*
-tests/inference_run/helios_runs/*
-tests/inference_run/local_runs/*
+AMXPs/inference_run/run*
+AMXPs/inference_run/archive/*
+AMXPs/inference_run/model_data/*
+AMXPs/inference_run/helios_runs/*
+AMXPs/inference_run/local_runs/*

@@ -10,13 +10,13 @@ cdef _preloaded* init_preload(object atmosphere):
 
     preloaded = <_preloaded*> malloc(sizeof(_preloaded))
 
-    preloaded.ndims = <size_t>(len(atmosphere) - 1)
+    preloaded.ndims = <size_t>(len(atmosphere) - 1) 					# Amount of dimensions for for-loops
 
-    preloaded.params = <double**> malloc(sizeof(double*) * preloaded.ndims)
-    preloaded.N = <size_t*> malloc(sizeof(size_t) * (preloaded.ndims))
-    preloaded.S = <size_t*> malloc(sizeof(size_t) * (preloaded.ndims - 1))
-    preloaded.BLOCKS = <size_t*> malloc(sizeof(size_t) * (preloaded.ndims - 1))
-    
+    preloaded.params = <double**> malloc(sizeof(double*) * preloaded.ndims) 		# Memory address of the first element of the atmosphere table for each dimension. Atmosphere is a contiguous array, so that the next element can also be found.
+    preloaded.N = <size_t*> malloc(sizeof(size_t) * (preloaded.ndims)) 		# N will be the size of the data for each dimension 	
+    preloaded.S = <size_t*> malloc(sizeof(size_t) * (preloaded.ndims - 1))		# S[1] will be N[1]*N[0] ... which will be necessary for the memory structure
+    preloaded.BLOCKS = <size_t*> malloc(sizeof(size_t) * (preloaded.ndims - 1))	# BLOCKS will be populated later with the points for the interpolation hypercube.
+     
     # print("memory allocated.")
     # print("preloaded.S[0]:")
     # print(preloaded.S[0])

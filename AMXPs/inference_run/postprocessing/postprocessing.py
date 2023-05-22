@@ -120,7 +120,7 @@ print('likelihood:', ST.likelihood)
 ST.runs = xpsi.Runs.load_runs(ID='ST',
                                run_IDs=['run'],
                                roots=['run_se=0.3_lp=10_atm=A4_ne=32_mi=100'],
-                               base_dirs=['/home/bas/Documents/Projects/x-psi/xpsi-bas-fork/tests/inference_run/local_runs/run_A4/'],
+                               base_dirs=['/home/bas/Documents/Projects/x-psi/xpsi-bas-fork/AMXPs/inference_run/local_runs/run_A4/'],
                                # base_dirs=['/home/bas/Documents/Projects/x-psi/xpsi-bas-fork/tests/inference_run/helios_runs/run_A4/304400/run_A4'],
                                # base_dirs=['/home/bas/Documents/Projects/x-psi/xpsi-bas-fork/tests/inference_run/helios_runs/run_A5/304399/run_A5'],
                                use_nestcheck=[False],

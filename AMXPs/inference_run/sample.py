@@ -21,15 +21,15 @@ from xpsi.global_imports import gravradius
 second = False
 num_energies = 32
 te_index=0 # t__e = np.arange(40.0, 202.0, 4.0), there are 40.5 values (I expect that means 40)
-likelihood_toggle = 'default' #'default', 'custom'
+likelihood_toggle = 'custom' #'default', 'custom'
 machine = 'local' #'local', 'helios'
 
 
 import sys
 if machine == 'local':
-    sys.path.append('/home/bas/Documents/Projects/x-psi/xpsi-bas-fork/tests/')
+    sys.path.append('/home/bas/Documents/Projects/x-psi/xpsi-bas-fork/AMXPs/')
 elif machine == 'helios':
-    sys.path.append('/home/bdorsma/xpsi-bas/tests/')
+    sys.path.append('/home/bdorsma/xpsi-bas/AMXPs/')
 
 from custom_tools import CustomInstrument, CustomHotRegion, CustomHotRegion_Accreting, CustomHotRegion_Accreting_te_const
 from custom_tools import CustomPhotosphere_BB, CustomPhotosphere_N4, CustomPhotosphere_N5, CustomPhotosphere_A5, CustomPhotosphere_A4
@@ -62,7 +62,7 @@ print('n_params:', n_params)
 
 if atmosphere_type=='A':
     if machine == 'local':  
-        datastring = f'/home/bas/Documents/Projects/x-psi/xpsi-bas-fork/tests/synthesise_pulse_data/data/A{n_params}_synthetic_realisation.dat'
+        datastring = f'/home/bas/Documents/Projects/x-psi/xpsi-bas-fork/AMXPs/synthesise_pulse_data/data/A{n_params}_synthetic_realisation.dat'
     elif machine == 'helios':
             datastring=f'model_data/A{n_params}_synthetic_realisation.dat'
     settings = dict(counts = np.loadtxt(datastring, dtype=np.double),
@@ -83,11 +83,11 @@ data = xpsi.Data(**settings)
 ################################## INSTRUMENT #################################
 try:
     if machine == 'local':
-        NICER = CustomInstrument.from_response_files(ARF = '/home/bas/Documents/Projects/x-psi/xpsi-bas-fork/tests/model_data/nicer_v1.01_arf.txt',
-                                                     RMF = '/home/bas/Documents/Projects/x-psi/xpsi-bas-fork/tests/model_data/nicer_v1.01_rmf_matrix.txt',
+        NICER = CustomInstrument.from_response_files(ARF = '/home/bas/Documents/Projects/x-psi/xpsi-bas-fork/AMXPs/model_data/nicer_v1.01_arf.txt',
+                                                     RMF = '/home/bas/Documents/Projects/x-psi/xpsi-bas-fork/AMXPs/model_data/nicer_v1.01_rmf_matrix.txt',
                                                      max_input = 500, #500
                                                      min_input = 0,
-                                                     channel_edges = '/home/bas/Documents/Projects/x-psi/xpsi-bas-fork/tests/model_data/nicer_v1.01_rmf_energymap.txt')
+                                                     channel_edges = '/home/bas/Documents/Projects/x-psi/xpsi-bas-fork/AMXPs/model_data/nicer_v1.01_rmf_energymap.txt')
     elif machine == 'helios':
         NICER = CustomInstrument.from_response_files(ARF = 'model_data/nicer_v1.01_arf.txt',
                                                      RMF = 'model_data/nicer_v1.01_rmf_matrix.txt',
@@ -97,7 +97,7 @@ try:
    
 except:
     print("ERROR: You might miss one of the following files (check Modeling tutorial or the link below how to find them): \n model_data/nicer_v1.01_arf.tx, model_data/nicer_v1.01_rmf_matrix.txt, model_data/nicer_v1.01_rmf_energymap.txt")
-    print("https://github.com/ThomasEdwardRiley/xpsi_workshop.git")
+    print("https://zenodo.org/record/7113931")
     exit()
 
 
@@ -544,7 +544,7 @@ if likelihood_toggle == 'custom':
     print('use custom likelihood')
     likelihood = CustomLikelihood(star = star, signals = signal,
                                   num_energies=num_energies, #128
-                                  threads=1,
+                                  threads=2,
                                   prior=prior,
                                   externally_updated=True)
 elif likelihood_toggle == 'default':

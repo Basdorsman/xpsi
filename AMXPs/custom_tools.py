@@ -726,6 +726,7 @@ class CustomPrior(xpsi.Prior):
     """
 
     __derived_names__ = ['compactness', 'phase_separation',]
+    __draws_from_support__ = 2
 
     def __init__(self):
         """ Nothing to be done.
@@ -1247,7 +1248,7 @@ class CustomLikelihood(xpsi.Likelihood):
         tmpdict['starttime'] = time.time()
         # print("custom likelihood xpsi rank: ", xpsi._rank)
         # print("parameter vector:", p)
-        # start = time.time()
+        start = time.time()
 
         if reinitialise: # for safety if settings have been changed
             # print('reinitialise')
@@ -1310,7 +1311,7 @@ class CustomLikelihood(xpsi.Likelihood):
         
         tmpdict['endtime'] = time.time()
         tmpdict['deltatime'] = tmpdict['endtime'] - tmpdict['starttime'] 
-        # print('Likelihood evaluation took {:.3f} seconds'.format((time.time()-start)))
+        print('Likelihood evaluation took {:.3f} seconds'.format((time.time()-start)))
         # print('current ldict: ', self.ldict)
         # print("adding likelihood to dictionary. xpsi rank: ", xpsi._rank, "callcount: ", callcount)
         # self.ldict[xpsi._rank][callcount] = tmpdict

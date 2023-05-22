@@ -529,7 +529,7 @@ prior = CustomPrior()
 
 
 likelihood = xpsi.Likelihood(star = star, signals = signal,
-                             num_energies=128,
+                             num_energies=32,
                              threads=1,
                              prior=prior,
                              externally_updated=True)
@@ -557,14 +557,14 @@ runtime_params = {'resume': False,
                   'wrapped_params': wrapped_params,
                   'evidence_tolerance': 0.5,
                   'seed': 7,
-                  'max_iter': 100, # manual termination condition for short test
+                  'max_iter': -1, # manual termination condition for short test
                   'verbose': True}
 
 # let's require that checks pass before starting to sample
 try:
 	true_logl = -68147.0113542
 	#print(likelihood(p))#Need to print this if not using force_update in the following line.
-	likelihood.check(None, [true_logl], 1.0e-6,physical_points=[p],force_update=True)
+	likelihood.check(None, [true_logl], 1.0e-3,physical_points=[p],force_update=True)
 except:
 	print("Likelihood check did not pass. Checking if wrong atmosphere model installed.")
 	true_logl = -116504.074

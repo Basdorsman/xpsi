@@ -179,3 +179,4 @@ AMXPs/inference_run/helios_runs/*
 AMXPs/inference_run/local_runs/*
 examples/examples_modeling_tutorial/model_data/*
 examples/examples_modeling_tutorial/run/*
+examples/examples_modeling_tutorial/outputs/*

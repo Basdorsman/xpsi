@@ -485,8 +485,8 @@ class HotRegion(ParameterSubspace):
         if declaration: # can we safely assume azimuthal invariance?
             from xpsi.cellmesh.integrator_for_azimuthal_invariance import integrate as _integrator
         else: # more general purpose
-            # from xpsi.cellmesh.integrator import integrate as _integrator
-            from xpsi.cellmesh.integrator_timed import integrate as _integrator
+            from xpsi.cellmesh.integrator import integrate as _integrator
+            # from xpsi.cellmesh.integrator_timed import integrate as _integrator
         self._integrator = _integrator
 
     @property

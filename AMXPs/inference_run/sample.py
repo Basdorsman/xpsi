@@ -21,8 +21,8 @@ from xpsi.global_imports import gravradius
 second = False
 num_energies = 32
 te_index=0 # t__e = np.arange(40.0, 202.0, 4.0), there are 40.5 values (I expect that means 40)
-likelihood_toggle = 'custom' #'default', 'custom'
-machine = 'local' #'local', 'helios'
+likelihood_toggle = 'default' #'default', 'custom'
+machine = 'local' #'local', 'helios', 'snellius'
 
 
 import sys
@@ -30,6 +30,8 @@ if machine == 'local':
     sys.path.append('/home/bas/Documents/Projects/x-psi/xpsi-bas-fork/AMXPs/')
 elif machine == 'helios':
     sys.path.append('/home/bdorsma/xpsi-bas/AMXPs/')
+elif machine == 'snellius':
+    sys.path.append('home/dorsman/xpsi-bas-fork/AMXPs')
 
 from custom_tools import CustomInstrument, CustomHotRegion, CustomHotRegion_Accreting, CustomHotRegion_Accreting_te_const
 from custom_tools import CustomPhotosphere_BB, CustomPhotosphere_N4, CustomPhotosphere_N5, CustomPhotosphere_A5, CustomPhotosphere_A4
@@ -63,7 +65,7 @@ print('n_params:', n_params)
 if atmosphere_type=='A':
     if machine == 'local':  
         datastring = f'/home/bas/Documents/Projects/x-psi/xpsi-bas-fork/AMXPs/synthesise_pulse_data/data/A{n_params}_synthetic_realisation.dat'
-    elif machine == 'helios':
+    elif machine == 'helios' or machine == 'snellius':
             datastring=f'model_data/A{n_params}_synthetic_realisation.dat'
     settings = dict(counts = np.loadtxt(datastring, dtype=np.double),
                     channels=np.arange(20,201), #201
@@ -88,7 +90,7 @@ try:
                                                      max_input = 500, #500
                                                      min_input = 0,
                                                      channel_edges = '/home/bas/Documents/Projects/x-psi/xpsi-bas-fork/AMXPs/model_data/nicer_v1.01_rmf_energymap.txt')
-    elif machine == 'helios':
+    elif machine == 'helios' or machine == 'snellius':
         NICER = CustomInstrument.from_response_files(ARF = 'model_data/nicer_v1.01_arf.txt',
                                                      RMF = 'model_data/nicer_v1.01_rmf_matrix.txt',
                                                      max_input = 500, #500
@@ -346,7 +348,7 @@ if atmosphere_type == 'A':
                                         values=dict(mode_frequency = spacetime['frequency']))
     if machine == 'local':
         photosphere.hot_atmosphere = '/home/bas/Documents/Projects/x-psi/model_datas/bobrikova/Bobrikova_compton_slab.npz'
-    elif machine == 'helios':
+    elif machine == 'helios' or machine == 'snellius':
         photosphere.hot_atmosphere = 'model_data/Bobrikova_compton_slab.npz'
 
 elif atmosphere_type == 'N': # N DOES NOT WORK PROPERLY YET
@@ -565,6 +567,8 @@ if machine == 'local':
     folderstring = f'local_runs/run_{atmosphere_type}{n_params}'
 elif machine == 'helios':
     folderstring = f'helios_runs/run_{atmosphere_type}{n_params}'
+elif machine == 'snellius':
+    folderstring = f'snellius_runs/run_{atmosphere_type}{n_params}'
 
 try: 
     os.makedirs(folderstring)
@@ -590,9 +594,9 @@ if machine == 'local':
                       'seed': 7,
                       'max_iter': max_iter, #-1, # manual termination condition for short test
                       'verbose': True}
-if machine == 'helios':
+if machine == 'helios' or machine == 'snellius':
     sampling_efficiency = 0.8
-    n_live_points = 100
+    n_live_points = 50
     max_iter = -1
     runtime_params = {'resume': False,
                       'importance_nested_sampling': False,

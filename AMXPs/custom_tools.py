@@ -880,6 +880,7 @@ class CustomPrior_NoSecondary(xpsi.Prior):
     """
 
     __derived_names__ = ['compactness']#, 'phase_separation',]
+    __draws_from_support__ = 2
 
     # def __init__(self):
     #     """ Nothing to be done.

@@ -36,6 +36,7 @@ from custom_tools import CustomInstrument, CustomHotRegion, CustomHotRegion_Accr
 ################################## SETTINGS ###################################
 
 second = False
+te_index = 0
 
 try: #try to get parameters from shell input
     os.environ.get('atmosphere_type')    
@@ -43,8 +44,8 @@ try: #try to get parameters from shell input
     os.environ.get('n_params')
     n_params = os.environ['n_params']
 except:
-    atmosphere_type = "N"
-    n_params = "5"
+    atmosphere_type = "A"
+    n_params = "4"
 
 print("atmosphere_type:", atmosphere_type)
 print("n_params:", n_params)
@@ -182,12 +183,15 @@ if atmosphere_type=='A':
     if n_params== "5":
         photosphere = CustomPhotosphere_A5(hot = hot, elsewhere = None,
                                         values=dict(mode_frequency = spacetime['frequency']))
-        photosphere.hot_atmosphere = '/home/bas/Documents/Projects/x-psi/model_datas/bobrikova/Bobrikova_compton_slab.npz'
+        # photosphere.hot_atmosphere = '/home/bas/Documents/Projects/x-psi/model_datas/bobrikova/Bobrikova_compton_slab.npz'
 
     elif n_params== "4":
         photosphere = CustomPhotosphere_A4(hot = hot, elsewhere = None,
                                         values=dict(mode_frequency = spacetime['frequency']))
-        photosphere.hot_atmosphere = '/home/bas/Documents/Projects/x-psi/model_datas/bobrikova/Bobrikova_compton_slab.npz'
+        photosphere.te_index = te_index
+        # photosphere.hot_atmosphere = '/home/bas/Documents/Projects/x-psi/model_datas/bobrikova/Bobrikova_compton_slab.npz'
+    # SNELLIUS
+    photosphere.hot_atmosphere = '/home/dorsman/xpsi-bas-fork/AMXPs/model_data/Bobrikova_compton_slab.npz'
 
 elif atmosphere_type=='N':
     if n_params == "4":   
@@ -495,5 +499,10 @@ plt.colorbar(my_d,ax=ax)
 #plt.colorbar(res,ax=ax[2])
 
 figstring = './plots/{}{}_synthetic_realisation.png'.format(atmosphere_type, n_params)
+try:
+    os.makedirs('./plots')
+except OSError:
+    if not os.path.isdir('./plots'):
+        raise
 fig.savefig(figstring)
 print('plot saved in {}'.format(figstring))

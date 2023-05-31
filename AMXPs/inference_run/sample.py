@@ -21,8 +21,8 @@ from xpsi.global_imports import gravradius
 second = False
 num_energies = 32
 te_index=0 # t__e = np.arange(40.0, 202.0, 4.0), there are 40.5 values (I expect that means 40)
-likelihood_toggle = 'default' #'default', 'custom'
-machine = 'local' #'local', 'helios', 'snellius'
+likelihood_toggle = os.environ.get('likelihood') #'default', 'custom'
+machine = 'snellius' #'local', 'helios', 'snellius'
 
 
 import sys
@@ -31,7 +31,7 @@ if machine == 'local':
 elif machine == 'helios':
     sys.path.append('/home/bdorsma/xpsi-bas/AMXPs/')
 elif machine == 'snellius':
-    sys.path.append('home/dorsman/xpsi-bas-fork/AMXPs')
+    sys.path.append('/home/dorsman/xpsi-bas-fork/AMXPs/')
 
 from custom_tools import CustomInstrument, CustomHotRegion, CustomHotRegion_Accreting, CustomHotRegion_Accreting_te_const
 from custom_tools import CustomPhotosphere_BB, CustomPhotosphere_N4, CustomPhotosphere_N5, CustomPhotosphere_A5, CustomPhotosphere_A4
@@ -66,7 +66,7 @@ if atmosphere_type=='A':
     if machine == 'local':  
         datastring = f'/home/bas/Documents/Projects/x-psi/xpsi-bas-fork/AMXPs/synthesise_pulse_data/data/A{n_params}_synthetic_realisation.dat'
     elif machine == 'helios' or machine == 'snellius':
-            datastring=f'model_data/A{n_params}_synthetic_realisation.dat'
+            datastring=f'/home/dorsman/xpsi-bas-fork/AMXPs/synthesise_pulse_data/data/A{n_params}_synthetic_realisation.dat'
     settings = dict(counts = np.loadtxt(datastring, dtype=np.double),
                     channels=np.arange(20,201), #201
                     phases=np.linspace(0.0, 1.0, 33),
@@ -91,11 +91,11 @@ try:
                                                      min_input = 0,
                                                      channel_edges = '/home/bas/Documents/Projects/x-psi/xpsi-bas-fork/AMXPs/model_data/nicer_v1.01_rmf_energymap.txt')
     elif machine == 'helios' or machine == 'snellius':
-        NICER = CustomInstrument.from_response_files(ARF = 'model_data/nicer_v1.01_arf.txt',
-                                                     RMF = 'model_data/nicer_v1.01_rmf_matrix.txt',
+        NICER = CustomInstrument.from_response_files(ARF = '/home/dorsman/xpsi-bas-fork/AMXPs/model_data/nicer_v1.01_arf.txt',
+                                                     RMF = '/home/dorsman/xpsi-bas-fork/AMXPs/model_data/nicer_v1.01_rmf_matrix.txt',
                                                      max_input = 500, #500
                                                      min_input = 0,
-                                                     channel_edges = 'model_data/nicer_v1.01_rmf_energymap.txt')
+                                                     channel_edges = '/home/dorsman/xpsi-bas-fork/AMXPs/model_data/nicer_v1.01_rmf_energymap.txt')
    
 except:
     print("ERROR: You might miss one of the following files (check Modeling tutorial or the link below how to find them): \n model_data/nicer_v1.01_arf.tx, model_data/nicer_v1.01_rmf_matrix.txt, model_data/nicer_v1.01_rmf_energymap.txt")
@@ -349,7 +349,7 @@ if atmosphere_type == 'A':
     if machine == 'local':
         photosphere.hot_atmosphere = '/home/bas/Documents/Projects/x-psi/model_datas/bobrikova/Bobrikova_compton_slab.npz'
     elif machine == 'helios' or machine == 'snellius':
-        photosphere.hot_atmosphere = 'model_data/Bobrikova_compton_slab.npz'
+        photosphere.hot_atmosphere = '/home/dorsman/xpsi-bas-fork/AMXPs/model_data/Bobrikova_compton_slab.npz'
 
 elif atmosphere_type == 'N': # N DOES NOT WORK PROPERLY YET
     if n_params == "4":   
@@ -546,7 +546,7 @@ if likelihood_toggle == 'custom':
     print('use custom likelihood')
     likelihood = CustomLikelihood(star = star, signals = signal,
                                   num_energies=num_energies, #128
-                                  threads=2,
+                                  threads=1,
                                   prior=prior,
                                   externally_updated=True)
 elif likelihood_toggle == 'default':
@@ -576,15 +576,17 @@ except OSError:
     if not os.path.isdir(folderstring):
         raise
 
+
 if machine == 'local':
     sampling_efficiency = 0.3
     n_live_points = 25
     max_iter = 3
+    outputfiles_basename = f'./{folderstring}/run_se={sampling_efficiency}_lp={n_live_points}_atm={atmosphere_type}{n_params}_ne={num_energies}_mi={max_iter}'
     runtime_params = {'resume': False,
                       'importance_nested_sampling': False,
                       'multimodal': False,
                       'n_clustering_params': None,
-                      'outputfiles_basename': f'./{folderstring}/run_se={sampling_efficiency}_lp={n_live_points}_atm={atmosphere_type}{n_params}_ne={num_energies}_mi={max_iter}', 
+                      'outputfiles_basename': outputfiles_basename, 
                       'n_iter_before_update': 100,
                       'n_live_points': n_live_points,
                       'sampling_efficiency': sampling_efficiency,
@@ -594,15 +596,16 @@ if machine == 'local':
                       'seed': 7,
                       'max_iter': max_iter, #-1, # manual termination condition for short test
                       'verbose': True}
-if machine == 'helios' or machine == 'snellius':
+if machine == 'helios':
     sampling_efficiency = 0.8
     n_live_points = 50
     max_iter = -1
+    outputfiles_basename = f'./{folderstring}/run_se={sampling_efficiency}_lp={n_live_points}_atm={atmosphere_type}{n_params}_ne={num_energies}_mi={max_iter}'
     runtime_params = {'resume': False,
                       'importance_nested_sampling': False,
                       'multimodal': False,
                       'n_clustering_params': None,
-                      'outputfiles_basename': f'./{folderstring}/run_se={sampling_efficiency}_lp={n_live_points}_atm={atmosphere_type}{n_params}_ne={num_energies}_mi={max_iter}', 
+                      'outputfiles_basename': outputfiles_basename, 
                       'n_iter_before_update': 50,
                       'n_live_points': n_live_points,
                       'sampling_efficiency': sampling_efficiency,
@@ -612,6 +615,26 @@ if machine == 'helios' or machine == 'snellius':
                       'seed': 7,
                       'max_iter': max_iter, # manual termination condition for short test
                       'verbose': True}
+if machine == 'snellius':
+    sampling_efficiency = 0.8
+    n_live_points = 50
+    max_iter = 1000
+    outputfiles_basename = f'./{folderstring}/run_se={sampling_efficiency}_lp={n_live_points}_atm={atmosphere_type}{n_params}_ne={num_energies}_mi={max_iter}'
+    runtime_params = {'resume': False,
+                      'importance_nested_sampling': False,
+                      'multimodal': False,
+                      'n_clustering_params': None,
+                      'outputfiles_basename': outputfiles_basename,
+                      'n_iter_before_update': 50,
+                      'n_live_points': n_live_points,
+                      'sampling_efficiency': sampling_efficiency,
+                      'const_efficiency_mode': False,
+                      'wrapped_params': wrapped_params,
+                      'evidence_tolerance': 0.5,
+                      'seed': 7,
+                      'max_iter': max_iter, # manual termination condition for short test
+                      'verbose': True}
+
 
 try:
     true_logl = -7.94188579e+89 #-1.15566075e+05
@@ -696,7 +719,8 @@ if __name__ == '__main__':
     # likelihood.ldict['runtime_params']=runtime_params
    
     if likelihood_toggle == 'custom': 
-       
+        print('saving likelihood.runtime_params')
+
         # save options
         runtime_params['xpsi_size']=xpsi._size
         runtime_params['atmosphere_type']=atmosphere_type 
@@ -706,9 +730,15 @@ if __name__ == '__main__':
         runtime_params['te_index']=te_index 
         
         likelihood.runtime_params = runtime_params
-        
+       
         import dill as pickle
-        with open(f'{folderstring}/LikelihoodDiagnostics_ne={likelihood._num_energies}_rank={xpsi._rank}.pkl', 'wb') as file:
-              #file.write(pickle.dumps(likelihood.ldict)) # use `pickle.loads` to do the reverse
-                  pickle.dump((likelihood.ldict, likelihood.runtime_params), file)
-              
+        try:
+            os.makedirs(outputfiles_basename)
+        except OSError:
+            if not os.path.isdir(outputfiles_basename):
+                raise
+        
+        with open(f'{outputfiles_basename}/LikelihoodDiagnostics_ne={likelihood._num_energies}_rank={xpsi._rank}.pkl', 'wb') as file:
+            #file.write(pickle.dumps(likelihood.ldict)) # use `pickle.loads` to do the reverse
+            print('write the likelihoodDiagnostics to a file')
+            pickle.dump((likelihood.ldict, likelihood.runtime_params), file)

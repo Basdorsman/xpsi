@@ -14,6 +14,6 @@ then
 source blackbody.sh
 fi
 
-cd tests/synthesise_pulse_data/
+cd AMXPs/synthesise_pulse_data/
 export atmosphere_type n_params 
 python synthesise_pulse_data.py

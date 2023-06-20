@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH -N 1 #5
-#SBATCH --tasks-per-node=50
+#SBATCH --tasks-per-node=64
 #SBATCH -t 01:00:00 #1-00:00:00
 #SBATCH -p thin
 #SBATCH --job-name=A4test
@@ -22,7 +22,7 @@ module load intel/2022a
 
 export atmosphere_type='A'
 export n_params='4'
-export likelihood='custom' #custom, default
+export likelihood='default' #custom, default
 
 
 cd $HOME/xpsi-bas-fork/

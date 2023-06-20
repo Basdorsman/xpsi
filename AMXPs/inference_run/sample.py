@@ -617,8 +617,8 @@ if machine == 'helios':
                       'verbose': True}
 if machine == 'snellius':
     sampling_efficiency = 0.8
-    n_live_points = 50
-    max_iter = 1000
+    n_live_points = 64
+    max_iter = -1
     outputfiles_basename = f'./{folderstring}/run_se={sampling_efficiency}_lp={n_live_points}_atm={atmosphere_type}{n_params}_ne={num_energies}_mi={max_iter}'
     runtime_params = {'resume': False,
                       'importance_nested_sampling': False,

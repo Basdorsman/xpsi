@@ -349,11 +349,11 @@ if atmosphere_type == 'A':
     elif machine == 'helios' or machine == 'snellius':
         photosphere.hot_atmosphere = this_directory + '/../' + 'model_data/Bobrikova_compton_slab.npz'
 
-elif atmosphere_type == 'N': # N DOES NOT WORK PROPERLY YET
+elif atmosphere_type == 'N':
     if n_params == "4":   
         photosphere = CustomPhotosphere_N4(hot = hot, elsewhere = None,
                                         values=dict(mode_frequency = spacetime['frequency']))
-        photosphere.hot_atmosphere = '/home/bas/Documents/Projects/x-psi/model_datas/model_data/H-atmosphere_Spectra_fully_ionized/NSX_H-atmosphere_Spectra/nsx_H_v171019.npz'
+        photosphere.hot_atmosphere = this_directory + '/../' + '/model_data/H-atmosphere_Spectra_fully_ionized/NSX_H-atmosphere_Spectra/nsx_H_v171019.npz'
     
     elif n_params== "5":
         photosphere = CustomPhotosphere_N5(hot = hot, elsewhere = None,

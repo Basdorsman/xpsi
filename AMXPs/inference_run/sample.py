@@ -19,10 +19,10 @@ from xpsi.global_imports import gravradius
 
 ################################ OPTIONS ###############################
 second = False
-num_energies = 32
+num_energies = 16
 te_index=0 # t__e = np.arange(40.0, 202.0, 4.0), there are 40.5 values (I expect that means 40)
-likelihood_toggle = os.environ.get('likelihood') #'default', 'custom'
-machine = 'snellius' #'local', 'helios', 'snellius'
+likelihood_toggle = os.environ.get('likelihood') # default, custom
+machine = os.environ.get('machine') # local, helios, snellius
 
 this_directory = os.path.dirname(os.path.abspath(__file__))
 
@@ -62,24 +62,17 @@ print('atmosphere:', atmosphere)
 print('n_params:', n_params)
 
 ##################################### DATA ####################################
-
 if atmosphere_type=='A':
-    if machine == 'local':  
-        datastring = this_directory + '/../' + f'synthesise_pulse_data/data/A{n_params}_synthetic_realisation.dat'
-    elif machine == 'helios' or machine == 'snellius':
-        datastring = this_directory + '/../' + f'synthesise_pulse_data/data/A{n_params}_synthetic_realisation.dat'
-    settings = dict(counts = np.loadtxt(datastring, dtype=np.double),
-                    channels=np.arange(20,201), #201
-                    phases=np.linspace(0.0, 1.0, 33),
-                    first=0, last=180,
-                    exposure_time=1000.)
-elif atmosphere_type=='N': #N DOES NOT WORK PROPERLY YET
-        datastring = '../model_data/example_synthetic_realisation.dat'
-        settings = dict(counts = np.loadtxt(datastring, dtype=np.double),
+    exposure_time = 1000.
+elif atmosphere_type=='N':
+    exposure_time = 50000.
+
+datastring = this_directory + '/../' + f'synthesise_pulse_data/data/{atmosphere_type}{n_params}_synthetic_realisation.dat'        
+settings = dict(counts = np.loadtxt(datastring, dtype=np.double),
                 channels=np.arange(20,201), #201
                 phases=np.linspace(0.0, 1.0, 33),
                 first=0, last=180,
-                exposure_time=984307.6661)
+                exposure_time=exposure_time)
 
 data = xpsi.Data(**settings)
 

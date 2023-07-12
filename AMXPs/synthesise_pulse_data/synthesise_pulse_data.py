@@ -47,6 +47,12 @@ except:
     atmosphere_type = "A"
     n_params = "4"
 
+if atmosphere_type == 'N':
+    exposure_time=50000.
+elif atmosphere_type == 'A':
+    exposure_time=1000.
+else:
+    print('Problem with exposure time!')
 print("atmosphere_type:", atmosphere_type)
 print("n_params:", n_params)
 
@@ -183,15 +189,15 @@ if atmosphere_type=='A':
     if n_params== "5":
         photosphere = CustomPhotosphere_A5(hot = hot, elsewhere = None,
                                         values=dict(mode_frequency = spacetime['frequency']))
-        # photosphere.hot_atmosphere = '/home/bas/Documents/Projects/x-psi/model_datas/bobrikova/Bobrikova_compton_slab.npz'
 
     elif n_params== "4":
         photosphere = CustomPhotosphere_A4(hot = hot, elsewhere = None,
                                         values=dict(mode_frequency = spacetime['frequency']))
         photosphere.te_index = te_index
-        # photosphere.hot_atmosphere = '/home/bas/Documents/Projects/x-psi/model_datas/bobrikova/Bobrikova_compton_slab.npz'
+    # LOCAL
+    photosphere.hot_atmosphere = '/home/bas/Documents/Projects/x-psi/model_datas/bobrikova/Bobrikova_compton_slab.npz'
     # SNELLIUS
-    photosphere.hot_atmosphere = '/home/dorsman/xpsi-bas-fork/AMXPs/model_data/Bobrikova_compton_slab.npz'
+    #photosphere.hot_atmosphere = '/home/dorsman/xpsi-bas-fork/AMXPs/model_data/Bobrikova_compton_slab.npz'
 
 elif atmosphere_type=='N':
     if n_params == "4":   
@@ -461,7 +467,7 @@ elif atmosphere_type=='B':
 
 p.append(-2)        # Background sprectral index : gamma (E^gamma) 
 
-Instrument_kwargs = dict(exposure_time=50000.0,              
+Instrument_kwargs = dict(exposure_time=exposure_time,              
                          expected_background_counts=0., #10000.0,
                          name='{}{}_synthetic'.format(atmosphere_type, n_params),
                          directory='./data/')
@@ -498,7 +504,8 @@ plt.colorbar(my_d,ax=ax)
 #plt.colorbar(you_d,ax=ax[1])
 #plt.colorbar(res,ax=ax[2])
 
-figstring = './plots/{}{}_synthetic_realisation.png'.format(atmosphere_type, n_params)
+
+figstring = './plots/{}{}_synthetic_realisation_exp_time={}.png'.format(atmosphere_type, n_params, exposure_time)
 try:
     os.makedirs('./plots')
 except OSError:

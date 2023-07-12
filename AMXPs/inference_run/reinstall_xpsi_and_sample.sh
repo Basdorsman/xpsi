@@ -14,7 +14,8 @@ then
 source blackbody.sh
 fi
 
-
+likelihood="default"
+machine="local"
 cd AMXPs/inference_run/
-export atmosphere_type n_params
+export atmosphere_type n_params likelihood machine
 python sample.py

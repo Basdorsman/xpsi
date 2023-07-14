@@ -48,7 +48,7 @@ cdef void* init_hot(size_t numThreads, const _preloaded *const preloaded) nogil:
     # in terms of freeing dynamically allocated memory. This is entirely
     # the user's responsibility to manage.
     # Return NULL if dynamic memory is not required for the model
-
+    # printf('init hot')
     if preloaded == NULL :
         printf("ERROR: The numerical atmosphere data were not preloaded, which are required by this extension.\n")
     
@@ -183,6 +183,7 @@ cdef double eval_hot(size_t THREAD,
     # data = numerical model data required for intensity evaluation
 
     # This function must cast the void pointer appropriately for use.
+    # printf('eval hot')
     cdef DATA *D = <DATA*> data
 
     cdef:
@@ -195,14 +196,22 @@ cdef double eval_hot(size_t THREAD,
         double *I_CACHE = D.acc.INTENSITY_CACHE[THREAD]
         double *V_CACHE = D.acc.VEC_CACHE[THREAD]
         double vec[4]
-        double E_eff = k_B_over_keV * pow(10.0, VEC[0])
+        #double E_eff = k_B_over_keV * pow(10.0, VEC[0])
         int update_baseNode[4]
         int CACHE = 0
 
-    vec[0] = VEC[0] #temperature
-    vec[1] = VEC[1] # gravity
-    vec[2] = mu # zenith angle
-    vec[3] = log10(E / E_eff) # energy
+    cdef double tbb, tau
+    tbb = VEC[0]
+    tau = VEC[1]
+    
+    cdef double evere = 0.5109989e6 # electron volts in elecron rest energy
+    
+    # take into account the order of *._hot_atmosphere
+    # te is gone
+    vec[0] = tbb
+    vec[1] = tau
+    vec[2] = mu #0.5  # mu
+    vec[3] = E*1e3/evere #1.01088  # required if E input is in units of keV
     
     # printf("\nvec[0]: %.2e, vec[1]: %.2e, vec[2]: %.2e, vec[3]: %.2e", vec[0], vec[1], vec[2], vec[3])
 
@@ -351,7 +360,7 @@ cdef double eval_hot(size_t THREAD,
     if I < 0.0:
         return 0.0
 
-    return I * pow(10.0, 3.0 * vec[0])
+    return I #* pow(10.0, 3.0 * vec[0])
 
 
 cdef double eval_hot_norm() nogil:

@@ -22,8 +22,11 @@ module load intel/2022a
 
 export atmosphere_type='A'
 export n_params='4'
-export likelihood='default' #custom, default
+export num_energies='16'
+export likelihood='custom' #custom, default
+export machine='snellius'
 
+echo This is a $atmosphere_type$n_params${likelihood} on ${machine}. Num_energies is ${num_energies}.
 
 cd $HOME/xpsi-bas-fork/
 LDSHARED="icc -shared" CC=icc python setup.py install --${atmosphere_type}${n_params}Hot
@@ -32,7 +35,7 @@ cp -r $HOME/xpsi-bas-fork/AMXPs/* $TMPDIR/
 cd $TMPDIR/inference_run/
 echo 'make tmp snellius runs folder' 
 mkdir $TMPDIR/inference_run/snellius_runs/
-#mkdir $TMPDIR/inference_run/snellius_runs/run_${atmosphere_type}${n_params}
+mkdir $TMPDIR/inference_run/snellius_runs/run_${atmosphere_type}${n_params}
 
 export OMP_NUM_THREADS=1
 export OPENBLAS_NUM_THREADS=1
@@ -46,6 +49,6 @@ srun python sample.py > ${atmosphere_type}${n_params}${likelihood}_$SLURM_JOB_ID
 echo 'make home snellius_runs folder'
 mkdir $HOME/xpsi-bas-fork/AMXPs/inference_run/snellius_runs
 echo 'make run_atmosphereparams folder'
-mkdir $HOME/xpsi-bas-fork/AMXPs/inference_run/snellius_runs/run_${atmosphere_type}${n_params}
+mkdir $HOME/xpsi-bas-fork/AMXPs/inference_run/snellius_runs/run_${atmosphere_type}${n_params}${likelihood}
 cp ${atmosphere_type}${n_params}${likelihood}_$SLURM_JOB_ID.out ${atmosphere_type}${n_params}${likelihood}_$SLURM_JOB_ID.err $HOME/xpsi-bas-fork/AMXPs/inference_run/snellius_runs
-cp -r snellius_runs/run_${atmosphere_type}${n_params} $HOME/xpsi-bas-fork/AMXPs/inference_run/snellius_runs
+cp -r snellius_runs/run_${atmosphere_type}${n_params}${likelihood} $HOME/xpsi-bas-fork/AMXPs/inference_run/snellius_runs

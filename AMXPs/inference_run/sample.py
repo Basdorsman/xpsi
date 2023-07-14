@@ -19,7 +19,7 @@ from xpsi.global_imports import gravradius
 
 ################################ OPTIONS ###############################
 second = False
-num_energies = 16
+num_energies = int(os.environ.get('num_energies'))
 te_index=0 # t__e = np.arange(40.0, 202.0, 4.0), there are 40.5 values (I expect that means 40)
 likelihood_toggle = os.environ.get('likelihood') # default, custom
 machine = os.environ.get('machine') # local, helios, snellius
@@ -353,7 +353,7 @@ elif atmosphere_type == 'N':
     if n_params == "4":   
         photosphere = CustomPhotosphere_N4(hot = hot, elsewhere = None,
                                         values=dict(mode_frequency = spacetime['frequency']))
-        photosphere.hot_atmosphere = this_directory + '/../' + '/model_data/H-atmosphere_Spectra_fully_ionized/NSX_H-atmosphere_Spectra/nsx_H_v171019.npz'
+        photosphere.hot_atmosphere = this_directory + '/../' + '/model_data/nsx_H_v171019.npz'
     
     elif n_params== "5":
         photosphere = CustomPhotosphere_N5(hot = hot, elsewhere = None,
@@ -566,7 +566,7 @@ if machine == 'local':
 elif machine == 'helios':
     folderstring = f'helios_runs/run_{atmosphere_type}{n_params}'
 elif machine == 'snellius':
-    folderstring = f'snellius_runs/run_{atmosphere_type}{n_params}'
+    folderstring = f'snellius_runs/run_{atmosphere_type}{n_params}{likelihood_toggle}'
 
 try: 
     os.makedirs(folderstring)

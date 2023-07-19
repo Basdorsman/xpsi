@@ -14,8 +14,9 @@ then
 source blackbody.sh
 fi
 
-likelihood="default"
-machine="snellius"
+likelihood="custom"
+machine="local"
+num_energies=16
 cd AMXPs/inference_run/
-export atmosphere_type n_params likelihood machine
+export atmosphere_type n_params likelihood machine num_energies
 python sample.py

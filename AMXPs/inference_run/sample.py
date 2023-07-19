@@ -19,12 +19,44 @@ from xpsi.global_imports import gravradius
 
 ################################ OPTIONS ###############################
 second = False
-num_energies = int(os.environ.get('num_energies'))
 te_index=0 # t__e = np.arange(40.0, 202.0, 4.0), there are 40.5 values (I expect that means 40)
-likelihood_toggle = os.environ.get('likelihood') # default, custom
-machine = os.environ.get('machine') # local, helios, snellius
+
+
+
+
+num_energies = os.environ.get('num_energies')
+try:
+    num_energies = int(num_energies)
+except:
+    print("num energies not imported")
+    pass
+atmosphere_type = os.environ.get('atmosphere_type')
+n_params = os.environ.get('n_params')
+likelihood_toggle = os.environ.get('likelihood') 
+machine = os.environ.get('machine') 
+
+if isinstance(os.environ.get('atmosphere_type'),type(None)) or isinstance(os.environ.get('n_params'),type(None)) or isinstance(os.environ.get('likelihood'),type(None)) or isinstance(os.environ.get('machine'),type(None)) or isinstance(os.environ.get('num_energies'),type(None)): # if that fails input them here.
+    print('E: failed to import OS environment variables, using defaults.')    
+    atmosphere_type = 'N' #A, N, B
+    n_params = '4' #4, 5
+    likelihood_toggle = 'default' # default, custom
+    machine = 'local' # local, helios, snellius
+    num_energies = 16
+    
+
+if atmosphere_type == 'A': atmosphere = 'accreting'
+elif atmosphere_type == 'N': atmosphere = 'numerical'
+elif atmosphere_type == 'B': atmosphere = 'blackbody'
+
+print('atmosphere: ', atmosphere)
+print('n_params: ', n_params)
+print('likelihood: ', likelihood_toggle)
+print('machine: ', machine)
+print('num_energies: ', num_energies)
 
 this_directory = os.path.dirname(os.path.abspath(__file__))
+
+
 
 import sys
 if machine == 'local':
@@ -45,25 +77,10 @@ print('Rank reporting: %d' % xpsi._rank)
 
 
 
-# try to get parameters from shell input
-atmosphere_type = os.environ.get('atmosphere_type')
-n_params = os.environ.get('n_params')
-
-if isinstance(os.environ.get('atmosphere_type'),type(None)) or isinstance(os.environ.get('n_params'),type(None)): # if that fails input them here.
-    print('E: failed to import OS environment variables, using defaults.')    
-    atmosphere_type = 'A' #A, N, B
-    n_params = '4' #4, 5
-
-if atmosphere_type == 'A': atmosphere = 'accreting'
-elif atmosphere_type == 'N': atmosphere = 'numerical'
-elif atmosphere_type == 'B': atmosphere = 'blackbody'
-
-print('atmosphere:', atmosphere)
-print('n_params:', n_params)
 
 ##################################### DATA ####################################
 if atmosphere_type=='A':
-    exposure_time = 1000.
+    exposure_time = 40000.
 elif atmosphere_type=='N':
     exposure_time = 50000.
 
@@ -124,12 +141,13 @@ if atmosphere=='accreting':
         bounds = dict(super_colatitude = (None, None),
                       super_radius = (None, None),
                       phase_shift = (0.0, 0.1),
-                      super_tbb = (0.00015, 0.003),
-                      #super_te = (40., 200.),
-                      super_tau = (0.5, 3.5))
+                      super_tbb = (0.00015, 0.003))
+                      # super_tau = (0.5, 3.5))
+                      
+        values = dict(super_tau = 0.5)
     
         primary = CustomHotRegion_Accreting_te_const(bounds=bounds,
-           	                    values={},
+           	                    values=values,
            	                    symmetry=False, #call general integrator instead of for azimuthal invariance
            	                    omit=False,
            	                    cede=False,
@@ -419,8 +437,8 @@ if atmosphere=='accreting':
                   0.0, #phase of hotregion
                   1.0, #colatitude of centre of superseding region
                   0.075,  #angular radius superceding region
-                  tbb,
-                  tau,
+                  tbb
+                  #tau,
                   #6.2, #primary temperature
                   #modulator, #modulator
                   ]
@@ -439,7 +457,7 @@ if atmosphere=='accreting':
                   #modulator, #modulator
                   ]
 elif atmosphere=='numerical':   
-    p_temperature=6.2
+    p_temperature=6.764 # 6.2
     modulator = 0 
 
     if second:

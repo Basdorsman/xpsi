@@ -48,9 +48,9 @@ except:
     n_params = "4"
 
 if atmosphere_type == 'N':
-    exposure_time=50000.
+    exposure_time=50000. #Reproducing NSX atmosphere data would require exposure time of 984307.6661
 elif atmosphere_type == 'A':
-    exposure_time=1000.
+    exposure_time=40000.
 else:
     print('Problem with exposure time!')
 print("atmosphere_type:", atmosphere_type)
@@ -397,7 +397,7 @@ if atmosphere_type=='A':
                   #modulator, #modulator
                   ]
 elif atmosphere_type=='N':   
-    p_temperature=6.2
+    p_temperature = 6.764 # 6.2
     modulator = 0 
 
     if second:
@@ -479,7 +479,7 @@ print("Done !")
 print('signals:', np.sum(signal.signals))
 print('expected counts:', np.sum(signal.expected_counts))
 
-########## PLOT ###############
+########## DATA PLOT ###############
 
 my_data=np.loadtxt('./data/{}{}_synthetic_realisation.dat'.format(atmosphere_type, n_params))
 
@@ -503,7 +503,7 @@ ax.add_artist(anchored_text)
 plt.colorbar(my_d,ax=ax)
 #plt.colorbar(you_d,ax=ax[1])
 #plt.colorbar(res,ax=ax[2])
-
+plt.title('{}{}_synthetic_realisation_exp_time={}.png'.format(atmosphere_type, n_params, exposure_time))
 
 figstring = './plots/{}{}_synthetic_realisation_exp_time={}.png'.format(atmosphere_type, n_params, exposure_time)
 try:
@@ -512,4 +512,42 @@ except OSError:
     if not os.path.isdir('./plots'):
         raise
 fig.savefig(figstring)
-print('plot saved in {}'.format(figstring))
+print('data plot saved in {}'.format(figstring))
+
+################ SIGNAL PLOT ###################################
+
+if second:
+    ax = plot_2D_pulse((photosphere.signal[0][0], photosphere.signal[1][0]),
+                  x=signal.phases[0],
+                  shift=signal.shifts,
+                  y=signal.energies,
+                  ylabel=r'Energy (keV)')
+if not second:
+    # print('photosphere.signal[0][0]', photosphere.signal[0][0])
+    ax = plot_2D_pulse((photosphere.signal[0][0],),
+                  x=signal.phases[0],
+                  shift=signal.shifts,
+                  y=signal.energies,
+                  ylabel=r'Energy (keV)')
+
+if atmosphere_type=='A':
+    if n_params=='4':
+        ax.set_title('atm={} params={} te_index={}, tbb={:.2e} [keV], tau={:.2e} [-]'.format(atmosphere_type, n_params, te_index, tbb*511, tau), loc='center') #unit conversion te and tbb is different due to a cluster leftover according to Anna B.
+        figstringpulse = 'atm={}_sec={}_te_index={}_tbb={:.2e}_tau={:.2e}.png'.format(atmosphere_type, second, te_index, tbb, tau)
+    if n_params=='5':
+        ax.set_title('atm={} params={} te={:.2e} [keV], tbb={:.2e} [keV], tau={:.2e} [-]'.format(atmosphere_type, n_params, te*0.511, tbb*511, tau), loc='center') #unit conversion te and tbb is different due to a cluster leftover according to Anna B.
+        figstringpulse = 'atm={}_sec={}_te={:.2e}_tbb={:.2e}_tau={:.2e}.png'.format(atmosphere_type, second, te, tbb, tau)
+elif atmosphere_type=='N':
+    if n_params=="5":
+        ax.set_title('n_params={} p_temperature={} modulator={}'.format(n_params, p_temperature, modulator))
+        figstringpulse = '5D_pulses_atm={}_sec={}_p_temperature={}_modulator={}.png'.format(atmosphere_type, second, p_temperature, modulator)
+    elif n_params=="4":
+        ax.set_title('n_params={} p_temperature={}'.format(n_params, p_temperature))
+        figstringpulse='atm={}_sec={}_p_temperature={}.png'.format(atmosphere_type, second, p_temperature)
+elif atmosphere_type=='B':
+    ax.set_title('n_params={} p_temperature={}'.format(n_params, p_temperature))
+    figstringpulse = 'pulses_atm={}_sec={}_p_temperature={}.png'.format(atmosphere_type, second, p_temperature)
+
+
+plt.savefig(f'./plots/{figstringpulse}')
+print('signal plot saved in {}'.format(figstringpulse))

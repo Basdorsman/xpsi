@@ -62,7 +62,7 @@ import sys
 if machine == 'local':
     sys.path.append('/home/bas/Documents/Projects/x-psi/xpsi-bas-fork/AMXPs/')
 elif machine == 'helios':
-    sys.path.append('/home/bdorsma/xpsi-bas/AMXPs/')
+    sys.path.append(this_directory+'/../')
 elif machine == 'snellius':
     sys.path.append(this_directory+'/../')
 
@@ -582,7 +582,7 @@ if second:
 if machine == 'local':
     folderstring = f'local_runs/run_{atmosphere_type}{n_params}'
 elif machine == 'helios':
-    folderstring = f'helios_runs/run_{atmosphere_type}{n_params}'
+    folderstring = f'helios_runs/run_{atmosphere_type}{n_params}{likelihood_toggle}'
 elif machine == 'snellius':
     folderstring = f'snellius_runs/run_{atmosphere_type}{n_params}{likelihood_toggle}'
 
@@ -614,7 +614,7 @@ if machine == 'local':
                       'verbose': True}
 if machine == 'helios':
     sampling_efficiency = 0.8
-    n_live_points = 50
+    n_live_points = 64
     max_iter = -1
     outputfiles_basename = f'./{folderstring}/run_se={sampling_efficiency}_lp={n_live_points}_atm={atmosphere_type}{n_params}_ne={num_energies}_mi={max_iter}'
     runtime_params = {'resume': False,

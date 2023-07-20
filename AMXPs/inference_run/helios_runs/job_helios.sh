@@ -1,10 +1,10 @@
 #!/bin/bash
 #SBATCH -N 1
 #SBATCH --tasks-per-node=64
-#SBATCH -t 01:00:00
-#SBATCH -J time_likelihood
-#SBATCH -o output/time_likelihood_%j.out
-#SBATCH -e output/time_likelihood_%j.err
+#SBATCH -t 10:00:00
+#SBATCH -J compare_A4N4
+#SBATCH -o compare_A4N4_%j.out
+#SBATCH -e compare_A4N4_%j.err
 #SBATCH --partition=neutron-star
 #SBATCH --mem 160000
 #SBATCH --mail-user=b.dorsman@uva.nl
@@ -15,13 +15,13 @@ module load anaconda3/2021-05
 conda activate xpsi_py3
 module load openmpi/3.1.6
 
-export atmosphere_type='A'
+export atmosphere_type='N'
 export n_params='4'
 export num_energies='16'
 export likelihood='custom' #custom, default
 export machine='helios'
 
-export JOBNAME='time_likelihood'
+export JOBNAME='compare_A4N4'
 export RUN="run_${atmosphere_type}${n_params}${likelihood}" 
 export OMP_NUM_THREADS=1
 export OPENBLAS_NUM_THREADS=1
@@ -61,7 +61,7 @@ mpiexec -n 64 -mca btl_tcp_if_include ib0 python $XPSI_DIR/AMXPs/inference_run/s
 #Move your output from scratch to storage space.
 export STORAGE_DIR=/zfs/helios/filer0/$USER/$JOBNAME/$RUN/$SLURM_JOB_ID
 mkdir -p $STORAGE_DIR
-cp -r $OUTPUT_FOLDER/$RUN $STORAGE_DIR
+cp -r $OUTPUT_FOLDER/helios_runs/$RUN $STORAGE_DIR
 
 #Clean the scratch automatically here.
 #But remember to remove manually in each node, if the main program ends by crashing.

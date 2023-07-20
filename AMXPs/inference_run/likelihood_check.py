@@ -35,11 +35,11 @@ from collections import OrderedDict
 
 import xpsi
 
-from xpsi import PostProcessing
+#from xpsi import PostProcessing
 
 # choose a seed for the notebook if you want caching to be useful
 # and the notebook exactly reproducible
-PostProcessing.set_random_seed(42)
+#PostProcessing.set_random_seed(42)
 
 from xpsi.global_imports import gravradius
 
@@ -47,7 +47,11 @@ from xpsi.global_imports import gravradius
 path="../"
 sys.path.append(path)
 
-os.environ['machine']='local'
+os.environ['atmosphere_type']='N'
+os.environ['n_params']='4'
+os.environ['machine']='helios'
 os.environ['likelihood']='default'
+os.environ['num_energies']='16'
+
 import sample as ST
 #import sample_A4_only

@@ -10,23 +10,31 @@ import dill as pickle
 import matplotlib.pyplot as plt
 
 
+import os
+this_directory = os.path.dirname(os.path.abspath(__file__))
 
-numenergies=32
 atmosphere_type = 'N'
-n_params = 5
-
+n_params = 4
+likelihood = 'custom'
+numenergies=16
+sampling_efficiency=0.8
+live_points=64
+max_iterations=-1
 
 ldict = {}
 
-folderstring = f'local_runs/run_{atmosphere_type}{n_params}'
+# local
+#folderstring = f'local_runs/run_{atmosphere_type}{n_params}'
 
-# job_id = 304399
-# folderstring = f'helios_runs/run_{atmosphere_type}{n_params}/{job_id}/run_{atmosphere_type}{n_params}'
+# helios
+job_id = 324918#324879
+folderstring = this_directory + f'/helios_runs/run_{atmosphere_type}{n_params}{likelihood}/{job_id}/run_se={sampling_efficiency}_lp={live_points}_atm={atmosphere_type}{n_params}_ne={numenergies}_mi={max_iterations}'
 
 with open(f'{folderstring}/LikelihoodDiagnostics_ne={numenergies}_rank=0.pkl', 'rb') as file:
      (temporary, runtime_params) = pickle.load(file)
 
-xpsi_size = runtime_params['xpsi_size']
+#xpsi_size = runtime_params['xpsi_size']
+xpsi_size = 4
 
 fig, axes = plt.subplots(nrows=xpsi_size, ncols=1, figsize=(20, 2*xpsi_size), sharex=True)
 for ax, rank in zip(axes, range(xpsi_size)):

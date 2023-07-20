@@ -371,7 +371,7 @@ elif atmosphere_type == 'N':
     if n_params == "4":   
         photosphere = CustomPhotosphere_N4(hot = hot, elsewhere = None,
                                         values=dict(mode_frequency = spacetime['frequency']))
-        photosphere.hot_atmosphere = this_directory + '/../' + '/model_data/nsx_H_v171019.npz'
+        photosphere.hot_atmosphere = this_directory + '/../' + 'model_data/nsx_H_v171019.npz'
     
     elif n_params== "5":
         photosphere = CustomPhotosphere_N5(hot = hot, elsewhere = None,

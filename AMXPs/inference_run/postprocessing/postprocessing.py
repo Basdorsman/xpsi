@@ -48,14 +48,14 @@ path="../"
 sys.path.append(path)
 
 
-atmosphere_type = 'N'
-n_params = 4
+atmosphere_type = 'A'
+n_params = 5
 likelihood = 'custom'
 num_energies=16
 sampling_efficiency=0.8
 live_points=64
 max_iterations=-1
-job_id = 324918 # 324879 #
+job_id = 325177 # 324879 #
 
 os.environ['atmosphere_type']=atmosphere_type
 os.environ['n_params']=str(n_params)

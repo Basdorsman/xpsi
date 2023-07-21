@@ -2,9 +2,9 @@
 #SBATCH -N 1
 #SBATCH --tasks-per-node=64
 #SBATCH -t 10:00:00
-#SBATCH -J compare_A4N4
-#SBATCH -o compare_A4N4_%j.out
-#SBATCH -e compare_A4N4_%j.err
+#SBATCH -J A4A5extraparameter
+#SBATCH -o %j.out
+#SBATCH -e %j.err
 #SBATCH --partition=neutron-star
 #SBATCH --mem 160000
 #SBATCH --mail-user=b.dorsman@uva.nl
@@ -21,7 +21,7 @@ export num_energies='16'
 export likelihood='custom' #custom, default
 export machine='helios'
 
-export JOBNAME='compare_A4N4'
+export JOBNAME=$SLURM_JOB_NAME
 export RUN="run_${atmosphere_type}${n_params}${likelihood}" 
 export OMP_NUM_THREADS=1
 export OPENBLAS_NUM_THREADS=1

@@ -48,10 +48,10 @@ path="../"
 sys.path.append(path)
 
 os.environ['atmosphere_type']='A'
-os.environ['n_params']='4'
-os.environ['machine']='local'
+os.environ['n_params']='5'
+os.environ['machine']='helios'
 os.environ['likelihood']='custom'
 os.environ['num_energies']='16'
 
-import sample as ST
+import sample_A5_10 as ST
 #import sample_A4_only

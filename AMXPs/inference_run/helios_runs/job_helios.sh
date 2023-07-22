@@ -1,8 +1,8 @@
 #!/bin/bash
 #SBATCH -N 1
 #SBATCH --tasks-per-node=64
-#SBATCH -t 10:00:00
-#SBATCH -J A4A5extraparameter
+#SBATCH -t 2-00:00:00
+#SBATCH -J A5-10
 #SBATCH -o %j.out
 #SBATCH -e %j.err
 #SBATCH --partition=neutron-star
@@ -15,8 +15,8 @@ module load anaconda3/2021-05
 conda activate xpsi_py3
 module load openmpi/3.1.6
 
-export atmosphere_type='N'
-export n_params='4'
+export atmosphere_type='A'
+export n_params='5'
 export num_energies='16'
 export likelihood='custom' #custom, default
 export machine='helios'
@@ -56,7 +56,7 @@ mkdir $OUTPUT_FOLDER/helios_runs/$RUN
 
 cd $OUTPUT_FOLDER
 
-mpiexec -n 64 -mca btl_tcp_if_include ib0 python $XPSI_DIR/AMXPs/inference_run/sample.py
+mpiexec -n 64 -mca btl_tcp_if_include ib0 python $XPSI_DIR/AMXPs/inference_run/sample_A5_10.py
 
 #Move your output from scratch to storage space.
 export STORAGE_DIR=/zfs/helios/filer0/$USER/$JOBNAME/$RUN/$SLURM_JOB_ID

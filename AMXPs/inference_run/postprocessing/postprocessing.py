@@ -49,13 +49,14 @@ sys.path.append(path)
 
 
 atmosphere_type = 'A'
-n_params = 5
+n_params = 4
+sample_params = 9
 likelihood = 'custom'
 num_energies=16
 sampling_efficiency=0.8
 live_points=64
 max_iterations=-1
-job_id = 325177 # 324879 #
+job_id = 325351 #325177 # 324879 #
 
 os.environ['atmosphere_type']=atmosphere_type
 os.environ['n_params']=str(n_params)
@@ -67,8 +68,8 @@ import sample as ST
 # We will use the same bounds used during sampling
 if atmosphere_type=='A':
     # Settings names, bounds and labels
-    ST.names=['mass','radius','distance','cos_inclination','p__phase_shift',
-              'p__super_colatitude','p__super_radius','p__super_tbb']#'p__super_te','p__super_tau']
+    #ST.names=['mass','radius','distance','cos_inclination','p__phase_shift','p__super_colatitude','p__super_radius','p__super_tbb']
+    ST.names=['mass','radius','distance','cos_inclination','p__phase_shift','p__super_colatitude','p__super_radius','p__super_tbb','p__super_tau']
     
     ST.bounds = {'mass':(1.0,3.0),
                  'radius':(3.0 * gravradius(1.0), 16.0),
@@ -77,10 +78,10 @@ if atmosphere_type=='A':
                  'p__phase_shift':(0.0, 0.1),
                  'p__super_colatitude':(0.001, math.pi/2 - 0.001),
                  'p__super_radius':(0.001, math.pi/2.0 - 0.001),
-                 'p__super_tbb':(0.00015, 0.003)}#, 
+                 'p__super_tbb':(0.00015, 0.003)} 
                  #'p__super_te': (40., 200.),
-                 #'p__super_tau': (0.5, 3.5)}
-    
+
+    if sample_params == 9: ST.bounds['p__super_tau'] = (0.5, 3.5)
     
     # Now the labels
     ST.labels = {'mass': r"M\;\mathrm{[M}_{\odot}\mathrm{]}",
@@ -90,9 +91,8 @@ if atmosphere_type=='A':
                   'p__phase_shift': r"\phi_{p}\;\mathrm{[cycles]}",
                   'p__super_colatitude': r"\Theta_{spot}\;\mathrm{[rad]}",
                   'p__super_radius': r"\zeta_{spot}\;\mathrm{[rad]}",
-                  'p__super_tbb': r"t_{bb}\;\mathrm{[data units]}"}#,
+                  'p__super_tbb': r"t_{bb}\;\mathrm{[data units]}"}
                   #'p__super_te': r"t_e data units",
-                  #'p__super_tau': r"\tau data units"}
     
     ST.truths={'mass': 1.6,                               # Mass in solar Mass
               'radius': 14.,                              # Equatorial radius in km
@@ -103,10 +103,15 @@ if atmosphere_type=='A':
               'p__super_radius': 0.075,                 # Angular radius of the (circular) superseding region
               'p__super_tbb': 0.001}#,                      # Blackbody temperature
               #'p__super_te': 40,                          # Electron temperature
-              #'p__super_tau': 0.5}                        # Optical depth
-elif atmosphere_type=='N':
+
+    if sample_params == 9:
+        ST.bounds['p__super_tau'] = (0.5, 3.5) # Optical depth
+        ST.labels['p__super_tau'] = r"\tau\;\mathrm{[data units]}"
+        ST.truths['p__super_tau'] = 0.5
+
+if atmosphere_type=='N':
     ST.names=['mass','radius','distance','cos_inclination','p__phase_shift',
-              'p__super_colatitude','p__super_radius','p__super_temperature']#'p__super_te','p__super_tau']
+              'p__super_colatitude','p__super_radius','p__super_temperature']
     
     ST.bounds = {'mass':(1.0,3.0),
                  'radius':(3.0 * gravradius(1.0), 16.0),
@@ -168,7 +173,7 @@ print('likelihood:', ST.likelihood)
 
 
 ST.runs = xpsi.Runs.load_runs(ID='ST',
-                               run_IDs=[f'{atmosphere_type}{n_params}'],
+                               run_IDs=[f'{atmosphere_type}{n_params}-{sample_params}'],
                                roots=[f'run_se={sampling_efficiency}_lp={live_points}_atm={atmosphere_type}{n_params}_ne={num_energies}_mi={max_iterations}'],
                                base_dirs=[f'/home/bas/Documents/Projects/x-psi/xpsi-bas-fork/AMXPs/inference_run/helios_runs/run_{atmosphere_type}{n_params}custom/{job_id}'],
                                # base_dirs=['/home/bas/Documents/Projects/x-psi/xpsi-bas-fork/AMXPs/inference_run/local_runs/run_A4/'],
@@ -188,7 +193,7 @@ ST.runs = xpsi.Runs.load_runs(ID='ST',
 pp = xpsi.PostProcessing.CornerPlotter([ST.runs])
 fig = pp.plot(
      params=ST.names,
-     IDs=OrderedDict([('ST', [f'{atmosphere_type}{n_params}',]),]),
+     IDs=OrderedDict([('ST', [f'{atmosphere_type}{n_params}-{sample_params}',]),]),
      prior_density=False,
      KL_divergence=True,
      ndraws=5e4,
@@ -234,7 +239,7 @@ fig = pp.plot(
      nx=500)
 
 pp = xpsi.SignalPlotter([ST.runs])
-pp.plot(IDs=OrderedDict([('ST', [f'{atmosphere_type}{n_params}']),
+pp.plot(IDs=OrderedDict([('ST', [f'{atmosphere_type}{n_params}-{sample_params}']),
                         ]),
         combine=False, # use these controls if more than one run for a posterior
         combine_all=False,

@@ -27,14 +27,14 @@ ldict = {}
 #folderstring = f'local_runs/run_{atmosphere_type}{n_params}'
 
 # helios
-job_id = 325177
+job_id = 325354
 folderstring = this_directory + f'/helios_runs/run_{atmosphere_type}{n_params}{likelihood}/{job_id}/run_se={sampling_efficiency}_lp={live_points}_atm={atmosphere_type}{n_params}_ne={numenergies}_mi={max_iterations}'
 
 with open(f'{folderstring}/LikelihoodDiagnostics_ne={numenergies}_rank=0.pkl', 'rb') as file:
      (temporary, runtime_params) = pickle.load(file)
 
 #xpsi_size = runtime_params['xpsi_size']
-xpsi_size = 1
+xpsi_size = 2
 
 fig, axes = plt.subplots(nrows=xpsi_size, ncols=1, figsize=(20, 2*xpsi_size), sharex=True)
 for ax, rank in zip(axes, range(xpsi_size)):

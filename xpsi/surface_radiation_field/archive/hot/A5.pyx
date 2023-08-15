@@ -259,7 +259,7 @@ cdef double eval_hot(size_t THREAD,
     vec[1] = tbb
     vec[2] = tau
     vec[3] = mu
-    vec[4] = E*1e3/evere # conversion from keV to electron rest energy
+    vec[4] = E # CAN WE PLEASE NOT DO ANY CONVERSIONS HERE #E*1e3/evere # conversion from keV to electron rest energy
  
     # printf("Bobrikova atmosphere interpolator")
     

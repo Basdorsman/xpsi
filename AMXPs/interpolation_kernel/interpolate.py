@@ -72,17 +72,23 @@ if atmosphere_type == 'A':
     E = np.asarray([0.1]) # Energy, need to look up units still
     mu = np.asarray([0.5]) # cos(emission angle)
 
+    # atmosphere parameters
+    te = 101 #40 - 200
+    tbb = 0.0015 #0.001 - 0.0031
+    tau = 1.01  #0.5 - 3.55
+    
+    # E = np.asarray([9.65080984e-02])
+    # mu = np.asarray([5.00000000e-01])
+    # tau = 1.00000000e+00
+    # tbb = 1.40000000e-03
+    # te = 1.04000000e+02
+
     if n_params == '4':
         if machine == 'local':
             atmosphere = preload_atmosphere_A4('/home/bas/Documents/Projects/x-psi/model_datas/bobrikova/Bobrikova_compton_slab.npz')
         elif machine == 'helios':
             atmosphere = preload_atmosphere_A4('model_data/Bobrikova_compton_slab.npz')
-            
 
-        # atmosphere parameters
-        #te = 101 #40 - 200
-        tbb = 0.0015 #0.001 - 0.0031
-        tau = 1.01  #0.5 - 3.55
         local_vars = np.asarray([[tbb, tau]])
 
     if n_params == '5':
@@ -90,12 +96,7 @@ if atmosphere_type == 'A':
             atmosphere = preload_atmosphere_A5('/home/bas/Documents/Projects/x-psi/model_datas/bobrikova/Bobrikova_compton_slab.npz')
         elif machine == 'helios':
             atmosphere = preload_atmosphere_A5('model_data/Bobrikova_compton_slab.npz')
-            
 
-        # atmosphere parameters
-        te = 101 #40 - 200
-        tbb = 0.0015 #0.001 - 0.0031
-        tau = 1.01  #0.5 - 3.55
         local_vars = np.asarray([[te, tbb, tau]])
 
     intensity = xpsi.surface_radiation_field.intensity(E, mu, local_vars,
@@ -105,3 +106,18 @@ if atmosphere_type == 'A':
     
 
 print(intensity)
+
+
+#%%
+from time import time
+repetitions = 1000
+
+time_start = time()
+for i in range(repetitions):
+    intensity = xpsi.surface_radiation_field.intensity(E, mu, local_vars,
+                                                       atmosphere=atmosphere,
+                                                       extension='hot',
+                                                       numTHREADS=2)
+    
+time_elapsed = time() - time_start
+print(time_elapsed)  

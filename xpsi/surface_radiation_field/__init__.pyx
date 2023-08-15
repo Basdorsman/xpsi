@@ -231,8 +231,8 @@ def intensity(double[::1] energies,
                                   &(local_variables[i,0]),
                                   data)
 
-        # get photon specific intensity
-        intensities[i] *= norm_ptr() / (energies[i] * keV)
+        # DO NOT get photon specific intensity
+        #intensities[i] *= norm_ptr() / (energies[i] * keV)
 
     if atmosphere:
         free_preload(preloaded)

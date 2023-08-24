@@ -40,34 +40,28 @@ try:
     if '--N4Hot' in sys.argv:
         print("Installing NSX 4 Parameters")
         shutil.copy('xpsi/surface_radiation_field/archive/hot/N4.pyx', 'xpsi/surface_radiation_field/hot.pyx')
-        #shutil.copy('xpsi/surface_radiation_field/archive/hot/numerical.pxd', 'xpsi/surface_radiation_field/hot.pxd')
         sys.argv.remove("--N4Hot")
     if '--N5Else' in sys.argv:
         print("Copying numerical atmosphere for the rest of the surface")
         shutil.copy('xpsi/surface_radiation_field/archive/elsewhere/N4.pyx', 'xpsi/surface_radiation_field/elsewhere.pyx')
-        # shutil.copy('xpsi/surface_radiation_field/archive/hot/A5.pyx', 'xpsi/surface_radiation_field/hot.pyx')
         sys.argv.remove("--N5Else")
     if '--NumHotBeam' in sys.argv:
         print("Copying numerical atmosphere for the hot region(s)")
         shutil.copy('xpsi/surface_radiation_field/archive/hot/numerical_fbeam.pyx', 'xpsi/surface_radiation_field/hot.pyx')
-        #shutil.copy('xpsi/surface_radiation_field/archive/hot/numerical.pxd', 'xpsi/surface_radiation_field/hot.pxd')
         sys.argv.remove("--NumHotBeam")
     # 4D numerical atmosphere with 5 parameter (modulator)
     if '--N5Hot' in sys.argv:
         print("Installing NSX 5 Parameters")
         shutil.copy('xpsi/surface_radiation_field/archive/hot/N5.pyx', 'xpsi/surface_radiation_field/hot.pyx')
-        #shutil.copy('xpsi/surface_radiation_field/archive/hot/numerical.pxd', 'xpsi/surface_radiation_field/hot.pxd')
         sys.argv.remove("--N5Hot")
     # compton model
     if '--A5Hot' in sys.argv:
         print("Installing Accreting 5 Parameters")
         shutil.copy('xpsi/surface_radiation_field/archive/hot/A5.pyx', 'xpsi/surface_radiation_field/hot.pyx')
-        #shutil.copy('xpsi/surface_radiation_field/archive/hot/A5.pxd', 'xpsi/surface_radiation_field/hot.pxd')
         sys.argv.remove("--A5Hot")
     if '--A4Hot' in sys.argv:
         print("Installing Accreting 4 Parameters")
         shutil.copy('xpsi/surface_radiation_field/archive/hot/A4.pyx', 'xpsi/surface_radiation_field/hot.pyx')
-        #shutil.copy('xpsi/surface_radiation_field/archive/hot/numerical.pxd', 'xpsi/surface_radiation_field/hot.pxd')
         sys.argv.remove("--A4Hot")
     # if '--CompElse' in sys.argv:
     #     print("Copying Compton emission model for the rest of the surface")
@@ -284,7 +278,7 @@ if __name__ == '__main__':
                 'xpsi.surface_radiation_field.hot',
                 'xpsi.surface_radiation_field.elsewhere',
                 'xpsi.cellmesh.integrator',
-                'xpsi.cellmesh.integrator_split_interpolation',
+                'xpsi.cellmesh.integrator_timed',
                 'xpsi.cellmesh.integrator_for_azimuthal_invariance',
                 'xpsi.cellmesh.integrator_for_time_invariance',
                 'xpsi.pixelmesh.METRIC_qK',

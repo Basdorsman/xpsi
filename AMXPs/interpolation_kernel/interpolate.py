@@ -107,14 +107,64 @@ if atmosphere_type == 'A':
 
 print(intensity)
 
+#%% MAKE RANDOM VARIABLES
+
+def random_with_bounds(lower_limit, upper_limit, size):
+    return (upper_limit - lower_limit) * np.random.random(size = size) + lower_limit
+
+size = 10000
+
+t__e = np.arange(40.0, 202.0, 4.0) #actual range is 40-200 imaginaty units, ~20-100 keV (Te(keV)*1000/511keV is here)
+t__bb = np.arange(0.001, 0.0031, 0.0002) #this one is non-physical, we went for way_to_low Tbbs here, I will most probably delete results from too small Tbbs. This is Tbb(keV)/511keV, so these correspond to 0.07 - 1.5 keV, but our calculations don't work correctly for Tbb<<0.5 keV
+tau__t = np.arange(0.5, 3.55, 0.1) 
+
+# ENERGY AND MU VECTOR ARE MADE ANALYTICALLY LIKE THIS
+x_l, x_u = -3.7, .3 # lower and upper bounds of the log_10 energy span
+NEnergy = 150 # 50# 101 # number of energy points (x)
+IntEnergy = np.logspace(x_l,x_u,NEnergy), np.log(1e1)*(x_u-x_l)/(NEnergy-1.) # sample points and weights for integrations over the spectrum computing sorce function
+E_vector,x_weight=IntEnergy
+
+from numpy.polynomial.legendre import leggauss
+
+def init_mu(n = 3):
+        NMu = n # number of propagation zenith angle cosines (\mu) [0,1]
+        NZenith = 2*NMu # number of propagation zenith angles (z) [0,pi]
+        mu = np.empty(NZenith)
+        #mu = Array{Float64}(undef,NZenith)
+        #mu_weight = Array{Float64}(undef,NZenith)
+        m2,mw = leggauss(NMu)
+        mu[:NMu] = (m2 - 1.)/2
+        mu[NMu:NZenith] = (m2 + 1.)/2
+        
+        #mu_weight[1:NMu] = (mw)./2
+        #mu_weight[NMu+1:2NMu] = (mw)./2
+        #global μ_grid = n, 2n, mu, mu_weight
+        
+        return mu[NMu:NZenith]
+
+mu_vector = init_mu(9)
+
+te_random = random_with_bounds(min(t__e), max(t__e), size)
+tbb_random = random_with_bounds(min(t__bb), max(t__bb), size)
+tau_random = random_with_bounds(min(tau__t), max(tau__t), size)
+E_random_exponent = random_with_bounds(x_l, x_u, size)
+E_random = 10 ** E_random_exponent
+mu_random = random_with_bounds(min(mu_vector), max(mu_vector), size)
+
+random_local_vars = np.asarray([te_random, tbb_random, tau_random])
+
+
+    
+
 
 #%%
 from time import time
-repetitions = 1000
+repetitions = size
+Intensity = np.empty(repetitions)
 
 time_start = time()
 for i in range(repetitions):
-    intensity = xpsi.surface_radiation_field.intensity(E, mu, local_vars,
+    Intensity[i] = xpsi.surface_radiation_field.intensity(np.asarray([E_random[i]]), np.asarray([mu_random[i]]), np.asarray([random_local_vars[:,i]]),
                                                        atmosphere=atmosphere,
                                                        extension='hot',
                                                        numTHREADS=2)

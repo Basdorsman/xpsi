@@ -200,13 +200,34 @@ variable_point = (te, tbb, tau, E, mu)
 
 Intensity = interpolate.interpn(variable_arrays, I_mighty, variable_point)
 print(Intensity)
+
+#%% MAKE RANDOM VARIABLES
+
+def random_with_bounds(lower_limit, upper_limit, size):
+    return (upper_limit - lower_limit) * np.random.random(size = size) + lower_limit
+
+size = 10000
+
+te_random = random_with_bounds(min(t__e), max(t__e), size)
+tbb_random = random_with_bounds(min(t__bb), max(t__bb), size)
+tau_random = random_with_bounds(min(tau__t), max(tau__t), size)
+E_random_exponent = random_with_bounds(x_l, x_u, size)
+E_random = 10 ** E_random_exponent
+mu_random = random_with_bounds(min(mu_vector), max(mu_vector), size)
+
+random_variable_draws = np.asarray((te_random, tbb_random, tau_random, E_random, mu_random))
+
+
+    
+
 #%%
 from time import time
-repetitions = 1000
+repetitions = size
+Intensity = np.empty(repetitions)
 
 time_start = time()
 for i in range(repetitions):
-    Intensity = interpolate.interpn(variable_arrays, I_mighty, variable_point)
+    Intensity[i] = interpolate.interpn(variable_arrays, I_mighty, random_variable_draws[:,i])
     
 time_elapsed = time() - time_start
 print(time_elapsed)  

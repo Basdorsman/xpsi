@@ -58,10 +58,12 @@ try:
     if '--A5Hot' in sys.argv:
         print("Installing Accreting 5 Parameters")
         shutil.copy('xpsi/surface_radiation_field/archive/hot/A5.pyx', 'xpsi/surface_radiation_field/hot.pyx')
+        shutil.copy('xpsi/surface_radiation_field/archive/hot/A5.pxd', 'xpsi/surface_radiation_field/hot.pxd')
         sys.argv.remove("--A5Hot")
     if '--A4Hot' in sys.argv:
         print("Installing Accreting 4 Parameters")
         shutil.copy('xpsi/surface_radiation_field/archive/hot/A4.pyx', 'xpsi/surface_radiation_field/hot.pyx')
+        shutil.copy('xpsi/surface_radiation_field/archive/hot/numerical.pxd', 'xpsi/surface_radiation_field/hot.pxd')
         sys.argv.remove("--A4Hot")
     # if '--CompElse' in sys.argv:
     #     print("Copying Compton emission model for the rest of the surface")

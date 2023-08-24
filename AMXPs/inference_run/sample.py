@@ -163,14 +163,14 @@ if atmosphere=='accreting':
                       super_radius = (None, None),
                       phase_shift = (0.0, 0.1),
                       super_tbb = (0.00015, 0.003),
-                      #super_te = (40., 200.))
+                      super_te = (40., 200.),
                       super_tau = (0.5, 3.5))
 
-        values = dict(super_te = 40.)
+        #values = dict(super_te = 40.)
         #values = dict(super_te = 40., super_tau = 0.5)
     
         primary = CustomHotRegion_Accreting(bounds=bounds,
-           	                    values=values,
+           	                    values={},#values,
            	                    symmetry=False, #call general integrator instead of for azimuthal invariance
            	                    omit=False,
            	                    cede=False,
@@ -454,7 +454,7 @@ if atmosphere=='accreting':
                   1.0, #colatitude of centre of superseding region
                   0.075,  #angular radius superceding region
                   tbb,
-                  #te
+                  te,
                   tau
                   #6.2, #primary temperature
                   #modulator, #modulator

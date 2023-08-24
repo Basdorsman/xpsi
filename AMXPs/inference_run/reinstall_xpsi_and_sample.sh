@@ -14,9 +14,9 @@ then
 source blackbody.sh
 fi
 
-likelihood="custom"
+likelihood="default"
 machine="local"
 num_energies=16
 cd AMXPs/inference_run/
 export atmosphere_type n_params likelihood machine num_energies
-python sample.py
+python sample.py #> test.txt

@@ -11,4 +11,3 @@ cdef double eval_hot_norm() nogil
 cdef void* init_hot(size_t numThreads, const _preloaded *const preloaded) nogil
 
 cdef int free_hot(size_t numThreads, void *const data) nogil
-

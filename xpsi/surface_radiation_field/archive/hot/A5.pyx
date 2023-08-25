@@ -10,6 +10,9 @@ from libc.stdlib cimport malloc, free
 
 from xpsi.global_imports import _keV, _k_B
 
+import numpy as np
+cimport numpy as np
+
 cdef int SUCCESS = 0
 cdef int ERROR = 1
 
@@ -37,6 +40,8 @@ ctypedef struct ACCELERATE:
 ctypedef struct DATA:
     const _preloaded *p 	# _preloaded is a struct defined in preload.pxd
     ACCELERATE acc		# Make ACCELERATE object
+
+
 
 #----------------------------------------------------------------------->>>
 # >>> User modifiable functions.
@@ -259,7 +264,7 @@ cdef double eval_hot(size_t THREAD,
     vec[1] = tbb
     vec[2] = tau
     vec[3] = mu
-    vec[4] = E # CAN WE PLEASE NOT DO ANY CONVERSIONS HERE #E*1e3/evere # conversion from keV to electron rest energy
+    vec[4] = E*1e3/evere # conversion from keV to electron rest energy
  
     # printf("Bobrikova atmosphere interpolator")
     
@@ -281,6 +286,9 @@ cdef double eval_hot(size_t THREAD,
     #printf("\neval_hot() called")
     #printf("\nVEC[0]: %f", VEC[0])
     #printf("\nVEC[1]: %f", VEC[1])
+    
+    # printf('ndims')
+    # printf('\nD.p.ndims 5D: %ld', D.p.ndims)
 
     while i < D.p.ndims: 					# For each dimension 
         # if parallel == 31:
@@ -496,6 +504,7 @@ cdef double eval_hot(size_t THREAD,
         return 0.0
     # Vec here should be the temperature!
     # printf(" I_out: %.8e, ", I * pow(10.0, 3.0 * vec[1]))
+    # printf(" I_out: %f, ", I)
     
     #return I * pow(10.0, 3.0 * Temperature)
     return I
@@ -510,9 +519,73 @@ cdef double eval_hot_norm() nogil:
 
     return erg / 4.135667662e-18
 
-cdef double produce_2D_data(size_t THREAD, const double *const VEC, void *const data) nogil:
+cdef double* produce_2D_data(size_t THREAD, const double *const VEC, void *const data) nogil:
     # interpolate data to make a 2D dataset with only E and mu
+    # printf('\nproduce_2D_data called')
     cdef DATA *D = <DATA*> data
-    printf('produce_2D_data called')
-    printf('%ld', D.p.ndims)
-    return 4e-18
+    # printf('\n')
+    
+    cdef size_t i, j
+    cdef double I_E
+    
+    # check if atmosphere data is healthy ...
+    # for i in range(D.p.ndims):
+    #     printf('D.p.params[%ld][0]: %f, ', i, D.p.params[i][0])
+    #     printf('D.p.N[%ld]: %d. ', i, D.p.N[i])
+    
+    # check if VEC is healthy...
+    # cdef double te, tbb, tau # I have three parameters in VEC
+    # te = VEC[0]
+    # tbb = VEC[1]
+    # tau = VEC[2]
+    
+    # printf('\nte = %f, ', te)
+    # printf('tbb = %f, ', tbb)
+    # printf('tau = %f. ', tau)
+    
+    # print interpolated intensities...
+    
+    #cdef double[:, ::1] I_data
+    cdef double *I_data
+    I_data = <double*> malloc(sizeof(double*) * D.p.N[3] * D.p.N[4])
+
+    
+    for i in range(D.p.N[3]):
+        mu = D.p.params[3][i]
+        # mu_array[i] = mu
+        # printf('mu_array[%ld] = %f', i, mu_array[i])
+        for j in range(D.p.N[4]):
+            E = D.p.params[4][j]
+            # E_array[j] = E 
+            # printf('\ni = %ld, j = %ld. ', i, j)
+            
+            I_E = eval_hot(THREAD,
+                            E,
+                            mu,
+                            VEC,
+                            data)
+            index = i * D.p.N[4] + j
+            I_data[index] = I_E
+            # printf('I_data[%ld] = %f. ', index, I_data[index])
+            
+    
+    return I_data
+
+cdef object make_atmosphere_2D(double *I_data, void *const data):
+    cdef DATA *D = <DATA*> data
+    # cdef np.npy_double[:] mu_array = np.empty(D.p.N[3], dtype=np.float64)
+    # cdef np.npy_double[:] E_array = np.empty(D.p.N[4], dtype=np.float64)
+    # cdef np.npy_double[:] I_array = np.empty(D.p.N[3]*D.p.N[4], dtype=np.float64)
+    cdef np.ndarray[double, ndim=1, mode="c"] mu_array = np.ascontiguousarray(np.empty(D.p.N[3], dtype=float))
+    cdef np.ndarray[double, ndim=1, mode="c"] E_array = np.ascontiguousarray(np.empty(D.p.N[4], dtype=float))
+    cdef np.ndarray[double, ndim=1, mode="c"] I_array = np.ascontiguousarray(np.empty(D.p.N[3]*D.p.N[4], dtype=float))
+    cdef size_t i, j, index
+    for i in range(D.p.N[3]):
+        mu_array[i] = D.p.params[3][i]
+        for j in range(D.p.N[4]):
+            index = i * D.p.N[4] + j
+            I_array[index] = I_data[index]
+    for j in range(D.p.N[4]):
+        E_array[j] = D.p.params[4][j]
+    cdef tuple atmosphere_2D = (mu_array, E_array, I_array)
+    return atmosphere_2D

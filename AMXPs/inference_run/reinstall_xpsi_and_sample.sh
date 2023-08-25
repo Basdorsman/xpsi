@@ -14,7 +14,7 @@ then
 source blackbody.sh
 fi
 
-likelihood="default"
+likelihood="custom"
 machine="local"
 num_energies=16
 cd AMXPs/inference_run/

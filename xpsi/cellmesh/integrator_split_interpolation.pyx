@@ -15,6 +15,7 @@ from libc.stdio cimport printf
 # from libc.time cimport time, time_t, clock, clock_t, CLOCKS_PER_SEC
 import xpsi
 
+from builtins import print
 
 cdef double _pi = M_PI
 cdef double _hlfpi = M_PI / 2.0
@@ -36,7 +37,14 @@ from xpsi.surface_radiation_field.hot cimport (init_hot,
                                                eval_hot,
                                                eval_hot_norm,
                                                free_hot,
-                                               produce_2D_data)
+                                               produce_2D_data,
+                                               make_atmosphere_2D)
+
+from xpsi.surface_radiation_field.hot_2D cimport (init_hot_2D,
+                                               eval_hot_2D,
+                                               eval_hot_2D_norm,
+                                               free_hot_2D)
+
 
 from xpsi.surface_radiation_field.elsewhere cimport (init_elsewhere,
                                                      free_elsewhere,
@@ -132,7 +140,7 @@ def integrate(size_t numThreads,
         double eta # Doppler boost factor in the NRF; TP
         double mu # NRF and then CRF emission angle w.r.t surface normal; TP
         double E_prime # Photon energy in the CRF, given an energy at infinity; TP
-        double I_E # Radiant and or spectral intensity in the CRF; TP
+        double I_E, I_E2D, I_E5D # Radiant and or spectral intensity in the CRF; TP
         double __PHASE, __PHASE_plusShift, __GEOM, __Z, __ABB # TP
         double phi_shift # TP
         double superlum # TP
@@ -277,23 +285,72 @@ def integrate(size_t numThreads,
     # printf("\nfor ii in prange(<signed int>cellArea.shape[0]")
     # t_start = clock()#time(NULL)
 
-
-    # for E:
-    #     for mu:
-    #         I_E = eval_hot(T,
-    #                        E_prime,
-    #                        __ABB,
-    #                        &(srcCellParams[i,j,0]),
-    #                        hot_data)
     
     # printf('\ntest')
     # printf("srcCellParams[0,0,0]: %.8e, ", srcCellParams[0,0,0])
     # printf("srcCellParams[0,0,1]: %.8e, ", srcCellParams[0,0,1])
 
-    cdef double 2D_data
-    2D_data = produce_2D_data(T, &(srcCellParams[i,j,0]), hot_data)
 
     
+    # for i in len(hot_atmosphere):
+    #     cdef double[::1] cast
+    #     cast = hot_atmosphere[i]
+    #     printf('\nfirst atmosphere element: %f', hot_atmosphere[i][0])
+
+        
+    # atmosphere info
+    # print("Type:", type(hot_atmosphere))
+    # print("Contents:", "(")
+    # for i, item in enumerate(hot_atmosphere):
+    #     print("  [{}]: {}".format(i, item))
+    # print(")")    
+
+    # print('health check 2D')
+    # print(srcCellParams[0,0,0])
+    # print(hot_data[0])
+
+    # Initiate 2D atmosphere
+    cdef double* I_data_2D
+    I_data_2D = produce_2D_data(T, &(srcCellParams[0,0,0]), hot_data)
+    # printf('\nI_data_2D[0] = %f.', I_data_2D[0]) 
+    atmosphere_2D = make_atmosphere_2D(I_data_2D, hot_data)
+ 
+
+    # 2D atmosphere info    
+    # for i in range(len(atmosphere_2D)): 
+    #     print('atmosphere_2D[',i,'][0]]: ',atmosphere_2D[i][0])
+    # print("Type:", type(atmosphere_2D))
+    # print("Contents:", "(")
+    # for i, item in enumerate(atmosphere_2D):
+    #     print("  [{}]: {}".format(i, item))
+    # print(")")   
+
+    # initiate data 2D
+    hot_preloaded_2D = init_preload(atmosphere_2D)
+    hot_data_2D = init_hot_2D(N_T, hot_preloaded_2D)
+ 
+    # Eval hot 2D
+    # cdef double Intesti2D, Intestity5D
+    # cdef double E_test = 1.0e-1
+    # cdef double mu_test = 0.5
+    # Intesti2D = eval_hot_2D(T, E_test, mu_test, hot_data_2D) 
+    # print('Intestity 2D:', Intesti2D)
+
+
+    # print('health check 5D')
+    # print(srcCellParams[0,0,0])
+    # print(srcCellParams[0,0,1])
+    # print(srcCellParams[0,0,2])
+    # print(hot_data[0])
+
+    # Intestity5D = eval_hot(T,
+    #                E_test,
+    #                mu_test,
+    #                &(srcCellParams[0,0,0]),
+    #                hot_data)
+
+    # print('Intestity5D:', Intestity5D)
+
 
     for ii in prange(<signed int>cellArea.shape[0],
                      nogil = True,
@@ -637,13 +694,18 @@ def integrate(size_t numThreads,
  
                                         
                                         #time the interpolations
+                                        # printf('\neval hot:\n')
                                         
-                                        I_E = eval_hot(T,
-                                                       E_prime,
-                                                       __ABB,
-                                                       &(srcCellParams[i,j,0]),
-                                                       hot_data)
-                                        I_E = I_E * eval_hot_norm()
+                                        # I_E5D = eval_hot(T,
+                                        #                 E_prime,
+                                        #                 __ABB,
+                                        #                 &(srcCellParams[i,j,0]),
+                                        #                 hot_data)
+                                        # printf('I_E5D %f, ', I_E5D)
+                                        
+                                        I_E2D = eval_hot_2D(T, E_prime, __ABB, hot_data_2D)
+                                        # printf('I_E2D %f', I_E2D)
+                                        I_E = I_E2D * eval_hot_norm()
 
                                         if perform_correction == 1:
                                             correction_I_E = eval_elsewhere(T,
@@ -724,10 +786,14 @@ def integrate(size_t numThreads,
     free(InvisFlag)
     free(InvisStep)
 
+    free(I_data_2D)
+
     if hot_atmosphere:
         free_preload(hot_preloaded)
+        free_preload(hot_preloaded_2D)
 
     free_hot(N_T, hot_data)
+    free_hot_2D(N_T, hot_data_2D)
 
     if perform_correction == 1:
         if elsewhere_atmosphere:

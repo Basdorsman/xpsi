@@ -45,7 +45,7 @@ ctypedef struct DATA:
 # >>> Thus the bodies of the following need not be written explicitly in
 # ... the Cython language.
 #----------------------------------------------------------------------->>>
-cdef void* init_hot(size_t numThreads, const _preloaded *const preloaded) nogil:
+cdef void* init_hot_2D(size_t numThreads, const _preloaded *const preloaded) nogil:
     # This function must match the free management routine free_hot()
     # in terms of freeing dynamically allocated memory. This is entirely
     # the user's responsibility to manage.
@@ -164,7 +164,7 @@ cdef void* init_hot(size_t numThreads, const _preloaded *const preloaded) nogil:
     return <void*> D
 
 
-cdef int free_hot(size_t numThreads, void *const data) nogil:
+cdef int free_hot_2D(size_t numThreads, void *const data) nogil:
     # This function must match the initialisation routine init_hot()
     # in terms of freeing dynamically allocated memory. This is entirely
     # the user's responsibility to manage.
@@ -209,7 +209,7 @@ cdef int free_hot(size_t numThreads, void *const data) nogil:
 # ... weights or re-read intensities if not necessary.
 #----------------------------------------------------------------------->>>
     
-cdef double eval_hot(size_t THREAD,
+cdef double eval_hot_2D(size_t THREAD,
                      double E,
                      double mu,
                      void *const data) nogil:
@@ -249,7 +249,7 @@ cdef double eval_hot(size_t THREAD,
     # vec[1] = tbb
     # vec[2] = tau
     vec[0] = mu
-    vec[1] = E # CAN WE PLEASE NOT DO ANY CONVERSIONS HERE #E*1e3/evere # conversion from keV to electron rest energy
+    vec[1] = E#*1e3/evere # conversion from keV to electron rest energy
  
     # printf("Bobrikova atmosphere interpolator")
     
@@ -261,16 +261,19 @@ cdef double eval_hot(size_t THREAD,
     # printf("vec[4]: %.2e\n", vec[4])
     
 
-    printf("\nvec[0]: %.8e, ", vec[0])
-    printf("vec[1]: %.8e, ", vec[1])
+    # printf("\nvec[0]: %.8e, ", vec[0])
+    # printf("vec[1]: %.8e, ", vec[1])
     # printf("vec[2]: %.8e, ", vec[2])
     # printf("vec[3]: %.8e, ", vec[3])
     # printf("vec[4]: %.8e, ", vec[4])
     
     
-    #printf("\neval_hot() called")
-    #printf("\nVEC[0]: %f", VEC[0])
-    #printf("\nVEC[1]: %f", VEC[1])
+    # printf("\neval_hot() called")
+    # printf("\nVEC[0]: %f", VEC[0])
+    # printf("\nVEC[1]: %f", VEC[1])
+    # printf('ndims')
+    # printf('\nD.p.ndims 2D: %ld', D.p.ndims)
+
 
     while i < D.p.ndims: 					# For each dimension 
         # if parallel == 31:
@@ -477,11 +480,11 @@ cdef double eval_hot(size_t THREAD,
         return 0.0
     # Vec here should be the temperature!
     # printf(" I_out: %.8e, ", I * pow(10.0, 3.0 * vec[1]))
-    
+    # printf(" I_out: %f, ", I)
     #return I * pow(10.0, 3.0 * Temperature)
     return I
 
-cdef double eval_hot_norm() nogil:
+cdef double eval_hot_2D_norm() nogil:
     # Source radiation field normalisation which is independent of the
     # parameters of the parametrised model -- i.e. cell properties, energy,
     # and angle.

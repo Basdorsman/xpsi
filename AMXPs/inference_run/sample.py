@@ -24,24 +24,23 @@ te_index=0 # t__e = np.arange(40.0, 202.0, 4.0), there are 40.5 values (I expect
 
 
 
-num_energies = os.environ.get('num_energies')
-try:
-    num_energies = int(num_energies)
-except:
-    print("num energies not imported")
-    pass
+
 atmosphere_type = os.environ.get('atmosphere_type')
 n_params = os.environ.get('n_params')
 likelihood_toggle = os.environ.get('likelihood') 
-machine = os.environ.get('machine') 
+machine = os.environ.get('machine')
+num_energies = int(os.environ.get('num_energies'))
+sampling_params = int(os.environ.get('sampling_params'))
 
-if isinstance(os.environ.get('atmosphere_type'),type(None)) or isinstance(os.environ.get('n_params'),type(None)) or isinstance(os.environ.get('likelihood'),type(None)) or isinstance(os.environ.get('machine'),type(None)) or isinstance(os.environ.get('num_energies'),type(None)): # if that fails input them here.
-    print('E: failed to import OS environment variables, using defaults.')    
+
+if isinstance(os.environ.get('atmosphere_type'),type(None)) or isinstance(os.environ.get('n_params'),type(None)) or isinstance(os.environ.get('likelihood'),type(None)) or isinstance(os.environ.get('machine'),type(None)) or isinstance(os.environ.get('num_energies'),type(None)) or isinstance(os.environ.get('sampling_params'),type(None)): # if that fails input them here.
+    print('E: failed to import some OS environment variables, using defaults.')    
     atmosphere_type = 'A' #A, N, B
     n_params = '5' #4, 5
     likelihood_toggle = 'default' # default, custom
     machine = 'local' # local, helios, snellius
     num_energies = 16
+    sampling_params=8
     
 
 if atmosphere_type == 'A': atmosphere = 'accreting'
@@ -53,10 +52,10 @@ print('n_params: ', n_params)
 print('likelihood: ', likelihood_toggle)
 print('machine: ', machine)
 print('num_energies: ', num_energies)
+print('sampling_params: ', sampling_params)
+
 
 this_directory = os.path.dirname(os.path.abspath(__file__))
-
-
 
 import sys
 if machine == 'local':
@@ -138,16 +137,23 @@ from xpsi import HotRegions
 
 if atmosphere=='accreting':
     if n_params=='4':
-        bounds = dict(super_colatitude = (None, None),
-                      super_radius = (None, None),
-                      phase_shift = (0.0, 0.1),
-                      super_tbb = (0.00015, 0.003),
-                      super_tau = (0.5, 3.5))
-                      
-        #values = dict(super_tau = 0.5)
+        if sampling_params==8:
+            bounds = dict(super_colatitude = (None, None),
+                          super_radius = (None, None),
+                          phase_shift = (0.0, 0.1),
+                          super_tbb = (0.00015, 0.003))
+            values = dict(super_tau = 0.5)
+
+        if sampling_params==9:
+            bounds = dict(super_colatitude = (None, None),
+                          super_radius = (None, None),
+                          phase_shift = (0.0, 0.1),
+                          super_tbb = (0.00015, 0.003),
+                          super_tau = (0.5, 3.5))
+            values = {}
     
         primary = CustomHotRegion_Accreting_te_const(bounds=bounds,
-           	                    values={},#values,
+           	                    values=values,
            	                    symmetry=False, #call general integrator instead of for azimuthal invariance
            	                    omit=False,
            	                    cede=False,
@@ -159,18 +165,32 @@ if atmosphere=='accreting':
            	                    num_rays=200,
            	                    prefix='p')
     if n_params=='5':
-        bounds = dict(super_colatitude = (None, None),
-                      super_radius = (None, None),
-                      phase_shift = (0.0, 0.1),
-                      super_tbb = (0.00015, 0.003),
-                      super_te = (40., 200.),
-                      super_tau = (0.5, 3.5))
+        if sampling_params==8:
+            bounds = dict(super_colatitude = (None, None),
+                          super_radius = (None, None),
+                          phase_shift = (0.0, 0.1),
+                          super_tbb = (0.00015, 0.003))
+            values = dict(super_te = 40., super_tau = 0.5)
 
-        #values = dict(super_te = 40.)
-        #values = dict(super_te = 40., super_tau = 0.5)
-    
+        if sampling_params==9: 
+            bounds = dict(super_colatitude = (None, None),
+                          super_radius = (None, None),
+                          phase_shift = (0.0, 0.1),
+                          super_tbb = (0.00015, 0.003),
+                          super_tau = (0.5, 3.5))
+            values = dict(super_te = 40.)  #as I am writing this I am not checking if maybe this should be tau instead
+
+        if sampling_params==10: 
+            bounds = dict(super_colatitude = (None, None),
+                          super_radius = (None, None),
+                          phase_shift = (0.0, 0.1),
+                          super_tbb = (0.00015, 0.003),
+                          super_te = (40., 200.),
+                          super_tau = (0.5, 3.5))
+            values={}
+
         primary = CustomHotRegion_Accreting(bounds=bounds,
-           	                    values={},#values,
+           	                    values=values,
            	                    symmetry=False, #call general integrator instead of for azimuthal invariance
            	                    omit=False,
            	                    cede=False,
@@ -440,11 +460,11 @@ if atmosphere=='accreting':
                   0.0, #phase of hotregion
                   1.0, #colatitude of centre of superseding region
                   0.075,  #angular radius superceding region
-                  tbb,
-                  tau
+                  tbb
                   #6.2, #primary temperature
                   #modulator, #modulator
                   ]
+            if sampling_params==8: p.append(tau)
         if n_params=='5':
             p = [1.6, #1.4, #grav mass
                   14.0,#12.5, #coordinate equatorial radius
@@ -453,12 +473,12 @@ if atmosphere=='accreting':
                   0.0, #phase of hotregion
                   1.0, #colatitude of centre of superseding region
                   0.075,  #angular radius superceding region
-                  tbb,
-                  te,
-                  tau
+                  tbb
                   #6.2, #primary temperature
                   #modulator, #modulator
                   ]
+            if sampling_params==9: p.append(tau)
+            if sampling_params==10: p += [te, tau]
 elif atmosphere=='numerical':   
     p_temperature=6.764 # 6.2
     modulator = 0 
@@ -500,6 +520,7 @@ elif atmosphere=='numerical':
                   p_temperature, #primary temperature
                   #modulator #modulator
                   ]
+            
         
 elif atmosphere=='blackbody':
     p_temperature=6.2
@@ -529,7 +550,7 @@ elif atmosphere=='blackbody':
               ]
         
         
-    
+
 star(p)
 star.update() 
 

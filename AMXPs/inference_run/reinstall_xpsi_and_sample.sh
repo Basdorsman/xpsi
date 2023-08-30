@@ -3,6 +3,8 @@ echo "atmosphere type: N for NSX, A for accreting, B for blackbody"
 read atmosphere_type
 echo "number of parameters in atmosphere: choose 4 or 5 for NSX or accreting atmosphere"
 read n_params
+echo "sampling problem dimensionality: 8, 9 or 10"
+read sampling_params
 #n_params="A"
 cd ../../
 
@@ -14,7 +16,9 @@ then
 source blackbody.sh
 fi
 
-
+likelihood="custom"
+machine="local"
+num_energies=16
 cd AMXPs/inference_run/
-export atmosphere_type n_params
-python sample.py
+export atmosphere_type n_params likelihood machine num_energies sampling_params
+python sample.py #> test.txt

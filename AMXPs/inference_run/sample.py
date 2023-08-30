@@ -19,10 +19,41 @@ from xpsi.global_imports import gravradius
 
 ################################ OPTIONS ###############################
 second = False
-num_energies = 32
 te_index=0 # t__e = np.arange(40.0, 202.0, 4.0), there are 40.5 values (I expect that means 40)
-likelihood_toggle = os.environ.get('likelihood') #'default', 'custom'
-machine = 'snellius' #'local', 'helios', 'snellius'
+
+
+
+
+
+atmosphere_type = os.environ.get('atmosphere_type')
+n_params = os.environ.get('n_params')
+likelihood_toggle = os.environ.get('likelihood') 
+machine = os.environ.get('machine')
+num_energies = int(os.environ.get('num_energies'))
+sampling_params = int(os.environ.get('sampling_params'))
+
+
+if isinstance(os.environ.get('atmosphere_type'),type(None)) or isinstance(os.environ.get('n_params'),type(None)) or isinstance(os.environ.get('likelihood'),type(None)) or isinstance(os.environ.get('machine'),type(None)) or isinstance(os.environ.get('num_energies'),type(None)) or isinstance(os.environ.get('sampling_params'),type(None)): # if that fails input them here.
+    print('E: failed to import some OS environment variables, using defaults.')    
+    atmosphere_type = 'A' #A, N, B
+    n_params = '5' #4, 5
+    likelihood_toggle = 'default' # default, custom
+    machine = 'local' # local, helios, snellius
+    num_energies = 16
+    sampling_params=8
+    
+
+if atmosphere_type == 'A': atmosphere = 'accreting'
+elif atmosphere_type == 'N': atmosphere = 'numerical'
+elif atmosphere_type == 'B': atmosphere = 'blackbody'
+
+print('atmosphere: ', atmosphere)
+print('n_params: ', n_params)
+print('likelihood: ', likelihood_toggle)
+print('machine: ', machine)
+print('num_energies: ', num_energies)
+print('sampling_params: ', sampling_params)
+
 
 this_directory = os.path.dirname(os.path.abspath(__file__))
 
@@ -30,7 +61,7 @@ import sys
 if machine == 'local':
     sys.path.append('/home/bas/Documents/Projects/x-psi/xpsi-bas-fork/AMXPs/')
 elif machine == 'helios':
-    sys.path.append('/home/bdorsma/xpsi-bas/AMXPs/')
+    sys.path.append(this_directory+'/../')
 elif machine == 'snellius':
     sys.path.append(this_directory+'/../')
 
@@ -45,41 +76,19 @@ print('Rank reporting: %d' % xpsi._rank)
 
 
 
-# try to get parameters from shell input
-atmosphere_type = os.environ.get('atmosphere_type')
-n_params = os.environ.get('n_params')
-
-if isinstance(os.environ.get('atmosphere_type'),type(None)) or isinstance(os.environ.get('n_params'),type(None)): # if that fails input them here.
-    print('E: failed to import OS environment variables, using defaults.')    
-    atmosphere_type = 'A' #A, N, B
-    n_params = '4' #4, 5
-
-if atmosphere_type == 'A': atmosphere = 'accreting'
-elif atmosphere_type == 'N': atmosphere = 'numerical'
-elif atmosphere_type == 'B': atmosphere = 'blackbody'
-
-print('atmosphere:', atmosphere)
-print('n_params:', n_params)
 
 ##################################### DATA ####################################
-
 if atmosphere_type=='A':
-    if machine == 'local':  
-        datastring = this_directory + '/../' + f'synthesise_pulse_data/data/A{n_params}_synthetic_realisation.dat'
-    elif machine == 'helios' or machine == 'snellius':
-        datastring = this_directory + '/../' + f'synthesise_pulse_data/data/A{n_params}_synthetic_realisation.dat'
-    settings = dict(counts = np.loadtxt(datastring, dtype=np.double),
-                    channels=np.arange(20,201), #201
-                    phases=np.linspace(0.0, 1.0, 33),
-                    first=0, last=180,
-                    exposure_time=1000.)
-elif atmosphere_type=='N': #N DOES NOT WORK PROPERLY YET
-        datastring = '../model_data/example_synthetic_realisation.dat'
-        settings = dict(counts = np.loadtxt(datastring, dtype=np.double),
+    exposure_time = 40000.
+elif atmosphere_type=='N':
+    exposure_time = 50000.
+
+datastring = this_directory + '/../' + f'synthesise_pulse_data/data/{atmosphere_type}{n_params}_synthetic_realisation.dat'        
+settings = dict(counts = np.loadtxt(datastring, dtype=np.double),
                 channels=np.arange(20,201), #201
                 phases=np.linspace(0.0, 1.0, 33),
                 first=0, last=180,
-                exposure_time=984307.6661)
+                exposure_time=exposure_time)
 
 data = xpsi.Data(**settings)
 
@@ -128,15 +137,23 @@ from xpsi import HotRegions
 
 if atmosphere=='accreting':
     if n_params=='4':
-        bounds = dict(super_colatitude = (None, None),
-                      super_radius = (None, None),
-                      phase_shift = (0.0, 0.1),
-                      super_tbb = (0.00015, 0.003),
-                      #super_te = (40., 200.),
-                      super_tau = (0.5, 3.5))
+        if sampling_params==8:
+            bounds = dict(super_colatitude = (None, None),
+                          super_radius = (None, None),
+                          phase_shift = (0.0, 0.1),
+                          super_tbb = (0.00015, 0.003))
+            values = dict(super_tau = 0.5)
+
+        if sampling_params==9:
+            bounds = dict(super_colatitude = (None, None),
+                          super_radius = (None, None),
+                          phase_shift = (0.0, 0.1),
+                          super_tbb = (0.00015, 0.003),
+                          super_tau = (0.5, 3.5))
+            values = {}
     
         primary = CustomHotRegion_Accreting_te_const(bounds=bounds,
-           	                    values={},
+           	                    values=values,
            	                    symmetry=False, #call general integrator instead of for azimuthal invariance
            	                    omit=False,
            	                    cede=False,
@@ -148,15 +165,32 @@ if atmosphere=='accreting':
            	                    num_rays=200,
            	                    prefix='p')
     if n_params=='5':
-        bounds = dict(super_colatitude = (None, None),
-                      super_radius = (None, None),
-                      phase_shift = (0.0, 0.1),
-                      super_tbb = (0.00015, 0.003),
-                      super_te = (40., 200.),
-                      super_tau = (0.5, 3.5))
-    
+        if sampling_params==8:
+            bounds = dict(super_colatitude = (None, None),
+                          super_radius = (None, None),
+                          phase_shift = (0.0, 0.1),
+                          super_tbb = (0.00015, 0.003))
+            values = dict(super_te = 40., super_tau = 0.5)
+
+        if sampling_params==9: 
+            bounds = dict(super_colatitude = (None, None),
+                          super_radius = (None, None),
+                          phase_shift = (0.0, 0.1),
+                          super_tbb = (0.00015, 0.003),
+                          super_tau = (0.5, 3.5))
+            values = dict(super_te = 40.)  #as I am writing this I am not checking if maybe this should be tau instead
+
+        if sampling_params==10: 
+            bounds = dict(super_colatitude = (None, None),
+                          super_radius = (None, None),
+                          phase_shift = (0.0, 0.1),
+                          super_tbb = (0.00015, 0.003),
+                          super_te = (40., 200.),
+                          super_tau = (0.5, 3.5))
+            values={}
+
         primary = CustomHotRegion_Accreting(bounds=bounds,
-           	                    values={},
+           	                    values=values,
            	                    symmetry=False, #call general integrator instead of for azimuthal invariance
            	                    omit=False,
            	                    cede=False,
@@ -356,11 +390,11 @@ if atmosphere_type == 'A':
     elif machine == 'helios' or machine == 'snellius':
         photosphere.hot_atmosphere = this_directory + '/../' + 'model_data/Bobrikova_compton_slab.npz'
 
-elif atmosphere_type == 'N': # N DOES NOT WORK PROPERLY YET
+elif atmosphere_type == 'N':
     if n_params == "4":   
         photosphere = CustomPhotosphere_N4(hot = hot, elsewhere = None,
                                         values=dict(mode_frequency = spacetime['frequency']))
-        photosphere.hot_atmosphere = '/home/bas/Documents/Projects/x-psi/model_datas/model_data/H-atmosphere_Spectra_fully_ionized/NSX_H-atmosphere_Spectra/nsx_H_v171019.npz'
+        photosphere.hot_atmosphere = this_directory + '/../' + 'model_data/nsx_H_v171019.npz'
     
     elif n_params== "5":
         photosphere = CustomPhotosphere_N5(hot = hot, elsewhere = None,
@@ -426,11 +460,11 @@ if atmosphere=='accreting':
                   0.0, #phase of hotregion
                   1.0, #colatitude of centre of superseding region
                   0.075,  #angular radius superceding region
-                  tbb,
-                  tau,
+                  tbb
                   #6.2, #primary temperature
                   #modulator, #modulator
                   ]
+            if sampling_params==8: p.append(tau)
         if n_params=='5':
             p = [1.6, #1.4, #grav mass
                   14.0,#12.5, #coordinate equatorial radius
@@ -439,14 +473,14 @@ if atmosphere=='accreting':
                   0.0, #phase of hotregion
                   1.0, #colatitude of centre of superseding region
                   0.075,  #angular radius superceding region
-                  tbb,
-                  te,
-                  tau,
+                  tbb
                   #6.2, #primary temperature
                   #modulator, #modulator
                   ]
+            if sampling_params==9: p.append(tau)
+            if sampling_params==10: p += [te, tau]
 elif atmosphere=='numerical':   
-    p_temperature=6.2
+    p_temperature=6.764 # 6.2
     modulator = 0 
 
     if second:
@@ -486,6 +520,7 @@ elif atmosphere=='numerical':
                   p_temperature, #primary temperature
                   #modulator #modulator
                   ]
+            
         
 elif atmosphere=='blackbody':
     p_temperature=6.2
@@ -515,7 +550,7 @@ elif atmosphere=='blackbody':
               ]
         
         
-    
+
 star(p)
 star.update() 
 
@@ -571,9 +606,9 @@ if second:
 if machine == 'local':
     folderstring = f'local_runs/run_{atmosphere_type}{n_params}'
 elif machine == 'helios':
-    folderstring = f'helios_runs/run_{atmosphere_type}{n_params}'
+    folderstring = f'helios_runs/run_{atmosphere_type}{n_params}{likelihood_toggle}'
 elif machine == 'snellius':
-    folderstring = f'snellius_runs/run_{atmosphere_type}{n_params}'
+    folderstring = f'snellius_runs/run_{atmosphere_type}{n_params}{likelihood_toggle}'
 
 try: 
     os.makedirs(folderstring)
@@ -603,7 +638,7 @@ if machine == 'local':
                       'verbose': True}
 if machine == 'helios':
     sampling_efficiency = 0.8
-    n_live_points = 50
+    n_live_points = 64
     max_iter = -1
     outputfiles_basename = f'./{folderstring}/run_se={sampling_efficiency}_lp={n_live_points}_atm={atmosphere_type}{n_params}_ne={num_energies}_mi={max_iter}'
     runtime_params = {'resume': False,
@@ -622,8 +657,8 @@ if machine == 'helios':
                       'verbose': True}
 if machine == 'snellius':
     sampling_efficiency = 0.8
-    n_live_points = 50
-    max_iter = 1000
+    n_live_points = 64
+    max_iter = -1
     outputfiles_basename = f'./{folderstring}/run_se={sampling_efficiency}_lp={n_live_points}_atm={atmosphere_type}{n_params}_ne={num_energies}_mi={max_iter}'
     runtime_params = {'resume': False,
                       'importance_nested_sampling': False,

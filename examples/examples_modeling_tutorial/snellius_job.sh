@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH -N 1 #5
-#SBATCH --tasks-per-node=50
+#SBATCH --tasks-per-node=64
 #SBATCH -t 01:00:00 #1-00:00:00
 #SBATCH -p thin
 #SBATCH --job-name=N4

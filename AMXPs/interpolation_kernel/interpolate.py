@@ -72,17 +72,23 @@ if atmosphere_type == 'A':
     E = np.asarray([0.1]) # Energy, need to look up units still
     mu = np.asarray([0.5]) # cos(emission angle)
 
+    # atmosphere parameters
+    te = 101 #40 - 200
+    tbb = 0.0015 #0.001 - 0.0031
+    tau = 1.01  #0.5 - 3.55
+    
+    # E = np.asarray([9.65080984e-02])
+    # mu = np.asarray([5.00000000e-01])
+    # tau = 1.00000000e+00
+    # tbb = 1.40000000e-03
+    # te = 1.04000000e+02
+
     if n_params == '4':
         if machine == 'local':
             atmosphere = preload_atmosphere_A4('/home/bas/Documents/Projects/x-psi/model_datas/bobrikova/Bobrikova_compton_slab.npz')
         elif machine == 'helios':
             atmosphere = preload_atmosphere_A4('model_data/Bobrikova_compton_slab.npz')
-            
 
-        # atmosphere parameters
-        #te = 101 #40 - 200
-        tbb = 0.0015 #0.001 - 0.0031
-        tau = 1.01  #0.5 - 3.55
         local_vars = np.asarray([[tbb, tau]])
 
     if n_params == '5':
@@ -90,12 +96,7 @@ if atmosphere_type == 'A':
             atmosphere = preload_atmosphere_A5('/home/bas/Documents/Projects/x-psi/model_datas/bobrikova/Bobrikova_compton_slab.npz')
         elif machine == 'helios':
             atmosphere = preload_atmosphere_A5('model_data/Bobrikova_compton_slab.npz')
-            
 
-        # atmosphere parameters
-        te = 101 #40 - 200
-        tbb = 0.0015 #0.001 - 0.0031
-        tau = 1.01  #0.5 - 3.55
         local_vars = np.asarray([[te, tbb, tau]])
 
     intensity = xpsi.surface_radiation_field.intensity(E, mu, local_vars,
@@ -105,3 +106,68 @@ if atmosphere_type == 'A':
     
 
 print(intensity)
+
+#%% MAKE RANDOM VARIABLES
+
+def random_with_bounds(lower_limit, upper_limit, size):
+    return (upper_limit - lower_limit) * np.random.random(size = size) + lower_limit
+
+size = 10000
+
+t__e = np.arange(40.0, 202.0, 4.0) #actual range is 40-200 imaginaty units, ~20-100 keV (Te(keV)*1000/511keV is here)
+t__bb = np.arange(0.001, 0.0031, 0.0002) #this one is non-physical, we went for way_to_low Tbbs here, I will most probably delete results from too small Tbbs. This is Tbb(keV)/511keV, so these correspond to 0.07 - 1.5 keV, but our calculations don't work correctly for Tbb<<0.5 keV
+tau__t = np.arange(0.5, 3.55, 0.1) 
+
+# ENERGY AND MU VECTOR ARE MADE ANALYTICALLY LIKE THIS
+x_l, x_u = -3.7, .3 # lower and upper bounds of the log_10 energy span
+NEnergy = 150 # 50# 101 # number of energy points (x)
+IntEnergy = np.logspace(x_l,x_u,NEnergy), np.log(1e1)*(x_u-x_l)/(NEnergy-1.) # sample points and weights for integrations over the spectrum computing sorce function
+E_vector,x_weight=IntEnergy
+
+from numpy.polynomial.legendre import leggauss
+
+def init_mu(n = 3):
+        NMu = n # number of propagation zenith angle cosines (\mu) [0,1]
+        NZenith = 2*NMu # number of propagation zenith angles (z) [0,pi]
+        mu = np.empty(NZenith)
+        #mu = Array{Float64}(undef,NZenith)
+        #mu_weight = Array{Float64}(undef,NZenith)
+        m2,mw = leggauss(NMu)
+        mu[:NMu] = (m2 - 1.)/2
+        mu[NMu:NZenith] = (m2 + 1.)/2
+        
+        #mu_weight[1:NMu] = (mw)./2
+        #mu_weight[NMu+1:2NMu] = (mw)./2
+        #global μ_grid = n, 2n, mu, mu_weight
+        
+        return mu[NMu:NZenith]
+
+mu_vector = init_mu(9)
+
+te_random = random_with_bounds(min(t__e), max(t__e), size)
+tbb_random = random_with_bounds(min(t__bb), max(t__bb), size)
+tau_random = random_with_bounds(min(tau__t), max(tau__t), size)
+E_random_exponent = random_with_bounds(x_l, x_u, size)
+E_random = 10 ** E_random_exponent
+mu_random = random_with_bounds(min(mu_vector), max(mu_vector), size)
+
+random_local_vars = np.asarray([te_random, tbb_random, tau_random])
+
+
+    
+
+
+#%%
+from time import time
+repetitions = size
+Intensity = np.empty(repetitions)
+
+time_start = time()
+for i in range(repetitions):
+    Intensity[i] = xpsi.surface_radiation_field.intensity(np.asarray([E_random[i]]), np.asarray([mu_random[i]]), np.asarray([random_local_vars[:,i]]),
+                                                       atmosphere=atmosphere,
+                                                       extension='hot',
+                                                       numTHREADS=2)
+    
+time_elapsed = time() - time_start
+print(time_elapsed)  

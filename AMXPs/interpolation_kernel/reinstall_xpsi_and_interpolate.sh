@@ -15,6 +15,6 @@ source blackbody.sh
 fi
 
 
-cd tests/interpolation_kernel/
+cd AMXPs/interpolation_kernel/
 export atmosphere_type n_params
 python interpolate.py

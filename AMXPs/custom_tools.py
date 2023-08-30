@@ -605,7 +605,7 @@ class CustomPhotosphere_A5(xpsi.Photosphere):
         with np.load(path, allow_pickle=True) as data_dictionary:
             NSX = data_dictionary['NSX.npy']
             size_reorderme = data_dictionary['size.npy']
-            print(size_reorderme)
+            #print(size_reorderme)
         
         #size = (150, 9, 31, 11, 41)
         size = [size_reorderme[3], size_reorderme[4], size_reorderme[2], size_reorderme[1], size_reorderme[0]]

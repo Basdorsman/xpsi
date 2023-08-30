@@ -10,6 +10,9 @@ from libc.stdlib cimport malloc, free
 
 from xpsi.global_imports import _keV, _k_B
 
+import numpy as np
+cimport numpy as np
+
 cdef int SUCCESS = 0
 cdef int ERROR = 1
 
@@ -37,6 +40,8 @@ ctypedef struct ACCELERATE:
 ctypedef struct DATA:
     const _preloaded *p 	# _preloaded is a struct defined in preload.pxd
     ACCELERATE acc		# Make ACCELERATE object
+
+
 
 #----------------------------------------------------------------------->>>
 # >>> User modifiable functions.
@@ -281,6 +286,9 @@ cdef double eval_hot(size_t THREAD,
     #printf("\neval_hot() called")
     #printf("\nVEC[0]: %f", VEC[0])
     #printf("\nVEC[1]: %f", VEC[1])
+    
+    # printf('ndims')
+    # printf('\nD.p.ndims 5D: %ld', D.p.ndims)
 
     while i < D.p.ndims: 					# For each dimension 
         # if parallel == 31:
@@ -496,6 +504,7 @@ cdef double eval_hot(size_t THREAD,
         return 0.0
     # Vec here should be the temperature!
     # printf(" I_out: %.8e, ", I * pow(10.0, 3.0 * vec[1]))
+    # printf(" I_out: %f, ", I)
     
     #return I * pow(10.0, 3.0 * Temperature)
     return I
@@ -510,242 +519,73 @@ cdef double eval_hot_norm() nogil:
 
     return erg / 4.135667662e-18
 
-# cdef double eval_hot_faster(size_t THREAD,
-#                      double E,
-#                      double mu,
-#                      const double *const VEC,
-#                      void *const data) nogil:
+cdef double* produce_2D_data(size_t THREAD, const double *const VEC, void *const data) nogil:
+    # interpolate data to make a 2D dataset with only E and mu
+    # printf('\nproduce_2D_data called')
+    cdef DATA *D = <DATA*> data
+    # printf('\n')
     
-#     # Arguments:
-#     # E = photon energy in keV
-#     # mu = cosine of ray zenith angle (i.e., angle to surface normal)
-#     # VEC = variables such as temperature, effective gravity, ...
-#     # data = numerical model data required for intensity evaluation
-#     # This function must cast the void pointer appropriately for use.
-#     cdef DATA *D = <DATA*> data
-
-#     cdef:
-#         size_t i = 0, ii
-#         double I = 0.0, temp
-#         double *node_vals = D.acc.node_vals[THREAD]
-#         size_t *BN = D.acc.BN[THREAD]
-#         double *SPACE = D.acc.SPACE[THREAD]
-#         double *DIFF = D.acc.DIFF[THREAD]
-#         double *I_CACHE = D.acc.INTENSITY_CACHE[THREAD]
-#         double *V_CACHE = D.acc.VEC_CACHE[THREAD]
-#         double vec[5] # should be = ndims
-#         # double E_eff = k_B_over_keV * pow(10.0, VEC[0])
-#         # double E_eff = k_B_over_keV * pow(10.0, Temperature)
-#         int update_baseNode[5]  # should be = ndims
-#         int CACHE 
-# cdef double eval_ho= 0
-
-#     cdef double te, tbb, tau
-#     te = VEC[0]
-#     tbb = VEC[1]
-#     tau = VEC[2]
+    cdef size_t i, j
+    cdef double I_E
     
-#     cdef double evere = 0.5109989e6 # electron volts in elecron rest energy
-
-#     # take into account the order of *._hot_atmosphere
-#     vec[0] = te
-#     vec[1] = tbb
-#     vec[2] = tau
-#     vec[3] = mu #0.5  # mu
-#     vec[4] = E*1e3/evere #1.01088  # E
-#     # printf("Bobrikova atmosphere interpolator")
+    # check if atmosphere data is healthy ...
+    # for i in range(D.p.ndims):
+    #     printf('D.p.params[%ld][0]: %f, ', i, D.p.params[i][0])
+    #     printf('D.p.N[%ld]: %d. ', i, D.p.N[i])
     
-#     # printf("diagnostics 0:\n")
-#     # printf("E: %.2e, ", E)
-#     # printf("Temperature: %.2e, ", Temperature)
-#     # printf("k_B_over_keV: %.2e, ", k_B_over_keV)
-#     # printf("E_eff: %.2e, ", E_eff)
-#     # printf("vec[4]: %.2e\n", vec[4])
+    # check if VEC is healthy...
+    # cdef double te, tbb, tau # I have three parameters in VEC
+    # te = VEC[0]
+    # tbb = VEC[1]
+    # tau = VEC[2]
     
-
-#     # printf("\nvec[0]: %.8e, ", vec[0])
-#     # printf("vec[1]: %.8e, ", vec[1])
-#     # printf("vec[2]: %.8e, ", vec[2])
-#     # printf("vec[3]: %.8e, ", vec[3])
-#     # printf("vec[4]: %.8e, ", vec[4])
+    # printf('\nte = %f, ', te)
+    # printf('tbb = %f, ', tbb)
+    # printf('tau = %f. ', tau)
     
+    # print interpolated intensities...
     
-#     #printf("\neval_hot() called")
-#     #printf("\nVEC[0]: %f", VEC[0])
-#     #printf("\nVEC[1]: %f", VEC[1])
+    #cdef double[:, ::1] I_data
+    cdef double *I_data
+    I_data = <double*> malloc(sizeof(double*) * D.p.N[3] * D.p.N[4])
 
-#     while i < D.p.ndims:
-#         # if parallel == 31:
-#         # printf("\nDimension: %d", <int>i)
-#         update_baseNode[i] = 0
-#         if vec[i] < node_vals[2*i] and BN[i] != 0:
-#             # if parallel == 31:
-#             # printf("\nExecute block 1: %d", <int>i)
-#             update_baseNode[i] = 1
-#             while vec[i] < D.p.params[i][BN[i] + 1]:
-#                 # if parallel == 31:
-#                 #     printf("\n!")
-#                 #     printf("\nvec i: %.8e", vec[i])
-#                 #     printf("\nBase node: %d", <int>BN[i])
-#                 if BN[i] > 0:
-#                     BN[i] -= 1
-#                 elif vec[i] <= D.p.params[i][0]:
-#                     vec[i] = D.p.params[i][0]
-#                     break
-#                 elif BN[i] == 0:
-#                     break
-
-#             node_vals[2*i] = D.p.params[i][BN[i] + 1]
-#             node_vals[2*i + 1] = D.p.params[i][BN[i] + 2]
-
-#             # if parallel == 31:
-#             # printf("\nEnd Block 1: %d", <int>i)
-
-#         elif vec[i] > node_vals[2*i + 1] and BN[i] != D.p.N[i] - 4: # I believe this has to do with the cubic interpolation points, so this remains 4
-#             # if parallel == 31:
-#             # printf("\nExecute block 2: %d", <int>i)
-#             update_baseNode[i] = 1
-#             while vec[i] > D.p.params[i][BN[i] + 2]:
-#                 if BN[i] < D.p.N[i] - 4:
-#                     BN[i] += 1
-#                 elif vec[i] >= D.p.params[i][D.p.N[i] - 1]:
-#                     vec[i] = D.p.params[i][D.p.N[i] - 1]
-#                     break
-#                 elif BN[i] == D.p.N[i] - 4:
-#                     break
-
-#             node_vals[2*i] = D.p.params[i][BN[i] + 1]
-#             node_vals[2*i + 1] = D.p.params[i][BN[i] + 2]
-
-#             # if parallel == 31:
-#             # printf("\nEnd Block 2: %d", <int>i)
-
-#         # if parallel == 31:
-#         # printf("\nTry block 3: %d", <int>i)
-
-#         if V_CACHE[i] != vec[i] or update_baseNode[i] == 1:
-#             # if parallel == 31:
-#             # printf("\nExecute block 3: %d", <int>i)
-#             ii = 4*i
-#             DIFF[ii] = vec[i] - D.p.params[i][BN[i] + 1]
-#             DIFF[ii] *= vec[i] - D.p.params[i][BN[i] + 2]
-#             DIFF[ii] *= vec[i] - D.p.params[i][BN[i] + 3]
-
-#             DIFF[ii + 1] = vec[i] - D.p.params[i][BN[i]]
-#             DIFF[ii + 1] *= vec[i] - D.p.params[i][BN[i] + 2]
-#             DIFF[ii + 1] *= vec[i] - D.p.params[i][BN[i] + 3]
-
-#             DIFF[ii + 2] = vec[i] - D.p.params[i][BN[i]]
-#             DIFF[ii + 2] *= vec[i] - D.p.params[i][BN[i] + 1]
-#             DIFF[ii + 2] *= vec[i] - D.p.params[i][BN[i] + 3]
-
-#             DIFF[ii + 3] = vec[i] - D.p.params[i][BN[i]]
-#             DIFF[ii + 3] *= vec[i] - D.p.params[i][BN[i] + 1]
-#             DIFF[ii + 3] *= vec[i] - D.p.params[i][BN[i] + 2]
-
-#             # printf("\nupdating V_CACHE")
-
-
-#             V_CACHE[i] = vec[i]
-
-#             # if parallel == 31:
-#             # printf("\nEnd block 3: %d", <int>i)
-
-#         # if parallel == 31:
-#         #     printf("\nTry block 4: %d", <int>i)
-
-#         if update_baseNode[i] == 1:
-#             # if parallel == 31:
-#             # printf("\nExecute block 4: %d", <int>i)
-#             # printf("i=%d, ", <int>i)
-#             # printf("D.p.params[i][BN[i]]: %.2e\n", D.p.params[i][BN[i]])
-#             CACHE = 1
-#             SPACE[ii] = 1.0 / (D.p.params[i][BN[i]] - D.p.params[i][BN[i] + 1])
-#             SPACE[ii] /= D.p.params[i][BN[i]] - D.p.params[i][BN[i] + 2]
-#             SPACE[ii] /= D.p.params[i][BN[i]] - D.p.params[i][BN[i] + 3]
-
-#             SPACE[ii + 1] = 1.0 / (D.p.params[i][BN[i] + 1] - D.p.params[i][BN[i]])
-#             SPACE[ii + 1] /= D.p.params[i][BN[i] + 1] - D.p.params[i][BN[i] + 2]
-#             SPACE[ii + 1] /= D.p.params[i][BN[i] + 1] - D.p.params[i][BN[i] + 3]
-
-#             SPACE[ii + 2] = 1.0 / (D.p.params[i][BN[i] + 2] - D.p.params[i][BN[i]])
-#             SPACE[ii + 2] /= D.p.params[i][BN[i] + 2] - D.p.params[i][BN[i] + 1]
-#             SPACE[ii + 2] /= D.p.params[i][BN[i] + 2] - D.p.params[i][BN[i] + 3]
-
-#             SPACE[ii + 3] = 1.0 / (D.p.params[i][BN[i] + 3] - D.p.params[i][BN[i]])
-#             SPACE[ii + 3] /= D.p.params[i][BN[i] + 3] - D.p.params[i][BN[i] + 1]
-#             SPACE[ii + 3] /= D.p.params[i][BN[i] + 3] - D.p.params[i][BN[i] + 2]
-
-#             # if parallel == 31:
-#             # printf("\nEnd block 4: %d", <int>i)
-
-#         # printf("\ncomputing DIFFs and SPACEs\n")
-#         # printf("DIFF[ii]: %.2e, ", DIFF[ii])
-#         # printf("DIFF[ii+1]: %.2e, ", DIFF[ii+1])
-#         # printf("DIFF[ii+2]: %.2e, ", DIFF[ii+2])
-#         # printf("DIFF[ii+3]: %.2e\n", DIFF[ii+3])
-        
-        
-#         # printf("SPACE[ii]: %.2e, ", SPACE[ii])
-#         # printf("SPACE[ii+1]: %.2e, ", SPACE[ii+1])
-#         # printf("SPACE[ii+2]: %.2e, ", SPACE[ii+2])
-#         # printf("SPACE[ii+3]: %.2e\n", SPACE[ii+3])
-
-#         i += 1
-
-#     cdef size_t j, k, l, m, INDEX, II, JJ, KK, LL
-#     cdef double *address = NULL
-#     # cdef double *address = <double*>malloc(iteration_size * sizeof(double))
-
-
-#     cdef int iterator
-#     cdef int iteration_size = 1024
-#     cdef double* temp2 = <double*>malloc(iteration_size * sizeof(double))
-
-#     for iterator in range(iteration_size):
-#         # printf("i:%lu, ",i)
-#         m = iterator % 4
-#         l = iterator / 4 % 4
-#         k = iterator / 16 % 4
-#         j = iterator / 64 % 4
-#         i = iterator / 256 % 4
-        
-        
-#         address = D.p.I + (BN[0] + i) * D.p.S[0] + (BN[1] + j) * D.p.S[1] + (BN[2] + k) * D.p.S[2] + (BN[3] + l) * D.p.S[3] + BN[4] + m
- 
-#     # for iterator in range(iteration_size):
-#     #     # printf("i:%lu, ",i)
-#     #     m = iterator % 4
-#     #     l = iterator / 4 % 4
-#     #     k = iterator / 16 % 4
-#     #     j = iterator / 64 % 4
-#     #     i = iterator / 256 % 4
     
-#         temp2[iterator] = DIFF[i] * DIFF[4 + j] * DIFF[8 + k] * DIFF[12 + l] * DIFF[16 + m] * SPACE[i] * SPACE[4 + j] * SPACE[8 + k] * SPACE[12 + l] * SPACE[16 + m]
-        
-        
-        
-#     # for iterator in range(iteration_size):
-#     #     # printf("i:%lu, ",i)
-#     #     m = iterator % 4
-#     #     l = iterator / 4 % 4
-#     #     k = iterator / 16 % 4
-#     #     j = iterator / 64 % 4
-#     #     i = iterator / 256 % 4
+    for i in range(D.p.N[3]):
+        mu = D.p.params[3][i]
+        # mu_array[i] = mu
+        # printf('mu_array[%ld] = %f', i, mu_array[i])
+        for j in range(D.p.N[4]):
+            E = D.p.params[4][j]
+            # E_array[j] = E 
+            # printf('\ni = %ld, j = %ld. ', i, j)
+            
+            I_E = eval_hot(THREAD,
+                            E,
+                            mu,
+                            VEC,
+                            data)
+            index = i * D.p.N[4] + j
+            I_data[index] = I_E
+            # printf('I_data[%ld] = %f. ', index, I_data[index])
+            
+    
+    return I_data
 
-#         if CACHE == 1:
-#             # printf('replace %f ',I_CACHE[INDEX])
-#             # printf('with %f\n', address[0])
-#             I_CACHE[iterator] = address[0]
-#         # printf('%f\n', I2)
-#         # if temp2[iterator] != 0.0:
-#         I += temp2[iterator] *  I_CACHE[iterator]
-#         # I2 += temp *  I_CACHE[iterator]
-#         # printf('I2: %f\n',I2)
-#     free(temp2)
-#     # free(address)
-
-#     if I < 0.0:
-#          return 0.0
-
-#     return I
+cdef object make_atmosphere_2D(double *I_data, void *const data):
+    cdef DATA *D = <DATA*> data
+    # cdef np.npy_double[:] mu_array = np.empty(D.p.N[3], dtype=np.float64)
+    # cdef np.npy_double[:] E_array = np.empty(D.p.N[4], dtype=np.float64)
+    # cdef np.npy_double[:] I_array = np.empty(D.p.N[3]*D.p.N[4], dtype=np.float64)
+    cdef np.ndarray[double, ndim=1, mode="c"] mu_array = np.ascontiguousarray(np.empty(D.p.N[3], dtype=float))
+    cdef np.ndarray[double, ndim=1, mode="c"] E_array = np.ascontiguousarray(np.empty(D.p.N[4], dtype=float))
+    cdef np.ndarray[double, ndim=1, mode="c"] I_array = np.ascontiguousarray(np.empty(D.p.N[3]*D.p.N[4], dtype=float))
+    cdef size_t i, j, index
+    for i in range(D.p.N[3]):
+        mu_array[i] = D.p.params[3][i]
+        for j in range(D.p.N[4]):
+            index = i * D.p.N[4] + j
+            I_array[index] = I_data[index]
+    for j in range(D.p.N[4]):
+        E_array[j] = D.p.params[4][j]
+    cdef tuple atmosphere_2D = (mu_array, E_array, I_array)
+    return atmosphere_2D

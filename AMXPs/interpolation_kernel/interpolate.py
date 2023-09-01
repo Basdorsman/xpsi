@@ -1,6 +1,7 @@
 import numpy as np
 import xpsi
 
+np.random.seed(xpsi._rank+10)
 machine = 'local' #'local', 'helios'
 
 
@@ -119,7 +120,7 @@ if atmosphere_type == 'A':
 def random_with_bounds(lower_limit, upper_limit, size):
     return (upper_limit - lower_limit) * np.random.random(size = size) + lower_limit
 
-size = 10
+size = 100000
 
 t__e = np.arange(40.0, 202.0, 4.0) #actual range is 40-200 imaginaty units, ~20-100 keV (Te(keV)*1000/511keV is here)
 t__bb = np.arange(0.001, 0.0031, 0.0002) #this one is non-physical, we went for way_to_low Tbbs here, I will most probably delete results from too small Tbbs. This is Tbb(keV)/511keV, so these correspond to 0.07 - 1.5 keV, but our calculations don't work correctly for Tbb<<0.5 keV
@@ -164,17 +165,62 @@ random_local_vars = np.asarray([te_random, tbb_random, tau_random])
     
 
 
-#%%
-from time import time
+#%% comined 
+# from time import time
 repetitions = size
-Intensity = np.empty(repetitions)
+intensity_c = np.empty(repetitions)
 
-time_start = time()
+# time_start = time()
 for i in range(repetitions):
-    Intensity[i] = xpsi.surface_radiation_field.intensity_no_norm(np.asarray([E_random[i]]), np.asarray([mu_random[i]]), np.asarray([random_local_vars[:,i]]),
-                                                       atmosphere=atmosphere,
-                                                       extension='hot',
-                                                       numTHREADS=2)
+    intensity_c[i] = xpsi.surface_radiation_field.intensity_no_norm(np.asarray([E_random[i]]), np.asarray([mu_random[i]]), np.asarray([random_local_vars[:,i]]),
+                                                        atmosphere=atmosphere,
+                                                        extension='hot',
+                                                        numTHREADS=2)
     
-time_elapsed = time() - time_start
-print(time_elapsed)  
+
+    
+# time_elapsed = time() - time_start
+# print(time_elapsed)  
+
+#%% split
+
+# from time import time
+# repetitions = size
+intensity_s = np.empty(repetitions)
+
+# time_start = time()
+for i in range(repetitions):
+    intensity_s[i] = xpsi.surface_radiation_field.intensity_split_interpolation(np.asarray([E_random[i]]), np.asarray([mu_random[i]]), np.asarray([random_local_vars[:,i]]),
+                                                        atmosphere=atmosphere,
+                                                        extension='hot',
+                                                        numTHREADS=2)
+    
+
+    
+# time_elapsed = time() - time_start
+# print(time_elapsed)  
+
+
+## differences
+# print(intensity_c)
+# print(intensity_s)
+print('largest absolute difference')
+abs_dif = intensity_c-intensity_s
+print(np.argmax(abs_dif))
+print(np.nanmax(abs_dif))
+
+print('largest fractional difference')
+frac_dif = np.divide(intensity_s - intensity_c, intensity_c, out=0*np.ones_like(intensity_s), where=intensity_c!=0)
+print(np.argmax(frac_dif))
+print(np.nanmax(frac_dif))
+
+#%% histogram
+import matplotlib.pyplot as plt
+hist_data = intensity_c[intensity_c != 0]
+nbins=100
+log_bins = np.logspace(np.log10(hist_data.min()), np.log10(hist_data.max()), nbins)
+
+plt.hist(hist_data, log_bins, log=True)
+plt.xscale('log')
+plt.ylabel('count in log bin')
+plt.xlabel('intensity (data units)')

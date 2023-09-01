@@ -70,10 +70,8 @@ class HotRegion(ParameterSubspace):
         with value ``None``, or a required name that is omitted from the bounds
         dictionary.
 
-    :param bool symmetry:
-        Is the radiation field axisymmetric (w.r.t the stellar rotation
-        axis) within superseding (and ceding) member regions? This determines
-        which ``CellMesh`` integrator to deploy based on this safety check.
+    :param str symmetry:
+        Which integrator do we invoke?
 
     :param int sqrt_num_cells:
         Number of cells in both colatitude and azimuth which form a regular
@@ -214,7 +212,7 @@ class HotRegion(ParameterSubspace):
     def __init__(self,
                  bounds,
                  values,
-                 symmetry = True,
+                 symmetry = 'combined',
                  omit = False,
                  cede = False,
                  concentric = False,
@@ -476,16 +474,17 @@ class HotRegion(ParameterSubspace):
 
     @symmetry.setter
     def symmetry(self, declaration):
-        if not isinstance(declaration, bool):
-            raise TypeError('Declare symmetry existence with a boolean.')
+        if not isinstance(declaration, str):
+            raise TypeError('Declare symmetry existence with a string.')
 
         self._symmetry = declaration
 
         # find the required integrator
-        if declaration: # can we safely assume azimuthal invariance?
+        if declaration == 'azimuthal_invariance': # can we safely assume azimuthal invariance?
             from xpsi.cellmesh.integrator_for_azimuthal_invariance import integrate as _integrator
-        else: # more general purpose
-            # from xpsi.cellmesh.integrator import integrate as _integrator
+        elif declaration == 'combined': # more general purpose
+            from xpsi.cellmesh.integrator import integrate as _integrator
+        elif declaration == 'split': # attempt to optimize
             from xpsi.cellmesh.integrator_split_interpolation import integrate as _integrator
         self._integrator = _integrator
 
@@ -1135,7 +1134,10 @@ class HotRegion(ParameterSubspace):
                                        hot_atmosphere,
                                        elsewhere_atmosphere,
                                        self._image_order_limit)
-        # print("super pulse done")
+        print("super pulse done")
+        self.diagnosis=super_pulse[2]
+        
+        # print(super_pulse[1])
         if super_pulse[0] == 1:
             raise PulseError('Fatal numerical error during superseding-'
                              'region pulse integration.')
@@ -1176,6 +1178,7 @@ class HotRegion(ParameterSubspace):
             else:
                 return (super_pulse[1], cede_pulse[1])
 
-        return (super_pulse[1],)
+        # return (super_pulse[1],super_pulse[2])
+        return (super_pulse[1])
 
 HotRegion._update_doc()

@@ -3,8 +3,8 @@ echo "atmosphere type: N for NSX, A for accreting, B for blackbody"
 read atmosphere_type
 echo "number of parameters in atmosphere: choose 4 or 5 for NSX or accreting atmosphere"
 read n_params
-echo "sampling problem dimensionality: 8, 9 or 10"
-read sampling_params
+echo "which integrator to invoke: a for azimuthal_invariance, c for combined, s for split."
+read integrator
 #n_params="A"
 cd ../../
 
@@ -19,6 +19,7 @@ fi
 likelihood="custom"
 machine="local"
 num_energies=16
+sampling_params=8
 cd AMXPs/inference_run/
-export atmosphere_type n_params likelihood machine num_energies sampling_params
-python sample.py #> test.txt
+export atmosphere_type n_params likelihood machine num_energies sampling_params integrator
+python likelihood_checks.py #> test.txt

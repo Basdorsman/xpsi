@@ -153,10 +153,12 @@ def integrate(size_t numThreads,
         int I, image_order, _IO
         double _phase_lag
         size_t _InvisPhase
+        # size_t bascounter
 
         double[:,:,::1] privateFlux = np.zeros((N_T, N_P, N_E), dtype = np.double)
         double[:,::1] flux = np.zeros((N_E, N_P), dtype = np.double)
-
+        double[:,:,:,:,::1] diagnosis = np.zeros((cellArea.shape[0], cellArea.shape[1], N_E, N_P, 3), dtype = np.double)
+      
         int *terminate = <int*> malloc(N_T * sizeof(int))
 
         int *InvisFlag = <int*> malloc(N_T * sizeof(int))
@@ -328,6 +330,10 @@ def integrate(size_t numThreads,
     # initiate data 2D
     hot_preloaded_2D = init_preload(atmosphere_2D)
     hot_data_2D = init_hot_2D(N_T, hot_preloaded_2D)
+    printf('\ntest')
+    
+    # bascounter = 0
+    # printf('bascounter %ld',bascounter)
  
     # Eval hot 2D
     # cdef double Intesti2D, Intestity5D
@@ -692,6 +698,7 @@ def integrate(size_t numThreads,
                                         # printf("srcCellParams[i,j,0]: %.8e, ", srcCellParams[i,j,0])
                                         # printf("srcCellParams[i,j,1]: %.8e, ", srcCellParams[i,j,1])
  
+
                                         
                                         #time the interpolations
                                         # printf('\neval hot:\n')
@@ -704,8 +711,19 @@ def integrate(size_t numThreads,
                                         # printf('I_E5D %f, ', I_E5D)
                                         
                                         I_E2D = eval_hot_2D(T, E_prime, __ABB, hot_data_2D)
+                                        
+                                        # save some parameters
+                                        diagnosis[i,j,p,k,0]= E_prime
+                                        diagnosis[i,j,p,k,1]= __ABB
+                                        diagnosis[i,j,p,k,2] = I_E2D
+                                        
+                                        # printf('\n(%ld)',bascounter)
+                                        # bascounter = bascounter + 1
+                                        
                                         # printf('I_E2D %f', I_E2D)
                                         I_E = I_E2D * eval_hot_norm()
+                                        
+                                        
 
                                         if perform_correction == 1:
                                             correction_I_E = eval_elsewhere(T,
@@ -738,6 +756,8 @@ def integrate(size_t numThreads,
         for T in range(N_T):
             for k in range(N_P):
                 flux[i,k] += privateFlux[T,k,i]
+                # flux[i,k,0] += privateFlux[T,k,i]
+
 
     for p in range(N_E):
         for k in range(N_P):
@@ -806,4 +826,5 @@ def integrate(size_t numThreads,
             free(terminate)
             return (ERROR, None)
 
-    return (SUCCESS, np.asarray(flux, dtype = np.double, order = 'C'))
+    return (SUCCESS, np.asarray(flux, dtype = np.double, order = 'C'), np.asarray(diagnosis, dtype = np.double, order = 'C'))
+    # return (SUCCESS, np.asarray(flux, dtype = np.double, order = 'C'))

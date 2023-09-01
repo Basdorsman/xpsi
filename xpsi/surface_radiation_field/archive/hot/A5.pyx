@@ -558,7 +558,7 @@ cdef double* produce_2D_data(size_t THREAD, const double *const VEC, void *const
             E = D.p.params[4][j]
             # E_array[j] = E 
             # printf('\ni = %ld, j = %ld. ', i, j)
-            
+
             I_E = eval_hot(THREAD,
                             E,
                             mu,
@@ -568,7 +568,7 @@ cdef double* produce_2D_data(size_t THREAD, const double *const VEC, void *const
             I_data[index] = I_E
             # printf('I_data[%ld] = %f. ', index, I_data[index])
             
-    
+
     return I_data
 
 cdef object make_atmosphere_2D(double *I_data, void *const data):

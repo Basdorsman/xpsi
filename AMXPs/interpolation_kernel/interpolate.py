@@ -34,7 +34,7 @@ def preload_atmosphere_A5(path):
     with np.load(path, allow_pickle=True) as data_dictionary:
         NSX = data_dictionary['NSX.npy']
         size_reorderme = data_dictionary['size.npy']
-        print(size_reorderme)
+        # print(size_reorderme)
     
     #size = (150, 9, 31, 11, 41)
     size = [size_reorderme[3], size_reorderme[4], size_reorderme[2], size_reorderme[1], size_reorderme[0]]
@@ -99,20 +99,27 @@ if atmosphere_type == 'A':
 
         local_vars = np.asarray([[te, tbb, tau]])
 
-    intensity = xpsi.surface_radiation_field.intensity(E, mu, local_vars,
-                                                       atmosphere=atmosphere,
-                                                       extension='hot',
-                                                       numTHREADS=2)
+    intensity1 = xpsi.surface_radiation_field.intensity_no_norm(E, mu, local_vars,
+                                                        atmosphere=atmosphere,
+                                                        extension='hot',
+                                                        numTHREADS=2)
+    
+    print(intensity1)
+
+    intensity2 = xpsi.surface_radiation_field.intensity_split_interpolation(E, mu, local_vars,
+                                                        atmosphere=atmosphere,
+                                                        extension='hot',
+                                                        numTHREADS=2)    
     
 
-print(intensity)
+    print(intensity2)
 
 #%% MAKE RANDOM VARIABLES
 
 def random_with_bounds(lower_limit, upper_limit, size):
     return (upper_limit - lower_limit) * np.random.random(size = size) + lower_limit
 
-size = 10000
+size = 10
 
 t__e = np.arange(40.0, 202.0, 4.0) #actual range is 40-200 imaginaty units, ~20-100 keV (Te(keV)*1000/511keV is here)
 t__bb = np.arange(0.001, 0.0031, 0.0002) #this one is non-physical, we went for way_to_low Tbbs here, I will most probably delete results from too small Tbbs. This is Tbb(keV)/511keV, so these correspond to 0.07 - 1.5 keV, but our calculations don't work correctly for Tbb<<0.5 keV
@@ -164,7 +171,7 @@ Intensity = np.empty(repetitions)
 
 time_start = time()
 for i in range(repetitions):
-    Intensity[i] = xpsi.surface_radiation_field.intensity(np.asarray([E_random[i]]), np.asarray([mu_random[i]]), np.asarray([random_local_vars[:,i]]),
+    Intensity[i] = xpsi.surface_radiation_field.intensity_no_norm(np.asarray([E_random[i]]), np.asarray([mu_random[i]]), np.asarray([random_local_vars[:,i]]),
                                                        atmosphere=atmosphere,
                                                        extension='hot',
                                                        numTHREADS=2)

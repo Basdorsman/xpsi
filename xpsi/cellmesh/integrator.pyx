@@ -145,6 +145,7 @@ def integrate(size_t numThreads,
         int I, image_order, _IO
         double _phase_lag
         size_t _InvisPhase
+        double E_electronrest
 
         double[:,:,::1] privateFlux = np.zeros((N_T, N_P, N_E), dtype = np.double)
         double[:,::1] flux = np.zeros((N_E, N_P), dtype = np.double)
@@ -619,9 +620,9 @@ def integrate(size_t numThreads,
  
                                         
                                         #time the interpolations
-                                        
+                                        E_electronrest=E_prime*0.001956951 #kev to electron rest energy conversion
                                         I_E = eval_hot(T,
-                                                       E_prime,
+                                                       E_electronrest,
                                                        __ABB,
                                                        &(srcCellParams[i,j,0]),
                                                        hot_data)

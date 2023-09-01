@@ -22,4 +22,4 @@ num_energies=16
 sampling_params=8
 cd AMXPs/inference_run/
 export atmosphere_type n_params likelihood machine num_energies sampling_params integrator
-python likelihood_checks.py #> test.txt
+python likelihood_checks.py #sample.py #likelihood_checks.py #> test.txt

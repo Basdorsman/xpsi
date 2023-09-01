@@ -257,14 +257,14 @@ cdef double eval_hot(size_t THREAD,
     tbb = VEC[1]
     tau = VEC[2]
     
-    cdef double evere = 0.5109989e6 # electron volts in elecron rest energy
+    # cdef double evere = 0.5109989e6 # electron volts in elecron rest energy
 
     # The input value of the parameter (vec) to be interpolated. Note this is the order of *._hot_atmosphere
     vec[0] = te
     vec[1] = tbb
     vec[2] = tau
     vec[3] = mu
-    vec[4] = E*1e3/evere # conversion from keV to electron rest energy
+    vec[4] = E#*1e3/evere # conversion from keV to electron rest energy
  
     # printf("Bobrikova atmosphere interpolator")
     

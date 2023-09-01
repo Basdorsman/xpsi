@@ -20,7 +20,7 @@ from xpsi.global_imports import gravradius
 ################################ OPTIONS ###############################
 second = False
 te_index=0 # t__e = np.arange(40.0, 202.0, 4.0), there are 40.5 values (I expect that means 40)
-tbb=0.00015 #0.001 #0.00015 - 0.003
+tbb=0.001 #0.001 #0.00015 - 0.003
 te=40.#200 #40 - 200
 tau=0.5 #0.5 - 3.5
 
@@ -757,11 +757,12 @@ with open(f'pulse/energies={num_energies}_integrator={integrator}.pkl', 'wb') as
     
 #%% histogram of interpolations
 
-histodata = primary.diagnosis[:,:,:,:,0]
-histodatanonzero = histodata[histodata != 0]
-plt.hist(histodatanonzero.reshape(-1), bins=1000)
-plt.xlabel('Energy')
-plt.ylabel('number of counts in bin')
-print(np.sum(primary.diagnosis[:,:,:,:,0]))
+# histodata = primary.diagnosis[:,:,:,:,0]
+# histodatanonzero = histodata[histodata != 0]
+# plt.hist(histodatanonzero.reshape(-1), bins=1000)
+# plt.xlabel('Energy')
+# plt.ylabel('number of counts in bin')
+# print(np.sum(primary.diagnosis[:,:,:,:,0]))
+
 #1653046.1374140463 for tbb = 0.001
 #1653046.1374140463 for tbb = 0.00015

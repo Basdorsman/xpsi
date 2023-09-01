@@ -153,7 +153,7 @@ def integrate(size_t numThreads,
         int I, image_order, _IO
         double _phase_lag
         size_t _InvisPhase
-        # size_t bascounter
+        double E_electronrest
 
         double[:,:,::1] privateFlux = np.zeros((N_T, N_P, N_E), dtype = np.double)
         double[:,::1] flux = np.zeros((N_E, N_P), dtype = np.double)
@@ -709,11 +709,11 @@ def integrate(size_t numThreads,
                                         #                 &(srcCellParams[i,j,0]),
                                         #                 hot_data)
                                         # printf('I_E5D %f, ', I_E5D)
-                                        
-                                        I_E2D = eval_hot_2D(T, E_prime, __ABB, hot_data_2D)
+                                        E_electronrest=E_prime*0.001956951 #kev to electron rest energy conversion
+                                        I_E2D = eval_hot_2D(T, E_electronrest, __ABB, hot_data_2D)
                                         
                                         # save some parameters
-                                        diagnosis[i,j,p,k,0]= E_prime
+                                        diagnosis[i,j,p,k,0]= E_electronrest
                                         diagnosis[i,j,p,k,1]= __ABB
                                         diagnosis[i,j,p,k,2] = I_E2D
                                         

@@ -257,14 +257,14 @@ cdef double eval_hot(size_t THREAD,
     tbb = VEC[1]
     tau = VEC[2]
     
-    cdef double evere = 0.5109989e6 # electron volts in elecron rest energy
+    # cdef double evere = 0.5109989e6 # electron volts in elecron rest energy
 
     # The input value of the parameter (vec) to be interpolated. Note this is the order of *._hot_atmosphere
     vec[0] = te
     vec[1] = tbb
     vec[2] = tau
     vec[3] = mu
-    vec[4] = E*1e3/evere # conversion from keV to electron rest energy
+    vec[4] = E#*1e3/evere # conversion from keV to electron rest energy
  
     # printf("Bobrikova atmosphere interpolator")
     
@@ -558,7 +558,7 @@ cdef double* produce_2D_data(size_t THREAD, const double *const VEC, void *const
             E = D.p.params[4][j]
             # E_array[j] = E 
             # printf('\ni = %ld, j = %ld. ', i, j)
-            
+
             I_E = eval_hot(THREAD,
                             E,
                             mu,
@@ -568,7 +568,7 @@ cdef double* produce_2D_data(size_t THREAD, const double *const VEC, void *const
             I_data[index] = I_E
             # printf('I_data[%ld] = %f. ', index, I_data[index])
             
-    
+
     return I_data
 
 cdef object make_atmosphere_2D(double *I_data, void *const data):

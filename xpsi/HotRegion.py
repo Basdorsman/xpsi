@@ -1134,7 +1134,7 @@ class HotRegion(ParameterSubspace):
                                        hot_atmosphere,
                                        elsewhere_atmosphere,
                                        self._image_order_limit)
-        print("super pulse done")
+        # print("super pulse done")
         # self.diagnosis=super_pulse[2]
         
         # print(super_pulse[1])

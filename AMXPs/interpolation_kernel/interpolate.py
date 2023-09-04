@@ -205,7 +205,7 @@ for i in range(repetitions):
 # print(intensity_c)
 # print(intensity_s)
 print('largest absolute difference')
-abs_dif = intensity_c-intensity_s
+abs_dif = abs(intensity_c-intensity_s)
 print(np.argmax(abs_dif))
 print(np.nanmax(abs_dif))
 
@@ -216,11 +216,16 @@ print(np.nanmax(frac_dif))
 
 #%% histogram
 import matplotlib.pyplot as plt
-hist_data = intensity_c[intensity_c != 0]
+hist_ic = intensity_c[intensity_c != 0]
+hist_ad = abs_dif[abs_dif != 0]
 nbins=100
-log_bins = np.logspace(np.log10(hist_data.min()), np.log10(hist_data.max()), nbins)
+combined = np.concatenate((hist_ic, hist_ad))
+log_bins = np.logspace(np.log10(np.min(combined)), np.log10(np.max(combined)), nbins)
 
-plt.hist(hist_data, log_bins, log=True)
+plt.hist(hist_ic, bins=log_bins, alpha=0.5, color='blue', label='Intensity', log=True)
+plt.hist(hist_ad, bins=log_bins, alpha=0.5, color='orange', label='Intensity Difference', log=True)
+
 plt.xscale('log')
 plt.ylabel('count in log bin')
-plt.xlabel('intensity (data units)')
+plt.xlabel('Intensity (difference) [data units]')
+plt.legend()

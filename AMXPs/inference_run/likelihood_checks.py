@@ -20,7 +20,7 @@ from xpsi.global_imports import gravradius
 ################################ OPTIONS ###############################
 second = False
 te_index=0 # t__e = np.arange(40.0, 202.0, 4.0), there are 40.5 values (I expect that means 40)
-tbb=0.001 #0.001 #0.00015 - 0.003
+tbb=0.001 #0.001 #0.001 - 0.003 # updated lower limit
 te=40.#200 #40 - 200
 tau=0.5 #0.5 - 3.5
 
@@ -43,11 +43,11 @@ if isinstance(os.environ.get('atmosphere_type'),type(None)) or isinstance(os.env
     print('E: failed to import some OS environment variables, using defaults.')    
     atmosphere_type = 'A' #A, N, B
     n_params = '5' #4, 5
-    likelihood_toggle = 'default' # default, custom
+    likelihood_toggle = 'custom' # default, custom
     machine = 'local' # local, helios, snellius
     num_energies = 16
-    sampling_params=8
-    integrator_type='s'
+    sampling_params=10
+    integrator_type='c'
 
 
 if atmosphere_type == 'A': atmosphere = 'accreting'
@@ -182,14 +182,14 @@ if atmosphere=='accreting':
             bounds = dict(super_colatitude = (None, None),
                           super_radius = (None, None),
                           phase_shift = (0.0, 0.1),
-                          super_tbb = (0.00015, 0.003))
+                          super_tbb = (0.001, 0.003))
             values = dict(super_te = te, super_tau = tau)
 
         if sampling_params==9: 
             bounds = dict(super_colatitude = (None, None),
                           super_radius = (None, None),
                           phase_shift = (0.0, 0.1),
-                          super_tbb = (0.00015, 0.003),
+                          super_tbb = (0.001, 0.003),
                           super_tau = (0.5, 3.5))
             values = dict(super_te = te)  #as I am writing this I am not checking if maybe this should be tau instead
 
@@ -197,7 +197,7 @@ if atmosphere=='accreting':
             bounds = dict(super_colatitude = (None, None),
                           super_radius = (None, None),
                           phase_shift = (0.0, 0.1),
-                          super_tbb = (0.00015, 0.003),
+                          super_tbb = (0.001, 0.003),
                           super_te = (40., 200.),
                           super_tau = (0.5, 3.5))
             values={}
@@ -563,7 +563,6 @@ elif atmosphere=='blackbody':
               ]
         
         
-
 star(p)
 star.update() 
 
@@ -693,9 +692,7 @@ try:
     true_logl = -7.94188579e+89 #-1.15566075e+05
     # print('about to evaluate likelihood')
     print("Compute likelikihood(p) once so the check passes. Likelihood = ", likelihood(p)) 
-
     likelihood.check(None, [true_logl], 1.0e-6,physical_points=[p])
-    #print(likelihood(p))
 except:
     print("Likelihood check did not pass. Checking if wrong atmosphere model installed.")
     true_logl = -3.27536126e+04
@@ -708,9 +705,12 @@ except:
         print("Seems that neither of the likelihood checks passed, so something must be wrong.")
 
 print('plotting...')
-
 rcParams['text.usetex'] = False
 rcParams['font.size'] = 14.0
+
+# random_draw = np.asarray([2.31408208e+00, 1.52255003e+01, 3.17410218e-01, 6.17105077e-01,4.68989205e-02, 1.43932885e-01, 1.46629707e+00, 2.30527925e-04,1.11742870e+02, 1.51992774e+00])
+# likelihood(random_draw, reinitialise=True)
+
 
 # Likelihood check and plot
 if second:
@@ -754,15 +754,47 @@ import dill as pickle
 with open(f'pulse/energies={num_energies}_integrator={integrator}.pkl', 'wb') as file:
     pickle.dump((photosphere.signal[0][0], signal.phases[0], signal.energies, signal.shifts), file)
     
+################################# SAMPLE LIKELIHOODS ################################################
+
+print('mytest:',likelihood(p))
+sample_size = 100
+p_draws = prior.draw(sample_size)
+
     
-#%% histogram of interpolations
+mylist = np.ndarray.tolist(p_draws[0])
+mylist.append(p)
+mylist = np.asarray(mylist)
 
-# histodata = primary.diagnosis[:,:,:,:,0]
-# histodatanonzero = histodata[histodata != 0]
-# plt.hist(histodatanonzero.reshape(-1), bins=1000)
-# plt.xlabel('Energy')
-# plt.ylabel('number of counts in bin')
-# print(np.sum(primary.diagnosis[:,:,:,:,0]))
+draws = []
+likelihoods = []
+for draw in mylist:
+    draws.append(draw)
+    likelihoods.append(likelihood(draw, reinitialise=True))
+    
+    
+if integrator == 'combined':
+    likelihoods_c = likelihoods
+elif integrator == 'split':
+    likelihoods_s = likelihoods
+#%% Diff PLOTS
 
-#1653046.1374140463 for tbb = 0.001
-#1653046.1374140463 for tbb = 0.00015
+
+
+diff_likelihoods = abs(np.asarray(likelihoods_s)-np.asarray(likelihoods_c))
+
+fig, axes = plt.subplots(1,2, figsize=(10,5))
+
+axes[0].loglog(abs(np.asarray(likelihoods)[diff_likelihoods != 0]), diff_likelihoods[diff_likelihoods != 0],'x')
+axes[0].set_xlabel('minus loglikelihood')
+axes[0].set_ylabel('$\Delta$ loglikelihood')
+
+axes[1].loglog(abs((np.asarray(draws)[:,7])[diff_likelihoods != 0]),diff_likelihoods[np.asarray(diff_likelihoods) != 0],'x')
+axes[1].set_xlabel('t_bb')
+# axes[1].set_yticks([])
+axes[1].set_xticks(np.logspace(-4, -2, 3))
+
+axes[0].grid(True)
+axes[1].grid(True)
+plt.tight_layout()
+
+

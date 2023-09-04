@@ -330,7 +330,7 @@ def integrate(size_t numThreads,
     # initiate data 2D
     hot_preloaded_2D = init_preload(atmosphere_2D)
     hot_data_2D = init_hot_2D(N_T, hot_preloaded_2D)
-    printf('\ntest')
+    # printf('\ntest')
     
     # bascounter = 0
     # printf('bascounter %ld',bascounter)

@@ -486,6 +486,8 @@ class HotRegion(ParameterSubspace):
             from xpsi.cellmesh.integrator import integrate as _integrator
         elif declaration == 'split': # attempt to optimize
             from xpsi.cellmesh.integrator_split_interpolation import integrate as _integrator
+        elif declaration == 'gsl': # gsl for 2D interpolation
+            from xpsi.cellmesh.integrator_split_gsl import integrate as _integrator
         self._integrator = _integrator
 
     @property

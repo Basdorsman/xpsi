@@ -494,6 +494,18 @@ cdef double eval_hot_2D_norm() nogil:
 
     return erg / 4.135667662e-18
 
+
+# cdef double get_param(int param_idx, void *const data) nogil:
+#     cdef DATA *D = <DATA*> data
+    
+#     cdef int i
+#     cdef double[:] param
+    
+#     for i in range(D.p.N[param_idx]):
+#          param[i] = D.p.params[param_idx][i]
+    
+#     return param
+    
 # cdef double eval_hot_faster(size_t THREAD,
 #                      double E,
 #                      double mu,

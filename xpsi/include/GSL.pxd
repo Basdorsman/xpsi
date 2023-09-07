@@ -310,7 +310,9 @@ cdef extern from "gsl/gsl_spline2d.h":
   unsigned int gsl_spline2d_min_size (const gsl_spline2d * spline) nogil
   
   double gsl_spline2d_eval (const gsl_spline2d * spline, const double x, const double y, gsl_interp_accel * xacc, gsl_interp_accel * yacc) nogil
-
+  
+  double gsl_spline2d_eval_extrap (const gsl_spline2d * spline, const double x, const double y, gsl_interp_accel * xacc, gsl_interp_accel * yacc) nogil
+  
   int gsl_spline2d_set (const gsl_spline2d * interp, double zarr[], const size_t i, const size_t j, const double z) nogil
   
   double gsl_spline2d_get(const gsl_spline2d * interp, const double zarr[], const size_t i, const size_t j) nogil

@@ -54,4 +54,4 @@ os.environ['likelihood']='custom'
 os.environ['num_energies']='16'
 
 import sample_A5_10 as ST
-#import sample_A4_only
+

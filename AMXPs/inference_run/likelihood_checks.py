@@ -47,7 +47,7 @@ if isinstance(os.environ.get('atmosphere_type'),type(None)) or isinstance(os.env
     machine = 'local' # local, helios, snellius
     num_energies = 16
     sampling_params=10
-    integrator_type='c'
+    integrator_type='s'
 
 
 if atmosphere_type == 'A': atmosphere = 'accreting'
@@ -57,6 +57,7 @@ elif atmosphere_type == 'B': atmosphere = 'blackbody'
 if integrator_type == 'a': integrator = 'azimuthal_invariance'
 elif integrator_type == 'c': integrator = 'combined'
 elif integrator_type == 's': integrator = 'split'
+elif integrator_type == 'g': integrator = 'gsl'
 
 
 print('atmosphere: ', atmosphere)
@@ -756,45 +757,45 @@ with open(f'pulse/energies={num_energies}_integrator={integrator}.pkl', 'wb') as
     
 ################################# SAMPLE LIKELIHOODS ################################################
 
-print('mytest:',likelihood(p))
-sample_size = 100
-p_draws = prior.draw(sample_size)
+# print('mytest:',likelihood(p))
+# sample_size = 100
+# p_draws = prior.draw(sample_size)
 
     
-mylist = np.ndarray.tolist(p_draws[0])
-mylist.append(p)
-mylist = np.asarray(mylist)
+# mylist = np.ndarray.tolist(p_draws[0])
+# mylist.append(p)
+# mylist = np.asarray(mylist)
 
-draws = []
-likelihoods = []
-for draw in mylist:
-    draws.append(draw)
-    likelihoods.append(likelihood(draw, reinitialise=True))
+# draws = []
+# likelihoods = []
+# for draw in mylist:
+#     draws.append(draw)
+#     likelihoods.append(likelihood(draw, reinitialise=True))
     
     
-if integrator == 'combined':
-    likelihoods_c = likelihoods
-elif integrator == 'split':
-    likelihoods_s = likelihoods
+# if integrator == 'combined':
+#     likelihoods_c = likelihoods
+# elif integrator == 'split':
+#     likelihoods_s = likelihoods
 #%% Diff PLOTS
 
 
 
-diff_likelihoods = abs(np.asarray(likelihoods_s)-np.asarray(likelihoods_c))
+# diff_likelihoods = abs(np.asarray(likelihoods_s)-np.asarray(likelihoods_c))
 
-fig, axes = plt.subplots(1,2, figsize=(10,5))
+# fig, axes = plt.subplots(1,2, figsize=(10,5))
 
-axes[0].loglog(abs(np.asarray(likelihoods)[diff_likelihoods != 0]), diff_likelihoods[diff_likelihoods != 0],'x')
-axes[0].set_xlabel('minus loglikelihood')
-axes[0].set_ylabel('$\Delta$ loglikelihood')
+# axes[0].loglog(abs(np.asarray(likelihoods)[diff_likelihoods != 0]), diff_likelihoods[diff_likelihoods != 0],'x')
+# axes[0].set_xlabel('minus loglikelihood')
+# axes[0].set_ylabel('$\Delta$ loglikelihood')
 
-axes[1].loglog(abs((np.asarray(draws)[:,7])[diff_likelihoods != 0]),diff_likelihoods[np.asarray(diff_likelihoods) != 0],'x')
-axes[1].set_xlabel('t_bb')
-# axes[1].set_yticks([])
-axes[1].set_xticks(np.logspace(-4, -2, 3))
+# axes[1].loglog(abs((np.asarray(draws)[:,7])[diff_likelihoods != 0]),diff_likelihoods[np.asarray(diff_likelihoods) != 0],'x')
+# axes[1].set_xlabel('t_bb')
+# # axes[1].set_yticks([])
+# axes[1].set_xticks(np.logspace(-4, -2, 3))
 
-axes[0].grid(True)
-axes[1].grid(True)
-plt.tight_layout()
+# axes[0].grid(True)
+# axes[1].grid(True)
+# plt.tight_layout()
 
 

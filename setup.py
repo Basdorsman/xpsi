@@ -106,6 +106,7 @@ if __name__ == '__main__':
             print('GSL version: ' + gsl_version)
             libraries = ['gsl','gslcblas','m'] # default BLAS interface for gsl
             library_dirs = [gsl_prefix + '/lib']
+            print('library_dirs', library_dirs)
             _src_dir = os.path.dirname(os.path.abspath(__file__))
             include_dirs = [gsl_prefix + '/include',
                             numpy.get_include(),
@@ -285,6 +286,7 @@ if __name__ == '__main__':
                 'xpsi.cellmesh.integrator_for_azimuthal_invariance',
                 'xpsi.cellmesh.integrator_for_time_invariance',
                 'xpsi.cellmesh.integrator_split_interpolation',
+                'xpsi.cellmesh.integrator_split_gsl',
                 'xpsi.pixelmesh.METRIC_qK',
                 'xpsi.pixelmesh.RODES_qK',
                 'xpsi.pixelmesh.BOUNDARY_CONDITIONS',

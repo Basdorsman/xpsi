@@ -11,3 +11,5 @@ cdef void* init_hot_2D(size_t numThreads, const _preloaded *const preloaded) nog
 
 cdef int free_hot_2D(size_t numThreads, void *const data) nogil
 
+# cdef double get_param(int param_idx, void *const data) nogil
+

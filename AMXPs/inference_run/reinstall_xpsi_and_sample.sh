@@ -15,8 +15,9 @@ then
 source blackbody.sh
 fi
 
+
 likelihood="custom" #default, custom
-machine="local" #local, helios, snellius
+machine="snellius" #local, helios, snellius
 num_energies=16 #64
 sampling_params=10 #8,9 if n_params=4 and 8,9,10 if n_params=5
 cd AMXPs/inference_run/

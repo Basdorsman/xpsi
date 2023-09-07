@@ -15,10 +15,10 @@ then
 source blackbody.sh
 fi
 
-likelihood="custom"
-machine="local"
-num_energies=64 #16
-sampling_params=8
+likelihood="custom" #default, custom
+machine="local" #local, helios, snellius
+num_energies=16 #64
+sampling_params=10 #8,9 if n_params=4 and 8,9,10 if n_params=5
 cd AMXPs/inference_run/
 export atmosphere_type n_params likelihood machine num_energies sampling_params integrator
-python likelihood_checks.py #sample.py #likelihood_checks.py #> test.txt
+python sample.py #likelihood_checks.py #> test.txt

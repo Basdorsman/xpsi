@@ -19,21 +19,24 @@ from xpsi.global_imports import gravradius
 
 ################################ OPTIONS ###############################
 second = False
-te_index=0 # t__e = np.arange(40.0, 202.0, 4.0), there are 40.5 values (I expect that means 40)
+te_index=0 # relevant for atmosphere A4. t__e = np.arange(40.0, 202.0, 4.0), there are 40.5 values (I expect that means 40)
 
-
-
-
-
+# os environment options
 atmosphere_type = os.environ.get('atmosphere_type')
 n_params = os.environ.get('n_params')
 likelihood_toggle = os.environ.get('likelihood') 
 machine = os.environ.get('machine')
-num_energies = int(os.environ.get('num_energies'))
-sampling_params = int(os.environ.get('sampling_params'))
+integrator_type = os.environ.get('integrator')
+
+try:
+    num_energies = int(os.environ.get('num_energies'))
+    sampling_params = int(os.environ.get('sampling_params'))
+except:
+    pass
 
 
-if isinstance(os.environ.get('atmosphere_type'),type(None)) or isinstance(os.environ.get('n_params'),type(None)) or isinstance(os.environ.get('likelihood'),type(None)) or isinstance(os.environ.get('machine'),type(None)) or isinstance(os.environ.get('num_energies'),type(None)) or isinstance(os.environ.get('sampling_params'),type(None)): # if that fails input them here.
+# default options if os environment not provided
+if isinstance(os.environ.get('atmosphere_type'),type(None)) or isinstance(os.environ.get('n_params'),type(None)) or isinstance(os.environ.get('likelihood'),type(None)) or isinstance(os.environ.get('machine'),type(None)) or isinstance(os.environ.get('num_energies'),type(None)) or isinstance(os.environ.get('sampling_params'),type(None)) or isinstance(os.environ.get('integrator'),type(None)): # if that fails input them here.
     print('E: failed to import some OS environment variables, using defaults.')    
     atmosphere_type = 'A' #A, N, B
     n_params = '5' #4, 5
@@ -41,11 +44,17 @@ if isinstance(os.environ.get('atmosphere_type'),type(None)) or isinstance(os.env
     machine = 'local' # local, helios, snellius
     num_energies = 16
     sampling_params=8
+    integrator_type = 's'
     
 
 if atmosphere_type == 'A': atmosphere = 'accreting'
 elif atmosphere_type == 'N': atmosphere = 'numerical'
 elif atmosphere_type == 'B': atmosphere = 'blackbody'
+
+if integrator_type == 'a': integrator = 'azimuthal_invariance'
+elif integrator_type == 'c': integrator = 'combined'
+elif integrator_type == 's': integrator = 'split'
+elif integrator_type == 'g': integrator = 'gsl'
 
 print('atmosphere: ', atmosphere)
 print('n_params: ', n_params)
@@ -53,7 +62,7 @@ print('likelihood: ', likelihood_toggle)
 print('machine: ', machine)
 print('num_energies: ', num_energies)
 print('sampling_params: ', sampling_params)
-
+print('integrator:', integrator)
 
 this_directory = os.path.dirname(os.path.abspath(__file__))
 
@@ -69,7 +78,7 @@ from custom_tools import CustomInstrument, CustomHotRegion, CustomHotRegion_Accr
 from custom_tools import CustomPhotosphere_BB, CustomPhotosphere_N4, CustomPhotosphere_N5, CustomPhotosphere_A5, CustomPhotosphere_A4
 from custom_tools import CustomSignal, CustomPrior, CustomPrior_NoSecondary, plot_2D_pulse, CustomLikelihood
 
-import time
+# import time
 
 np.random.seed(xpsi._rank+10)
 print('Rank reporting: %d' % xpsi._rank)
@@ -154,7 +163,7 @@ if atmosphere=='accreting':
     
         primary = CustomHotRegion_Accreting_te_const(bounds=bounds,
            	                    values=values,
-           	                    symmetry=False, #call general integrator instead of for azimuthal invariance
+           	                    symmetry=integrator, #call general integrator instead of for azimuthal invariance
            	                    omit=False,
            	                    cede=False,
            	                    concentric=False,
@@ -191,7 +200,7 @@ if atmosphere=='accreting':
 
         primary = CustomHotRegion_Accreting(bounds=bounds,
            	                    values=values,
-           	                    symmetry=False, #call general integrator instead of for azimuthal invariance
+           	                    symmetry=integrator, #call general integrator instead of for azimuthal invariance
            	                    omit=False,
            	                    cede=False,
            	                    concentric=False,

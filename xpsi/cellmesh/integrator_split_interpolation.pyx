@@ -12,7 +12,7 @@ from cython.parallel cimport *
 from libc.math cimport M_PI, sqrt, sin, cos, acos, log10, pow, exp, fabs, ceil, log
 from libc.stdlib cimport malloc, free
 from libc.stdio cimport printf
-from libc.time cimport time, time_t, clock, clock_t, CLOCKS_PER_SEC
+# from libc.time cimport time, time_t, clock, clock_t, CLOCKS_PER_SEC
 import xpsi
 
 from builtins import print
@@ -109,10 +109,8 @@ def integrate(size_t numThreads,
     # >>>
     #----------------------------------------------------------------------->>>
     cdef:
-        # double secs_per_clock = 1/CLOCKS_PER_SEC
         int interpolations = 0
-        #time_t t_start, t_end #, elapsed_time # I was using clock_t (one line below) most recently
-        clock_t t_start, t_end, t_2D_start, t_2D_end #, elapsed_time    
+        # clock_t t_start, t_end, t_2D_start, t_2D_end #, elapsed_time    
         signed int ii
         size_t i, j, k, ks, _kdx, m, p # Array indexing
         size_t T, twoT # Used globally to represent thread index
@@ -283,7 +281,7 @@ def integrate(size_t numThreads,
     # >>>
     #----------------------------------------------------------------------->>>
     # printf("\nfor ii in prange(<signed int>cellArea.shape[0]")
-    t_start = clock()#time(NULL)
+    # t_start = clock()#time(NULL)
 
     
     # printf('\ntest')
@@ -355,7 +353,7 @@ def integrate(size_t numThreads,
 
     # print('Intestity5D:', Intestity5D)
 
-    t_2D_start = clock()
+    # t_2D_start = clock()
 
     for ii in prange(<signed int>cellArea.shape[0],
                      nogil = True,
@@ -707,7 +705,7 @@ def integrate(size_t numThreads,
                                         #                 &(srcCellParams[i,j,0]),
                                         #                 hot_data)
                                         # printf('I_E5D %f, ', I_E5D)
-                                        E_electronrest=E_prime*0.001956951 #kev to electron rest energy conversion. Am I losing precision here?
+                                        E_electronrest=E_prime*0.001956951198 #kev to electron rest energy conversion.
                                         I_E2D = eval_hot_2D(T, E_electronrest, __ABB, hot_data_2D)
                                         
                                         # save some parameters
@@ -743,13 +741,13 @@ def integrate(size_t numThreads,
         if terminate[T] == 1:
            break # out of colatitude loop
     
-    t_end = clock()  # time(NULL)
-    elapsed_time = <double>(t_end - t_start) / CLOCKS_PER_SEC
-    elapsed_time_2D = <double>(t_end - t_2D_start) / CLOCKS_PER_SEC
-    printf("\nnumber of interpolations: %d", interpolations)
-    printf("\nTime taken for 2D interpolations: %.6f seconds", elapsed_time_2D)
-    printf("\nTime taken for 3D+2D interpolations: %.6f seconds", elapsed_time)
-    printf("\n")
+    # t_end = clock()  # time(NULL)
+    # elapsed_time = <double>(t_end - t_start) / CLOCKS_PER_SEC
+    # elapsed_time_2D = <double>(t_end - t_2D_start) / CLOCKS_PER_SEC
+    # printf("\nnumber of interpolations: %d", interpolations)
+    # printf("\nTime taken for 2D interpolations: %.6f seconds", elapsed_time_2D)
+    # printf("\nTime taken for 3D+2D interpolations: %.6f seconds", elapsed_time)
+    # printf("\n")
 
     for i in range(N_E):
         for T in range(N_T):

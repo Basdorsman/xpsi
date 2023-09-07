@@ -39,7 +39,7 @@ except:
     pass
 
 
-if isinstance(os.environ.get('atmosphere_type'),type(None)) or isinstance(os.environ.get('n_params'),type(None)) or isinstance(os.environ.get('likelihood'),type(None)) or isinstance(os.environ.get('machine'),type(None)) or isinstance(os.environ.get('num_energies'),type(None)) or isinstance(os.environ.get('sampling_params'),type(None)) or isinstance(os.environ.get('integrator'),type(None)): # if that fails input them here.
+if isinstance(os.environ.get('atmosphere_type'),type(None)) or isinstance(os.environ.get('n_params'),type(None)) or isinstance(os.environ.get('likelihood'),type(None)) or isinstance(os.environ.get('machine'),type(None)) or isinstance(os.environ.get('num_energies'),type(None)) or isinstance(os.environ.get('sampling_params'),type(None)) or isinstance(os.environ.get('interpolator'),type(None)): # if that fails input them here.
     print('E: failed to import some OS environment variables, using defaults.')    
     atmosphere_type = 'A' #A, N, B
     n_params = '5' #4, 5

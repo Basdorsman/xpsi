@@ -1,6 +1,7 @@
 import numpy as np
 import xpsi
 
+np.random.seed(xpsi._rank+10)
 machine = 'local' #'local', 'helios'
 
 
@@ -34,7 +35,7 @@ def preload_atmosphere_A5(path):
     with np.load(path, allow_pickle=True) as data_dictionary:
         NSX = data_dictionary['NSX.npy']
         size_reorderme = data_dictionary['size.npy']
-        print(size_reorderme)
+        # print(size_reorderme)
     
     #size = (150, 9, 31, 11, 41)
     size = [size_reorderme[3], size_reorderme[4], size_reorderme[2], size_reorderme[1], size_reorderme[0]]
@@ -99,20 +100,27 @@ if atmosphere_type == 'A':
 
         local_vars = np.asarray([[te, tbb, tau]])
 
-    intensity = xpsi.surface_radiation_field.intensity(E, mu, local_vars,
-                                                       atmosphere=atmosphere,
-                                                       extension='hot',
-                                                       numTHREADS=2)
+    intensity1 = xpsi.surface_radiation_field.intensity_no_norm(E, mu, local_vars,
+                                                        atmosphere=atmosphere,
+                                                        extension='hot',
+                                                        numTHREADS=2)
+    
+    print(intensity1)
+
+    intensity2 = xpsi.surface_radiation_field.intensity_split_interpolation(E, mu, local_vars,
+                                                        atmosphere=atmosphere,
+                                                        extension='hot',
+                                                        numTHREADS=2)    
     
 
-print(intensity)
+    print(intensity2)
 
 #%% MAKE RANDOM VARIABLES
 
 def random_with_bounds(lower_limit, upper_limit, size):
     return (upper_limit - lower_limit) * np.random.random(size = size) + lower_limit
 
-size = 10000
+size = 100000
 
 t__e = np.arange(40.0, 202.0, 4.0) #actual range is 40-200 imaginaty units, ~20-100 keV (Te(keV)*1000/511keV is here)
 t__bb = np.arange(0.001, 0.0031, 0.0002) #this one is non-physical, we went for way_to_low Tbbs here, I will most probably delete results from too small Tbbs. This is Tbb(keV)/511keV, so these correspond to 0.07 - 1.5 keV, but our calculations don't work correctly for Tbb<<0.5 keV
@@ -157,17 +165,67 @@ random_local_vars = np.asarray([te_random, tbb_random, tau_random])
     
 
 
-#%%
-from time import time
+#%% comined 
+# from time import time
 repetitions = size
-Intensity = np.empty(repetitions)
+intensity_c = np.empty(repetitions)
 
-time_start = time()
+# time_start = time()
 for i in range(repetitions):
-    Intensity[i] = xpsi.surface_radiation_field.intensity(np.asarray([E_random[i]]), np.asarray([mu_random[i]]), np.asarray([random_local_vars[:,i]]),
-                                                       atmosphere=atmosphere,
-                                                       extension='hot',
-                                                       numTHREADS=2)
+    intensity_c[i] = xpsi.surface_radiation_field.intensity_no_norm(np.asarray([E_random[i]]), np.asarray([mu_random[i]]), np.asarray([random_local_vars[:,i]]),
+                                                        atmosphere=atmosphere,
+                                                        extension='hot',
+                                                        numTHREADS=2)
     
-time_elapsed = time() - time_start
-print(time_elapsed)  
+
+    
+# time_elapsed = time() - time_start
+# print(time_elapsed)  
+
+#%% split
+
+# from time import time
+# repetitions = size
+intensity_s = np.empty(repetitions)
+
+# time_start = time()
+for i in range(repetitions):
+    intensity_s[i] = xpsi.surface_radiation_field.intensity_split_interpolation(np.asarray([E_random[i]]), np.asarray([mu_random[i]]), np.asarray([random_local_vars[:,i]]),
+                                                        atmosphere=atmosphere,
+                                                        extension='hot',
+                                                        numTHREADS=2)
+    
+
+    
+# time_elapsed = time() - time_start
+# print(time_elapsed)  
+
+
+## differences
+# print(intensity_c)
+# print(intensity_s)
+print('largest absolute difference')
+abs_dif = abs(intensity_c-intensity_s)
+print(np.argmax(abs_dif))
+print(np.nanmax(abs_dif))
+
+print('largest fractional difference')
+frac_dif = np.divide(intensity_s - intensity_c, intensity_c, out=0*np.ones_like(intensity_s), where=intensity_c!=0)
+print(np.argmax(frac_dif))
+print(np.nanmax(frac_dif))
+
+#%% histogram
+import matplotlib.pyplot as plt
+hist_ic = intensity_c[intensity_c != 0]
+hist_ad = abs_dif[abs_dif != 0]
+nbins=100
+combined = np.concatenate((hist_ic, hist_ad))
+log_bins = np.logspace(np.log10(np.min(combined)), np.log10(np.max(combined)), nbins)
+
+plt.hist(hist_ic, bins=log_bins, alpha=0.5, color='blue', label='Intensity', log=True)
+plt.hist(hist_ad, bins=log_bins, alpha=0.5, color='orange', label='Intensity Difference', log=True)
+
+plt.xscale('log')
+plt.ylabel('count in log bin')
+plt.xlabel('Intensity (difference) [data units]')
+plt.legend()

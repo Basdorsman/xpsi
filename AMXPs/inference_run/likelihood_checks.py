@@ -19,9 +19,13 @@ from xpsi.global_imports import gravradius
 
 ################################ OPTIONS ###############################
 second = False
-te_index=0 # relevant for atmosphere A4. t__e = np.arange(40.0, 202.0, 4.0), there are 40.5 values (I expect that means 40)
+te_index=0 # t__e = np.arange(40.0, 202.0, 4.0), there are 40.5 values (I expect that means 40)
+tbb=0.001 #0.001 #0.001 - 0.003 # updated lower limit
+te=40.#200 #40 - 200
+tau=0.5 #0.5 - 3.5
 
-# os environment options
+
+
 atmosphere_type = os.environ.get('atmosphere_type')
 n_params = os.environ.get('n_params')
 likelihood_toggle = os.environ.get('likelihood') 
@@ -35,17 +39,16 @@ except:
     pass
 
 
-# default options if os environment not provided
-if isinstance(os.environ.get('atmosphere_type'),type(None)) or isinstance(os.environ.get('n_params'),type(None)) or isinstance(os.environ.get('likelihood'),type(None)) or isinstance(os.environ.get('machine'),type(None)) or isinstance(os.environ.get('num_energies'),type(None)) or isinstance(os.environ.get('sampling_params'),type(None)) or isinstance(os.environ.get('integrator'),type(None)): # if that fails input them here.
+if isinstance(os.environ.get('atmosphere_type'),type(None)) or isinstance(os.environ.get('n_params'),type(None)) or isinstance(os.environ.get('likelihood'),type(None)) or isinstance(os.environ.get('machine'),type(None)) or isinstance(os.environ.get('num_energies'),type(None)) or isinstance(os.environ.get('sampling_params'),type(None)) or isinstance(os.environ.get('interpolator'),type(None)): # if that fails input them here.
     print('E: failed to import some OS environment variables, using defaults.')    
     atmosphere_type = 'A' #A, N, B
     n_params = '5' #4, 5
-    likelihood_toggle = 'default' # default, custom
+    likelihood_toggle = 'custom' # default, custom
     machine = 'local' # local, helios, snellius
     num_energies = 16
-    sampling_params=8
-    integrator_type = 's'
-    
+    sampling_params=10
+    integrator_type='s'
+
 
 if atmosphere_type == 'A': atmosphere = 'accreting'
 elif atmosphere_type == 'N': atmosphere = 'numerical'
@@ -56,6 +59,7 @@ elif integrator_type == 'c': integrator = 'combined'
 elif integrator_type == 's': integrator = 'split'
 elif integrator_type == 'g': integrator = 'gsl'
 
+
 print('atmosphere: ', atmosphere)
 print('n_params: ', n_params)
 print('likelihood: ', likelihood_toggle)
@@ -63,6 +67,7 @@ print('machine: ', machine)
 print('num_energies: ', num_energies)
 print('sampling_params: ', sampling_params)
 print('integrator:', integrator)
+
 
 this_directory = os.path.dirname(os.path.abspath(__file__))
 
@@ -78,7 +83,7 @@ from custom_tools import CustomInstrument, CustomHotRegion, CustomHotRegion_Accr
 from custom_tools import CustomPhotosphere_BB, CustomPhotosphere_N4, CustomPhotosphere_N5, CustomPhotosphere_A5, CustomPhotosphere_A4
 from custom_tools import CustomSignal, CustomPrior, CustomPrior_NoSecondary, plot_2D_pulse, CustomLikelihood
 
-# import time
+import time
 
 np.random.seed(xpsi._rank+10)
 print('Rank reporting: %d' % xpsi._rank)
@@ -151,7 +156,7 @@ if atmosphere=='accreting':
                           super_radius = (None, None),
                           phase_shift = (0.0, 0.1),
                           super_tbb = (0.00015, 0.003))
-            values = dict(super_tau = 0.5)
+            values = dict(super_tau = tau)
 
         if sampling_params==9:
             bounds = dict(super_colatitude = (None, None),
@@ -178,22 +183,22 @@ if atmosphere=='accreting':
             bounds = dict(super_colatitude = (None, None),
                           super_radius = (None, None),
                           phase_shift = (0.0, 0.1),
-                          super_tbb = (0.00015, 0.003))
-            values = dict(super_te = 40., super_tau = 0.5)
+                          super_tbb = (0.001, 0.003))
+            values = dict(super_te = te, super_tau = tau)
 
         if sampling_params==9: 
             bounds = dict(super_colatitude = (None, None),
                           super_radius = (None, None),
                           phase_shift = (0.0, 0.1),
-                          super_tbb = (0.00015, 0.003),
+                          super_tbb = (0.001, 0.003),
                           super_tau = (0.5, 3.5))
-            values = dict(super_te = 40.)  #as I am writing this I am not checking if maybe this should be tau instead
+            values = dict(super_te = te)  #as I am writing this I am not checking if maybe this should be tau instead
 
         if sampling_params==10: 
             bounds = dict(super_colatitude = (None, None),
                           super_radius = (None, None),
                           phase_shift = (0.0, 0.1),
-                          super_tbb = (0.00015, 0.003),
+                          super_tbb = (0.001, 0.003),
                           super_te = (40., 200.),
                           super_tau = (0.5, 3.5))
             values={}
@@ -439,9 +444,9 @@ star = xpsi.Star(spacetime = spacetime, photospheres = photosphere)
 
 if atmosphere=='accreting':
     # Compton slab model parameters
-    tbb=0.001 #0.00015-  0.003
-    te=40.#200 #40 - 200
-    tau=0.5 #0.5 - 3.5
+    # tbb=0.00015 #0.001 #0.00015-  0.003
+    # te=40.#200 #40 - 200
+    # tau=0.5 #0.5 - 3.5
 
     if second:
         p = [1.6, #1.4, #grav mass
@@ -559,7 +564,6 @@ elif atmosphere=='blackbody':
               ]
         
         
-
 star(p)
 star.update() 
 
@@ -667,7 +671,7 @@ if machine == 'helios':
 if machine == 'snellius':
     sampling_efficiency = 0.8
     n_live_points = 64
-    max_iter = 3
+    max_iter = -1
     outputfiles_basename = f'./{folderstring}/run_se={sampling_efficiency}_lp={n_live_points}_atm={atmosphere_type}{n_params}_ne={num_energies}_mi={max_iter}'
     runtime_params = {'resume': False,
                       'importance_nested_sampling': False,
@@ -689,9 +693,7 @@ try:
     true_logl = -7.94188579e+89 #-1.15566075e+05
     # print('about to evaluate likelihood')
     print("Compute likelikihood(p) once so the check passes. Likelihood = ", likelihood(p)) 
-
     likelihood.check(None, [true_logl], 1.0e-6,physical_points=[p])
-    #print(likelihood(p))
 except:
     print("Likelihood check did not pass. Checking if wrong atmosphere model installed.")
     true_logl = -3.27536126e+04
@@ -703,91 +705,97 @@ except:
     except:
         print("Seems that neither of the likelihood checks passed, so something must be wrong.")
 
+print('plotting...')
+rcParams['text.usetex'] = False
+rcParams['font.size'] = 14.0
 
-if __name__ == '__main__':
-    
-    # ################################### PLOTS #####################################
-    
-    print('plotting...')
-    
-    rcParams['text.usetex'] = False
-    rcParams['font.size'] = 14.0
-    
-    # Likelihood check and plot
-    if second:
-        ax = plot_2D_pulse((photosphere.signal[0][0], photosphere.signal[1][0]),
-                      x=signal.phases[0],
-                      shift=signal.shifts,
-                      y=signal.energies,
-                      ylabel=r'Energy (keV)')
-    if not second:
-        # print('photosphere.signal[0][0]', photosphere.signal[0][0])
-        ax = plot_2D_pulse((photosphere.signal[0][0],),
-                      x=signal.phases[0],
-                      shift=signal.shifts,
-                      y=signal.energies,
-                      ylabel=r'Energy (keV)')
-    
-    if atmosphere=='accreting':
-        if n_params=='4':
-            ax.set_title('atm={} params={} te_index={}, tbb={:.2e} [keV], tau={:.2e} [-]'.format(atmosphere_type, n_params, te_index, tbb*511, tau), loc='center') #unit conversion te and tbb is different due to a cluster leftover according to Anna B.
-            figstring = '{}/energies={}_atm={}_sec={}_te_index={}_tbb={:.2e}_tau={:.2e}.png'.format(folderstring, num_energies, atmosphere_type, second, te_index, tbb, tau)
-        if n_params=='5':
-            ax.set_title('atm={} params={} te={:.2e} [keV], tbb={:.2e} [keV], tau={:.2e} [-]'.format(atmosphere_type, n_params, te*0.511, tbb*511, tau), loc='center') #unit conversion te and tbb is different due to a cluster leftover according to Anna B.
-            figstring = '{}/energies={}_atm={}_sec={}_te={:.2e}_tbb={:.2e}_tau={:.2e}.png'.format(folderstring, num_energies, atmosphere_type, second, te, tbb, tau)
-    elif atmosphere=='numerical':
-        if n_params=="5":
-            ax.set_title('n_params={} p_temperature={} modulator={}'.format(n_params, p_temperature, modulator))
-            figstring='{}/5D_pulses_atm={}_sec={}_p_temperature={}_modulator={}.png'.format(folderstring, atmosphere, second, p_temperature, modulator)
-        elif n_params=="4":
-            ax.set_title('n_params={} p_temperature={}'.format(n_params, p_temperature))
-            figstring='{}/energies={}_atm={}_sec={}_p_temperature={}.png'.format(folderstring, num_energies, atmosphere, second, p_temperature)
-    elif atmosphere=='blackbody':
+# random_draw = np.asarray([2.31408208e+00, 1.52255003e+01, 3.17410218e-01, 6.17105077e-01,4.68989205e-02, 1.43932885e-01, 1.46629707e+00, 2.30527925e-04,1.11742870e+02, 1.51992774e+00])
+# likelihood(random_draw, reinitialise=True)
+
+
+# Likelihood check and plot
+if second:
+    ax = plot_2D_pulse((photosphere.signal[0][0], photosphere.signal[1][0]),
+                  x=signal.phases[0],
+                  shift=signal.shifts,
+                  y=signal.energies,
+                  ylabel=r'Energy (keV)')
+if not second:
+    # print('photosphere.signal[0][0]', photosphere.signal[0][0])
+    ax = plot_2D_pulse((photosphere.signal[0][0],),
+                  x=signal.phases[0],
+                  shift=signal.shifts,
+                  y=signal.energies,
+                  ylabel=r'Energy (keV)')
+
+if atmosphere=='accreting':
+    if n_params=='4':
+        ax.set_title('atm={} params={} te_index={}, tbb={:.2e} [keV], tau={:.2e} [-]'.format(atmosphere_type, n_params, te_index, tbb*511, tau), loc='center') #unit conversion te and tbb is different due to a cluster leftover according to Anna B.
+        figstring = '{}/energies={}_atm={}_sec={}_te_index={}_tbb={:.2e}_tau={:.2e}.png'.format(folderstring, num_energies, atmosphere_type, second, te_index, tbb, tau)
+    if n_params=='5':
+        ax.set_title('atm={} params={} te={:.2e} [keV], tbb={:.2e} [keV], tau={:.2e} [-]'.format(atmosphere_type, n_params, te*0.511, tbb*511, tau), loc='center') #unit conversion te and tbb is different due to a cluster leftover according to Anna B.
+        figstring = '{}/energies={}_atm={}_sec={}_te={:.2e}_tbb={:.2e}_tau={:.2e}.png'.format(folderstring, num_energies, atmosphere_type, second, te, tbb, tau)
+elif atmosphere=='numerical':
+    if n_params=="5":
+        ax.set_title('n_params={} p_temperature={} modulator={}'.format(n_params, p_temperature, modulator))
+        figstring='{}/5D_pulses_atm={}_sec={}_p_temperature={}_modulator={}.png'.format(folderstring, atmosphere, second, p_temperature, modulator)
+    elif n_params=="4":
         ax.set_title('n_params={} p_temperature={}'.format(n_params, p_temperature))
-        figstring='{}/pulses_atm={}_sec={}_p_temperature={}.png'.format(folderstring, atmosphere, second, p_temperature)
-    
-    
-    plt.savefig(figstring)
-    print('figure saved in {}'.format(figstring))
-    
-    ##################### DO SAMPLING ################
-    
-    
-    print("sampling starts ...")
-    xpsi.Sample.nested(likelihood, prior,**runtime_params)
-    print("... sampling done")
-    # likelihood.ldict['num_energies']=num_energies
-    
-    # for i in range(xpsi._size):
-        # likelihood.ldict[f"{i}"] = getattr(likelihood, f"ldict{i}", None)
-        # if xpsi._rank == i:
-            # setattr(likelihood, f"tmpdict{xpsi._rank}", likelihood.tmpdict)
-            # likelihood.ldict[i] = likelihood.tmpdict
-            # print(f"xpsi._rank: {xpsi._rank}, tmpdict: {likelihood.tmpdict}")
-            
-    # likelihood.ldict['runtime_params']=runtime_params
-   
-    if likelihood_toggle == 'custom': 
-        print('saving likelihood.runtime_params')
+        figstring='{}/energies={}_atm={}_sec={}_p_temperature={}.png'.format(folderstring, num_energies, atmosphere, second, p_temperature)
+elif atmosphere=='blackbody':
+    ax.set_title('n_params={} p_temperature={}'.format(n_params, p_temperature))
+    figstring='{}/pulses_atm={}_sec={}_p_temperature={}.png'.format(folderstring, atmosphere, second, p_temperature)
 
-        # save options
-        runtime_params['xpsi_size']=xpsi._size
-        runtime_params['atmosphere_type']=atmosphere_type 
-        runtime_params['n_params']=n_params 
-        runtime_params['second']=second 
-        runtime_params['num_energies']=num_energies 
-        runtime_params['te_index']=te_index 
-        
-        likelihood.runtime_params = runtime_params
-       
-        import dill as pickle
-        try:
-            os.makedirs(outputfiles_basename)
-        except OSError:
-            if not os.path.isdir(outputfiles_basename):
-                raise
-        
-        with open(f'{outputfiles_basename}/LikelihoodDiagnostics_ne={likelihood._num_energies}_rank={xpsi._rank}.pkl', 'wb') as file:
-            #file.write(pickle.dumps(likelihood.ldict)) # use `pickle.loads` to do the reverse
-            print('write the likelihoodDiagnostics to a file')
-            pickle.dump((likelihood.ldict, likelihood.runtime_params), file)
+
+plt.savefig(figstring)
+print('figure saved in {}'.format(figstring))
+
+# np.savetxt('signal/energies={}_integrator={}.txt'.format(num_energies,integrator),photosphere.signal[0][0])
+import dill as pickle
+with open(f'pulse/energies={num_energies}_integrator={integrator}.pkl', 'wb') as file:
+    pickle.dump((photosphere.signal[0][0], signal.phases[0], signal.energies, signal.shifts), file)
+    
+################################# SAMPLE LIKELIHOODS ################################################
+
+# print('mytest:',likelihood(p))
+# sample_size = 100
+# p_draws = prior.draw(sample_size)
+
+    
+# mylist = np.ndarray.tolist(p_draws[0])
+# mylist.append(p)
+# mylist = np.asarray(mylist)
+
+# draws = []
+# likelihoods = []
+# for draw in mylist:
+#     draws.append(draw)
+#     likelihoods.append(likelihood(draw, reinitialise=True))
+    
+    
+# if integrator == 'combined':
+#     likelihoods_c = likelihoods
+# elif integrator == 'split':
+#     likelihoods_s = likelihoods
+#%% Diff PLOTS
+
+
+
+# diff_likelihoods = abs(np.asarray(likelihoods_s)-np.asarray(likelihoods_c))
+
+# fig, axes = plt.subplots(1,2, figsize=(10,5))
+
+# axes[0].loglog(abs(np.asarray(likelihoods)[diff_likelihoods != 0]), diff_likelihoods[diff_likelihoods != 0],'x')
+# axes[0].set_xlabel('minus loglikelihood')
+# axes[0].set_ylabel('$\Delta$ loglikelihood')
+
+# axes[1].loglog(abs((np.asarray(draws)[:,7])[diff_likelihoods != 0]),diff_likelihoods[np.asarray(diff_likelihoods) != 0],'x')
+# axes[1].set_xlabel('t_bb')
+# # axes[1].set_yticks([])
+# axes[1].set_xticks(np.logspace(-4, -2, 3))
+
+# axes[0].grid(True)
+# axes[1].grid(True)
+# plt.tight_layout()
+
+

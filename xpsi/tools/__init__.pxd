@@ -1,4 +1,5 @@
 from GSL cimport (gsl_interp_type,
+                  gsl_interp2d_type,
                   gsl_interp_akima_periodic,
                   gsl_interp_akima,
                   gsl_interp_steffen,

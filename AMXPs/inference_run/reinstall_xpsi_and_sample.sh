@@ -3,9 +3,8 @@ echo "atmosphere type: N for NSX, A for accreting, B for blackbody"
 read atmosphere_type
 echo "number of parameters in atmosphere: choose 4 or 5 for NSX or accreting atmosphere"
 read n_params
-echo "sampling problem dimensionality: 8, 9 or 10"
-read sampling_params
-#n_params="A"
+echo "which integrator to invoke: a for azimuthal_invariance, c for combined, s for split, g for gsl."
+read integrator
 cd ../../
 
 if [ $atmosphere_type == "N" ] || [ $atmosphere_type == "A" ]
@@ -16,9 +15,11 @@ then
 source blackbody.sh
 fi
 
-likelihood="custom"
-machine="snellius"
-num_energies=16
+
+likelihood="custom" #default, custom
+machine="snellius" #local, helios, snellius
+num_energies=16 #64
+sampling_params=10 #8,9 if n_params=4 and 8,9,10 if n_params=5
 cd AMXPs/inference_run/
-export atmosphere_type n_params likelihood machine num_energies sampling_params
-python sample.py #> test.txt
+export atmosphere_type n_params likelihood machine num_energies sampling_params integrator
+python sample.py #likelihood_checks.py #> test.txt

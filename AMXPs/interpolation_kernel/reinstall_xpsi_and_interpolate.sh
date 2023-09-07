@@ -3,7 +3,6 @@ echo "atmosphere type: N for NSX, A for accreting, B for blackbody"
 read atmosphere_type
 echo "number of parameters in atmosphere: choose 4 or 5 for NSX or accreting atmosphere"
 read n_params
-#n_params="A"
 cd ../../
 
 if [ $atmosphere_type == "N" ] || [ $atmosphere_type == "A" ]

@@ -53,7 +53,7 @@ from xpsi.surface_radiation_field.elsewhere cimport (init_elsewhere,
 
 from .rays cimport eval_image_deflection, invert, link_rayXpanda
 
-from ..tools cimport _get_phase_interpolant, gsl_interp_type
+from ..tools cimport _get_phase_interpolant, gsl_interp_type, gsl_interp2d_type
 
 
 def integrate(size_t numThreads,
@@ -109,8 +109,12 @@ def integrate(size_t numThreads,
     # >>>
     #----------------------------------------------------------------------->>>
     cdef:
-        int interpolations = 0
-        # clock_t t_start, t_end, t_2D_start, t_2D_end #, elapsed_time    
+        # double secs_per_clock = 1/CLOCKS_PER_SEC
+        # int interpolations = 0
+        #time_t t_start, t_end #, elapsed_time # I was using clock_t (one line below) most recently
+        # clock_t t_start, t_end, t_eval_start, t_eval_end #, elapsed_time    
+        # double elapsed_time = 0.
+        # double t_eval_sum = 0.
         signed int ii
         size_t i, j, k, ks, _kdx, m, p # Array indexing
         size_t T, twoT # Used globally to represent thread index
@@ -280,80 +284,63 @@ def integrate(size_t numThreads,
     # >>> Integrate.
     # >>>
     #----------------------------------------------------------------------->>>
-    # printf("\nfor ii in prange(<signed int>cellArea.shape[0]")
-    # t_start = clock()#time(NULL)
 
-    
-    # printf('\ntest')
-    # printf("srcCellParams[0,0,0]: %.8e, ", srcCellParams[0,0,0])
-    # printf("srcCellParams[0,0,1]: %.8e, ", srcCellParams[0,0,1])
-
-
-    
-    # for i in len(hot_atmosphere):
-    #     cdef double[::1] cast
-    #     cast = hot_atmosphere[i]
-    #     printf('\nfirst atmosphere element: %f', hot_atmosphere[i][0])
-
-        
-    # atmosphere info
-    # print("Type:", type(hot_atmosphere))
-    # print("Contents:", "(")
-    # for i, item in enumerate(hot_atmosphere):
-    #     print("  [{}]: {}".format(i, item))
-    # print(")")    
-
-    # print('health check 2D')
-    # print(srcCellParams[0,0,0])
-    # print(hot_data[0])
-
+    #################################### 2D interpolator
     # Initiate 2D atmosphere
     cdef double* I_data_2D
     I_data_2D = produce_2D_data(T, &(srcCellParams[0,0,0]), hot_data)
-    # printf('\nI_data_2D[0] = %f.', I_data_2D[0]) 
     atmosphere_2D = make_atmosphere_2D(I_data_2D, hot_data)
  
-
-    # 2D atmosphere info    
-    # for i in range(len(atmosphere_2D)): 
-    #     print('atmosphere_2D[',i,'][0]]: ',atmosphere_2D[i][0])
-    # print("Type:", type(atmosphere_2D))
-    # print("Contents:", "(")
-    # for i, item in enumerate(atmosphere_2D):
-    #     print("  [{}]: {}".format(i, item))
-    # print(")")   
 
     # initiate data 2D
     hot_preloaded_2D = init_preload(atmosphere_2D)
     hot_data_2D = init_hot_2D(N_T, hot_preloaded_2D)
-    # printf('\ntest')
+
+    cdef double E_test = 2e-3
+    cdef double mu_test = 5e-1
+    T = threadid()
     
-    # bascounter = 0
-    # printf('bascounter %ld',bascounter)
- 
-    # Eval hot 2D
-    # cdef double Intesti2D, Intestity5D
-    # cdef double E_test = 1.0e-1
-    # cdef double mu_test = 0.5
-    # Intesti2D = eval_hot_2D(T, E_test, mu_test, hot_data_2D) 
-    # print('Intestity 2D:', Intesti2D)
+    I_test = eval_hot_2D(T, E_test, mu_test, hot_data_2D)
+    printf('\ninterpolating tests:')
+    printf('\nI_test: %f', I_test)
+
+    ############################# gsl 2D interpolator (only works for 1 thread)
+    cdef const gsl_interp2d_type *interp_type = gsl_interp2d_bicubic #gsl_interp2d_bilinear
+    cdef int nE = len(atmosphere_2D[1])
+    cdef int nmu = len(atmosphere_2D[0])
+    cdef gsl_spline2d *spline = gsl_spline2d_alloc(interp_type, nE, nmu)  
+    cdef int mu_index
+    cdef int E_index
+    cdef int I_index
+    cdef double *E_ptr = <double*>malloc(nE * sizeof(double)) #is this allowed to be a pointer?
+    cdef double *mu_ptr = <double*>malloc(nmu * sizeof(double))  #is this allowed to be a pointer?
+    cdef double *I_ptr = <double*>malloc(nE * nmu * sizeof(double))
+    cdef accel *Eacc = <accel*> malloc(sizeof(accel*))
+    cdef accel *muacc = <accel*> malloc(sizeof(accel*))
+    cdef double I_test_gsl
+
+    for mu_index in range(len(atmosphere_2D[0])):
+        mu_ptr[mu_index] = atmosphere_2D[0][mu_index]
+        # printf('\n%f',mu_ptr[mu_index])
+    for E_index in range(len(atmosphere_2D[1])):
+        E_ptr[E_index] = atmosphere_2D[1][E_index]
+        # printf('\n%f',E_ptr[E_index])
+    for I_index in range(len(atmosphere_2D[2])):
+        I_ptr[I_index] = atmosphere_2D[2][I_index]
+        # printf('\n%d: %f', I_index, I_ptr[I_index])  
+
+    gsl_spline2d_init(spline, E_ptr, mu_ptr, I_ptr, nE, nmu)
+
+    Eacc = gsl_interp_accel_alloc()
+    muacc = gsl_interp_accel_alloc()
+   
+    I_test_gsl = gsl_spline2d_eval(spline, E_test, mu_test, Eacc, muacc)
+
+    printf('\nI_test_gsl: %f', I_test_gsl)
+    printf('\n')
 
 
-    # print('health check 5D')
-    # print(srcCellParams[0,0,0])
-    # print(srcCellParams[0,0,1])
-    # print(srcCellParams[0,0,2])
-    # print(hot_data[0])
 
-    # Intestity5D = eval_hot(T,
-    #                E_test,
-    #                mu_test,
-    #                &(srcCellParams[0,0,0]),
-    #                hot_data)
-
-    # print('Intestity5D:', Intestity5D)
-
-    # t_2D_start = clock()
 
     for ii in prange(<signed int>cellArea.shape[0],
                      nogil = True,
@@ -657,7 +644,8 @@ def integrate(size_t numThreads,
 
                     j = 0
                     # printf("\nWhile loop for geometric interps starts here.")
-               
+                    # interpolations+=1
+                    
                     while j < cellArea.shape[1] and terminate[T] == 0:
                         if CELL_RADIATES[i,j] == 1:
                             phi_shift = phi[i,j]
@@ -705,16 +693,23 @@ def integrate(size_t numThreads,
                                         #                 &(srcCellParams[i,j,0]),
                                         #                 hot_data)
                                         # printf('I_E5D %f, ', I_E5D)
-                                        E_electronrest=E_prime*0.001956951198 #kev to electron rest energy conversion.
-                                        I_E2D = eval_hot_2D(T, E_electronrest, __ABB, hot_data_2D)
+                                        E_electronrest=E_prime*0.001956951 #kev to electron rest energy conversion, I am losing some accuracy I guess
                                         
+                                        # printf('\nE_electronrest: %f',E_electronrest)
+                                        # printf('\n__ABB: %f',__ABB)
+                                        
+                                        # I_E2D = gsl_spline2d_eval(spline, E_electronrest, __ABB, Eacc, muacc)
+                                        I_E2D = gsl_spline2d_eval_extrap(spline, E_electronrest, __ABB, Eacc, muacc)
+                                        
+                                        #I_E2D = eval_hot_2D(T, E_electronrest, __ABB, hot_data_2D)
+       
                                         # save some parameters
                                         diagnosis[i,j,p,k,0]= E_electronrest
                                         diagnosis[i,j,p,k,1]= __ABB
                                         diagnosis[i,j,p,k,2] = I_E2D
                                         
                                         # printf('\n(%ld)',bascounter)
-                                        interpolations += 1
+                                        # bascounter = bascounter + 1
                                         
                                         # printf('I_E2D %f', I_E2D)
                                         I_E = I_E2D * eval_hot_norm()
@@ -742,13 +737,12 @@ def integrate(size_t numThreads,
            break # out of colatitude loop
     
     # t_end = clock()  # time(NULL)
+    # printf('clockcycles: %ld\n', t_end)
     # elapsed_time = <double>(t_end - t_start) / CLOCKS_PER_SEC
-    # elapsed_time_2D = <double>(t_end - t_2D_start) / CLOCKS_PER_SEC
-    # printf("\nnumber of interpolations: %d", interpolations)
-    # printf("\nTime taken for 2D interpolations: %.6f seconds", elapsed_time_2D)
-    # printf("\nTime taken for 3D+2D interpolations: %.6f seconds", elapsed_time)
-    # printf("\n")
-
+    # printf("interpolations: %d\n", interpolations)
+    # printf("Time taken for eval_hot and norm: %.6f seconds\n", t_eval_sum)
+    # printf("Time taken for geometrical interpolations: %.6f seconds\n", elapsed_time)
+    
     for i in range(N_E):
         for T in range(N_T):
             for k in range(N_P):
@@ -803,6 +797,7 @@ def integrate(size_t numThreads,
     free(InvisFlag)
     free(InvisStep)
 
+    # 2D interpolator
     free(I_data_2D)
 
     if hot_atmosphere:
@@ -811,6 +806,15 @@ def integrate(size_t numThreads,
 
     free_hot(N_T, hot_data)
     free_hot_2D(N_T, hot_data_2D)
+
+    # gsl interpolator
+    gsl_spline2d_free(spline);
+    gsl_interp_accel_free(Eacc);
+    gsl_interp_accel_free(muacc);
+    free(E_ptr)
+    free(mu_ptr)
+    free(I_ptr)
+
 
     if perform_correction == 1:
         if elsewhere_atmosphere:

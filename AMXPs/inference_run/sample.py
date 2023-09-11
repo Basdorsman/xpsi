@@ -27,6 +27,7 @@ n_params = os.environ.get('n_params')
 likelihood_toggle = os.environ.get('likelihood') 
 machine = os.environ.get('machine')
 integrator_type = os.environ.get('integrator')
+compiler = os.environ.get('compiler')
 
 try:
     num_energies = int(os.environ.get('num_energies'))
@@ -36,7 +37,7 @@ except:
 
 
 # default options if os environment not provided
-if isinstance(os.environ.get('atmosphere_type'),type(None)) or isinstance(os.environ.get('n_params'),type(None)) or isinstance(os.environ.get('likelihood'),type(None)) or isinstance(os.environ.get('machine'),type(None)) or isinstance(os.environ.get('num_energies'),type(None)) or isinstance(os.environ.get('sampling_params'),type(None)) or isinstance(os.environ.get('integrator'),type(None)): # if that fails input them here.
+if isinstance(os.environ.get('atmosphere_type'),type(None)) or isinstance(os.environ.get('n_params'),type(None)) or isinstance(os.environ.get('likelihood'),type(None)) or isinstance(os.environ.get('machine'),type(None)) or isinstance(os.environ.get('num_energies'),type(None)) or isinstance(os.environ.get('sampling_params'),type(None)) or isinstance(os.environ.get('integrator'),type(None)) or isinstance(os.environ.get('compiler'),type(None)): # if that fails input them here.
     print('E: failed to import some OS environment variables, using defaults.')    
     atmosphere_type = 'A' #A, N, B
     n_params = '5' #4, 5
@@ -45,6 +46,7 @@ if isinstance(os.environ.get('atmosphere_type'),type(None)) or isinstance(os.env
     num_energies = 16
     sampling_params=8
     integrator_type = 's'
+    compiler = 'foss'
     
 
 if atmosphere_type == 'A': atmosphere = 'accreting'
@@ -617,7 +619,8 @@ if machine == 'local':
 elif machine == 'helios':
     folderstring = f'helios_runs/run_{atmosphere_type}{n_params}{likelihood_toggle}'
 elif machine == 'snellius':
-    folderstring = f'snellius_runs/run_{atmosphere_type}{n_params}{likelihood_toggle}'
+    #folderstring = f'snellius_runs/run_{atmosphere_type}{n_params}{likelihood_toggle}'
+    folderstring = f'run_{atmosphere_type}{n_params}_s{sampling_params}_e{num_energies}_{compiler}'
 
 try: 
     os.makedirs(folderstring)
@@ -667,7 +670,7 @@ if machine == 'helios':
 if machine == 'snellius':
     sampling_efficiency = 0.8
     n_live_points = 64
-    max_iter = 3
+    max_iter = -1
     outputfiles_basename = f'./{folderstring}/run_se={sampling_efficiency}_lp={n_live_points}_atm={atmosphere_type}{n_params}_ne={num_energies}_mi={max_iter}'
     runtime_params = {'resume': False,
                       'importance_nested_sampling': False,

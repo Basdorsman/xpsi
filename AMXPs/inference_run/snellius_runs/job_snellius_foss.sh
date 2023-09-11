@@ -3,7 +3,7 @@
 #SBATCH --tasks-per-node=64
 #SBATCH -t 01:00:00 #1-00:00:00
 #SBATCH -p thin
-#SBATCH --job-name=A4test
+#SBATCH --job-name=A5foss
 #SBATCH --mail-user=b.dorsman@uva.nl
 #SBATCH --mail-type=END
 
@@ -19,11 +19,15 @@ module load foss/2022a
 module load SciPy-bundle/2022.05-foss-2022a
 module load wrapt/1.15.0-foss-2022a
 module load matplotlib/3.5.2-foss-2022a
+source $HOME/xpsi-bas-fork/venv_foss/bin/activate
 
 export atmosphere_type='A'
-export n_params='4'
+export n_params='5'
+export num_energies='16'
 export likelihood='custom' #custom, default
-
+export machine='snellius'
+export sampling_params='10'
+export integrator='s'
 
 cd $HOME/xpsi-bas-fork/
 LDSHARED="gcc -shared" CC=gcc python setup.py install --${atmosphere_type}${n_params}Hot
@@ -32,7 +36,7 @@ cp -r $HOME/xpsi-bas-fork/AMXPs/* $TMPDIR/
 cd $TMPDIR/inference_run/
 echo 'make tmp snellius runs folder' 
 mkdir $TMPDIR/inference_run/snellius_runs/
-#mkdir $TMPDIR/inference_run/snellius_runs/run_${atmosphere_type}${n_params}
+mkdir $TMPDIR/inference_run/snellius_runs/run_${atmosphere_type}${n_params}_foss
 
 export OMP_NUM_THREADS=1
 export OPENBLAS_NUM_THREADS=1
@@ -44,6 +48,6 @@ srun python sample.py > ${atmosphere_type}${n_params}${likelihood}_$SLURM_JOB_ID
 echo 'make home snellius_runs folder'
 mkdir $HOME/xpsi-bas-fork/AMXPs/inference_run/snellius_runs
 echo 'make run_atmosphereparams folder'
-mkdir $HOME/xpsi-bas-fork/AMXPs/inference_run/snellius_runs/run_${atmosphere_type}${n_params}
+mkdir $HOME/xpsi-bas-fork/AMXPs/inference_run/snellius_runs/run_${atmosphere_type}${n_params}_foss
 cp ${atmosphere_type}${n_params}${likelihood}_$SLURM_JOB_ID.out ${atmosphere_type}${n_params}${likelihood}_$SLURM_JOB_ID.err $HOME/xpsi-bas-fork/AMXPs/inference_run/snellius_runs
-cp -r snellius_runs/run_${atmosphere_type}${n_params} $HOME/xpsi-bas-fork/AMXPs/inference_run/snellius_runs
+cp -r snellius_runs/run_${atmosphere_type}${n_params}_foss $HOME/xpsi-bas-fork/AMXPs/inference_run/snellius_runs

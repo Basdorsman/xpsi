@@ -1,8 +1,8 @@
 #!/bin/bash
 #SBATCH -N 1 #5
-#SBATCH --tasks-per-node=64
-#SBATCH -t 1-00:00:00
-#SBATCH -p thin
+#SBATCH --tasks-per-node=128
+#SBATCH -t 10:00:00 #1-00:00:00
+#SBATCH -p rome
 #SBATCH --job-name=A5intel
 #SBATCH --mail-user=b.dorsman@uva.nl
 #SBATCH --mail-type=END
@@ -21,11 +21,13 @@ module load 2022
 export compiler='intel' #foss/intel
 export atmosphere_type='A'
 export n_params='5'
-export num_energies='32'
-export likelihood='custom' #custom, default
+export num_energies='16'
+export likelihood='default' #custom, default
 export machine='snellius'
 export sampling_params='10'
 export integrator='s'
+export live_points=$SLURM_TASKS_PER_NODE
+export max_iter='-1'
 
 export XPSI_DIR=$HOME/xpsi-bas-fork
 export LABEL=${atmosphere_type}${n_params}_s${sampling_params}_e${num_energies}_${compiler}

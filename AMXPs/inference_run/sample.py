@@ -32,21 +32,25 @@ compiler = os.environ.get('compiler')
 try:
     num_energies = int(os.environ.get('num_energies'))
     sampling_params = int(os.environ.get('sampling_params'))
+    live_points = int(os.environ.get('live_points'))
+    max_iter = int(os.environ.get('max_iter'))
 except:
     pass
 
 
 # default options if os environment not provided
-if isinstance(os.environ.get('atmosphere_type'),type(None)) or isinstance(os.environ.get('n_params'),type(None)) or isinstance(os.environ.get('likelihood'),type(None)) or isinstance(os.environ.get('machine'),type(None)) or isinstance(os.environ.get('num_energies'),type(None)) or isinstance(os.environ.get('sampling_params'),type(None)) or isinstance(os.environ.get('integrator'),type(None)) or isinstance(os.environ.get('compiler'),type(None)): # if that fails input them here.
+if isinstance(os.environ.get('atmosphere_type'),type(None)) or isinstance(os.environ.get('n_params'),type(None)) or isinstance(os.environ.get('likelihood'),type(None)) or isinstance(os.environ.get('machine'),type(None)) or isinstance(os.environ.get('num_energies'),type(None)) or isinstance(os.environ.get('sampling_params'),type(None)) or isinstance(os.environ.get('integrator'),type(None)) or isinstance(os.environ.get('compiler'),type(None)) or isinstance(os.environ.get('live_points'),type(None)) or isinstance(os.environ.get('max_iter'),type(None)): # if that fails input them here.
     print('E: failed to import some OS environment variables, using defaults.')    
     atmosphere_type = 'A' #A, N, B
     n_params = '5' #4, 5
     likelihood_toggle = 'default' # default, custom
     machine = 'local' # local, helios, snellius
     num_energies = 16
-    sampling_params=8
+    sampling_params= 8
     integrator_type = 's'
     compiler = 'foss'
+    live_points = 64
+    max_iter = -1
     
 
 if atmosphere_type == 'A': atmosphere = 'accreting'
@@ -84,9 +88,6 @@ from custom_tools import CustomSignal, CustomPrior, CustomPrior_NoSecondary, plo
 
 np.random.seed(xpsi._rank+10)
 print('Rank reporting: %d' % xpsi._rank)
-
-
-
 
 ##################################### DATA ####################################
 if atmosphere_type=='A':
@@ -669,8 +670,8 @@ if machine == 'helios':
                       'verbose': True}
 if machine == 'snellius':
     sampling_efficiency = 0.8
-    n_live_points = 64
-    max_iter = -1
+    n_live_points = live_points
+    max_iter = max_iter
     outputfiles_basename = f'./{folderstring}/run_se={sampling_efficiency}_lp={n_live_points}_atm={atmosphere_type}{n_params}_ne={num_energies}_mi={max_iter}'
     runtime_params = {'resume': False,
                       'importance_nested_sampling': False,

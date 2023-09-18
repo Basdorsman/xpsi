@@ -442,7 +442,7 @@ star = xpsi.Star(spacetime = spacetime, photospheres = photosphere)
 
 if atmosphere=='accreting':
     # Compton slab model parameters
-    tbb=0.001 #0.00015-  0.003
+    tbb=0.001 #0.001 - 0.003
     te=40.#200 #40 - 200
     tau=0.5 #0.5 - 3.5
 

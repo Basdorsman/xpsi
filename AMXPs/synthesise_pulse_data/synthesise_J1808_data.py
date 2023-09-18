@@ -50,7 +50,7 @@ except:
 if atmosphere_type == 'N':
     exposure_time=50000. #Reproducing NSX atmosphere data would require exposure time of 984307.6661
 elif atmosphere_type == 'A':
-    exposure_time=40000.
+    exposure_time=2350000.      #Reproducing Mason's J1808 data
 else:
     print('Problem with exposure time!')
 print("atmosphere_type:", atmosphere_type)
@@ -58,8 +58,8 @@ print("n_params:", n_params)
 
 ################################## INSTRUMENT #################################
 try:
-    NICER = CustomInstrument.from_response_files(ARF = '../model_data/nicer_v1.01_arf.txt',
-                                             RMF = '../model_data/nicer_v1.01_rmf_matrix.txt',
+    NICER = CustomInstrument.from_response_files(ARF = '../model_data/J1808/ni2584010103mpu7_3c50.arf',
+                                             RMF = '../model_data/J1808/ni2584010103mpu7_3c50.rmf',
                                              max_input = 500, #500
                                              min_input = 0,
                                              channel_edges = '../model_data/nicer_v1.01_rmf_energymap.txt')
@@ -76,7 +76,7 @@ bounds = dict(distance = (0.1, 10.0),                       # (Earth) distance
                 radius = (3.0 * gravradius(1.0), 16.0),     # equatorial radius
                 cos_inclination = (0.0, 1.0))               # (Earth) inclination to rotation axis
 
-spacetime = xpsi.Spacetime(bounds=bounds, values=dict(frequency=300.0))# Fixing the spin
+spacetime = xpsi.Spacetime(bounds=bounds, values=dict(frequency=401.0))# Fixing the spin
 
 ############################### SINGLE HOTREGION ##############################
 
@@ -322,80 +322,77 @@ for h in hot.objects:
 
 print("Prossecco ...")
 
+# SAX J1808-like 
+mass = 1.4
+radius = 12.
+distance = 3.5
+inclination = 60
+cos_inclination = math.cos(inclination*math.pi/180)
+phase_shift = 0
+super_colatitude = 20*math.pi/180
+super_radius = 15.5*math.pi/180
+
 if atmosphere_type=='A':
     if n_params=='5':
         # Compton slab model parameters
-        tbb=0.001 #0.00015-  0.003
-        te=40 #200. #40 - 200
-        tau=0.5 #0.5 - 3.5
+        tbb=0.002 #0.001 -0.003 Tbb(data) = Tbb(keV)/511keV, 1 keV = 0.002 data
+        te=97.85 #40-200 corresponds to 20-100 keV (Te(data) = Te(keV)*1000/511keV), 50 keV = 25.55 data
+        tau=1. #0.5 - 3.5 tau = ln(Fin/Fout)
+
     
         if second:
-            p = [1.6, #1.4, #grav mass
-                  14.0,#12.5, #coordinate equatorial radius
-                  0.2, # earth distance kpc
-                  math.cos(1.25), #cosine of earth inclination
-                  0.0, #phase of hotregion
-                  1.0, #colatitude of centre of superseding region
-                  0.075,  #angular radius superceding region
+            p = [mass, #1.4, #grav mass
+                  radius,#12.5, #coordinate equatorial radius
+                  distance, # earth distance kpc
+                  cos_inclination, #cosine of earth inclination
+                  phase_shift, #phase of hotregion
+                  super_colatitude, #colatitude of centre of superseding region
+                  super_radius,  #angular radius superceding region
                   tbb,
                   te,
                   tau,
-                  #6.2, #primary temperature
-                  #modulator, #modulator
                   0.025,
                   math.pi - 1.0,
                   0.075
                   ]
         elif not second:
-            p = [1.6, #1.4, #grav mass
-                  14.0,#12.5, #coordinate equatorial radius
-                  0.2, # earth distance kpc
-                  math.cos(1.25), #cosine of earth inclination
-                  0.0, #phase of hotregion
-                  1.0, #colatitude of centre of superseding region
-                  0.075,  #angular radius superceding region
+            p = [mass, #1.4, #grav mass
+                  radius,#12.5, #coordinate equatorial radius
+                  distance, # earth distance kpc
+                  cos_inclination, #cosine of earth inclination
+                  phase_shift, #phase of hotregion
+                  super_colatitude, #colatitude of centre of superseding region
+                  super_radius,  #angular radius superceding region
                   tbb,
                   te,
-                  tau,
-                  #6.2, #primary temperature
-                  #modulator, #modulator
+                  tau
                   ]
-    elif n_params=='4':
-        # Compton slab model parameters
-        tbb=0.001
-        #te=200.
-        tau=0.5
-    
+    elif n_params=='4':    
         if second:
-            p = [1.6, #1.4, #grav mass
-                  14.0,#12.5, #coordinate equatorial radius
-                  0.2, # earth distance kpc
-                  math.cos(1.25), #cosine of earth inclination
-                  0.0, #phase of hotregion
-                  1.0, #colatitude of centre of superseding region
-                  0.075,  #angular radius superceding region
+            p = [mass, #1.4, #grav mass
+                  radius,#12.5, #coordinate equatorial radius
+                  distance, # earth distance kpc
+                  cos_inclination, #cosine of earth inclination
+                  phase_shift, #phase of hotregion
+                  super_colatitude, #colatitude of centre of superseding region
+                  super_radius,  #angular radius superceding region
                   tbb,
-                  #te,
                   tau,
-                  #6.2, #primary temperature
-                  #modulator, #modulator
                   0.025,
                   math.pi - 1.0,
                   0.075
                   ]
         elif not second:
-            p = [1.6, #1.4, #grav mass
-                  14.0,#12.5, #coordinate equatorial radius
-                  0.2, # earth distance kpc
-                  math.cos(1.25), #cosine of earth inclination
-                  0.0, #phase of hotregion
-                  1.0, #colatitude of centre of superseding region
-                  0.075,  #angular radius superceding region
+            p = [mass, #1.4, #grav mass
+                  radius,#12.5, #coordinate equatorial radius
+                  distance, # earth distance kpc
+                  cos_inclination, #cosine of earth inclination
+                  phase_shift, #phase of hotregion
+                  super_colatitude, #colatitude of centre of superseding region
+                  super_radius,  #angular radius superceding region
                   tbb,
-                  #te,
-                  tau,
-                  #6.2, #primary temperature
-                  #modulator, #modulator
+                  te,
+                  tau
                   ]
 elif atmosphere_type=='N':   
     p_temperature = 6.764 # 6.2
@@ -468,9 +465,12 @@ elif atmosphere_type=='B':
 
 p.append(-2)        # Background sprectral index : gamma (E^gamma) 
 
+print("printing Parameters of the star:")
+print(star.params)
+
 Instrument_kwargs = dict(exposure_time=exposure_time,              
                          expected_background_counts=0., #10000.0,
-                         name='{}{}_synthetic'.format(atmosphere_type, n_params),
+                         name='J1808_synthetic',
                          directory='./data/')
 
 likelihood.synthesise(p, force=True, Instrument=Instrument_kwargs) 
@@ -482,7 +482,7 @@ print('expected counts:', np.sum(signal.expected_counts))
 
 ########## DATA PLOT ###############
 
-my_data=np.loadtxt('./data/{}{}_synthetic_realisation.dat'.format(atmosphere_type, n_params))
+my_data=np.loadtxt('./data/J1808_synthetic_realisation.dat'.format(atmosphere_type, n_params))
 
 fig,ax=plt.subplots(1,1,figsize=(10,5))
 
@@ -504,16 +504,17 @@ ax.add_artist(anchored_text)
 plt.colorbar(my_d,ax=ax)
 #plt.colorbar(you_d,ax=ax[1])
 #plt.colorbar(res,ax=ax[2])
-plt.title('{}{}_synthetic_realisation_exp_time={}.png'.format(atmosphere_type, n_params, exposure_time))
+figstring = 'J1808_synthetic_realisation_exp_time={}.png'.format(exposure_time)
+plt.title(figstring)
 
-figstring = './plots/{}{}_synthetic_realisation_exp_time={}.png'.format(atmosphere_type, n_params, exposure_time)
+
 try:
     os.makedirs('./plots')
 except OSError:
     if not os.path.isdir('./plots'):
         raise
-fig.savefig(figstring)
-print('data plot saved in {}'.format(figstring))
+fig.savefig('./plots/'+figstring)
+print('data plot saved in plots/{}'.format(figstring))
 
 ################ SIGNAL PLOT ###################################
 
@@ -534,21 +535,21 @@ if not second:
 if atmosphere_type=='A':
     if n_params=='4':
         ax.set_title('atm={} params={} te_index={}, tbb={:.2e} [keV], tau={:.2e} [-]'.format(atmosphere_type, n_params, te_index, tbb*511, tau), loc='center') #unit conversion te and tbb is different due to a cluster leftover according to Anna B.
-        figstringpulse = 'atm={}_sec={}_te_index={}_tbb={:.2e}_tau={:.2e}.png'.format(atmosphere_type, second, te_index, tbb, tau)
+        # figstringpulse = 'atm={}_sec={}_te_index={}_tbb={:.2e}_tau={:.2e}.png'.format(atmosphere_type, second, te_index, tbb, tau)
     if n_params=='5':
         ax.set_title('atm={} params={} te={:.2e} [keV], tbb={:.2e} [keV], tau={:.2e} [-]'.format(atmosphere_type, n_params, te*0.511, tbb*511, tau), loc='center') #unit conversion te and tbb is different due to a cluster leftover according to Anna B.
-        figstringpulse = 'atm={}_sec={}_te={:.2e}_tbb={:.2e}_tau={:.2e}.png'.format(atmosphere_type, second, te, tbb, tau)
+        # figstringpulse = 'atm={}_sec={}_te={:.2e}_tbb={:.2e}_tau={:.2e}.png'.format(atmosphere_type, second, te, tbb, tau)
 elif atmosphere_type=='N':
     if n_params=="5":
         ax.set_title('n_params={} p_temperature={} modulator={}'.format(n_params, p_temperature, modulator))
-        figstringpulse = '5D_pulses_atm={}_sec={}_p_temperature={}_modulator={}.png'.format(atmosphere_type, second, p_temperature, modulator)
+        # figstringpulse = '5D_pulses_atm={}_sec={}_p_temperature={}_modulator={}.png'.format(atmosphere_type, second, p_temperature, modulator)
     elif n_params=="4":
         ax.set_title('n_params={} p_temperature={}'.format(n_params, p_temperature))
-        figstringpulse='atm={}_sec={}_p_temperature={}.png'.format(atmosphere_type, second, p_temperature)
+        # figstringpulse='atm={}_sec={}_p_temperature={}.png'.format(atmosphere_type, second, p_temperature)
 elif atmosphere_type=='B':
     ax.set_title('n_params={} p_temperature={}'.format(n_params, p_temperature))
-    figstringpulse = 'pulses_atm={}_sec={}_p_temperature={}.png'.format(atmosphere_type, second, p_temperature)
+    # figstringpulse = 'pulses_atm={}_sec={}_p_temperature={}.png'.format(atmosphere_type, second, p_temperature)
 
 
-plt.savefig(f'./plots/{figstringpulse}')
-print('signal plot saved in {}'.format(figstringpulse))
+plt.savefig(f'./plots/J1808.png')
+print('signal plot saved in plots/J1808.png')

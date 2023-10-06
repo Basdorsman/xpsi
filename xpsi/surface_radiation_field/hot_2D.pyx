@@ -269,8 +269,8 @@ cdef double eval_hot_2D(size_t THREAD,
     
     
     # printf("\neval_hot() called")
-    # printf("\nVEC[0]: %f", VEC[0])
-    # printf("\nVEC[1]: %f", VEC[1])
+    # printf("\nvec[0]: %f", vec[0])
+    # printf("\nvec[1]: %f", vec[1])
     # printf('ndims')
     # printf('\nD.p.ndims 2D: %ld', D.p.ndims)
 
@@ -475,6 +475,8 @@ cdef double eval_hot_2D(size_t THREAD,
                 #<int>BN[0], <int>BN[1], <int>BN[2], <int>BN[3])
 
     # printf("\nI:  %.8e", I)
+    # printf("\nvec[0]: %f", vec[0])
+    # printf("\nvec[1]: %f", vec[1])
 
     if I < 0.0:
         return 0.0

@@ -482,6 +482,8 @@ class HotRegion(ParameterSubspace):
         # find the required integrator
         if declaration == 'azimuthal_invariance': # can we safely assume azimuthal invariance?
             from xpsi.cellmesh.integrator_for_azimuthal_invariance import integrate as _integrator
+        elif declaration == 'azimuthal_invariance_split': # can we safely assume azimuthal invariance?
+            from xpsi.cellmesh.integrator_for_azimuthal_invariance_split import integrate as _integrator
         elif declaration == 'combined': # more general purpose
             from xpsi.cellmesh.integrator import integrate as _integrator
         elif declaration == 'split': # attempt to optimize
@@ -1110,7 +1112,7 @@ class HotRegion(ParameterSubspace):
         # print(self._image_order_limit)
         # print("all variables ok")
 
-        # print("self.integrator in hotregion. threads:", self.threads) 
+        # print("self.integrator in hotregion. threads:", threads) 
         super_pulse = self._integrator(threads,
                                        st.R,
                                        st.Omega,
@@ -1181,6 +1183,7 @@ class HotRegion(ParameterSubspace):
                 return (super_pulse[1], cede_pulse[1])
 
         # return (super_pulse[1],super_pulse[2])
+        # print('integrate in hotregion done')
         return (super_pulse[1])
 
 HotRegion._update_doc()

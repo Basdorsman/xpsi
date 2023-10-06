@@ -31,7 +31,7 @@ from xpsi.global_imports import _c, _G, _dpr, gravradius, _csq, _km, _2pi
 
 import sys
 sys.path.append('../')
-from custom_tools import CustomInstrument, CustomHotRegion, CustomHotRegion_Accreting, CustomHotRegion_Accreting_te_const, CustomPhotosphere_BB, CustomPhotosphere_N4, CustomPhotosphere_N5, CustomPhotosphere_A5, CustomPhotosphere_A4, CustomSignal, CustomPrior, CustomPrior_NoSecondary, plot_2D_pulse, CustomBackground, SynthesiseData
+from custom_tools import CustomInstrumentJ1808, CustomHotRegion, CustomHotRegion_Accreting, CustomHotRegion_Accreting_te_const, CustomPhotosphere_BB, CustomPhotosphere_N4, CustomPhotosphere_N5, CustomPhotosphere_A5, CustomPhotosphere_A4, CustomSignal, CustomPrior, CustomPrior_NoSecondary, plot_2D_pulse, CustomBackground, SynthesiseData
 
 ################################## SETTINGS ###################################
 
@@ -45,28 +45,29 @@ try: #try to get parameters from shell input
     n_params = os.environ['n_params']
 except:
     atmosphere_type = "A"
-    n_params = "4"
+    n_params = "5"
 
 if atmosphere_type == 'N':
     exposure_time=50000. #Reproducing NSX atmosphere data would require exposure time of 984307.6661
 elif atmosphere_type == 'A':
-    exposure_time=2350000.      #Reproducing Mason's J1808 data
+    exposure_time=2e6      #Reproducing Mason's J1808 data with no background = 2350000.
 else:
     print('Problem with exposure time!')
 print("atmosphere_type:", atmosphere_type)
 print("n_params:", n_params)
 
 ################################## INSTRUMENT #################################
-try:
-    NICER = CustomInstrument.from_response_files(ARF = '../model_data/J1808/ni2584010103mpu7_3c50.arf',
-                                             RMF = '../model_data/J1808/ni2584010103mpu7_3c50.rmf',
-                                             max_input = 500, #500
-                                             min_input = 0,
-                                             channel_edges = '../model_data/nicer_v1.01_rmf_energymap.txt')
-except:
-    print("ERROR: You might miss one of the following files (check Modeling tutorial or the link below how to find them): \n model_data/nicer_v1.01_arf.tx, model_data/nicer_v1.01_rmf_matrix.txt, model_data/nicer_v1.01_rmf_energymap.txt")
-    print("https://github.com/ThomasEdwardRiley/xpsi_workshop.git")
-    exit()
+channel_low = 20
+channel_hi = 300 #600
+max_input = 1400 #2000
+
+NICER = CustomInstrumentJ1808.from_response_files(ARF = '../model_data/J1808/ni2584010103mpu7_arf_aeff.txt',
+                                                  RMF = '../model_data/J1808/ni2584010103mpu7_rmf_matrix.txt',
+                                                  channel_edges = '../model_data/J1808/ni2584010103mpu7_rmf_energymap.txt',
+                                                  channel_low=channel_low,
+                                                  channel_hi=channel_hi,
+                                                  max_input=max_input)
+
 
 
 ############################### SPACETIME #####################################
@@ -80,106 +81,43 @@ spacetime = xpsi.Spacetime(bounds=bounds, values=dict(frequency=401.0))# Fixing 
 
 ############################### SINGLE HOTREGION ##############################
 
-if atmosphere_type=='A':
-    if n_params=='5':
-        bounds = dict(super_colatitude = (None, None),
-                      super_radius = (None, None),
-                      phase_shift = (0.0, 0.1),
-                      super_tbb = (0.00015, 0.003),
-                      super_te = (40., 200.),
-                      super_tau = (0.5, 3.5))
-    
-        primary = CustomHotRegion_Accreting(bounds=bounds,
-           	                    values={},
-           	                    symmetry='split', #call general integrator instead of for azimuthal invariance
-           	                    omit=False,
-           	                    cede=False,
-           	                    concentric=False,
-           	                    sqrt_num_cells=32,
-           	                    min_sqrt_num_cells=10,
-           	                    max_sqrt_num_cells=64,
-           	                    num_leaves=100,
-           	                    num_rays=200,
-           	                    prefix='p')
-    elif n_params=='4':
-        bounds = dict(super_colatitude = (None, None),
-                      super_radius = (None, None),
-                      phase_shift = (0.0, 0.1),
-                      super_tbb = (0.00015, 0.003),
-                      super_tau = (0.5, 3.5))
-    
-        primary = CustomHotRegion_Accreting_te_const(bounds=bounds,
-           	                    values={},
-           	                    symmetry='split', #call general integrator instead of for azimuthal invariance
-           	                    omit=False,
-           	                    cede=False,
-           	                    concentric=False,
-           	                    sqrt_num_cells=32,
-           	                    min_sqrt_num_cells=10,
-           	                    max_sqrt_num_cells=64,
-           	                    num_leaves=100,
-           	                    num_rays=200,
-           	                    prefix='p')
-elif atmosphere_type=='N':
-    if n_params=='4':
-        bounds = dict(super_colatitude = (None, None),
-                      super_radius = (None, None),
-                      phase_shift = (0.0, 0.1),
-                      super_temperature = (5.1, 6.8))#,
-                      #super_modulator = (-0.3, 0.3))
-    
-        primary = xpsi.HotRegion(bounds=bounds,
-           	                    values={},
-           	                    symmetry=False, #call general integrator instead of for azimuthal invariance
-           	                    omit=False,
-           	                    cede=False,
-           	                    concentric=False,
-           	                    sqrt_num_cells=32,
-           	                    min_sqrt_num_cells=10,
-           	                    max_sqrt_num_cells=64,
-           	                    num_leaves=100,
-           	                    num_rays=200,
-                                #modulated = True, #modulation flag
-           	                    prefix='p')
-    elif n_params=='5':
-        bounds = dict(super_colatitude = (None, None),
-                      super_radius = (None, None),
-                      phase_shift = (0.0, 0.1),
-                      super_temperature = (5.1, 6.8),
-                      super_modulator = (-0.3, 0.3))
-    
-        primary = CustomHotRegion(bounds=bounds,
-           	                    values={},
-           	                    symmetry=False, #call general integrator instead of for azimuthal invariance
-           	                    omit=False,
-           	                    cede=False,
-           	                    concentric=False,
-           	                    sqrt_num_cells=32,
-           	                    min_sqrt_num_cells=10,
-           	                    max_sqrt_num_cells=64,
-           	                    num_leaves=100,
-           	                    num_rays=200,
-                                modulated = True, #modulation flag
-           	                    prefix='p')
+num_leaves = 128
+sqrt_num_cells = 128
+num_rays = 512
 
+kwargs = {'symmetry': 'split', #call general integrator instead of for azimuthal invariance
+          'omit': False,
+          'cede': False,
+          'concentric': False,
+          'sqrt_num_cells': sqrt_num_cells,
+          'min_sqrt_num_cells': 10,
+          'max_sqrt_num_cells': 64,
+          'num_leaves': num_leaves,
+          'num_rays': num_rays,
+          'prefix': 'p'}
+values = {}
+bounds = dict(super_colatitude = (None, None),
+              super_radius = (None, None),
+              phase_shift = (0.0, 0.1))
+if atmosphere_type=='A':
+    bounds['super_tbb'] = (0.001, 0.003)
+    bounds['super_tau'] = (0.5, 3.5)
+    if n_params=='5':
+        bounds['super_te'] = (40., 200.)
+        primary = CustomHotRegion_Accreting(bounds, values, **kwargs)
+    elif n_params=='4':    
+        primary = CustomHotRegion_Accreting_te_const(bounds, values, **kwargs)
+elif atmosphere_type=='N':
+    bounds['super_temperature'] = (5.1, 6.8)
+    if n_params=='4':
+        primary = xpsi.HotRegion(bounds, values, **kwargs)
+    elif n_params=='5':
+        kwargs['modulated'] = True
+        bounds['super_modulator'] = (-0.3, 0.3)
+        primary = CustomHotRegion(bounds, values, **kwargs)
 elif atmosphere_type=='B':
-    bounds = dict(super_colatitude = (None, None),
-                  super_radius = (None, None),
-                  phase_shift = (0.0, 0.1),
-                  super_temperature = (5.1, 6.8))
-    
-    primary = xpsi.HotRegion(bounds=bounds,
-    	                    values={},
-    	                    symmetry=True,
-    	                    omit=False,
-    	                    cede=False,
-    	                    concentric=False,
-    	                    sqrt_num_cells=32,
-    	                    min_sqrt_num_cells=10,
-    	                    max_sqrt_num_cells=64,
-    	                    num_leaves=100,
-    	                    num_rays=200,
-    	                    prefix='p') 	
+    bounds['super_temperature'] = (5.1, 6.8)
+    primary = CustomHotRegion(bounds, values, **kwargs)
 
 hot = HotRegions((primary,))
     
@@ -238,7 +176,8 @@ background = CustomBackground(bounds=(None, None))
 
 
 #_data = SynthesiseData(np.arange(10,301), np.linspace(0.0, 1.0, 33), 0, 290 )
-_data = SynthesiseData(np.arange(20,201), np.linspace(0.0, 1.0, 33), 0, 180 ) #Apparently some hardcoded stuff for NICER
+phases_space = np.linspace(0.0, 1.0, 33)
+_data = SynthesiseData(np.arange(channel_low,channel_hi), phases_space, 0, channel_hi-channel_low-1) #Apparently some hardcoded stuff for NICER
 
 
 from xpsi.tools.synthesise import synthesise_exposure as _synthesise
@@ -317,7 +256,7 @@ likelihood = xpsi.Likelihood(star = star, signals = signal,
 
 
 for h in hot.objects:
-    h.set_phases(num_leaves = 100)
+    h.set_phases(num_leaves)
 
 
 print("Prossecco ...")
@@ -335,8 +274,8 @@ super_radius = 15.5*math.pi/180
 if atmosphere_type=='A':
     if n_params=='5':
         # Compton slab model parameters
-        tbb=0.002 #0.001 -0.003 Tbb(data) = Tbb(keV)/511keV, 1 keV = 0.002 data
-        te=97.85 #40-200 corresponds to 20-100 keV (Te(data) = Te(keV)*1000/511keV), 50 keV = 25.55 data
+        tbb=0.0015 #0.001 -0.003 Tbb(data) = Tbb(keV)/511keV, 1 keV = 0.002 data
+        te=100. #40-200 corresponds to 20-100 keV (Te(data) = Te(keV)*1000/511keV), 50 keV = 100 data
         tau=1. #0.5 - 3.5 tau = ln(Fin/Fout)
 
     
@@ -463,13 +402,15 @@ elif atmosphere_type=='B':
               p_temperature #primary temperature
               ]
 
-p.append(-2)        # Background sprectral index : gamma (E^gamma) 
+background_spectral_index = -1.01  #bounds: -1.01 to -4.0
+background_expected_counts = 7e7#7e7 #0
+p.append(background_spectral_index)        # Background sprectral index : gamma (E^gamma) 
 
 print("printing Parameters of the star:")
 print(star.params)
 
 Instrument_kwargs = dict(exposure_time=exposure_time,              
-                         expected_background_counts=0., #10000.0,
+                         expected_background_counts=background_expected_counts, #10000.0,
                          name='J1808_synthetic',
                          directory='./data/')
 
@@ -486,27 +427,29 @@ my_data=np.loadtxt('./data/J1808_synthetic_realisation.dat'.format(atmosphere_ty
 
 fig,ax=plt.subplots(1,1,figsize=(10,5))
 
-#xpsi_d=ax[0].imshow(good_xspi_data,cmap=cm.magma,origin="lower", aspect="auto",extent=[0,1,10,300])
-my_d=ax.imshow(my_data,cmap=cm.magma,origin="lower", aspect="auto",extent=[0,1,10,300])
-#res=ax[2].imshow(residual,cmap=cm.magma,origin="lower", aspect="auto",extent=[0,1,10,300])
 
-# anchored_text1 = AnchoredText("xpsi_good_installation",loc=1)
-anchored_text = AnchoredText("Your installation",loc=1)
-# anchored_text3 = AnchoredText("Residual",loc=1)
+# my_d=ax.imshow(my_data,cmap=cm.jet,origin="lower", aspect="auto",extent=[0,1,10,300])
+# ax.set_ylabel("Channels")
+# ax.set_xlabel("Phases")
+# plt.colorbar(my_d,ax=ax)
 
-ax.set_ylabel("Channels")
-ax.set_xlabel("Phases")
-#ax[1].set_xlabel("Phases")
-#ax[2].set_xlabel("Phases")
-ax.add_artist(anchored_text)
-#ax[1].add_artist(anchored_text2)
-#ax[2].add_artist(anchored_text3)
-plt.colorbar(my_d,ax=ax)
-#plt.colorbar(you_d,ax=ax[1])
-#plt.colorbar(res,ax=ax[2])
-figstring = 'J1808_synthetic_realisation_exp_time={}.png'.format(exposure_time)
-plt.title(figstring)
+# my_d=ax.pcolormesh(phases_space, NICER.channel_edges, my_data, cmap=cm.jet)
+# ax.set_ylabel('Channel_edges (keV)')
+# ax.set_xlabel('Phase')
+# ax.set_yscale('log')
 
+# plt.colorbar(my_d,ax=ax)
+figstring = f'J1808_synthetic_realisation_exp_time={exposure_time}_bkg_counts={background_expected_counts}_powerlaw_index_{background_spectral_index}.png'
+# plt.title(figstring)
+
+my_d=ax = plot_2D_pulse((my_data,),
+              x=phases_space,
+              shift=signal.shifts,
+              y=NICER.channel_edges[:-1], #channels,
+              ylabel=r'Energy (keV)',
+              cm=cm.jet,
+              num_rotations=2.0,
+              normalize=False)
 
 try:
     os.makedirs('./plots')
@@ -530,7 +473,8 @@ if not second:
                   x=signal.phases[0],
                   shift=signal.shifts,
                   y=signal.energies,
-                  ylabel=r'Energy (keV)')
+                  ylabel=r'Energy (keV)',
+                  num_rotations=2.0)
 
 if atmosphere_type=='A':
     if n_params=='4':

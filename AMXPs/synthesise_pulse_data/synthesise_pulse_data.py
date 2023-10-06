@@ -98,8 +98,8 @@ if atmosphere_type=='A':
            	                    sqrt_num_cells=32,
            	                    min_sqrt_num_cells=10,
            	                    max_sqrt_num_cells=64,
-           	                    num_leaves=100,
-           	                    num_rays=200,
+           	                    num_leaves=64,
+           	                    num_rays=512,
            	                    prefix='p')
     elif n_params=='4':
         bounds = dict(super_colatitude = (None, None),

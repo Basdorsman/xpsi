@@ -16,4 +16,4 @@ fi
 
 cd AMXPs/synthesise_pulse_data/
 export atmosphere_type n_params 
-python synthesise_J1808_data.py
+python synthesise_J1808_data.py #synthesise_pulse_data.py #synthesise_J1808_data.py #  #

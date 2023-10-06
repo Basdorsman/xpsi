@@ -65,10 +65,74 @@ class CustomInstrument(xpsi.Instrument):
 
         for i in range(matrix.shape[0]):
             matrix[i,:] *= ARF[min_input:max_input,3]
+            # print(np.sum(matrix[i,:]))
 
         channels = np.arange(20, 201)
 
         return cls(matrix, edges, channels, channel_edges[20:202,-2])
+
+class CustomInstrumentJ1808(xpsi.Instrument):
+    """ A model of the NICER telescope response. """
+
+    def __call__(self, signal, *args):
+        """ Overwrite base just to show it is possible.
+
+        We loaded only a submatrix of the total instrument response
+        matrix into memory, so here we can simplify the method in the
+        base class.
+
+        """
+        matrix = self.construct_matrix()
+
+        self._folded_signal = np.dot(matrix, signal)
+
+        return self._folded_signal
+
+    @classmethod
+    def from_response_files(cls, ARF, RMF, skiprows = 2, specresp_index = 2, 
+                            energy_hi_index = 1, energy_low_index = 0, 
+                            channel_low = 20, channel_hi = 300, max_input=1400,
+                            min_input=0, channel_edges=None):
+        """ Constructor which converts response files into :class:`numpy.ndarray`s.
+        :param str ARF: Path to ARF which is compatible with
+                                :func:`numpy.loadtxt`.
+        :param str RMF: Path to RMF which is compatible with
+                                :func:`numpy.loadtxt`.
+        :param str channel_edges: Optional path to edges which is compatible with
+                                  :func:`numpy.loadtxt`.
+        """
+    
+        if min_input != 0:
+            min_input = int(min_input)
+    
+        max_input = int(max_input)
+    
+        try:
+            ARF = np.loadtxt(ARF, dtype=np.double, skiprows=skiprows)
+            RMF = np.loadtxt(RMF, dtype=np.double)
+            if channel_edges:
+                channel_edges = np.loadtxt(channel_edges, dtype=np.double, skiprows=skiprows)[:,1:]
+        except:
+            print('A file could not be loaded.')
+            raise
+    
+        matrix = np.ascontiguousarray(RMF[min_input:max_input,channel_low:channel_hi].T, dtype=np.double)
+    
+        edges = np.zeros(ARF[min_input:max_input,specresp_index].shape[0]+1, dtype=np.double)
+    
+        edges[0] = ARF[min_input,energy_low_index]; edges[1:] = ARF[min_input:max_input,energy_hi_index]
+    
+        for i in range(matrix.shape[0]):
+            # print('before')
+            # print(np.sum(matrix[i,:]))
+            matrix[i,:] *= ARF[min_input:max_input,specresp_index]
+            # print('after')
+            # print(np.sum(matrix[i,:]))
+        channels = np.arange(channel_low,channel_hi)
+        # print(channel_edges)
+        channel_edges = channel_edges[channel_low:channel_hi+1,-2]
+        # print(channel_edges)
+        return cls(matrix, edges, channels, channel_edges)
 
 class CustomHotRegion(xpsi.HotRegion):
     """Custom implementation of HotRegion"""
@@ -279,7 +343,7 @@ class CustomHotRegion_Accreting(xpsi.HotRegion):
         tbb
         """
         super_tbb = Parameter('super_tbb',
-  		    strict_bounds = (0.00015, 0.003), # this one is non-physical, we went for way_to_low Tbbs here, I will most probably delete results from too small Tbbs. This is Tbb(keV)/511keV, so these correspond to 0.07 - 1.5 keV, but our calculations don't work correctly for Tbb<<0.5 keV
+  		    strict_bounds = (0.001, 0.003), # this one is non-physical, we went for way_to_low Tbbs here, I will most probably delete results from too small Tbbs. This is Tbb(keV)/511keV, so these correspond to 0.07 - 1.5 keV, but our calculations don't work correctly for Tbb<<0.5 keV
   		    bounds = bounds.get('super_tbb', None),
   		    doc = doc,
   		    symbol = r'tbb',
@@ -696,7 +760,7 @@ class CustomSignal(xpsi.Signal):
         self._support = obj
 
     def __call__(self, *args, **kwargs):
-        #print("running CustomSignal call...")
+        # print("running CustomSignal call...")
         self.loglikelihood, self.expected_counts, self.background_signal, self.background_signal_given_support = \
                 eval_marginal_likelihood(self._data.exposure_time,
                                           self._data.phases,
@@ -711,8 +775,8 @@ class CustomSignal(xpsi.Signal):
                                           self._epsrel,
                                           self._epsilon,
                                           self._sigmas,
-                                          kwargs.get('llzero'),
-                                          slim=-1.0) #no 10^89s
+                                          kwargs.get('llzero'))#,
+                                          #slim=-1.0) #no 10^89s
 
 from scipy.stats import truncnorm
 class CustomPrior(xpsi.Prior):
@@ -1056,7 +1120,7 @@ def veneer(x, y, axes, lw=1.0, length=8):
 
 def plot_2D_pulse(z, x, shift, y, ylabel,
                   num_rotations=1.0, res=1000, figsize=(12,6),
-                  cm=cm.viridis):
+                  cm=cm.viridis, normalize=True):
     """ Helper function to plot a phase-energy pulse.
 
     :param array-like z:
@@ -1077,6 +1141,7 @@ def plot_2D_pulse(z, x, shift, y, ylabel,
     ax = plt.subplot(gs[0])
     ax_cb = plt.subplot(gs[1])
 
+    res = int(len(x)*num_rotations)
     new_phases = np.linspace(0.0, num_rotations, res)
 
     interpolated = phase_interpolator(new_phases,
@@ -1086,15 +1151,20 @@ def plot_2D_pulse(z, x, shift, y, ylabel,
         interpolated += phase_interpolator(new_phases,
                                            x,
                                            z[1], shift[1])
-
-    profile = ax.pcolormesh(new_phases,
-                             y,
-                             interpolated/np.max(interpolated),
-                             cmap = cm,
-                             linewidth = 0,
-                             rasterized = True)
-
-    # print('interpolated:', interpolated)
+    if normalize:
+        profile = ax.pcolormesh(new_phases,
+                                 y,
+                                 interpolated/np.max(interpolated),
+                                 cmap = cm,
+                                 linewidth = 0,
+                                 rasterized = True)
+    elif not normalize:
+        profile = ax.pcolormesh(new_phases,
+                                 y,
+                                 interpolated,
+                                 cmap = cm,
+                                 linewidth = 0,
+                                 rasterized = True)
     
     profile.set_edgecolor('face')
 
@@ -1103,14 +1173,16 @@ def plot_2D_pulse(z, x, shift, y, ylabel,
     ax.set_ylabel(ylabel)
     ax.set_xlabel(r'Phase')
     veneer((0.1, 0.5), (None,None), ax)
-
-    cb = plt.colorbar(profile, cax = ax_cb, ticks = MultipleLocator(0.2))
-
-    cb.set_label(label=r'Signal (arbitrary units)', labelpad=25)
-    cb.solids.set_edgecolor('face')
-
-    veneer((None, None), (0.05, None), ax_cb)
-    cb.outline.set_linewidth(1.0)
+    
+    if normalize:
+        cb = plt.colorbar(profile, cax = ax_cb, ticks = MultipleLocator(0.2))
+        cb.set_label(label=r'Signal (arbitrary units)', labelpad=25)
+        cb.solids.set_edgecolor('face')
+        veneer((None, None), (0.05, None), ax_cb)
+        cb.outline.set_linewidth(1.0)
+    elif not normalize:
+        ticks = np.linspace(0, np.max(z[0]), 10)
+        cb = plt.colorbar(profile, cax = ax_cb,  ticks = ticks)
     
     return ax
 
@@ -1263,6 +1335,7 @@ class CustomLikelihood(xpsi.Likelihood):
             # print('not externally updated')
             if p is None: # expected a vector of values instead of nothing
                 raise TypeError('Parameter values have not been updated.')
+            # print('update free parameters')
             super(xpsi.Likelihood, self).__call__(p) # update free parameters
 
         if self.needs_update or force:
@@ -1275,6 +1348,7 @@ class CustomLikelihood(xpsi.Likelihood):
                 if not _np.isfinite(logprior):
                     # print("if not _np.isfinite(logprior):")
                     # we need to restore due to premature return
+                    # print('restore')
                     super(xpsi.Likelihood, self).__call__(self.cached)
                     # print("super(Likelihood, self).__call__(self.cached)")
                     # print('likelihood -inf due to outside of prior')

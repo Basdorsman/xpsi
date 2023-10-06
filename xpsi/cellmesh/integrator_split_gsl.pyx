@@ -808,9 +808,9 @@ def integrate(size_t numThreads,
     free_hot_2D(N_T, hot_data_2D)
 
     # gsl interpolator
-    gsl_spline2d_free(spline);
-    gsl_interp_accel_free(Eacc);
-    gsl_interp_accel_free(muacc);
+    gsl_spline2d_free(spline)
+    gsl_interp_accel_free(Eacc)
+    gsl_interp_accel_free(muacc)
     free(E_ptr)
     free(mu_ptr)
     free(I_ptr)

@@ -85,13 +85,13 @@ num_leaves = 128
 sqrt_num_cells = 128
 num_rays = 512
 
-kwargs = {'symmetry': 'split', #call general integrator instead of for azimuthal invariance
+kwargs = {'symmetry': 'azimuthal_invariance_split', #call general integrator instead of for azimuthal invariance
           'omit': False,
           'cede': False,
           'concentric': False,
           'sqrt_num_cells': sqrt_num_cells,
           'min_sqrt_num_cells': 10,
-          'max_sqrt_num_cells': 64,
+          'max_sqrt_num_cells': 128,
           'num_leaves': num_leaves,
           'num_rays': num_rays,
           'prefix': 'p'}

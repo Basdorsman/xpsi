@@ -156,35 +156,36 @@ spacetime = xpsi.Spacetime(bounds=bounds, values=dict(frequency=401.0))
 
 
 ################################## HOTREGIONS #################################
-
+num_leaves = 128
+sqrt_num_cells = 128
+num_rays = 512
 ################################## PRIMARY ####################################
 from xpsi import HotRegions
 
+bounds = dict(super_colatitude = (None, None),
+              super_radius = (None, None),
+              phase_shift = (0.0, 0.1))
+values = {}
+
+kwargs = {'symmetry': integrator, #call general integrator instead of for azimuthal invariance
+          'omit': False,
+          'cede': False,
+          'concentric': False,
+          'sqrt_num_cells': sqrt_num_cells,
+          'min_sqrt_num_cells': 10,
+          'max_sqrt_num_cells': 128,
+          'num_leaves': num_leaves,
+          'num_rays': num_rays,
+          'prefix': 'p'}
+
 if atmosphere=='accreting':
-    bounds = dict(super_colatitude = (None, None),
-                  super_radius = (None, None),
-                  phase_shift = (0.0, 0.1),
-                  super_tbb = (0.001, 0.003))
-    values = {}
-    kwargs = {'bounds': bounds,
-              'values': values,
-              'symmetry': integrator, #call general integrator instead of for azimuthal invariance
-              'omit': False,
-              'cede': False,
-              'concentric': False,
-              'sqrt_num_cells': 32,
-              'min_sqrt_num_cells': 10,
-              'max_sqrt_num_cells': 64,
-              'num_leaves': 64,
-              'num_rays': 512,
-              'prefix': 'p'}
+    bounds['super_tbb'] = (0.001, 0.003)
     if n_params=='4':
         if sampling_params==8:
             values['super_tau'] = tau
         if sampling_params==9:
             bounds['super_tau'] = (0.5, 3.5)
-            values = {}
-        primary = CustomHotRegion_Accreting_te_const(**kwargs)
+        primary = CustomHotRegion_Accreting_te_const(bounds, values, **kwargs)
     if n_params=='5':
         if sampling_params==8:
             values['super_tau'] = tau
@@ -195,69 +196,20 @@ if atmosphere=='accreting':
         if sampling_params==10: 
             bounds['super_tau'] = (0.5, 3.5)
             bounds['super_te'] = (40., 200.)
-        primary = CustomHotRegion_Accreting(**kwargs)
+        primary = CustomHotRegion_Accreting(bounds, values, **kwargs)
 
 elif atmosphere=='numerical':
-    if n_params=='4':
-        bounds = dict(super_colatitude = (None, None),
-                      super_radius = (None, None),
-                      phase_shift = (0.0, 0.1),
-                      super_temperature = (5.1, 6.8))#,
-                      #super_modulator = (-0.3, 0.3))
-    
-        primary = xpsi.HotRegion(bounds=bounds,
-           	                    values={},
-           	                    symmetry=False, #call general integrator instead of for azimuthal invariance
-           	                    omit=False,
-           	                    cede=False,
-           	                    concentric=False,
-           	                    sqrt_num_cells=32,
-           	                    min_sqrt_num_cells=10,
-           	                    max_sqrt_num_cells=64,
-           	                    num_leaves=100,
-           	                    num_rays=200,
-                                #modulated = True, #modulation flag
-           	                    prefix='p')
+    bounds['super_temperature'] = (5.1, 6.8)
+    if n_params=='4':    
+        primary = xpsi.HotRegion(bounds, values, **kwargs)
     elif n_params=='5':
-        bounds = dict(super_colatitude = (None, None),
-                      super_radius = (None, None),
-                      phase_shift = (0.0, 0.1),
-                      super_temperature = (5.1, 6.8),
-                      super_modulator = (-0.3, 0.3))
-    
-        primary = CustomHotRegion(bounds=bounds,
-           	                    values={},
-           	                    symmetry=False, #call general integrator instead of for azimuthal invariance
-           	                    omit=False,
-           	                    cede=False,
-           	                    concentric=False,
-           	                    sqrt_num_cells=32,
-           	                    min_sqrt_num_cells=10,
-           	                    max_sqrt_num_cells=64,
-           	                    num_leaves=100,
-           	                    num_rays=200,
-                                modulated = True, #modulation flag
-           	                    prefix='p')
+        bounds['super_modulator'] = (-0.3, 0.3)
+        kwargs['modulated'] = True
+        primary = CustomHotRegion(bounds, values, **kwargs)
 
 elif atmosphere=='blackbody':
-    bounds = dict(super_colatitude = (None, None),
-                  super_radius = (None, None),
-                  phase_shift = (0.0, 0.1),
-                  super_temperature = (5.1, 6.8))
-    
-    primary = xpsi.HotRegion(bounds=bounds,
-    	                    values={},
-    	                    symmetry=True,
-    	                    omit=False,
-    	                    cede=False,
-    	                    concentric=False,
-    	                    sqrt_num_cells=32,
-    	                    min_sqrt_num_cells=10,
-    	                    max_sqrt_num_cells=64,
-    	                    num_leaves=100,
-    	                    num_rays=200,
-    	                    prefix='p') 	
-    
+    bounds['super_temperature'] = (5.1, 6.8)
+    primary = xpsi.HotRegion(bounds, values, **kwargs)
 
 
 ###################################### SECONDARY ##############################
@@ -656,71 +608,46 @@ import dill as pickle
 with open(f'pulse/energies={num_energies}_integrator={integrator}.pkl', 'wb') as file:
     pickle.dump((photosphere.signal[0][0], signal.phases[0], signal.energies, signal.shifts), file)
     
+
+print('hi res likelihood:',likelihood(p))
+
 ################################# SAMPLE LIKELIHOODS AND TIME ################################################
 
-print('mytest:',likelihood(p))
-sample_size = 10
-p_draws = prior.draw(sample_size)
+# sample_size = 10
+# p_draws = prior.draw(sample_size)
 
     
-mylist = np.ndarray.tolist(p_draws[0])
-mylist.append(p)
-mylist = np.asarray(mylist)
+# mylist = np.ndarray.tolist(p_draws[0])
+# mylist.append(p)
+# mylist = np.asarray(mylist)
 
-draws = []
-likelihoods = []
+# draws = []
+# likelihoods = []
 
-import time
+# import time
 
-start = time.time()
+# start = time.time()
 
-
-for draw in mylist:
-    draws.append(draw)
-    # print('parameter:')
-    # print(draw)
-    new_likelihood = likelihood(draw, reinitialise=True)
-    # print('new likelihood:')
-    # print(new_likelihood)
-    likelihoods.append(new_likelihood)
-    
-
-end = time.time()
-print(f'average likelihood evaluatation {sample_size} {integrator_type} {num_energies}:',(end - start)/sample_size)
-    
-
-## Test update
-primary = CustomHotRegion_Accreting(bounds=bounds,
-   	                    values=values,
-   	                    symmetry=integrator, #call general integrator instead of for azimuthal invariance
-   	                    omit=False,
-   	                    cede=False,
-   	                    concentric=False,
-   	                    sqrt_num_cells=32,
-   	                    min_sqrt_num_cells=10,
-   	                    max_sqrt_num_cells=64,
-   	                    num_leaves=64,  # 100,
-   	                    num_rays=512, # 200,
-   	                    prefix='p')
-
-hot = HotRegions((primary,))
-photosphere = CustomPhotosphere_A5(hot = hot, elsewhere = None,
-                                values=dict(mode_frequency = spacetime['frequency']))
-photosphere.hot_atmosphere = '/home/bas/Documents/Projects/x-psi/model_datas/bobrikova/Bobrikova_compton_slab.npz'
-star = xpsi.Star(spacetime = spacetime, photospheres = photosphere)
-star(p)
-star.update()
-likelihood = CustomLikelihood(star = star, signals = signal,
-                              num_energies=num_energies, #128
-                              threads=1,
-                              prior=prior,
-                              externally_updated=True)
-
-likelihood.star.photospheres[0].hot.print_settings()
 
 # for draw in mylist:
 #     draws.append(draw)
-#     likelihoods.append(likelihood(draw, reinitialise=True))
+#     # print('parameter:')
+#     # print(draw)
+#     new_likelihood = likelihood(draw, reinitialise=True)
+#     # print('new likelihood:')
+#     # print(new_likelihood)
+#     likelihoods.append(new_likelihood)
+    
+
+# end = time.time()
+# print(f'average likelihood evaluatation {sample_size} {integrator_type} {num_energies}:',(end - start)/sample_size)
+    
+
+################################## resolution tests #####################
+
+
+
+
 
 #%% Diff PLOTS
 

@@ -176,4 +176,9 @@ AMXPs/inference_run/run*
 AMXPs/inference_run/archive/*
 AMXPs/inference_run/model_data/*
 AMXPs/inference_run/helios_runs/*
+AMXPs/inference_run/snellius_runs/*
 AMXPs/inference_run/local_runs/*
+AMXPs/inference_run/postprocessing/*
+examples/examples_modeling_tutorial/model_data/*
+examples/examples_modeling_tutorial/run/*
+examples/examples_modeling_tutorial/outputs/*

@@ -1,0 +1,25 @@
+from GSL cimport (gsl_interp_eval,
+                   gsl_interp_eval_deriv,
+                   gsl_interp_alloc,
+                   gsl_interp_accel,
+                   gsl_interp_accel_alloc,
+                   gsl_interp_steffen,
+                   gsl_interp,
+                   gsl_interp_init,
+                   gsl_interp_free,
+                   gsl_interp_accel_free,
+                   gsl_interp_accel_reset,
+                   gsl_isnan,
+                   gsl_isinf,
+                   gsl_interp2d_bicubic,
+                   gsl_interp2d_bilinear,
+                   gsl_spline2d,
+                   gsl_spline2d_alloc,
+                   gsl_spline2d_set,
+                   gsl_spline2d_init,
+                   gsl_spline2d_eval,
+                   gsl_spline2d_free,
+                   gsl_spline2d_eval_extrap)
+
+ctypedef gsl_interp_accel accel
+ctypedef gsl_interp interp

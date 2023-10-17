@@ -58,10 +58,12 @@ try:
     if '--A5Hot' in sys.argv:
         print("Installing Accreting 5 Parameters")
         shutil.copy('xpsi/surface_radiation_field/archive/hot/A5.pyx', 'xpsi/surface_radiation_field/hot.pyx')
+        shutil.copy('xpsi/surface_radiation_field/archive/hot/A5.pxd', 'xpsi/surface_radiation_field/hot.pxd')
         sys.argv.remove("--A5Hot")
     if '--A4Hot' in sys.argv:
         print("Installing Accreting 4 Parameters")
         shutil.copy('xpsi/surface_radiation_field/archive/hot/A4.pyx', 'xpsi/surface_radiation_field/hot.pyx')
+        shutil.copy('xpsi/surface_radiation_field/archive/hot/numerical.pxd', 'xpsi/surface_radiation_field/hot.pxd')
         sys.argv.remove("--A4Hot")
     # if '--CompElse' in sys.argv:
     #     print("Copying Compton emission model for the rest of the surface")
@@ -104,6 +106,7 @@ if __name__ == '__main__':
             print('GSL version: ' + gsl_version)
             libraries = ['gsl','gslcblas','m'] # default BLAS interface for gsl
             library_dirs = [gsl_prefix + '/lib']
+            # print('library_dirs', library_dirs)
             _src_dir = os.path.dirname(os.path.abspath(__file__))
             include_dirs = [gsl_prefix + '/include',
                             numpy.get_include(),
@@ -276,11 +279,15 @@ if __name__ == '__main__':
                 'xpsi.surface_radiation_field.__init__',
                 'xpsi.surface_radiation_field.preload',
                 'xpsi.surface_radiation_field.hot',
+                'xpsi.surface_radiation_field.hot_2D',
                 'xpsi.surface_radiation_field.elsewhere',
                 'xpsi.cellmesh.integrator',
                 'xpsi.cellmesh.integrator_timed',
                 'xpsi.cellmesh.integrator_for_azimuthal_invariance',
+                'xpsi.cellmesh.integrator_for_azimuthal_invariance_split',
                 'xpsi.cellmesh.integrator_for_time_invariance',
+                'xpsi.cellmesh.integrator_split_interpolation',
+                'xpsi.cellmesh.integrator_split_gsl',
                 'xpsi.pixelmesh.METRIC_qK',
                 'xpsi.pixelmesh.RODES_qK',
                 'xpsi.pixelmesh.BOUNDARY_CONDITIONS',

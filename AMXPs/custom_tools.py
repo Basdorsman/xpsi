@@ -7,7 +7,8 @@ Created on Thu Jun 16 11:26:35 2022
 """
 import xpsi
 from xpsi.global_imports import *
-from xpsi.global_imports import _c, _G, _dpr, gravradius, _csq, _km, _2pi
+from xpsi.global_imports import _c, _G, _dpr, gravradius, _csq, _km, _2pi, _keV, _k_B
+k_B_over_keV = _k_B / _keV
 from xpsi.Parameter import Parameter
 
 import numpy as np
@@ -65,10 +66,74 @@ class CustomInstrument(xpsi.Instrument):
 
         for i in range(matrix.shape[0]):
             matrix[i,:] *= ARF[min_input:max_input,3]
+            # print(np.sum(matrix[i,:]))
 
         channels = np.arange(20, 201)
 
         return cls(matrix, edges, channels, channel_edges[20:202,-2])
+
+class CustomInstrumentJ1808(xpsi.Instrument):
+    """ A model of the NICER telescope response. """
+
+    def __call__(self, signal, *args):
+        """ Overwrite base just to show it is possible.
+
+        We loaded only a submatrix of the total instrument response
+        matrix into memory, so here we can simplify the method in the
+        base class.
+
+        """
+        matrix = self.construct_matrix()
+
+        self._folded_signal = np.dot(matrix, signal)
+
+        return self._folded_signal
+
+    @classmethod
+    def from_response_files(cls, ARF, RMF, skiprows = 2, specresp_index = 2, 
+                            energy_hi_index = 1, energy_low_index = 0, 
+                            channel_low = 20, channel_hi = 300, max_input=1400,
+                            min_input=0, channel_edges=None):
+        """ Constructor which converts response files into :class:`numpy.ndarray`s.
+        :param str ARF: Path to ARF which is compatible with
+                                :func:`numpy.loadtxt`.
+        :param str RMF: Path to RMF which is compatible with
+                                :func:`numpy.loadtxt`.
+        :param str channel_edges: Optional path to edges which is compatible with
+                                  :func:`numpy.loadtxt`.
+        """
+    
+        if min_input != 0:
+            min_input = int(min_input)
+    
+        max_input = int(max_input)
+    
+        try:
+            ARF = np.loadtxt(ARF, dtype=np.double, skiprows=skiprows)
+            RMF = np.loadtxt(RMF, dtype=np.double)
+            if channel_edges:
+                channel_edges = np.loadtxt(channel_edges, dtype=np.double, skiprows=skiprows)[:,1:]
+        except:
+            print('A file could not be loaded.')
+            raise
+    
+        matrix = np.ascontiguousarray(RMF[min_input:max_input,channel_low:channel_hi].T, dtype=np.double)
+    
+        edges = np.zeros(ARF[min_input:max_input,specresp_index].shape[0]+1, dtype=np.double)
+    
+        edges[0] = ARF[min_input,energy_low_index]; edges[1:] = ARF[min_input:max_input,energy_hi_index]
+    
+        for i in range(matrix.shape[0]):
+            # print('before')
+            # print(np.sum(matrix[i,:]))
+            matrix[i,:] *= ARF[min_input:max_input,specresp_index]
+            # print('after')
+            # print(np.sum(matrix[i,:]))
+        channels = np.arange(channel_low,channel_hi)
+        # print(channel_edges)
+        channel_edges = channel_edges[channel_low:channel_hi+1,-2]
+        # print(channel_edges)
+        return cls(matrix, edges, channels, channel_edges)
 
 class CustomHotRegion(xpsi.HotRegion):
     """Custom implementation of HotRegion"""
@@ -250,7 +315,8 @@ class CustomHotRegion_Accreting(xpsi.HotRegion):
     def __init__(self,
             bounds,
             values,
-            symmetry = True,
+            symmetry = 'azimuthal_invariance',
+            interpolator = 'split',
             omit = False,
             cede = False,
             concentric = False,
@@ -279,7 +345,7 @@ class CustomHotRegion_Accreting(xpsi.HotRegion):
         tbb
         """
         super_tbb = Parameter('super_tbb',
-  		    strict_bounds = (0.00015, 0.003), # this one is non-physical, we went for way_to_low Tbbs here, I will most probably delete results from too small Tbbs. This is Tbb(keV)/511keV, so these correspond to 0.07 - 1.5 keV, but our calculations don't work correctly for Tbb<<0.5 keV
+  		    strict_bounds = (0.001, 0.003), # this one is non-physical, we went for way_to_low Tbbs here, I will most probably delete results from too small Tbbs. This is Tbb(keV)/511keV, so these correspond to 0.07 - 1.5 keV, but our calculations don't work correctly for Tbb<<0.5 keV
   		    bounds = bounds.get('super_tbb', None),
   		    doc = doc,
   		    symbol = r'tbb',
@@ -313,6 +379,7 @@ class CustomHotRegion_Accreting(xpsi.HotRegion):
                 bounds,
                 values,
                 symmetry = symmetry,
+                interpolator = interpolator,
                 omit = omit,
                 cede = cede,
                 concentric = concentric,
@@ -335,9 +402,8 @@ class CustomHotRegion_Accreting(xpsi.HotRegion):
                 custom = custom,
                 image_order_limit = image_order_limit,
                 **kwargs
-                )        
-        
-    
+                )
+
     def _HotRegion__compute_cellParamVecs(self):
         self._super_radiates = _np.greater(self._super_cellArea, 0.0).astype(_np.int32)
         self._super_cellParamVecs = _np.ones((self._super_radiates.shape[0],
@@ -345,29 +411,10 @@ class CustomHotRegion_Accreting(xpsi.HotRegion):
                                       #2
                                       3),
                                      dtype=_np.double)
-        
-        #self._super_cellParamVecs[...,:-1] *= self['super_temperature']
+
         self._super_cellParamVecs[...,0] *= self['super_te']
         self._super_cellParamVecs[...,1] *= self['super_tbb']
         self._super_cellParamVecs[...,2] *= self['super_tau']
-        
-        
-        # for i in range(self._super_cellParamVecs.shape[1]):
-        #     self._super_cellParamVecs[:,i,-1] *= self._super_effGrav
-        
-        # try:
-        #     self._cede_radiates = _np.greater(self._cede_cellArea, 0.0).astype(_np.int32)
-        # except AttributeError:
-        #     pass
-        # else:
-        #     self._cede_cellParamVecs = _np.ones((self._cede_radiates.shape[0],
-        #                                  self._cede_radiates.shape[1],
-        #                                  2), dtype=_np.double)
-        
-        #     self._cede_cellParamVecs[...,:-1] *= self['cede_temperature']
-        
-        #     for i in range(self._cede_cellParamVecs.shape[1]):
-        #         self._cede_cellParamVecs[:,i,-1] *= self._cede_effGrav
 
 class CustomHotRegion_Accreting_te_const(xpsi.HotRegion):
     """Custom implementation of HotRegion. Accreting Atmosphere model by 
@@ -605,7 +652,7 @@ class CustomPhotosphere_A5(xpsi.Photosphere):
         with np.load(path, allow_pickle=True) as data_dictionary:
             NSX = data_dictionary['NSX.npy']
             size_reorderme = data_dictionary['size.npy']
-            print(size_reorderme)
+            #print(size_reorderme)
         
         #size = (150, 9, 31, 11, 41)
         size = [size_reorderme[3], size_reorderme[4], size_reorderme[2], size_reorderme[1], size_reorderme[0]]
@@ -696,7 +743,7 @@ class CustomSignal(xpsi.Signal):
         self._support = obj
 
     def __call__(self, *args, **kwargs):
-        #print("running CustomSignal call...")
+        # print("running CustomSignal call...")
         self.loglikelihood, self.expected_counts, self.background_signal, self.background_signal_given_support = \
                 eval_marginal_likelihood(self._data.exposure_time,
                                           self._data.phases,
@@ -711,8 +758,8 @@ class CustomSignal(xpsi.Signal):
                                           self._epsrel,
                                           self._epsilon,
                                           self._sigmas,
-                                          kwargs.get('llzero'),
-                                          slim=-1.0) #no 10^89s
+                                          kwargs.get('llzero'))#,
+                                          #slim=-1.0) #no 10^89s
 
 from scipy.stats import truncnorm
 class CustomPrior(xpsi.Prior):
@@ -726,6 +773,7 @@ class CustomPrior(xpsi.Prior):
     """
 
     __derived_names__ = ['compactness', 'phase_separation',]
+    __draws_from_support__ = 2
 
     def __init__(self):
         """ Nothing to be done.
@@ -879,6 +927,7 @@ class CustomPrior_NoSecondary(xpsi.Prior):
     """
 
     __derived_names__ = ['compactness']#, 'phase_separation',]
+    __draws_from_support__ = 2
 
     # def __init__(self):
     #     """ Nothing to be done.
@@ -1053,8 +1102,8 @@ def veneer(x, y, axes, lw=1.0, length=8):
     plt.setp(axes.spines.values(), linewidth=lw, color='black')
 
 def plot_2D_pulse(z, x, shift, y, ylabel,
-                  num_rotations=5.0, res=1000, figsize=(12,6),
-                  cm=cm.viridis):
+                  num_rotations=1.0, res=1000, figsize=(12,6),
+                  cm=cm.viridis, normalize=True):
     """ Helper function to plot a phase-energy pulse.
 
     :param array-like z:
@@ -1075,6 +1124,7 @@ def plot_2D_pulse(z, x, shift, y, ylabel,
     ax = plt.subplot(gs[0])
     ax_cb = plt.subplot(gs[1])
 
+    res = int(len(x)*num_rotations)
     new_phases = np.linspace(0.0, num_rotations, res)
 
     interpolated = phase_interpolator(new_phases,
@@ -1084,15 +1134,20 @@ def plot_2D_pulse(z, x, shift, y, ylabel,
         interpolated += phase_interpolator(new_phases,
                                            x,
                                            z[1], shift[1])
-
-    profile = ax.pcolormesh(new_phases,
-                             y,
-                             interpolated/np.max(interpolated),
-                             cmap = cm,
-                             linewidth = 0,
-                             rasterized = True)
-
-    # print('interpolated:', interpolated)
+    if normalize:
+        profile = ax.pcolormesh(new_phases,
+                                 y,
+                                 interpolated/np.max(interpolated),
+                                 cmap = cm,
+                                 linewidth = 0,
+                                 rasterized = True)
+    elif not normalize:
+        profile = ax.pcolormesh(new_phases,
+                                 y,
+                                 interpolated,
+                                 cmap = cm,
+                                 linewidth = 0,
+                                 rasterized = True)
     
     profile.set_edgecolor('face')
 
@@ -1101,14 +1156,16 @@ def plot_2D_pulse(z, x, shift, y, ylabel,
     ax.set_ylabel(ylabel)
     ax.set_xlabel(r'Phase')
     veneer((0.1, 0.5), (None,None), ax)
-
-    cb = plt.colorbar(profile, cax = ax_cb, ticks = MultipleLocator(0.2))
-
-    cb.set_label(label=r'Signal (arbitrary units)', labelpad=25)
-    cb.solids.set_edgecolor('face')
-
-    veneer((None, None), (0.05, None), ax_cb)
-    cb.outline.set_linewidth(1.0)
+    
+    if normalize:
+        cb = plt.colorbar(profile, cax = ax_cb, ticks = MultipleLocator(0.2))
+        cb.set_label(label=r'Signal (arbitrary units)', labelpad=25)
+        cb.solids.set_edgecolor('face')
+        veneer((None, None), (0.05, None), ax_cb)
+        cb.outline.set_linewidth(1.0)
+    elif not normalize:
+        ticks = np.linspace(0, np.max(z[0]), 10)
+        cb = plt.colorbar(profile, cax = ax_cb,  ticks = ticks)
     
     return ax
 
@@ -1144,6 +1201,94 @@ class CustomBackground(xpsi.Background):
 
         self._incident_background= temp
         
+class CustomBackground_BlackBody(xpsi.Background):
+    """ The background injected to generate synthetic data. """
+
+    def __init__(self, bounds=None, value=None):
+
+        
+        # Blackbody component 
+        doc = """
+        Background black body temperature in 10^T Kelvin.
+        """
+        background_temperature = xpsi.Parameter('background_BB_temperature',
+                                strict_bounds = (3, 10),
+                                bounds = bounds.get('background_BB_temperature', None),
+                                doc = doc,
+                                symbol = r'$T_{BB}$',
+                                value = values.get('background_BB_temperature', None))
+        
+        doc = """
+        Background black body radius in m.
+        """
+        background_radius = xpsi.Parameter('background_BB_radius',
+                                strict_bounds = (1, 10),
+                                bounds = bounds.get('background_BB_radius', None),
+                                doc = doc,
+                                symbol = r'$R_{BB}$',
+                                value = values.get('background_BB_radius', None))
+
+        super(CustomBackground, self).__init__(background_temperature, background_radius)
+
+    def __call__(self, energy_edges, phases):
+        """ Evaluate the incident background field. """
+
+        T_BB = self['background_BB_temperature']
+        R_BB = self['background_BB_radius']
+        
+        # Defining array that will be used later
+        array_bb=np.array([])
+
+        # KbT in keV
+        T_kev = k_B_over_keV * pow(10.0, T_BB)
+        
+        # Numerical intergration  for both PL and BB
+        
+        # F_photon [ units  1/ (cm^2*s) ] = pi (R_BB/distance)^2 2/(c^2*h^3) int E^3/[exp(E/Kb*T)-1] dE
+
+
+
+        
+        # int E^2/[exp(E/Kb*T)-1] dE [ units keV^3 ]
+        for i in range(len(energy_edges)-1):
+            bb,_= quad(self.BlackBody, energy_edges[i], energy_edges[i+1], args=(temp))
+            array_bb=np.append(array_bb,bb)
+            
+        ######## Applying Normalization  in unit of photons/KeV/cm^2/s^1 #######
+        k_bb=(R_BB/distance)**2  # See https://heasarc.gsfc.nasa.gov/docs/xanadu/xspec/manual/node137.html
+        
+        # 2 * pi / (c^2*h^3) = 9.8832904e31 [ units keV^-3 1/ (cm^2*s) ] 
+        array_bb *=k_bb*(1.0344*10**(-3))
+        
+        BB = np.zeros((energy_edges.shape[0] - 1, phases.shape[0]))
+        
+        for i in range(phases.shape[0]):
+            BB[:,i] = array_bb
+            
+            
+        bkg=BB
+        
+        # Apply Interstellar if not None
+        if self._interstellar is not None:
+            self._energy_mids=(energy_edges[1:]+energy_edges[:-1])/2
+            self._interstellar(self._energy_mids, bkg) # Bad coding right ? :)
+            
+    
+    
+        self._incident_background = bkg
+
+    def BlackBody(self,energy,k):
+        """ Defining Blackbody function using xspec model
+        
+        See :https://heasarc.gsfc.nasa.gov/docs/xanadu/xspec/manual/node137.html
+
+        A(E)=E^2/(exp(E/kT)-1)
+
+        """
+        result=(energy**2)/(np.exp(energy/k)-1)
+        return result
+
+
 class SynthesiseData(xpsi.Data):
     """ Custom data container to enable synthesis. """
 
@@ -1247,7 +1392,7 @@ class CustomLikelihood(xpsi.Likelihood):
         tmpdict['starttime'] = time.time()
         # print("custom likelihood xpsi rank: ", xpsi._rank)
         # print("parameter vector:", p)
-        # start = time.time()
+        start = time.time()
 
         if reinitialise: # for safety if settings have been changed
             # print('reinitialise')
@@ -1261,6 +1406,7 @@ class CustomLikelihood(xpsi.Likelihood):
             # print('not externally updated')
             if p is None: # expected a vector of values instead of nothing
                 raise TypeError('Parameter values have not been updated.')
+            # print('update free parameters')
             super(xpsi.Likelihood, self).__call__(p) # update free parameters
 
         if self.needs_update or force:
@@ -1273,6 +1419,7 @@ class CustomLikelihood(xpsi.Likelihood):
                 if not _np.isfinite(logprior):
                     # print("if not _np.isfinite(logprior):")
                     # we need to restore due to premature return
+                    # print('restore')
                     super(xpsi.Likelihood, self).__call__(self.cached)
                     # print("super(Likelihood, self).__call__(self.cached)")
                     # print('likelihood -inf due to outside of prior')
@@ -1310,7 +1457,7 @@ class CustomLikelihood(xpsi.Likelihood):
         
         tmpdict['endtime'] = time.time()
         tmpdict['deltatime'] = tmpdict['endtime'] - tmpdict['starttime'] 
-        # print('Likelihood evaluation took {:.3f} seconds'.format((time.time()-start)))
+        print('Likelihood evaluation took {:.3f} seconds'.format((time.time()-start)))
         # print('current ldict: ', self.ldict)
         # print("adding likelihood to dictionary. xpsi rank: ", xpsi._rank, "callcount: ", callcount)
         # self.ldict[xpsi._rank][callcount] = tmpdict

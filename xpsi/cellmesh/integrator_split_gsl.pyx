@@ -15,6 +15,7 @@ from libc.stdio cimport printf
 # from libc.time cimport time, time_t, clock, clock_t, CLOCKS_PER_SEC
 import xpsi
 
+from builtins import print
 
 cdef double _pi = M_PI
 cdef double _hlfpi = M_PI / 2.0
@@ -35,8 +36,15 @@ from xpsi.surface_radiation_field.preload cimport (_preloaded,
 from xpsi.surface_radiation_field.hot cimport (init_hot,
                                                eval_hot,
                                                eval_hot_norm,
-                                               free_hot)
-                                               #eval_hot_faster)
+                                               free_hot,
+                                               produce_2D_data,
+                                               make_atmosphere_2D)
+
+from xpsi.surface_radiation_field.hot_2D cimport (init_hot_2D,
+                                               eval_hot_2D,
+                                               eval_hot_2D_norm,
+                                               free_hot_2D)
+
 
 from xpsi.surface_radiation_field.elsewhere cimport (init_elsewhere,
                                                      free_elsewhere,
@@ -45,7 +53,7 @@ from xpsi.surface_radiation_field.elsewhere cimport (init_elsewhere,
 
 from .rays cimport eval_image_deflection, invert, link_rayXpanda
 
-from ..tools cimport _get_phase_interpolant, gsl_interp_type
+from ..tools cimport _get_phase_interpolant, gsl_interp_type, gsl_interp2d_type
 
 
 def integrate(size_t numThreads,
@@ -132,7 +140,7 @@ def integrate(size_t numThreads,
         double eta # Doppler boost factor in the NRF; TP
         double mu # NRF and then CRF emission angle w.r.t surface normal; TP
         double E_prime # Photon energy in the CRF, given an energy at infinity; TP
-        double I_E # Radiant and or spectral intensity in the CRF; TP
+        double I_E, I_E2D, I_E5D # Radiant and or spectral intensity in the CRF; TP
         double __PHASE, __PHASE_plusShift, __GEOM, __Z, __ABB # TP
         double phi_shift # TP
         double superlum # TP
@@ -149,7 +157,8 @@ def integrate(size_t numThreads,
 
         double[:,:,::1] privateFlux = np.zeros((N_T, N_P, N_E), dtype = np.double)
         double[:,::1] flux = np.zeros((N_E, N_P), dtype = np.double)
-
+        double[:,:,:,:,::1] diagnosis = np.zeros((cellArea.shape[0], cellArea.shape[1], N_E, N_P, 3), dtype = np.double)
+      
         int *terminate = <int*> malloc(N_T * sizeof(int))
 
         int *InvisFlag = <int*> malloc(N_T * sizeof(int))
@@ -275,8 +284,63 @@ def integrate(size_t numThreads,
     # >>> Integrate.
     # >>>
     #----------------------------------------------------------------------->>>
-    # printf("\nfor ii in prange(<signed int>cellArea.shape[0]")
-    # t_start = clock()#time(NULL)
+
+    #################################### 2D interpolator
+    # Initiate 2D atmosphere
+    cdef double* I_data_2D
+    I_data_2D = produce_2D_data(T, &(srcCellParams[0,0,0]), hot_data)
+    atmosphere_2D = make_atmosphere_2D(I_data_2D, hot_data)
+ 
+
+    # initiate data 2D
+    hot_preloaded_2D = init_preload(atmosphere_2D)
+    hot_data_2D = init_hot_2D(N_T, hot_preloaded_2D)
+
+    cdef double E_test = 2e-3
+    cdef double mu_test = 5e-1
+    T = threadid()
+    
+    I_test = eval_hot_2D(T, E_test, mu_test, hot_data_2D)
+    printf('\ninterpolating tests:')
+    printf('\nI_test: %f', I_test)
+
+    ############################# gsl 2D interpolator (only works for 1 thread)
+    cdef const gsl_interp2d_type *interp_type = gsl_interp2d_bicubic #gsl_interp2d_bilinear
+    cdef int nE = len(atmosphere_2D[1])
+    cdef int nmu = len(atmosphere_2D[0])
+    cdef gsl_spline2d *spline = gsl_spline2d_alloc(interp_type, nE, nmu)  
+    cdef int mu_index
+    cdef int E_index
+    cdef int I_index
+    cdef double *E_ptr = <double*>malloc(nE * sizeof(double)) #is this allowed to be a pointer?
+    cdef double *mu_ptr = <double*>malloc(nmu * sizeof(double))  #is this allowed to be a pointer?
+    cdef double *I_ptr = <double*>malloc(nE * nmu * sizeof(double))
+    cdef accel *Eacc = <accel*> malloc(sizeof(accel*))
+    cdef accel *muacc = <accel*> malloc(sizeof(accel*))
+    cdef double I_test_gsl
+
+    for mu_index in range(len(atmosphere_2D[0])):
+        mu_ptr[mu_index] = atmosphere_2D[0][mu_index]
+        # printf('\n%f',mu_ptr[mu_index])
+    for E_index in range(len(atmosphere_2D[1])):
+        E_ptr[E_index] = atmosphere_2D[1][E_index]
+        # printf('\n%f',E_ptr[E_index])
+    for I_index in range(len(atmosphere_2D[2])):
+        I_ptr[I_index] = atmosphere_2D[2][I_index]
+        # printf('\n%d: %f', I_index, I_ptr[I_index])  
+
+    gsl_spline2d_init(spline, E_ptr, mu_ptr, I_ptr, nE, nmu)
+
+    Eacc = gsl_interp_accel_alloc()
+    muacc = gsl_interp_accel_alloc()
+   
+    I_test_gsl = gsl_spline2d_eval(spline, E_test, mu_test, Eacc, muacc)
+
+    printf('\nI_test_gsl: %f', I_test_gsl)
+    printf('\n')
+
+
+
 
     for ii in prange(<signed int>cellArea.shape[0],
                      nogil = True,
@@ -618,15 +682,39 @@ def integrate(size_t numThreads,
                                         # printf("srcCellParams[i,j,0]: %.8e, ", srcCellParams[i,j,0])
                                         # printf("srcCellParams[i,j,1]: %.8e, ", srcCellParams[i,j,1])
  
+
                                         
                                         #time the interpolations
-                                        E_electronrest=E_prime*0.001956951 #kev to electron rest energy conversion
-                                        I_E = eval_hot(T,
-                                                       E_electronrest,
-                                                       __ABB,
-                                                       &(srcCellParams[i,j,0]),
-                                                       hot_data)
-                                        I_E = I_E * eval_hot_norm()
+                                        # printf('\neval hot:\n')
+                                        
+                                        # I_E5D = eval_hot(T,
+                                        #                 E_prime,
+                                        #                 __ABB,
+                                        #                 &(srcCellParams[i,j,0]),
+                                        #                 hot_data)
+                                        # printf('I_E5D %f, ', I_E5D)
+                                        E_electronrest=E_prime*0.001956951 #kev to electron rest energy conversion, I am losing some accuracy I guess
+                                        
+                                        # printf('\nE_electronrest: %f',E_electronrest)
+                                        # printf('\n__ABB: %f',__ABB)
+                                        
+                                        # I_E2D = gsl_spline2d_eval(spline, E_electronrest, __ABB, Eacc, muacc)
+                                        I_E2D = gsl_spline2d_eval_extrap(spline, E_electronrest, __ABB, Eacc, muacc)
+                                        
+                                        #I_E2D = eval_hot_2D(T, E_electronrest, __ABB, hot_data_2D)
+       
+                                        # save some parameters
+                                        diagnosis[i,j,p,k,0]= E_electronrest
+                                        diagnosis[i,j,p,k,1]= __ABB
+                                        diagnosis[i,j,p,k,2] = I_E2D
+                                        
+                                        # printf('\n(%ld)',bascounter)
+                                        # bascounter = bascounter + 1
+                                        
+                                        # printf('I_E2D %f', I_E2D)
+                                        I_E = I_E2D * eval_hot_norm()
+                                        
+                                        
 
                                         if perform_correction == 1:
                                             correction_I_E = eval_elsewhere(T,
@@ -659,6 +747,8 @@ def integrate(size_t numThreads,
         for T in range(N_T):
             for k in range(N_P):
                 flux[i,k] += privateFlux[T,k,i]
+                # flux[i,k,0] += privateFlux[T,k,i]
+
 
     for p in range(N_E):
         for k in range(N_P):
@@ -707,10 +797,24 @@ def integrate(size_t numThreads,
     free(InvisFlag)
     free(InvisStep)
 
+    # 2D interpolator
+    free(I_data_2D)
+
     if hot_atmosphere:
         free_preload(hot_preloaded)
+        free_preload(hot_preloaded_2D)
 
     free_hot(N_T, hot_data)
+    free_hot_2D(N_T, hot_data_2D)
+
+    # gsl interpolator
+    gsl_spline2d_free(spline)
+    gsl_interp_accel_free(Eacc)
+    gsl_interp_accel_free(muacc)
+    free(E_ptr)
+    free(mu_ptr)
+    free(I_ptr)
+
 
     if perform_correction == 1:
         if elsewhere_atmosphere:
@@ -723,4 +827,5 @@ def integrate(size_t numThreads,
             free(terminate)
             return (ERROR, None)
 
-    return (SUCCESS, np.asarray(flux, dtype = np.double, order = 'C'))
+    return (SUCCESS, np.asarray(flux, dtype = np.double, order = 'C'), np.asarray(diagnosis, dtype = np.double, order = 'C'))
+    # return (SUCCESS, np.asarray(flux, dtype = np.double, order = 'C'))

@@ -75,6 +75,7 @@ import numpy as np
 cimport numpy as np
 
 from libc.stdio cimport printf
+from libc.stdlib cimport malloc, free
 
 
 from ..global_imports import _keV
@@ -88,7 +89,14 @@ from .preload cimport (_preloaded,
 from .hot cimport (init_hot,
                    eval_hot,
                    eval_hot_norm,
-                   free_hot)
+                   free_hot, 
+                   produce_2D_data,
+                   make_atmosphere_2D)
+
+from .hot_2D cimport (init_hot_2D,
+                      eval_hot_2D,
+                      eval_hot_2D_norm,
+                      free_hot_2D)
 
 from .elsewhere cimport (init_elsewhere,
                          free_elsewhere,
@@ -240,6 +248,76 @@ def intensity(double[::1] energies,
     free_ptr(numTHREADS, data)
 
     return np.asarray(intensities, dtype = np.double, order = 'C')
+
+def intensity_split_interpolation(double E,
+              double mu,
+              double[:,::1] local_variables,
+              atmosphere = None,
+              extension = 'hot',
+              size_t numTHREADS = 1):
+
+    # cdef fptr_init init_ptr = NULL
+    # cdef fptr_free free_ptr = NULL
+    # cdef fptr_eval eval_ptr = NULL
+    # cdef fptr_norm norm_ptr = NULL
+    
+    # init_ptr = init_hot
+    # free_ptr = free_hot
+    # eval_ptr = eval_hot
+    # norm_ptr = eval_hot_norm
+    
+    # initialise the source radiation field
+    cdef _preloaded *preloaded = NULL
+    cdef void *data = NULL
+
+    if atmosphere:
+        preloaded = init_preload(atmosphere)
+        data = init_hot(numTHREADS, preloaded)
+    else:
+        data = init_hot(numTHREADS, NULL)
+        
+    cdef double *I_data_2D
+    
+    # printf('\nlocal variables[0]: %f', local_variables[0,0])
+    # printf('\nlocal variables[1]: %f', local_variables[0,1])
+    # printf('\nlocal variables address: %p',&(local_variables[0,0]))
+    # printf('\ndata: %p', &(data))
+    
+    # cdef double test
+    
+    cdef size_t T
+    T = threadid()
+    
+    # test = eval_ptr(T,
+    #          E,
+    #          mu,
+    #          &(local_variables[0,0]),
+    #          data)
+    
+    # produce_2D_data(T, &(local_variables[0,0]), data)
+    I_data_2D = produce_2D_data(T, &(local_variables[0,0]), data)
+
+    atmosphere_2D = make_atmosphere_2D(I_data_2D, data)    
+    hot_preloaded_2D = init_preload(atmosphere_2D)
+    hot_data_2D = init_hot_2D(numTHREADS, hot_preloaded_2D)
+    
+    cdef double I_E2D
+    I_E2D = eval_hot_2D(T, E, mu, hot_data_2D)
+    
+
+    # don't get photon specific intensity
+    # intensities[i] *= norm_ptr() / (energies[i] * keV)
+
+    if atmosphere:
+        free_preload(preloaded)
+        free_preload(hot_preloaded_2D)
+
+    free(I_data_2D)
+    free_hot_2D(numTHREADS, hot_data_2D)
+    free_hot(numTHREADS, data)
+    
+    return np.asarray(I_E2D, dtype = np.double, order = 'C')
+
 
 def intensity_no_norm(double[::1] energies,
               double[::1] mu,

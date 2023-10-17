@@ -326,7 +326,7 @@ class Likelihood(ParameterSubspace):
                         energies = signals[0].energies
                     # print("attempting to photosphere.integrate. threads: ", self.threads)
                     photosphere.integrate(energies, self.threads)
-                    # print("photosphere.integrate(energies, self.threads)")
+                    # print("photosphere done")
                 except xpsiError as e:
                     try:
                         prefix = ' prefix ' + photosphere.prefix
@@ -345,10 +345,12 @@ class Likelihood(ParameterSubspace):
             star_updated = True
 
         # register the signals by operating with the instrument response
+        # print('register the signals by operating with the instrument response')
         for signals, photosphere in zip(self._signals, self._star.photospheres):
             #print("register the signals by operating with the instrument response")
             for signal in signals:
                 if star_updated or signal.needs_update:
+                    # print('update star')
                     signal.register(tuple(
                                      tuple(self._divide(component,
                                                     self._star.spacetime.d_sq)
@@ -363,6 +365,7 @@ class Likelihood(ParameterSubspace):
 
                 if not fast_mode and reregistered:
                     if synthesise:
+                        # print('synthesise')
                         hot = photosphere.hot
                         try:
                             kws = kwargs.pop(signal.prefix)
@@ -373,6 +376,7 @@ class Likelihood(ParameterSubspace):
                         signal.shifts = _np.array(shifts)
                         signal.synthesise(threads=self._threads, **kws)
                     else:
+                        # print('not synthesise')
                         try:
                             hot = photosphere.hot
                             shifts = [h['phase_shift'] for h in hot.objects]
@@ -380,6 +384,7 @@ class Likelihood(ParameterSubspace):
                             # print("call signal inside likelihood driver")
                             signal(threads=self._threads, llzero=self._llzero)
                         except LikelihoodError:
+                            # print('except likelihood error')
                             try:
                                 prefix = ' prefix ' + signal.prefix
                             except AttributeError:
@@ -389,6 +394,7 @@ class Likelihood(ParameterSubspace):
                             print('Parameter vector: ', super(Likelihood,self).__call__())
                             return self.random_near_llzero
 
+        # print('likelihood driver done')
         return star_updated
 
     def reinitialise(self):
@@ -435,7 +441,7 @@ class Likelihood(ParameterSubspace):
         if not self.externally_updated: # do not safely assume already handled
             if p is None: # expected a vector of values instead of nothing
                 raise TypeError('Parameter values have not been updated.')
-            super(Likelihood, self).__call__(p) # update free parameters
+            # super(Likelihood, self).__call__(p) # update free parameters
 
         if self.needs_update or force:
             try:

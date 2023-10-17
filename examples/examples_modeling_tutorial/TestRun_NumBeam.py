@@ -603,7 +603,6 @@ except:
 		print("Seems that blacbkody atmosphere extension was used instead of numerical.")
 		print("Please re-install X-PSI using numerical atmosphere extension including beaming parameters if want to use this test run.")
 	except:
-		print("Seems that neither of the likelihood checks passed, which can mean that the basic numerical atmosphere extension was used instead of the one with additional beaming parameters (required by this test run). Please re-install X-PSI with the latter if that is the case. Otherwise, something else must be wrong.")
 		exit()
 	exit()
 

@@ -52,7 +52,14 @@ from xpsi.surface_radiation_field.preload cimport (_preloaded,
 from xpsi.surface_radiation_field.hot cimport (init_hot,
                                                eval_hot,
                                                eval_hot_norm,
-                                               free_hot)
+                                               free_hot,
+                                               produce_2D_data,
+                                               make_atmosphere_2D)
+
+from xpsi.surface_radiation_field.hot_2D cimport (init_hot_2D,
+                                               eval_hot_2D,
+                                               eval_hot_2D_norm,
+                                               free_hot_2D)
 
 from xpsi.surface_radiation_field.elsewhere cimport (init_elsewhere,
                                                      free_elsewhere,
@@ -138,7 +145,7 @@ def integrate(size_t numThreads,
         double eta # Doppler boost factor in the NRF; TP
         double mu # NRF and then CRF emission angle w.r.t surface normal; TP
         double E_prime # Photon energy in the CRF, given an energy at infinity; TP
-        double I_E # Radiant and or spectral intensity in the CRF; TP
+        double I_E, I_E2D # Radiant and or spectral intensity in the CRF; TP
         double _PHASE, _PHASE_plusShift, _GEOM, _Z, _ABB # TP
         double phi_shift # TP
         double superlum # TP
@@ -153,6 +160,7 @@ def integrate(size_t numThreads,
         double _specific_flux
         size_t _InvisPhase
         double E_electronrest
+        double count_evals = 1.
 
         double[:,:,::1] privateFlux = np.zeros((N_T, N_E, N_P), dtype = np.double)
         double[:,::1] flux = np.zeros((N_E, N_P), dtype = np.double)
@@ -268,6 +276,20 @@ def integrate(size_t numThreads,
     # >>> Integrate.
     # >>>
     #----------------------------------------------------------------------->>>
+    
+    
+    # printf('\nintegrate')
+    # Initiate 2D atmosphere
+    cdef double* I_data_2D
+    I_data_2D = produce_2D_data(T, &(srcCellParams[0,0,0]), hot_data)
+    # printf('\nI_data_2D[0] = %f.', I_data_2D[0]) 
+    atmosphere_2D = make_atmosphere_2D(I_data_2D, hot_data)
+    
+    # initiate data 2D
+    hot_preloaded_2D = init_preload(atmosphere_2D)
+    hot_data_2D = init_hot_2D(N_T, hot_preloaded_2D)
+    
+    
     for ii in prange(<signed int>cellArea.shape[0],
                      nogil = True,
                      schedule = 'static',
@@ -430,6 +452,10 @@ def integrate(size_t numThreads,
 
                                 PHASE[T][_kdx] = leaves[_kdx] + _phase_lag
 
+                                # printf(".%.8e", count_evals)
+                                # count_evals = 1. + count_evals 
+                                # printf(".%ld",J)
+
                                 # specific intensities
                                 for p in range(N_E):
                                     E_prime = energies[p] / _Z
@@ -440,12 +466,14 @@ def integrate(size_t numThreads,
                                     # printf("srcCellParams[i,j,1]: %.8e, ", srcCellParams[i,J,1])
 
                                     E_electronrest=E_prime*0.001956951 #kev to electron rest energy conversion
-                                    
-                                    I_E = eval_hot(T,
-                                                   E_electronrest,
-                                                   _ABB,
-                                                   &(srcCellParams[i,J,0]),
-                                                   hot_data)
+                                    # printf('\neval hot start')
+                                    I_E2D = eval_hot_2D(T, E_electronrest, _ABB, hot_data_2D)
+                                    # printf('\neval hot done')
+                                    # I_E = eval_hot(T,
+                                    #                E_electronrest,
+                                    #                _ABB,
+                                    #                &(srcCellParams[i,J,0]),
+                                    #                hot_data)
 
                                     if perform_correction == 1:
                                         correction_I_E = eval_elsewhere(T,
@@ -455,7 +483,7 @@ def integrate(size_t numThreads,
                                                                         ext_data)
                                         correction_I_E = correction_I_E * eval_elsewhere_norm()
 
-                                    (PROFILE[T] + BLOCK[p] + _kdx)[0] = (I_E * eval_hot_norm() - correction_I_E) * _GEOM
+                                    (PROFILE[T] + BLOCK[p] + _kdx)[0] = (I_E2D * eval_hot_norm() - correction_I_E) * _GEOM
 
                         if k == 0: # if initially visible at first/last phase steps
                             # periodic
@@ -640,12 +668,17 @@ def integrate(size_t numThreads,
     free(InvisFlag)
     free(InvisStep)
 
+    # 2D interpolator
+    free(I_data_2D)
+
     free(BLOCK)
 
     if hot_atmosphere:
         free_preload(hot_preloaded)
-
+        free_preload(hot_preloaded_2D)
+ 
     free_hot(N_T, hot_data)
+    free_hot_2D(N_T, hot_data_2D)
 
     if perform_correction == 1:
         if elsewhere_atmosphere:
@@ -659,5 +692,7 @@ def integrate(size_t numThreads,
             return (ERROR, None)
 
     free(terminate)
+    # printf('\nsucces')
+    # printf('\nsucces2')
 
     return (SUCCESS, np.asarray(flux, dtype = np.double, order = 'C'))

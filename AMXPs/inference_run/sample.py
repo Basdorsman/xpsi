@@ -30,13 +30,15 @@ n_params = os.environ.get('n_params')
 likelihood_toggle = os.environ.get('likelihood') 
 machine = os.environ.get('machine')
 integrator_type = os.environ.get('integrator')
-
+compiler = os.environ.get('compiler')
 
 try:
     num_energies = int(os.environ.get('num_energies'))
     sampling_params = int(os.environ.get('sampling_params'))
     live_points = int(os.environ.get('live_points'))
     max_iter = int(os.environ.get('max_iter'))
+    sqrt_num_cells = int(os.environ.get('sqrt_num_cells'))
+    num_leaves = int(os.environ.get('num_leaves'))
 except:
     pass
 

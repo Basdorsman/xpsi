@@ -53,5 +53,5 @@ os.environ['machine']='helios'
 os.environ['likelihood']='custom'
 os.environ['num_energies']='16'
 
-import sample_A5_10 as ST
+import sample as ST
 

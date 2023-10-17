@@ -7,7 +7,8 @@ Created on Thu Jun 16 11:26:35 2022
 """
 import xpsi
 from xpsi.global_imports import *
-from xpsi.global_imports import _c, _G, _dpr, gravradius, _csq, _km, _2pi
+from xpsi.global_imports import _c, _G, _dpr, gravradius, _csq, _km, _2pi, _keV, _k_B
+k_B_over_keV = _k_B / _keV
 from xpsi.Parameter import Parameter
 
 import numpy as np
@@ -314,7 +315,8 @@ class CustomHotRegion_Accreting(xpsi.HotRegion):
     def __init__(self,
             bounds,
             values,
-            symmetry = True,
+            symmetry = 'azimuthal_invariance',
+            interpolator = 'split',
             omit = False,
             cede = False,
             concentric = False,
@@ -377,6 +379,7 @@ class CustomHotRegion_Accreting(xpsi.HotRegion):
                 bounds,
                 values,
                 symmetry = symmetry,
+                interpolator = interpolator,
                 omit = omit,
                 cede = cede,
                 concentric = concentric,
@@ -399,9 +402,8 @@ class CustomHotRegion_Accreting(xpsi.HotRegion):
                 custom = custom,
                 image_order_limit = image_order_limit,
                 **kwargs
-                )        
-        
-    
+                )
+
     def _HotRegion__compute_cellParamVecs(self):
         self._super_radiates = _np.greater(self._super_cellArea, 0.0).astype(_np.int32)
         self._super_cellParamVecs = _np.ones((self._super_radiates.shape[0],
@@ -409,29 +411,10 @@ class CustomHotRegion_Accreting(xpsi.HotRegion):
                                       #2
                                       3),
                                      dtype=_np.double)
-        
-        #self._super_cellParamVecs[...,:-1] *= self['super_temperature']
+
         self._super_cellParamVecs[...,0] *= self['super_te']
         self._super_cellParamVecs[...,1] *= self['super_tbb']
         self._super_cellParamVecs[...,2] *= self['super_tau']
-        
-        
-        # for i in range(self._super_cellParamVecs.shape[1]):
-        #     self._super_cellParamVecs[:,i,-1] *= self._super_effGrav
-        
-        # try:
-        #     self._cede_radiates = _np.greater(self._cede_cellArea, 0.0).astype(_np.int32)
-        # except AttributeError:
-        #     pass
-        # else:
-        #     self._cede_cellParamVecs = _np.ones((self._cede_radiates.shape[0],
-        #                                  self._cede_radiates.shape[1],
-        #                                  2), dtype=_np.double)
-        
-        #     self._cede_cellParamVecs[...,:-1] *= self['cede_temperature']
-        
-        #     for i in range(self._cede_cellParamVecs.shape[1]):
-        #         self._cede_cellParamVecs[:,i,-1] *= self._cede_effGrav
 
 class CustomHotRegion_Accreting_te_const(xpsi.HotRegion):
     """Custom implementation of HotRegion. Accreting Atmosphere model by 
@@ -1218,6 +1201,94 @@ class CustomBackground(xpsi.Background):
 
         self._incident_background= temp
         
+class CustomBackground_BlackBody(xpsi.Background):
+    """ The background injected to generate synthetic data. """
+
+    def __init__(self, bounds=None, value=None):
+
+        
+        # Blackbody component 
+        doc = """
+        Background black body temperature in 10^T Kelvin.
+        """
+        background_temperature = xpsi.Parameter('background_BB_temperature',
+                                strict_bounds = (3, 10),
+                                bounds = bounds.get('background_BB_temperature', None),
+                                doc = doc,
+                                symbol = r'$T_{BB}$',
+                                value = values.get('background_BB_temperature', None))
+        
+        doc = """
+        Background black body radius in m.
+        """
+        background_radius = xpsi.Parameter('background_BB_radius',
+                                strict_bounds = (1, 10),
+                                bounds = bounds.get('background_BB_radius', None),
+                                doc = doc,
+                                symbol = r'$R_{BB}$',
+                                value = values.get('background_BB_radius', None))
+
+        super(CustomBackground, self).__init__(background_temperature, background_radius)
+
+    def __call__(self, energy_edges, phases):
+        """ Evaluate the incident background field. """
+
+        T_BB = self['background_BB_temperature']
+        R_BB = self['background_BB_radius']
+        
+        # Defining array that will be used later
+        array_bb=np.array([])
+
+        # KbT in keV
+        T_kev = k_B_over_keV * pow(10.0, T_BB)
+        
+        # Numerical intergration  for both PL and BB
+        
+        # F_photon [ units  1/ (cm^2*s) ] = pi (R_BB/distance)^2 2/(c^2*h^3) int E^3/[exp(E/Kb*T)-1] dE
+
+
+
+        
+        # int E^2/[exp(E/Kb*T)-1] dE [ units keV^3 ]
+        for i in range(len(energy_edges)-1):
+            bb,_= quad(self.BlackBody, energy_edges[i], energy_edges[i+1], args=(temp))
+            array_bb=np.append(array_bb,bb)
+            
+        ######## Applying Normalization  in unit of photons/KeV/cm^2/s^1 #######
+        k_bb=(R_BB/distance)**2  # See https://heasarc.gsfc.nasa.gov/docs/xanadu/xspec/manual/node137.html
+        
+        # 2 * pi / (c^2*h^3) = 9.8832904e31 [ units keV^-3 1/ (cm^2*s) ] 
+        array_bb *=k_bb*(1.0344*10**(-3))
+        
+        BB = np.zeros((energy_edges.shape[0] - 1, phases.shape[0]))
+        
+        for i in range(phases.shape[0]):
+            BB[:,i] = array_bb
+            
+            
+        bkg=BB
+        
+        # Apply Interstellar if not None
+        if self._interstellar is not None:
+            self._energy_mids=(energy_edges[1:]+energy_edges[:-1])/2
+            self._interstellar(self._energy_mids, bkg) # Bad coding right ? :)
+            
+    
+    
+        self._incident_background = bkg
+
+    def BlackBody(self,energy,k):
+        """ Defining Blackbody function using xspec model
+        
+        See :https://heasarc.gsfc.nasa.gov/docs/xanadu/xspec/manual/node137.html
+
+        A(E)=E^2/(exp(E/kT)-1)
+
+        """
+        result=(energy**2)/(np.exp(energy/k)-1)
+        return result
+
+
 class SynthesiseData(xpsi.Data):
     """ Custom data container to enable synthesis. """
 

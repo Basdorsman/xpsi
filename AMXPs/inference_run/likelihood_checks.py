@@ -45,7 +45,7 @@ if isinstance(os.environ.get('atmosphere_type'),type(None)) or isinstance(os.env
     n_params = '5' #4, 5
     likelihood_toggle = 'custom' # default, custom
     machine = 'local' # local, helios, snellius
-    num_energies = 128
+    num_energies = 60 #128
     sampling_params=10
     integrator_type='x'
 
@@ -54,11 +54,21 @@ if atmosphere_type == 'A': atmosphere = 'accreting'
 elif atmosphere_type == 'N': atmosphere = 'numerical'
 elif atmosphere_type == 'B': atmosphere = 'blackbody'
 
-if integrator_type == 'a': integrator = 'azimuthal_invariance'
-elif integrator_type == 'x': integrator = 'azimuthal_invariance_split'
-elif integrator_type == 'c': integrator = 'combined'
-elif integrator_type == 's': integrator = 'split'
-elif integrator_type == 'g': integrator = 'gsl'
+if integrator_type == 'a': 
+    integrator = 'azimuthal_invariance'
+    interpolator = 'combined'
+elif integrator_type == 'x': # fastest option
+    integrator = 'azimuthal_invariance'
+    interpolator = 'split'
+elif integrator_type == 'c': 
+    integrator = 'general'
+    interpolator = 'combined'
+elif integrator_type == 's': 
+    integrator = 'general'
+    interpolator = 'split'
+elif integrator_type == 'g': 
+    integrator = 'general'
+    interpolator = 'split_gsl'
 
 
 print('atmosphere: ', atmosphere)
@@ -68,6 +78,7 @@ print('machine: ', machine)
 print('num_energies: ', num_energies)
 print('sampling_params: ', sampling_params)
 print('integrator:', integrator)
+print('interpolator:', interpolator)
 
 
 this_directory = os.path.dirname(os.path.abspath(__file__))
@@ -112,38 +123,15 @@ settings = dict(counts = np.loadtxt(datastring, dtype=np.double),
 data = xpsi.Data(**settings)
 
 ################################## INSTRUMENT #################################
-
-
-
-NICER = CustomInstrumentJ1808.from_response_files(ARF =  this_directory + '/../model_data/J1808/ni2584010103mpu7_arf_aeff.txt',
-                                                  RMF =  this_directory + '/../model_data/J1808/ni2584010103mpu7_rmf_matrix.txt',
-                                                  channel_edges =  this_directory + '/../model_data/J1808/ni2584010103mpu7_rmf_energymap.txt',
-                                                  channel_low=channel_low,
-                                                  channel_hi=channel_hi,
-                                                  max_input=max_input)
-
-# try:
-#     if machine == 'local':
-#         NICER = CustomInstrument.from_response_files(ARF = this_directory + '/../' + 'model_data/nicer_v1.01_arf.txt',
-#                                                       RMF = this_directory + '/../' + 'model_data/nicer_v1.01_rmf_matrix.txt',
-#                                                       max_input = 500, #500
-#                                                       min_input = 0,
-#                                                       channel_edges = this_directory + '/../' + 'model_data/nicer_v1.01_rmf_energymap.txt')
-#     elif machine == 'helios' or machine == 'snellius':
-#         NICER = CustomInstrument.from_response_files(ARF = this_directory +
-#                                                       '/../' + 'model_data/nicer_v1.01_arf.txt',
-#                                                       RMF = this_directory +
-#                                                       '/../' + 'model_data/nicer_v1.01_rmf_matrix.txt',
-#                                                       max_input = 500, #500
-#                                                       min_input = 0,
-#                                                       channel_edges =
-#                                                       this_directory + '/../' +
-#                                                       'model_data/nicer_v1.01_rmf_energymap.txt')   
-# except:
-#     print("ERROR: You might miss one of the following files (check Modeling tutorial or the link below how to find them): \n model_data/nicer_v1.01_arf.tx, model_data/nicer_v1.01_rmf_matrix.txt, model_data/nicer_v1.01_rmf_energymap.txt")
-#     print("https://zenodo.org/record/7113931")
-#     exit()
-
+try:
+    NICER = CustomInstrumentJ1808.from_response_files(ARF =  this_directory + '/../model_data/J1808/ni2584010103mpu7_arf_aeff.txt',
+                                                      RMF =  this_directory + '/../model_data/J1808/ni2584010103mpu7_rmf_matrix.txt',
+                                                      channel_edges =  this_directory + '/../model_data/J1808/ni2584010103mpu7_rmf_energymap.txt',
+                                                      channel_low=channel_low,
+                                                      channel_hi=channel_hi,
+                                                      max_input=max_input)
+except:
+    print("ERROR: could not load instrument files")
 
 ################################## SPACETIME ##################################
 
@@ -156,9 +144,11 @@ spacetime = xpsi.Spacetime(bounds=bounds, values=dict(frequency=401.0))
 
 
 ################################## HOTREGIONS #################################
-num_leaves = 128
-sqrt_num_cells = 128
+
+num_leaves = 50 #128
+sqrt_num_cells = 90 #128
 num_rays = 512
+
 ################################## PRIMARY ####################################
 from xpsi import HotRegions
 
@@ -168,6 +158,7 @@ bounds = dict(super_colatitude = (None, None),
 values = {}
 
 kwargs = {'symmetry': integrator, #call general integrator instead of for azimuthal invariance
+          'interpolator': interpolator,
           'omit': False,
           'cede': False,
           'concentric': False,

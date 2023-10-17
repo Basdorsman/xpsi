@@ -212,7 +212,8 @@ class HotRegion(ParameterSubspace):
     def __init__(self,
                  bounds,
                  values,
-                 symmetry = 'combined',
+                 symmetry = 'azimuthal_invariance',
+                 interpolator = 'split',
                  omit = False,
                  cede = False,
                  concentric = False,
@@ -252,6 +253,7 @@ class HotRegion(ParameterSubspace):
 
         self.image_order_limit = image_order_limit
 
+        self.interpolator = interpolator
         self.symmetry = symmetry
 
         # first the parameters that are fundemental to this class
@@ -468,6 +470,17 @@ class HotRegion(ParameterSubspace):
         return [self]
 
     @property
+    def interpolator(self):
+        """ Get the interpolator declaration (controls interpolator invocation). """
+        return self._interpolator
+    
+    @interpolator.setter
+    def interpolator(self, declaration):
+        if not isinstance(declaration, str):
+            raise TypeError('Declare interpolator with strings split or combined.')
+        self._interpolator = declaration
+
+    @property
     def symmetry(self):
         """ Get the symmetry declaration (controls integrator invocation). """
         return self._symmetry
@@ -479,17 +492,22 @@ class HotRegion(ParameterSubspace):
 
         self._symmetry = declaration
 
+        print(self.interpolator)
+
         # find the required integrator
         if declaration == 'azimuthal_invariance': # can we safely assume azimuthal invariance?
-            from xpsi.cellmesh.integrator_for_azimuthal_invariance import integrate as _integrator
-        elif declaration == 'azimuthal_invariance_split': # can we safely assume azimuthal invariance?
-            from xpsi.cellmesh.integrator_for_azimuthal_invariance_split import integrate as _integrator
-        elif declaration == 'combined': # more general purpose
-            from xpsi.cellmesh.integrator import integrate as _integrator
-        elif declaration == 'split': # attempt to optimize
-            from xpsi.cellmesh.integrator_split_interpolation import integrate as _integrator
-        elif declaration == 'gsl': # gsl for 2D interpolation
-            from xpsi.cellmesh.integrator_split_gsl import integrate as _integrator
+            if self.interpolator == 'split':
+                from xpsi.cellmesh.integrator_for_azimuthal_invariance_split import integrate as _integrator
+            elif self.interpolator == 'combined':
+                from xpsi.cellmesh.integrator_for_azimuthal_invariance import integrate as _integrator
+        elif declaration == 'general':
+            if self.interpolator == 'split':
+                from xpsi.cellmesh.integrator_split_interpolation import integrate as _integrator
+            elif self.interpolator == 'combined':
+                from xpsi.cellmesh.integrator import integrate as _integrator
+            elif self.interpolator == 'split_gsl':
+                from xpsi.cellmesh.integrator_split_gsl import integrate as _integrator
+
         self._integrator = _integrator
 
     @property

@@ -19,15 +19,18 @@ from xpsi.global_imports import gravradius
 
 ################################ OPTIONS ###############################
 second = False
-te_index=0 # relevant for atmosphere A4. t__e = np.arange(40.0, 202.0, 4.0), there are 40.5 values (I expect that means 40)
+te_index=0 # t__e = np.arange(40.0, 202.0, 4.0), there are 40.5 values (I expect that means 40)
+tbb=0.001 #0.001 #0.001 - 0.003 # updated lower limit
+te=40.#200 #40 - 200
+tau=0.5 #0.5 - 3.5
 
-# os environment options
+
 atmosphere_type = os.environ.get('atmosphere_type')
 n_params = os.environ.get('n_params')
 likelihood_toggle = os.environ.get('likelihood') 
 machine = os.environ.get('machine')
 integrator_type = os.environ.get('integrator')
-compiler = os.environ.get('compiler')
+
 
 try:
     num_energies = int(os.environ.get('num_energies'))
@@ -43,24 +46,36 @@ if isinstance(os.environ.get('atmosphere_type'),type(None)) or isinstance(os.env
     print('E: failed to import some OS environment variables, using defaults.')    
     atmosphere_type = 'A' #A, N, B
     n_params = '5' #4, 5
-    likelihood_toggle = 'default' # default, custom
+    likelihood_toggle = 'custom' # default, custom
     machine = 'local' # local, helios, snellius
-    num_energies = 16
-    sampling_params= 8
-    integrator_type = 's'
+    num_energies = 40
+    sampling_params= 10
+    integrator_type = 'x'
     compiler = 'foss'
     live_points = 64
-    max_iter = -1
-    
+    sqrt_num_cells = 50
+    num_leaves = 30
+    max_iter = 1
 
 if atmosphere_type == 'A': atmosphere = 'accreting'
 elif atmosphere_type == 'N': atmosphere = 'numerical'
 elif atmosphere_type == 'B': atmosphere = 'blackbody'
 
-if integrator_type == 'a': integrator = 'azimuthal_invariance'
-elif integrator_type == 'c': integrator = 'combined'
-elif integrator_type == 's': integrator = 'split'
-elif integrator_type == 'g': integrator = 'gsl'
+if integrator_type == 'a': 
+    integrator = 'azimuthal_invariance'
+    interpolator = 'combined'
+elif integrator_type == 'x': # fastest option
+    integrator = 'azimuthal_invariance'
+    interpolator = 'split'
+elif integrator_type == 'c': 
+    integrator = 'general'
+    interpolator = 'combined'
+elif integrator_type == 's': 
+    integrator = 'general'
+    interpolator = 'split'
+elif integrator_type == 'g': 
+    integrator = 'general'
+    interpolator = 'split_gsl'
 
 print('atmosphere: ', atmosphere)
 print('n_params: ', n_params)
@@ -69,6 +84,7 @@ print('machine: ', machine)
 print('num_energies: ', num_energies)
 print('sampling_params: ', sampling_params)
 print('integrator:', integrator)
+print('interpolator:', interpolator)
 
 this_directory = os.path.dirname(os.path.abspath(__file__))
 
@@ -80,7 +96,7 @@ elif machine == 'helios':
 elif machine == 'snellius':
     sys.path.append(this_directory+'/../')
 
-from custom_tools import CustomInstrument, CustomHotRegion, CustomHotRegion_Accreting, CustomHotRegion_Accreting_te_const
+from custom_tools import CustomInstrument, CustomInstrumentJ1808, CustomHotRegion, CustomHotRegion_Accreting, CustomHotRegion_Accreting_te_const
 from custom_tools import CustomPhotosphere_BB, CustomPhotosphere_N4, CustomPhotosphere_N5, CustomPhotosphere_A5, CustomPhotosphere_A4
 from custom_tools import CustomSignal, CustomPrior, CustomPrior_NoSecondary, plot_2D_pulse, CustomLikelihood
 
@@ -91,189 +107,103 @@ print('Rank reporting: %d' % xpsi._rank)
 
 ##################################### DATA ####################################
 if atmosphere_type=='A':
-    exposure_time = 40000.
+    exposure_time = 2e6#40000.
 elif atmosphere_type=='N':
     exposure_time = 50000.
 
-datastring = this_directory + '/../' + f'synthesise_pulse_data/data/{atmosphere_type}{n_params}_synthetic_realisation.dat'        
+datastring = this_directory + '/../' + f'synthesise_pulse_data/data/J1808_synthetic_realisation.dat'        
+channel_low = 20
+channel_hi = 300 #600
+max_input = 1400 #2000
+       
 settings = dict(counts = np.loadtxt(datastring, dtype=np.double),
-                channels=np.arange(20,201), #201
+                channels=np.arange(channel_low,channel_hi), #201
                 phases=np.linspace(0.0, 1.0, 33),
-                first=0, last=180,
+                first=0, last=channel_hi-channel_low-1,
                 exposure_time=exposure_time)
 
 data = xpsi.Data(**settings)
 
 ################################## INSTRUMENT #################################
 try:
-    if machine == 'local':
-        NICER = CustomInstrument.from_response_files(ARF = this_directory + '/../' + 'model_data/nicer_v1.01_arf.txt',
-                                                     RMF = this_directory + '/../' + 'model_data/nicer_v1.01_rmf_matrix.txt',
-                                                     max_input = 500, #500
-                                                     min_input = 0,
-                                                     channel_edges = this_directory + '/../' + 'model_data/nicer_v1.01_rmf_energymap.txt')
-    elif machine == 'helios' or machine == 'snellius':
-        NICER = CustomInstrument.from_response_files(ARF = this_directory +
-                                                     '/../' + 'model_data/nicer_v1.01_arf.txt',
-                                                     RMF = this_directory +
-                                                     '/../' + 'model_data/nicer_v1.01_rmf_matrix.txt',
-                                                     max_input = 500, #500
-                                                     min_input = 0,
-                                                     channel_edges =
-                                                     this_directory + '/../' +
-                                                     'model_data/nicer_v1.01_rmf_energymap.txt')
-   
+    NICER = CustomInstrumentJ1808.from_response_files(ARF =  this_directory + '/../model_data/J1808/ni2584010103mpu7_arf_aeff.txt',
+                                                      RMF =  this_directory + '/../model_data/J1808/ni2584010103mpu7_rmf_matrix.txt',
+                                                      channel_edges =  this_directory + '/../model_data/J1808/ni2584010103mpu7_rmf_energymap.txt',
+                                                      channel_low=channel_low,
+                                                      channel_hi=channel_hi,
+                                                      max_input=max_input)
 except:
-    print("ERROR: You might miss one of the following files (check Modeling tutorial or the link below how to find them): \n model_data/nicer_v1.01_arf.tx, model_data/nicer_v1.01_rmf_matrix.txt, model_data/nicer_v1.01_rmf_energymap.txt")
-    print("https://zenodo.org/record/7113931")
-    exit()
+    print("ERROR: could not load instrument files")
 
 
 ################################## SPACETIME ##################################
 
-# spacetime = xpsi.Spacetime.fixed_spin(300.0)
+bounds = dict(distance = (0.1, 10.0),                       # (Earth) distance
+                mass = (1.0, 3.0),                          # mass
+                radius = (3.0 * gravradius(1.0), 16.0),     # equatorial radius
+                cos_inclination = (0.0, 1.0))               # (Earth) inclination to rotation axis
 
-
-bounds = dict(distance = (0.1, 1.0),                     # (Earth) distance
-                mass = (1.0, 3.0),                       # mass
-                radius = (3.0 * gravradius(1.0), 16.0),  # equatorial radius
-                cos_inclination = (0.0, 1.0))      # (Earth) inclination to rotation axis
-
-spacetime = xpsi.Spacetime(bounds=bounds, values=dict(frequency=300.0))
+spacetime = xpsi.Spacetime(bounds=bounds, values=dict(frequency=401.0))
 
 
 ################################## HOTREGIONS #################################
-# print("hotregions")
+
+num_leaves = num_leaves #128
+sqrt_num_cells = sqrt_num_cells #128
+num_rays = 512
+
 ################################## PRIMARY ####################################
 from xpsi import HotRegions
 
+bounds = dict(super_colatitude = (None, None),
+              super_radius = (None, None),
+              phase_shift = (0.0, 0.1))
+values = {}
+
+kwargs = {'symmetry': integrator, #call general integrator instead of for azimuthal invariance
+          'interpolator': interpolator,
+          'omit': False,
+          'cede': False,
+          'concentric': False,
+          'sqrt_num_cells': sqrt_num_cells,
+          'min_sqrt_num_cells': 10,
+          'max_sqrt_num_cells': 128,
+          'num_leaves': num_leaves,
+          'num_rays': num_rays,
+          'prefix': 'p'}
+
 if atmosphere=='accreting':
+    bounds['super_tbb'] = (0.001, 0.003)
     if n_params=='4':
         if sampling_params==8:
-            bounds = dict(super_colatitude = (None, None),
-                          super_radius = (None, None),
-                          phase_shift = (0.0, 0.1),
-                          super_tbb = (0.00015, 0.003))
-            values = dict(super_tau = 0.5)
-
+            values['super_tau'] = tau
         if sampling_params==9:
-            bounds = dict(super_colatitude = (None, None),
-                          super_radius = (None, None),
-                          phase_shift = (0.0, 0.1),
-                          super_tbb = (0.00015, 0.003),
-                          super_tau = (0.5, 3.5))
-            values = {}
-    
-        primary = CustomHotRegion_Accreting_te_const(bounds=bounds,
-           	                    values=values,
-           	                    symmetry=integrator, #call general integrator instead of for azimuthal invariance
-           	                    omit=False,
-           	                    cede=False,
-           	                    concentric=False,
-           	                    sqrt_num_cells=32,
-           	                    min_sqrt_num_cells=10,
-           	                    max_sqrt_num_cells=64,
-           	                    num_leaves=100,
-           	                    num_rays=200,
-           	                    prefix='p')
+            bounds['super_tau'] = (0.5, 3.5)
+        primary = CustomHotRegion_Accreting_te_const(bounds, values, **kwargs)
     if n_params=='5':
         if sampling_params==8:
-            bounds = dict(super_colatitude = (None, None),
-                          super_radius = (None, None),
-                          phase_shift = (0.0, 0.1),
-                          super_tbb = (0.00015, 0.003))
-            values = dict(super_te = 40., super_tau = 0.5)
-
-        if sampling_params==9: 
-            bounds = dict(super_colatitude = (None, None),
-                          super_radius = (None, None),
-                          phase_shift = (0.0, 0.1),
-                          super_tbb = (0.00015, 0.003),
-                          super_tau = (0.5, 3.5))
-            values = dict(super_te = 40.)  #as I am writing this I am not checking if maybe this should be tau instead
-
+            values['super_tau'] = tau
+            values['super_te'] = te
+        if sampling_params==9:
+            bounds['super_tau'] = (0.5, 3.5)
+            values['super_te'] = te  # I am not sure if you could or should switch te and tau here.
         if sampling_params==10: 
-            bounds = dict(super_colatitude = (None, None),
-                          super_radius = (None, None),
-                          phase_shift = (0.0, 0.1),
-                          super_tbb = (0.00015, 0.003),
-                          super_te = (40., 200.),
-                          super_tau = (0.5, 3.5))
-            values={}
+            bounds['super_tau'] = (0.5, 3.5)
+            bounds['super_te'] = (40., 200.)
+        primary = CustomHotRegion_Accreting(bounds, values, **kwargs)
 
-        primary = CustomHotRegion_Accreting(bounds=bounds,
-           	                    values=values,
-           	                    symmetry=integrator, #call general integrator instead of for azimuthal invariance
-           	                    omit=False,
-           	                    cede=False,
-           	                    concentric=False,
-           	                    sqrt_num_cells=32,
-           	                    min_sqrt_num_cells=10,
-           	                    max_sqrt_num_cells=64,
-           	                    num_leaves=100,
-           	                    num_rays=200,
-           	                    prefix='p')
 elif atmosphere=='numerical':
-    if n_params=='4':
-        bounds = dict(super_colatitude = (None, None),
-                      super_radius = (None, None),
-                      phase_shift = (0.0, 0.1),
-                      super_temperature = (5.1, 6.8))#,
-                      #super_modulator = (-0.3, 0.3))
-    
-        primary = xpsi.HotRegion(bounds=bounds,
-           	                    values={},
-           	                    symmetry=False, #call general integrator instead of for azimuthal invariance
-           	                    omit=False,
-           	                    cede=False,
-           	                    concentric=False,
-           	                    sqrt_num_cells=32,
-           	                    min_sqrt_num_cells=10,
-           	                    max_sqrt_num_cells=64,
-           	                    num_leaves=100,
-           	                    num_rays=200,
-                                #modulated = True, #modulation flag
-           	                    prefix='p')
+    bounds['super_temperature'] = (5.1, 6.8)
+    if n_params=='4':    
+        primary = xpsi.HotRegion(bounds, values, **kwargs)
     elif n_params=='5':
-        bounds = dict(super_colatitude = (None, None),
-                      super_radius = (None, None),
-                      phase_shift = (0.0, 0.1),
-                      super_temperature = (5.1, 6.8),
-                      super_modulator = (-0.3, 0.3))
-    
-        primary = CustomHotRegion(bounds=bounds,
-           	                    values={},
-           	                    symmetry=False, #call general integrator instead of for azimuthal invariance
-           	                    omit=False,
-           	                    cede=False,
-           	                    concentric=False,
-           	                    sqrt_num_cells=32,
-           	                    min_sqrt_num_cells=10,
-           	                    max_sqrt_num_cells=64,
-           	                    num_leaves=100,
-           	                    num_rays=200,
-                                modulated = True, #modulation flag
-           	                    prefix='p')
+        bounds['super_modulator'] = (-0.3, 0.3)
+        kwargs['modulated'] = True
+        primary = CustomHotRegion(bounds, values, **kwargs)
 
 elif atmosphere=='blackbody':
-    bounds = dict(super_colatitude = (None, None),
-                  super_radius = (None, None),
-                  phase_shift = (0.0, 0.1),
-                  super_temperature = (5.1, 6.8))
-    
-    primary = xpsi.HotRegion(bounds=bounds,
-    	                    values={},
-    	                    symmetry=True,
-    	                    omit=False,
-    	                    cede=False,
-    	                    concentric=False,
-    	                    sqrt_num_cells=32,
-    	                    min_sqrt_num_cells=10,
-    	                    max_sqrt_num_cells=64,
-    	                    num_leaves=100,
-    	                    num_rays=200,
-    	                    prefix='p') 	
-    
+    bounds['super_temperature'] = (5.1, 6.8)
+    primary = xpsi.HotRegion(bounds, values, **kwargs)
 
 
 ###################################### SECONDARY ##############################
@@ -424,144 +354,62 @@ else:
 ################################### STAR ######################################
 
 star = xpsi.Star(spacetime = spacetime, photospheres = photosphere)
-# star['mass'] = 1.6
-# star['radius'] = 14.0
-# star['distance'] = 0.2
-# star['cos_inclination'] = math.cos(1.25)
-# star['p__phase_shift'] = 0.0
-# star['p__super_colatitude'] = 1.0
-# star['p__super_radius'] = 0.075
-# star['p__super_temperature'] = 6.2 
-# star['p__super_modulator'] = 0.0
+# SAX J1808-like 
+mass = 1.4
+radius = 12.
+distance = 3.5
+inclination = 60
+cos_inclination = math.cos(inclination*math.pi/180)
+phase_shift = 0
+super_colatitude = 20*math.pi/180
+super_radius = 15.5*math.pi/180
 
-# star['s__phase_shift'] = 0.025 #0.2 gives problems!
-# star['s__super_colatitude'] = math.pi - 1.0
-# star['s__super_radius'] = 0.025
-
-
+p = [mass, #1.4, #grav mass
+      radius,#12.5, #coordinate equatorial radius
+      distance, # earth distance kpc
+      cos_inclination, #cosine of earth inclination
+      phase_shift, #phase of hotregion
+      super_colatitude, #colatitude of centre of superseding region
+      super_radius]  #angular radius superceding region
 
 if atmosphere=='accreting':
     # Compton slab model parameters
-    tbb=0.001 #0.001 - 0.003
-    te=40.#200 #40 - 200
-    tau=0.5 #0.5 - 3.5
-
+    tbb=0.0015 #0.001 -0.003 Tbb(data) = Tbb(keV)/511keV, 1 keV = 0.002 data
+    te=100. #40-200 corresponds to 20-100 keV (Te(data) = Te(keV)*1000/511keV), 50 keV = 100 data
+    tau=1. #0.5 - 3.5 tau = ln(Fin/Fout)
+    p += [tbb]
     if second:
-        p = [1.6, #1.4, #grav mass
-              14.0,#12.5, #coordinate equatorial radius
-              0.2, # earth distance kpc
-              math.cos(1.25), #cosine of earth inclination
-              0.0, #phase of hotregion
-              1.0, #colatitude of centre of superseding region
-              0.075,  #angular radius superceding region
-              tbb,
-              te,
+        p += [te,
               tau,
-              #6.2, #primary temperature
-              #modulator, #modulator
-              0.025,
-              math.pi - 1.0,
-              0.075
+              0.025, #phase shift
+              math.pi - 1.0, #colatitude
+              0.075 #angular radius
               ]
     elif not second:
         if n_params=='4':
-            p = [1.6, #1.4, #grav mass
-                  14.0,#12.5, #coordinate equatorial radius
-                  0.2, # earth distance kpc
-                  math.cos(1.25), #cosine of earth inclination
-                  0.0, #phase of hotregion
-                  1.0, #colatitude of centre of superseding region
-                  0.075,  #angular radius superceding region
-                  tbb
-                  #6.2, #primary temperature
-                  #modulator, #modulator
-                  ]
             if sampling_params==8: p.append(tau)
         if n_params=='5':
-            p = [1.6, #1.4, #grav mass
-                  14.0,#12.5, #coordinate equatorial radius
-                  0.2, # earth distance kpc
-                  math.cos(1.25), #cosine of earth inclination
-                  0.0, #phase of hotregion
-                  1.0, #colatitude of centre of superseding region
-                  0.075,  #angular radius superceding region
-                  tbb
-                  #6.2, #primary temperature
-                  #modulator, #modulator
-                  ]
             if sampling_params==9: p.append(tau)
             if sampling_params==10: p += [te, tau]
-elif atmosphere=='numerical':   
-    p_temperature=6.764 # 6.2
-    modulator = 0 
 
-    if second:
-        p = [1.6, #1.4, #grav mass
-              14.0,#12.5, #coordinate equatorial radius
-              0.2, # earth distance kpc
-              math.cos(1.25), #cosine of earth inclination
-              0.0, #phase of hotregoin
-              1.0, #colatitude of centre of superseding region
-              0.075,  #angular radius superceding region
-              p_temperature, #primary temperature
-              modulator, #modulator
-              0.025,
-              math.pi - 1.0,
-              0.025
-              ]
-    elif not second:
-        if n_params=='5':
-            p = [1.6, #1.4, #grav mass
-                  14.0,#12.5, #coordinate equatorial radius
-                  0.2, # earth distance kpc
-                  math.cos(1.25), #cosine of earth inclination
-                  0.0, #phase of hotregoin
-                  1.0, #colatitude of centre of superseding region
-                  0.075,  #angular radius superceding region
-                  p_temperature, #primary temperature
-                  modulator #modulator
-                  ]
-        elif n_params=='4':
-            p = [1.6, #1.4, #grav mass
-                  14.0,#12.5, #coordinate equatorial radius
-                  0.2, # earth distance kpc
-                  math.cos(1.25), #cosine of earth inclination
-                  0.0, #phase of hotregoin
-                  1.0, #colatitude of centre of superseding region
-                  0.075,  #angular radius superceding region
-                  p_temperature, #primary temperature
-                  #modulator #modulator
-                  ]
+elif atmosphere=='numerical':   
+    p_temperature=6.764 # 6.2    
+    p += [p_temperature]
+    if n_params == '5':
+        modulator = 0 
+        p += [modulator]    
+        if second:
+            p += [0.025, #phase shift
+                  math.pi - 1.0, #colatitude
+                  0.075] #angular radius    
             
-        
 elif atmosphere=='blackbody':
     p_temperature=6.2
-    
+    p += [p_temperature]
     if second:
-        p = [1.6, #1.4, #grav mass
-              14.0,#12.5, #coordinate equatorial radius
-              0.2, # earth distance kpc
-              math.cos(1.25), #cosine of earth inclination
-              0.0, #phase of hotregoin
-              1.0, #colatitude of centre of superseding region
-              0.075,  #angular radius superceding region
-              p_temperature, #primary temperature
-              0.025,
+        p += [0.025,
               math.pi - 1.0,
-              0.025
-              ]
-    elif not second:
-        p = [1.6, #1.4, #grav mass
-              14.0,#12.5, #coordinate equatorial radius
-              0.2, # earth distance kpc
-              math.cos(1.25), #cosine of earth inclination
-              0.0, #phase of hotregoin
-              1.0, #colatitude of centre of superseding region
-              0.075,  #angular radius superceding region
-              p_temperature #primary temperature
-              ]
-        
-        
+              0.025]
 
 star(p)
 star.update() 
@@ -632,8 +480,8 @@ except OSError:
 
 if machine == 'local':
     sampling_efficiency = 0.3
-    n_live_points = 25
-    max_iter = 3
+    n_live_points = 64
+    max_iter = 100
     outputfiles_basename = f'./{folderstring}/run_se={sampling_efficiency}_lp={n_live_points}_atm={atmosphere_type}{n_params}_ne={num_energies}_mi={max_iter}'
     runtime_params = {'resume': False,
                       'importance_nested_sampling': False,

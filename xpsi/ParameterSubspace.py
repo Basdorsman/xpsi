@@ -258,7 +258,7 @@ class ParameterSubspace(object, metaclass=ABCMeta):
         """
         if p is not None:
             if len(p) != len(self):
-                raise ValueError('Parameter vector length mismatch.')
+                raise ValueError(f'Parameter vector length mismatch. p={p} vs self={self}')
             for param, value in zip(self, p):
                 param(value)
         else:

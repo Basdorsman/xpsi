@@ -152,6 +152,7 @@ def integrate(size_t numThreads,
         double _phase_lag
         double _specific_flux
         size_t _InvisPhase
+        double E_electronrest
 
         double[:,:,::1] privateFlux = np.zeros((N_T, N_E, N_P), dtype = np.double)
         double[:,::1] flux = np.zeros((N_E, N_P), dtype = np.double)
@@ -432,9 +433,16 @@ def integrate(size_t numThreads,
                                 # specific intensities
                                 for p in range(N_E):
                                     E_prime = energies[p] / _Z
+                                    # printf("\ninput parameters reporting:")
+                                    # printf("E_prime: %.8e, ", E_prime)
+                                    # printf("__ABB: %.8e, ", _ABB)
+                                    # printf("srcCellParams[i,j,0]: %.8e, ", srcCellParams[i,J,0])
+                                    # printf("srcCellParams[i,j,1]: %.8e, ", srcCellParams[i,J,1])
 
+                                    E_electronrest=E_prime*0.001956951 #kev to electron rest energy conversion
+                                    
                                     I_E = eval_hot(T,
-                                                   E_prime,
+                                                   E_electronrest,
                                                    _ABB,
                                                    &(srcCellParams[i,J,0]),
                                                    hot_data)

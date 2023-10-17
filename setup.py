@@ -284,6 +284,7 @@ if __name__ == '__main__':
                 'xpsi.cellmesh.integrator',
                 'xpsi.cellmesh.integrator_timed',
                 'xpsi.cellmesh.integrator_for_azimuthal_invariance',
+                'xpsi.cellmesh.integrator_for_azimuthal_invariance_split',
                 'xpsi.cellmesh.integrator_for_time_invariance',
                 'xpsi.cellmesh.integrator_split_interpolation',
                 'xpsi.cellmesh.integrator_split_gsl',

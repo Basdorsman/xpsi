@@ -492,8 +492,6 @@ class HotRegion(ParameterSubspace):
 
         self._symmetry = declaration
 
-        print(self.interpolator)
-
         # find the required integrator
         if declaration == 'azimuthal_invariance': # can we safely assume azimuthal invariance?
             if self.interpolator == 'split':

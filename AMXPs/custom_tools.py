@@ -7,13 +7,20 @@ Created on Thu Jun 16 11:26:35 2022
 """
 import xpsi
 from xpsi.global_imports import *
-from xpsi.global_imports import _c, _G, _dpr, gravradius, _csq, _km, _2pi, _keV, _k_B
+from xpsi.global_imports import _c, _G, _dpr, gravradius, _csq, _km, _2pi, _keV, _k_B, _c_cgs
 k_B_over_keV = _k_B / _keV
 from xpsi.Parameter import Parameter
+from xpsi.tools.synthesise import synthesise_exposure_no_scaling as _synthesise # no scaling!
+import os
+
+import scipy
+from scipy.optimize import curve_fit
 
 import numpy as np
 import math
-
+from scipy.integrate import quad
+from scipy.interpolate import Akima1DInterpolator
+from xpsi.Interstellar import Interstellar
 
 class CustomInstrument(xpsi.Instrument):
     """ A model of the NICER telescope response. """
@@ -593,7 +600,7 @@ class CustomPhotosphere_N4(xpsi.Photosphere):
         with np.load(path) as data_dictionary:
             NSX = data_dictionary['arr_0.npy']
 
-        _mu_opt = np.ascontiguousarray(NSX[0:size[2],1][::-1])
+        _mu_opt = np.ascontiguousarraycustomphoto(NSX[0:size[2],1][::-1])
         logE_opt = np.ascontiguousarray([NSX[i*size[2],0] for i in range(size[3])])
         logT_opt = np.ascontiguousarray([NSX[i*size[1]*size[2]*size[3],3] for i in range(size[0])])
         logg_opt = np.ascontiguousarray([NSX[i*size[2]*size[3],4] for i in range(size[1])])
@@ -759,7 +766,61 @@ class CustomSignal(xpsi.Signal):
                                           self._epsilon,
                                           self._sigmas,
                                           kwargs.get('llzero'))#,
-                                          #slim=-1.0) #no 10^89s
+                                          #slim=-1.0) #no 10^89s, so some likelihood calculations are skipped
+                                          
+    
+    def synthesise(self,
+                   exposure_time,
+                   name='no_pulse',
+                   directory='./',
+                   **kwargs):
+        
+            """ Synthesise data set.
+    
+            """
+            self._expected_counts, synthetic = _synthesise(exposure_time,
+                                                                       self._data.phases,
+                                                                       self._signals,
+                                                                       self._phases,
+                                                                       self._shifts,
+                                                                       self._background.registered_background,
+                                                                       gsl_seed=42)
+            self.synthetic_data = synthetic
+            
+            
+            try:
+                if not os.path.isdir(directory):
+                    os.mkdir(directory)
+            except OSError:
+                print('Cannot create write directory.')
+                raise
+    
+            np.savetxt(os.path.join(directory, name+'_realisation.dat'),
+                        synthetic,
+                        fmt = '%u')
+    
+            self._write(self.expected_counts,
+                        filename = os.path.join(directory, name+'_expected_hreadable.dat'),
+                        fmt = '%.8e')
+    
+            self._write(synthetic,
+                        filename = os.path.join(directory, name+'_realisation_hreadable.dat'),
+                        fmt = '%u')
+    
+    def _write(self, counts, filename, fmt):
+            """ Write to file in human readable format. """
+    
+            rows = len(self._data.phases) - 1
+            rows *= len(self._data.channels)
+    
+            phases = self._data.phases[:-1]
+            array = np.zeros((rows, 3))
+    
+            for i in range(counts.shape[0]):
+                for j in range(counts.shape[1]):
+                    array[i*len(phases) + j,:] = self._data.channels[i], phases[j], counts[i,j]
+    
+                np.savetxt(filename, array, fmt=['%u', '%.6f'] + [fmt])
 
 from scipy.stats import truncnorm
 class CustomPrior(xpsi.Prior):
@@ -1102,7 +1163,7 @@ def veneer(x, y, axes, lw=1.0, length=8):
     plt.setp(axes.spines.values(), linewidth=lw, color='black')
 
 def plot_2D_pulse(z, x, shift, y, ylabel,
-                  num_rotations=1.0, res=1000, figsize=(12,6),
+                  num_rotations=1.0, res=1000, figsize=(5,3),
                   cm=cm.viridis, normalize=True):
     """ Helper function to plot a phase-energy pulse.
 
@@ -1124,30 +1185,32 @@ def plot_2D_pulse(z, x, shift, y, ylabel,
     ax = plt.subplot(gs[0])
     ax_cb = plt.subplot(gs[1])
 
-    res = int(len(x)*num_rotations)
-    new_phases = np.linspace(0.0, num_rotations, res)
-
-    interpolated = phase_interpolator(new_phases,
+    new_phase_edges = np.linspace(0.0, num_rotations, res+1)
+    new_phase_mids = get_mids_from_edges(new_phase_edges)
+    interpolated = phase_interpolator(new_phase_mids,
                                       x,
                                       z[0], shift[0])
+
+    
     if len(z) == 2:
-        interpolated += phase_interpolator(new_phases,
-                                           x,
-                                           z[1], shift[1])
+        interpolated += phase_interpolator(new_phase_mids,
+                                            x,
+                                            z[1], shift[1])
     if normalize:
-        profile = ax.pcolormesh(new_phases,
+        profile = ax.pcolormesh(new_phase_mids,
                                  y,
                                  interpolated/np.max(interpolated),
                                  cmap = cm,
                                  linewidth = 0,
                                  rasterized = True)
     elif not normalize:
-        profile = ax.pcolormesh(new_phases,
+        profile = ax.pcolormesh(new_phase_mids,
                                  y,
                                  interpolated,
                                  cmap = cm,
                                  linewidth = 0,
-                                 rasterized = True)
+                                 rasterized = True,
+                                 shading = 'flat')
     
     profile.set_edgecolor('face')
 
@@ -1167,7 +1230,51 @@ def plot_2D_pulse(z, x, shift, y, ylabel,
         ticks = np.linspace(0, np.max(z[0]), 10)
         cb = plt.colorbar(profile, cax = ax_cb,  ticks = ticks)
     
-    return ax
+    return fig, ax
+
+def plot_one_pulse(signal, phases, channels, label=r'Counts', cm=cm.jet, figsize=(5,3)):
+    """ Plot a pulse resolved over a single rotational cycle. """
+
+    fig = plt.figure(figsize = figsize)
+
+    gs = gridspec.GridSpec(1, 2, width_ratios=[50,1])
+    ax = plt.subplot(gs[0])
+    ax_cb = plt.subplot(gs[1])
+    
+    if (signal <= 0.0).any():
+        vmax =  np.max( np.abs( signal ) )
+        vmin = -vmax
+    else:
+        vmax = np.max(signal)
+        vmin = np.min(signal)
+
+    profile = ax.pcolormesh(phases,
+                             channels,
+                             signal,
+                             cmap = cm,
+                             vmin = vmin,
+                             vmax = vmax,
+                             linewidth = 0,
+                             rasterized = True)
+
+    profile.set_edgecolor('face')
+
+    ax.set_xlim([0.0, 1.0])
+    ax.set_yscale('log')
+    ax.set_ylabel(r'Energy (keV)')
+    ax.set_xlabel(r'Phase')
+
+    cb = plt.colorbar(profile,
+                      cax = ax_cb)
+
+    cb.set_label(label=label, labelpad=25)
+    cb.solids.set_edgecolor('face')
+
+    veneer((0.05, 0.2), (None, None), ax)
+
+    plt.subplots_adjust(wspace = 0.025)
+    
+    return fig, ax
 
 class CustomBackground(xpsi.Background):
     """ The background injected to generate synthetic data. """
@@ -1204,37 +1311,46 @@ class CustomBackground(xpsi.Background):
 class CustomBackground_BlackBody(xpsi.Background):
     """ The background injected to generate synthetic data. """
 
-    def __init__(self, bounds=None, value=None):
+    def __init__(self, bounds=None, values=None, interstellar = None):
 
-        
-        # Blackbody component 
         doc = """
-        Background black body temperature in 10^T Kelvin.
+        Background black body temperature in log10 Kelvin.
         """
-        background_temperature = xpsi.Parameter('background_BB_temperature',
-                                strict_bounds = (3, 10),
-                                bounds = bounds.get('background_BB_temperature', None),
+        background_temperature = xpsi.Parameter('T_BB',
+                                strict_bounds = (3., 10.),
+                                bounds = bounds,
                                 doc = doc,
                                 symbol = r'$T_{BB}$',
-                                value = values.get('background_BB_temperature', None))
+                                value = values.get('T_BB', None))
         
         doc = """
-        Background black body radius in m.
+        Background black body normalisation in (km / 10 kpc)^2.
         """
-        background_radius = xpsi.Parameter('background_BB_radius',
-                                strict_bounds = (1, 10),
-                                bounds = bounds.get('background_BB_radius', None),
+        background_normalisation = xpsi.Parameter('K_BB',
+                                strict_bounds = (1., 1e8),
+                                bounds = bounds,
                                 doc = doc,
-                                symbol = r'$R_{BB}$',
-                                value = values.get('background_BB_radius', None))
+                                symbol = r'$K_{BB}$',
+                                value = values.get('K_BB', None))
+        
 
-        super(CustomBackground, self).__init__(background_temperature, background_radius)
+        super(CustomBackground_BlackBody, self).__init__(background_temperature, background_normalisation)
+        
+        # Making sure the interstellar object is form Interstall class
+        if interstellar is not None:
+            if not isinstance(interstellar, Interstellar):
+                raise TypeError('Invalid type for an interstellar object.')
+            else:
+                self._interstellar = interstellar
+        else:
+            self._interstellar = None
 
     def __call__(self, energy_edges, phases):
         """ Evaluate the incident background field. """
 
-        T_BB = self['background_BB_temperature']
-        R_BB = self['background_BB_radius']
+        T_BB = self['T_BB']
+        K_BB = self['K_BB'] #See https://heasarc.gsfc.nasa.gov/docs/xanadu/xspec/manual/node138.html
+
         
         # Defining array that will be used later
         array_bb=np.array([])
@@ -1242,28 +1358,26 @@ class CustomBackground_BlackBody(xpsi.Background):
         # KbT in keV
         T_kev = k_B_over_keV * pow(10.0, T_BB)
         
-        # Numerical intergration  for both PL and BB
-        
-        # F_photon [ units  1/ (cm^2*s) ] = pi (R_BB/distance)^2 2/(c^2*h^3) int E^3/[exp(E/Kb*T)-1] dE
+        # Numerical intergration  for BB
+        # F_photon [ units  1/ (cm^2*s) ] = pi (R_BB/distance)^2 2/(c^2*h^3) int E^2/[exp(E/Kb*T)-1] dE
 
 
-
-        
         # int E^2/[exp(E/Kb*T)-1] dE [ units keV^3 ]
         for i in range(len(energy_edges)-1):
-            bb,_= quad(self.BlackBody, energy_edges[i], energy_edges[i+1], args=(temp))
+            bb,_= quad(self.BlackBody, energy_edges[i], energy_edges[i+1], args=(T_kev))
             array_bb=np.append(array_bb,bb)
             
-        ######## Applying Normalization  in unit of photons/KeV/cm^2/s^1 #######
-        k_bb=(R_BB/distance)**2  # See https://heasarc.gsfc.nasa.gov/docs/xanadu/xspec/manual/node137.html
+        # c = 2.99792458e10 centimeters per second
+        # h = 4.13566770e-18 keV seconds
+        # k = 2 * pi / (c^2*h^3) = 9.8832904e31 [ units keV^-3 1/ (cm^2*s) ] 
+        # (1 km / 10 kpc)^2 = 1.0502650e-35 [ - ]
+        # together k = 1.0380074e-3
+        array_bb *=K_BB*(1.0380074e-3)
         
-        # 2 * pi / (c^2*h^3) = 9.8832904e31 [ units keV^-3 1/ (cm^2*s) ] 
-        array_bb *=k_bb*(1.0344*10**(-3))
+        BB = np.zeros((energy_edges.shape[0] - 1, phases.shape[0] - 1)) #must be divided over the phases, right? NOT THE EDGES
         
-        BB = np.zeros((energy_edges.shape[0] - 1, phases.shape[0]))
-        
-        for i in range(phases.shape[0]):
-            BB[:,i] = array_bb
+        for i in range(phases.shape[0]-1):
+            BB[:,i] = array_bb/(phases.shape[0]-1) 
             
             
         bkg=BB
@@ -1271,13 +1385,12 @@ class CustomBackground_BlackBody(xpsi.Background):
         # Apply Interstellar if not None
         if self._interstellar is not None:
             self._energy_mids=(energy_edges[1:]+energy_edges[:-1])/2
-            self._interstellar(self._energy_mids, bkg) # Bad coding right ? :)
+            self._interstellar(self._energy_mids, bkg) # bkg is overwritten here
             
-    
-    
+
         self._incident_background = bkg
 
-    def BlackBody(self,energy,k):
+    def BlackBody(self,energy,temp):
         """ Defining Blackbody function using xspec model
         
         See :https://heasarc.gsfc.nasa.gov/docs/xanadu/xspec/manual/node137.html
@@ -1285,9 +1398,272 @@ class CustomBackground_BlackBody(xpsi.Background):
         A(E)=E^2/(exp(E/kT)-1)
 
         """
-        result=(energy**2)/(np.exp(energy/k)-1)
+        result=(energy**2)/(np.exp(energy/temp)-1)
         return result
 
+
+class CustomBackground_DiskBB(xpsi.Background):
+    """ The background injected to generate synthetic data. """
+
+    def __init__(self, bounds=None, values=None, interstellar = None):
+        
+        doc = """
+        Temperature at inner disk radius in log10 Kelvin.
+        """
+        inner_temperature = xpsi.Parameter('T_in',
+                                strict_bounds = (3., 10.),
+                                bounds = bounds,
+                                doc = doc,
+                                symbol = r'$T_{in}$',
+                                value = values.get('T_in', None))
+        
+        doc = """
+        Disk normalisation cos_i*R_in^2/D^2 in (km / 10 kpc)^2.
+        """
+        background_normalisation = xpsi.Parameter('K_disk',
+                                strict_bounds = (0., 1e8),
+                                bounds = bounds,
+                                doc = doc,
+                                symbol = r'$K_{BB}$',
+                                value = values.get('K_disk', None))
+        
+
+        super(CustomBackground_DiskBB, self).__init__(inner_temperature, background_normalisation)
+        
+        # Making sure the interstellar object is form Interstall class
+        if interstellar is not None:
+            if not isinstance(interstellar, xpsi.Interstellar):
+                raise TypeError('Invalid type for an interstellar object.')
+            else:
+                self._interstellar = interstellar
+        else:
+            self._interstellar = None
+
+    def __call__(self, energy_edges, phases):
+        """ Evaluate the incident background field. """
+        
+        n_phase_edges = phases.shape[0]
+        n_phase_bins = n_phase_edges - 1
+        
+
+        T_in = self['T_in']
+        K_disk = self['K_disk']
+
+        # KbT in keV
+        T_in_keV = k_B_over_keV * pow(10.0, T_in)
+        
+        T_out_keV = T_in_keV*1e-1
+        
+        epsrel = 1e-4
+
+        flux_integral_array = np.array([]) #photons/s/cm^2/sr/energy_bin
+        for i in range(len(energy_edges)-1):
+            diskbb_flux_integral,_ = quad(self.diskbb_flux, energy_edges[i], energy_edges[i+1], args=(T_in_keV, T_out_keV, self.b_E, epsrel), epsrel=epsrel)
+            flux_integral_array=np.append(flux_integral_array,diskbb_flux_integral)
+        
+        # K_disk is cos_i*R_in^2/D^2 in (km / 10 kpc)^2.
+        # (1 km / 10 kpc)^2 = 1.0502650e-35 [ cm/cm ]
+        
+        flux_integral_array *=K_disk*4*np.pi/3*1.0502650e-35 # photons/s/cm^2/energy_bin
+        
+        BB = np.zeros((energy_edges.shape[0] - 1, n_phase_edges)) #phase edges, inclusive [0, 1], which is necessary for phase interpolation.
+        
+        for i in range(n_phase_edges):
+            BB[:,i] = flux_integral_array/n_phase_bins # If you want the counts, sum all phase edges except the last, which is the amount of phase bins.  
+            
+            
+        bkg=BB
+        
+        # Apply Interstellar if not None
+        if self._interstellar is not None:
+            self._energy_mids=(energy_edges[1:]+energy_edges[:-1])/2
+            self._interstellar(self._energy_mids, bkg) # bkg is overwritten here
+            
+
+        self._incident_background = bkg
+
+    def b_E(self, E, T):
+        '''
+        photons/s/keV/cm^2/sr (radiance type thing) of a blackbody
+
+        parameters:
+            E in keV
+            T in keV
+
+        returns:
+            b_E in photons/s/keV/cm^2/sr 
+        '''
+
+        b = 2*E**2/(_h_keV**3*_c_cgs**2)/(np.exp(E/T)-1)
+        return b
+        
+        
+    def B_E(self, E, T):
+        '''
+        Spectral radiance type thing of a blackbody.
+
+        parameters:
+            E in keV
+            T in keV
+
+        returns:
+            B_E in keV/s/keV/cm^2/sr (you will integrate over keV)
+        '''
+        
+        B = 2*E**3/(_h_keV**3*_c_cgs**2)/(np.exp(E/T)-1)
+        return B
+
+
+    def diskbb_integrand(self, T, E, T_in, spectral_radiance):
+        '''
+        parameters:
+            T, T_in in keV
+            E in keV
+
+        returns:
+            integrand in spectral radiance units/keV (you will integrate over keV)
+        '''
+
+        integrand = (T/T_in)**(-11/3)*spectral_radiance(E, T)/T_in
+        return integrand
+    
+    def diskbb_flux(self, E, T_in, T_out, spectral_radiance, epsrel):
+        '''
+        parameters:
+            T, T_in in keV
+            E in keV
+
+        returns:
+            integrated flux spectral radiance units (you have integrated over keV)
+        '''
+        
+        flux_integral,_= quad(self.diskbb_integrand, T_out, T_in, args=(E, T_in, spectral_radiance), epsrel=epsrel)
+        return flux_integral
+
+class CustomBackground_BB_PL(xpsi.Background):
+    """ The background injected to generate synthetic data. """
+
+    def __init__(self, bounds=None, value=None):
+
+        doc = """
+        Background black body temperature in 10^T Kelvin.
+        """
+        background_BB_temperature = xpsi.Parameter('background_BB_temperature',
+                                strict_bounds = (3., 10.),
+                                bounds = bounds,
+                                doc = doc,
+                                symbol = r'$T_{BB}$',
+                                value = value)
+        
+        doc = """
+        Background black body normalisation in (km / 10 kpc)^2.
+        """
+        background_BB_normalisation = xpsi.Parameter('background_BB_normalisation',
+                                strict_bounds = (1., 1e8),
+                                bounds = bounds,
+                                doc = doc,
+                                symbol = r'$k_{BB}$',
+                                value = value)
+        
+        # Powerlaw
+        doc = """
+        Background powerlaw spectral index.
+        """
+        background_PL_index = xpsi.Parameter('background_PL_index',
+                                strict_bounds = (1., 4.),
+                                bounds = bounds,
+                                doc = doc,
+                                symbol = r'$\Gamma$',
+                                value = value)
+        
+        doc = """
+        Background powerlaw normalisation.
+        """
+        background_PL_normalisation = xpsi.Parameter('background_PL_normalisation',
+                                strict_bounds = (1e-4, 1e4),
+                                bounds = bounds,
+                                doc = doc,
+                                symbol = r'$k_{BB}$',
+                                value = value)
+        
+        
+
+        super(CustomBackground_BB_PL, self).__init__(background_BB_temperature, background_BB_normalisation, background_PL_index, background_PL_normalisation)
+
+    def __call__(self, energy_edges, phases):
+        """ Evaluate the incident background field. """
+
+        T_BB = self['background_BB_temperature']
+        k_BB = self['background_BB_normalisation'] #See https://heasarc.gsfc.nasa.gov/docs/xanadu/xspec/manual/node138.html
+
+        
+        # Defining array that will be used later
+        array_bb=np.array([])
+
+        # KbT in keV
+        T_kev = k_B_over_keV * pow(10.0, T_BB)
+        
+        # Numerical intergration  for BB
+        # F_photon [ units  1/ (cm^2*s) ] = pi (R_BB/distance)^2 2/(c^2*h^3) int E^3/[exp(E/Kb*T)-1] dE
+
+
+        # int E^2/[exp(E/Kb*T)-1] dE [ units keV^3 ]
+        for i in range(len(energy_edges)-1):
+            bb,_= quad(self.BlackBody, energy_edges[i], energy_edges[i+1], args=(T_kev))
+            array_bb=np.append(array_bb,bb)
+            
+        # c = 2.99792458e10 centimeters per second
+        # h = 4.13566770e-18 keV seconds
+        # k = 2 * pi / (c^2*h^3) = 9.8832904e31 [ units keV^-3 1/ (cm^2*s) ] 
+        # (1 km / 10 kpc)^2 = 1.0502650e-35 [ - ]
+        # together k = 1.0380074e-3
+        array_bb *=k_BB*(1.0380074e-3)
+        
+        BB = np.zeros((energy_edges.shape[0] - 1, phases.shape[0]))
+        
+        for i in range(phases.shape[0]):
+            BB[:,i] = array_bb
+
+
+        # Power-law component
+        G_PL = self['background_PL_index']
+        k_PL = self['background_PL_normalisation']
+        
+        array_pl=np.array([])
+        for i in range(len(energy_edges)-1):
+            pl,_= quad(self.PowLaw, energy_edges[i], energy_edges[i+1], args=(G_PL))
+            array_pl=np.append(array_pl,pl)
+        
+        array_pl *=k_PL
+        PL = np.zeros((energy_edges.shape[0] - 1, phases.shape[0]))
+        
+        for i in range(phases.shape[0]):
+            PL[:,i] = array_pl
+            
+        bkg=PL+BB
+
+        self._incident_background = bkg
+
+    def PowLaw(self,energ, gamma):
+        """ Defining powerlaw function
+        E^-gamma
+    
+        """
+        #self.energ=energ
+        #self.gamma=gamma
+        pl=energ**(-gamma)
+        return pl
+
+    def BlackBody(self,energy,temp):
+        """ Defining Blackbody function using xspec model
+        
+        See :https://heasarc.gsfc.nasa.gov/docs/xanadu/xspec/manual/node137.html
+
+        A(E)=E^2/(exp(E/kT)-1)
+
+        """
+        result=(energy**2)/(np.exp(energy/temp)-1)
+        return result
 
 class SynthesiseData(xpsi.Data):
     """ Custom data container to enable synthesis. """
@@ -1382,7 +1758,7 @@ class CustomLikelihood(xpsi.Likelihood):
         Such a nice docstring. wow.
 
         """
-        # print("likelihood __call__ called. rank:", _rank,"comm: ", _comm,"size: ", _size)
+        # print("likelihood __call__ called")
         tmpdict = {}
         callcount = self.lcallcounter
         # tmpdict['xpsi._rank'] = xpsi._rank
@@ -1457,6 +1833,8 @@ class CustomLikelihood(xpsi.Likelihood):
         
         tmpdict['endtime'] = time.time()
         tmpdict['deltatime'] = tmpdict['endtime'] - tmpdict['starttime'] 
+        # print('p:', p)
+        
         print('Likelihood evaluation took {:.3f} seconds'.format((time.time()-start)))
         # print('current ldict: ', self.ldict)
         # print("adding likelihood to dictionary. xpsi rank: ", xpsi._rank, "callcount: ", callcount)
@@ -1473,6 +1851,7 @@ class CustomLikelihood(xpsi.Likelihood):
             for signal in signals:
                 try:
                     loglikelihood += signal.loglikelihood
+                    print('likelihood: ',signal.loglikelihood)
                     tmpdict['loglikelihood'] = signal.loglikelihood
                     # print('Computed loglikelihood: ', loglikelihood)
                 except AttributeError as e:
@@ -1488,3 +1867,115 @@ class CustomLikelihood(xpsi.Likelihood):
             return loglikelihood + logprior
         except NameError:
             return loglikelihood
+        
+def get_mids_from_edges(edges):
+    mids_len = len(edges)-1
+    mids = np.empty(mids_len)
+    for i in range(mids_len):
+        mids[i] = (edges[i]+edges[i+1])/2
+    return mids
+
+class CustomInterstellar(xpsi.Interstellar):
+    """ Apply interstellar attenuation. """
+
+    def __init__(self, energies, attenuation, bounds, value):
+
+        assert len(energies) == len(attenuation), 'Array length mismatch.'
+
+        self._lkp_energies = energies # for lookup
+        self._lkp_attenuation = attenuation # for lookup
+
+        N_H = Parameter('column_density',
+                        strict_bounds = (0.001,4.0),
+                        bounds = bounds,
+                        doc = 'Units of 10^21 cm^-2.',
+                        symbol = r'$N_{\rm H}$',
+                        value = value)
+
+        self._interpolator = Akima1DInterpolator(self._lkp_energies,
+                                                 self._lkp_attenuation)
+        self._interpolator.extrapolate = True
+
+        super(CustomInterstellar, self).__init__(N_H)
+
+    def attenuation(self, energies):
+        """ Interpolate the attenuation coefficients.
+
+        Useful for post-processing. 
+
+        """
+        return self._interpolate(energies)**(self['column_density']/1.4)
+
+    def _interpolate(self, energies):
+        """ Helper. """
+        _att = self._interpolator(energies)
+        _att[_att < 0.0] = 0.0
+        return _att
+
+    @classmethod
+    def from_SWG(cls, path, **kwargs):
+        """ Load attenuation file from the NICER SWG. Should be the 1.4e21 cm^-2 file. """
+
+        temp = np.loadtxt(path, dtype=np.double)
+
+        energies = temp[:,0]
+
+        attenuation = temp[:,2]
+
+        return cls(energies, attenuation, **kwargs)
+    
+    
+def get_T_in_keV(T_Kelvin):
+    """convert T in 10^x K to T in keV"""
+    T_keV = (10**T_Kelvin)*k_B_over_keV
+    return T_keV
+
+def get_T_in_log10_Kelvin(T_keV):
+    """convert T in 10^x K to T in keV"""
+    T_log10_Kelvin = np.log10(T_keV/k_B_over_keV)
+    return T_log10_Kelvin
+
+def sinfunc(phase, A, p, c):
+    
+    return A * np.sin(phase*2.0*np.pi + p) + c
+
+
+def sin2func(phase, A, p, c, A2, p2):
+
+        return A*np.sin(phase*2.0*np.pi + p) + A2*np.sin(phase*4.0*np.pi + p2) + c
+
+def fit2sin(phase, counts):
+    
+    
+    #counts=data.sum(axis=0)
+
+    c0 = 6500
+    A0 = 1000
+    p0 = 0.15*2.0*np.pi
+    A20 = 100
+    p20 = 0.01*2.0*np.pi
+
+    guess = [A0, p0,c0, A20, p20]
+    popt, pcov = scipy.optimize.curve_fit(sin2func, phase, counts, p0=guess)
+    #A, p, c, A2, p2 = popt
+    #print(popt)
+    
+    return popt 
+
+ 
+def fitsin(phase, counts):
+    
+    
+    #counts=data.sum(axis=0)
+
+    c0 = 6500
+    A0 = 1000
+    p0 = 0.15*2.0*np.pi
+    A20 = 100
+    p20 = 0.01*2.0*np.pi
+
+    guess = [A0, p0,c0]
+    popt, pcov = scipy.optimize.curve_fit(sinfunc, phase, counts, p0=guess)
+    perr = np.sqrt(np.diag(pcov))
+    
+    return popt, perr

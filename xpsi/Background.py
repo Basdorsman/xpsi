@@ -35,7 +35,7 @@ class Background(ParameterSubspace):
 
     @property
     def incident_background(self):
-        """ Return the incident background specifc photon flux.
+        """ Return the incident background specific photon flux.
 
         Note that the area units need to be consistent with the units
         the effective area is expressed in within the response matrix of

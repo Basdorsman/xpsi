@@ -292,7 +292,8 @@ class Likelihood(ParameterSubspace):
 
     def _driver(self, fast_mode=False, synthesise=False, force_update=False, **kwargs):
         """ Main likelihood evaluation driver routine. """
-        # print("inside driver")
+        # print('inside the driver')
+        
         self._star.activate_fast_mode(fast_mode)
 
         star_updated = False
@@ -303,7 +304,6 @@ class Likelihood(ParameterSubspace):
                 else:
                     fast_total_counts = tuple(signal.fast_total_counts for\
                                                         signal in self._signals)
-                # print('attempting to star.update. threads: ', self.threads)
                 self._star.update(fast_total_counts, self.threads,force_update=force_update)
             except xpsiError as e:
                 if isinstance(e, HotRegion.RayError):
@@ -441,7 +441,7 @@ class Likelihood(ParameterSubspace):
         if not self.externally_updated: # do not safely assume already handled
             if p is None: # expected a vector of values instead of nothing
                 raise TypeError('Parameter values have not been updated.')
-            # super(Likelihood, self).__call__(p) # update free parameters
+            super(Likelihood, self).__call__(p) # update free parameters
 
         if self.needs_update or force:
             try:
@@ -662,6 +662,7 @@ class Likelihood(ParameterSubspace):
             self.clear_cache() # clear cache and values
         elif force: # no need to reinitialise, just clear cache and values
             self.clear_cache()
+
 
         if not self.externally_updated: # do not safely assume already handled
             if p is None: # expected a vector of values instead of nothing

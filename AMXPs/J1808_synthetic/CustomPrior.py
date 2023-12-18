@@ -1,0 +1,133 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Created on Tue Dec  5 10:44:07 2023
+
+@author: bas
+"""
+import numpy as np
+import xpsi
+import math
+from scipy.stats import truncnorm
+from xpsi.global_imports import _c, _G, _dpr, gravradius, _csq, _km, _2pi, _keV, _k_B, _c_cgs
+
+class CustomPrior(xpsi.Prior):
+    """ A custom (joint) prior distribution.
+
+    Source: SAX-J1808.4-3658
+    Model variant: ST
+        One single-temperature
+
+   
+    p[0] = 1 to 3 solar mass
+    p[1] = 3G to 16 km (and also there are compactness restrictions)
+    p[2] = distance with a uniform prior from 3.4 to 4.6 (Galloway & Cumming 2006)
+    p[3] = cos inclination 0 to 1
+    p[3] = phase shift 0 to 2pi
+    p[4] = colatitude 0 to pi (/2 ??)
+    p[5] = angular radius 0 to pi/2
+    p[6] = hotspot seed temperature 0.5 - 1.5 keV
+    p[7] = hotspot electron temperature 20 - 100 keV
+    p[8] = tau 0.5 - 3.5
+    p[9] = elsewhere temperature 0.01 - 0.6 keV
+    p[10] = disk temperature 0.01 - 0.6 keV
+    p[11] = disk inner radius 20 to 64 km
+    p[12] = nH gaussian 1.17 += 0.2 x 10^21 cm^-2
+    
+
+    """
+
+    __derived_names__ = ['compactness']#, 'phase_separation',]
+    __draws_from_support__ = 2 #10^x
+
+    def __call__(self, p = None):
+        """ Evaluate distribution at ``p``.
+
+        :param list p: Model parameter values.
+
+        :returns: Logarithm of the distribution evaluated at ``p``.
+
+        """
+        temp = super(CustomPrior, self).__call__(p)
+        if not np.isfinite(temp):
+            return temp
+
+        # based on contemporary EOS theory
+        if not self.parameters['radius'] <= 16.0:
+            return -np.inf
+
+        ref = self.parameters.star.spacetime # shortcut
+
+        # causality limit for compactness
+        R_p = 1.0 + ref.epsilon * (-0.788 + 1.030 * ref.zeta)
+        if R_p < 1.45 / ref.R_r_s:
+            return -np.inf
+
+        # polar radius at photon sphere for ~static star (static ambient spacetime)
+        #if R_p < 1.5 / ref.R_r_s:
+        #    return -np.inf
+
+        mu = math.sqrt(-1.0 / (3.0 * ref.epsilon * (-0.788 + 1.030 * ref.zeta)))
+
+        # 2-surface cross-section have a single maximum in |z|
+        # i.e., an elliptical surface; minor effect on support, if any,
+        # for high spin frequenies
+        if mu < 1.0:
+            return -np.inf
+
+        ref = self.parameters # redefine shortcut
+
+        return 0.0
+
+    def inverse_sample(self, hypercube=None):
+        """ Draw sample uniformly from the distribution via inverse sampling. """
+
+        to_cache = self.parameters.vector
+
+        if hypercube is None:
+            hypercube = np.random.rand(len(self))
+
+        # the base method is useful, so to avoid writing that code again:
+        _ = super(CustomPrior, self).inverse_sample(hypercube)
+
+        ref = self.parameters # shortcut
+        
+
+        idx = ref.index('column_density')
+        
+        temporary = truncnorm.ppf(hypercube[idx], -3.0, 3.0, loc=1.17, scale=0.4)
+        if temporary < 0: temporary = 0
+        ref['column_density'] = temporary
+
+        
+
+        # flat priors in cosine of hot region centre colatitudes (isotropy)
+        # support modified by no-overlap rejection condition
+        idx = ref.index('p__super_colatitude')
+        a, b = ref.get_param('p__super_colatitude').bounds
+        a = math.cos(a); b = math.cos(b)
+        ref['p__super_colatitude'] = math.acos(b + (a - b) * hypercube[idx])
+
+
+
+
+        # restore proper cache
+        for parameter, cache in zip(ref, to_cache):
+            parameter.cached = cache
+
+        # it is important that we return the desired vector because it is
+        # automatically written to disk by MultiNest and only by MultiNest
+        return self.parameters.vector
+
+    def transform(self, p, **kwargs):
+        """ Add compactness. """
+
+        p = list(p) # copy
+
+        # used ordered names and values
+        ref = dict(zip(self.parameters.names, p))
+
+        # compactness ratio M/R_eq
+        p += [gravradius(ref['mass']) / ref['radius']]
+
+        return p

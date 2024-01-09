@@ -21,7 +21,6 @@ from xpsi.global_imports import gravradius
 
 ################################ OPTIONS ###############################
 machine = os.environ.get('machine')
-compiler = os.environ.get('compiler')
 run_type=os.environ.get('run_type')
 
 try:
@@ -35,10 +34,9 @@ except:
 
 
 # default options if os environment not provided
-if  isinstance(os.environ.get('machine'),type(None)) or isinstance(os.environ.get('num_energies'),type(None)) or isinstance(os.environ.get('compiler'),type(None)) or isinstance(os.environ.get('live_points'),type(None)) or isinstance(os.environ.get('max_iter'),type(None)): # if that fails input them here.
+if  isinstance(os.environ.get('machine'),type(None)) or isinstance(os.environ.get('num_energies'),type(None)) or isinstance(os.environ.get('live_points'),type(None)) or isinstance(os.environ.get('max_iter'),type(None)): # if that fails input them here.
     print('E: failed to import some OS environment variables, using defaults.')    
     machine = 'local' # local, helios, snellius
-    compiler = 'foss'
     num_energies = 40
     live_points = 64
     sqrt_num_cells = 50
@@ -46,8 +44,12 @@ if  isinstance(os.environ.get('machine'),type(None)) or isinstance(os.environ.ge
     max_iter = 1
     run_type = 'test' #test, sample
     
-    
-analysis_name = 'mock_J1808'
+try:
+    analysis_name = os.environ.get('LABEL')
+except:
+    print('cannot import analysis name, using default name')
+    analysis_name = 'analysis_name'
+
 integrator = 'azimuthal_invariance'
 interpolator = 'split'
 
@@ -96,39 +98,17 @@ data = xpsi.Data(**settings)
 
 ################################## INSTRUMENT #################################
 
+ARF_file=this_directory + '/../model_data/instrument_data/J1808_NICER_2019/merged_saxj1808_2019_arf_aeff.txt'
+RMF_file=this_directory + '/../model_data/instrument_data/J1808_NICER_2019/merged_saxj1808_2019_rmf_matrix.txt'
+channel_edges_file=this_directory + '/../model_data/instrument_data/J1808_NICER_2019/merged_saxj1808_2019_rmf_energymap.txt'
 
 
-try:
-    if machine == 'local':
-        # NICER = CustomInstrument.from_response_files(ARF = '../model_data/J1808/ni2584010103mpu7_arf_aeff.txt',
-        #                                           RMF = '../model_data/J1808/ni2584010103mpu7_rmf_matrix.txt',
-        #                                           channel_edges = '../model_data/J1808/ni2584010103mpu7_rmf_energymap.txt',
-        #                                           channel_low=channel_low,
-        #                                           channel_hi=channel_hi,
-        #                                           max_input=max_input)
-        
-        NICER = CustomInstrument.from_response_files(ARF = '../model_data/instrument_responses/J1808_NICER_2019/merged_saxj1808_2019_arf_aeff.txt',
-                                                  RMF = '../model_data/instrument_responses/J1808_NICER_2019/merged_saxj1808_2019_rmf_matrix.txt',
-                                                  channel_edges = '../model_data/instrument_responses/J1808_NICER_2019/merged_saxj1808_2019_rmf_energymap.txt',
-                                                  channel_low=channel_low,
-                                                  channel_hi=channel_hi,
-                                                  max_input=max_input)
-        
-    elif machine == 'helios' or machine == 'snellius':
-        NICER = CustomInstrument.from_response_files(ARF = this_directory +
-                                                     '/../' + 'model_data/nicer_v1.01_arf.txt',
-                                                     RMF = this_directory +
-                                                     '/../' + 'model_data/nicer_v1.01_rmf_matrix.txt',
-                                                     max_input = 500, #500
-                                                     min_input = 0,
-                                                     channel_edges =
-                                                     this_directory + '/../' +
-                                                     'model_data/nicer_v1.01_rmf_energymap.txt')
-   
-except:
-    print("ERROR: You might miss one of the following files (check Modeling tutorial or the link below how to find them): \n model_data/nicer_v1.01_arf.tx, model_data/nicer_v1.01_rmf_matrix.txt, model_data/nicer_v1.01_rmf_energymap.txt")
-    print("https://zenodo.org/record/7113931")
-    exit()
+NICER = CustomInstrument.from_response_files(ARF = ARF_file,
+        RMF = RMF_file,
+        channel_edges = channel_edges_file,       
+        channel_low=channel_low,
+        channel_hi=channel_hi,
+        max_input=max_input)
 
 
 ################################## SPACETIME ##################################
@@ -190,7 +170,11 @@ star = xpsi.Star(spacetime = spacetime, photospheres = photosphere)
 
 ################################## INTERSTELLAR ###################################
 
-interstellar = CustomInterstellar.from_SWG("/home/bas/Documents/Projects/x-psi/xpsi-bas-fork/AMXPs/model_data/n_H/TBnew/tbnew0.14.txt", bounds=(0.0, 3.), value=None)
+if machine=='local':
+    interstellar_file = "/home/bas/Documents/Projects/x-psi/xpsi-bas-fork/AMXPs/model_data/n_H/TBnew/tbnew0.14.txt"
+elif machine=='snellius':
+    interstellar_file = "/home/dorsman/xpsi-bas-fork/AMXPs/model_data/interstellar/tbnew/tbnew0.14.txt"
+interstellar=CustomInterstellar.from_SWG(interstellar_file, bounds=(0., 3.), value=None)
 
 #################################### SIGNAL ###################################
 
@@ -281,18 +265,17 @@ except OSError:
         raise
 
 
-sampling_efficiency = 0.8
-n_live_points = live_points
+sampling_efficiency = 0.3
 max_iter = max_iter
     
-outputfiles_basename = f'./{folderstring}/run_ST_lp={n_live_points}_'
+outputfiles_basename = f'./{folderstring}/run_ST_'
 runtime_params = {'resume': False,
                   'importance_nested_sampling': False,
                   'multimodal': False,
                   'n_clustering_params': None,
                   'outputfiles_basename': outputfiles_basename,
                   'n_iter_before_update': 100,
-                  'n_live_points': n_live_points,
+                  'n_live_points': live_points,
                   'sampling_efficiency': sampling_efficiency,
                   'const_efficiency_mode': False,
                   'wrapped_params': wrapped_params,

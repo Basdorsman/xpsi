@@ -38,7 +38,7 @@ class CustomPrior(xpsi.Prior):
     """
 
     __derived_names__ = ['compactness']#, 'phase_separation',]
-    __draws_from_support__ = 2 #10^x
+    __draws_from_support__ = 4 #10^x
 
     def __call__(self, p = None):
         """ Evaluate distribution at ``p``.

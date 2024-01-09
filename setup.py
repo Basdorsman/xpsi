@@ -19,7 +19,6 @@ desc = '''Options to choose the blackbody (default) or numerical atmosphere surf
           for the hot region and the rest of the surface'''
 parser = argparse.ArgumentParser(description=desc)
 
-#print('print for trying')
 try:
     parser.add_argument('--N5Hot', help="Numerical atmosphere for the hot region(s)", default=False, action="store_true")
     parser.add_argument('--NumElse', help="Numerical atmosphere for the rest of the surface", default=False, action="store_true")

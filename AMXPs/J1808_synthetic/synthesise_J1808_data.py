@@ -43,6 +43,8 @@ from CustomHotregion import CustomHotRegion_Accreting
 
 from helper_functions import get_T_in_log10_Kelvin, plot_2D_pulse
 
+this_directory = os.path.dirname(os.path.abspath(__file__))
+print('this_directory: ', this_directory)
 
 ################################## SETTINGS ###################################
 
@@ -54,6 +56,8 @@ try: #try to get parameters from shell input
     atmosphere_type = os.environ['atmosphere_type']
     os.environ.get('n_params')
     n_params = os.environ['n_params']
+    os.environ.get('machine')
+    machine = os.environ['machine']
 except:
     atmosphere_type = "A"
     n_params = "5"
@@ -72,20 +76,20 @@ channel_low = 20
 channel_hi = 300 #600
 max_input = 1400 #2000
 
-# NICER = CustomInstrumentJ1808.from_response_files(ARF = '../model_data/J1808/ni2584010103mpu7_arf_aeff.txt',
-#                                                   RMF = '../model_data/J1808/ni2584010103mpu7_rmf_matrix.txt',
-#                                                   channel_edges = '../model_data/J1808/ni2584010103mpu7_rmf_energymap.txt',
-#                                                   channel_low=channel_low,
-#                                                   channel_hi=channel_hi,
-#                                                   max_input=max_input)
+ARF_file=this_directory + '/../model_data/instrument_data/J1808_NICER_2019/merged_saxj1808_2019_arf_aeff.txt'
+RMF_file=this_directory + '/../model_data/instrument_data/J1808_NICER_2019/merged_saxj1808_2019_rmf_matrix.txt'
+channel_edges_file=this_directory + '/../model_data/instrument_data/J1808_NICER_2019/merged_saxj1808_2019_rmf_energymap.txt'
 
-NICER = CustomInstrument.from_response_files(ARF = '../model_data/instrument_responses/J1808_NICER_2019/merged_saxj1808_2019_arf_aeff.txt',
-                                          RMF = '../model_data/instrument_responses/J1808_NICER_2019/merged_saxj1808_2019_rmf_matrix.txt',
-                                          channel_edges = '../model_data/instrument_responses/J1808_NICER_2019/merged_saxj1808_2019_rmf_energymap.txt',
-                                          channel_low=channel_low,
-                                          channel_hi=channel_hi,
-                                          max_input=max_input)
+try:   
+    NICER = CustomInstrument.from_response_files(ARF = ARF_file,
+            RMF = RMF_file,
+            channel_edges = channel_edges_file,
+            channel_low=channel_low,
+            channel_hi=channel_hi,
+            max_input=max_input)
 
+except:
+    print('error! No instrument file!')
 
 ############################### SPACETIME #####################################
 
@@ -150,9 +154,11 @@ elsewhere = Elsewhere(bounds=dict(elsewhere_temperature = (None,None)))
 photosphere = CustomPhotosphere(hot = hot, elsewhere = elsewhere,
                                 values=dict(mode_frequency = spacetime['frequency']))
 # LOCAL
-photosphere.hot_atmosphere = '/home/bas/Documents/Projects/x-psi/model_datas/bobrikova/Bobrikova_compton_slab.npz'
+if machine=='local':
+    photosphere.hot_atmosphere = '/home/bas/Documents/Projects/x-psi/model_datas/bobrikova/Bobrikova_compton_slab.npz'
 # SNELLIUS
-#photosphere.hot_atmosphere = '/home/dorsman/xpsi-bas-fork/AMXPs/model_data/Bobrikova_compton_slab.npz'
+elif machine=='snellius':
+    photosphere.hot_atmosphere = '/home/dorsman/xpsi-bas-fork/AMXPs/model_data/Bobrikova_compton_slab.npz'
 
     
 ################################### STAR ######################################
@@ -164,8 +170,11 @@ star = xpsi.Star(spacetime = spacetime, photospheres = photosphere)
 prior = CustomPrior()
 
 ################################## INTERSTELLAR ###################################
+if machine=='local':
+    interstellar = CustomInterstellar.from_SWG("/home/bas/Documents/Projects/x-psi/xpsi-bas-fork/AMXPs/model_data/n_H/TBnew/tbnew0.14.txt", bounds=(None, None), value=None)
+elif machine=='snellius':
+    interstellar = CustomInterstellar.from_SWG("/home/dorsman/xpsi-bas-fork/AMXPs/model_data/interstellar/tbnew/tbnew0.14.txt", bounds=(None, None), value=None)
 
-interstellar = CustomInterstellar.from_SWG("/home/bas/Documents/Projects/x-psi/xpsi-bas-fork/AMXPs/model_data/n_H/TBnew/tbnew0.14.txt", bounds=(None, None), value=None)
 
 ############################### BACKGROUND ####################################
 

@@ -1,7 +1,7 @@
 #!/bin/bash
-#SBATCH -N 1 #5
+#SBATCH -N 5
 #SBATCH --tasks-per-node=192
-#SBATCH -t 1:00:00 #1-00:00:00
+#SBATCH -t 1-00:00:00
 #SBATCH -p genoa
 #SBATCH --job-name=mock1808
 #SBATCH --mail-user=b.dorsman@uva.nl
@@ -25,7 +25,7 @@ export num_leaves=50
 export sqrt_num_cells=90
 export machine=snellius
 export integrator=x
-export live_points=$SLURM_TASKS_PER_NODE
+export live_points=1000 #$SLURM_TASKS_PER_NODE
 export max_iter=-1
 export run_type=sample
 
@@ -52,8 +52,8 @@ cp -r $XPSI_DIR/AMXPs/* $TMPDIR/
 cd $TMPDIR/J1808_synthetic/
 
 echo 'run main.py'
-mpirun python main.py >std.out 2> std.err
-# srun python main.py > std.out 2> std.err
+# mpirun python main.py >std.out 2> std.err
+srun python main.py > std.out 2> std.err
 
 mkdir $HOME/outputs
 mkdir $HOME/outputs/$LABEL

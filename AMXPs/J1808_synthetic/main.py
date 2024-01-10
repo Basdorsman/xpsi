@@ -64,7 +64,7 @@ this_directory = os.path.dirname(os.path.abspath(__file__))
 import sys
 sys.path.append(this_directory+'/../')
 
-from custom_tools import CustomLikelihood
+# from custom_tools import CustomLikelihood #I am not saving likelihood statistics
 
 from CustomPrior import CustomPrior
 from CustomInstrument import CustomInstrument
@@ -234,7 +234,7 @@ prior = CustomPrior()
 ##################################### LIKELIHOOD ##############################
 
 
-likelihood = CustomLikelihood(star = star, signals = signal,
+likelihood = xpsi.Likelihood(star = star, signals = signal,
                               num_energies=num_energies, #128
                               threads=1,
                               prior=prior,
@@ -265,13 +265,13 @@ except OSError:
         raise
 
 
-sampling_efficiency = 0.3
+sampling_efficiency = 0.03
 max_iter = max_iter
-    
+
 outputfiles_basename = f'./{folderstring}/run_ST_'
 runtime_params = {'resume': False,
                   'importance_nested_sampling': False,
-                  'multimodal': False,
+                  'multimodal': True,
                   'n_clustering_params': None,
                   'outputfiles_basename': outputfiles_basename,
                   'n_iter_before_update': 100,
@@ -283,6 +283,8 @@ runtime_params = {'resume': False,
                   'seed': 7,
                   'max_iter': max_iter, # manual termination condition for short test
                   'verbose': True}
+
+print('runtime_params: ', runtime_params)
 
 if __name__ == '__main__':
     

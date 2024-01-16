@@ -24,7 +24,7 @@ class CustomPrior(xpsi.Prior):
     p[2] = distance with a uniform prior from 3.4 to 4.6 (Galloway & Cumming 2006)
     p[3] = cos inclination 0 to 1
     p[3] = phase shift 0 to 2pi
-    p[4] = colatitude 0 to pi (/2 ??)
+    p[4] = colatitude 0 to pi (/2? From inverse sampling I see it is not divided by two.)
     p[5] = angular radius 0 to pi/2
     p[6] = hotspot seed temperature 0.5 - 1.5 keV
     p[7] = hotspot electron temperature 20 - 100 keV

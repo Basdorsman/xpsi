@@ -93,7 +93,7 @@ except:
 
 ############################### SPACETIME #####################################
 
-bounds = dict(distance = (0.1, 10.0),                       # (Earth) distance
+bounds = dict(distance = (3.4, 3.6),                       # (Earth) distance
                 mass = (1.0, 3.0),                          # mass
                 radius = (3.0 * gravradius(1.0), 16.0),     # equatorial radius
                 cos_inclination = (0.0, 1.0))               # (Earth) inclination to rotation axis
@@ -120,7 +120,7 @@ kwargs = {'symmetry': 'azimuthal_invariance', #call general integrator instead o
 values = {}
 bounds = dict(super_colatitude = (None, None),
               super_radius = (None, None),
-              phase_shift = (0.0, 0.1))
+              phase_shift = (-0.25, 0.75))
 if atmosphere_type=='A':
     bounds['super_tbb'] = (0.001, 0.003)
     bounds['super_tau'] = (0.5, 3.5)
@@ -133,7 +133,7 @@ hot = HotRegions((primary,))
 
 ################################### ELSEWHERE ################################
 
-elsewhere = Elsewhere(bounds=dict(elsewhere_temperature = (None,None)))
+elsewhere = Elsewhere(bounds=dict(elsewhere_temperature = (5.0,7.0)))
 
 ################################ ATMOSPHERE ################################### 
       
@@ -256,6 +256,8 @@ likelihood.synthesise(p, force=True, Instrument=Instrument_kwargs)
 
 print("Done !")
 
+
+
 ########## DATA PLOT ###############
 
 my_data=np.loadtxt('./data/J1808_synthetic_realisation.dat'.format(atmosphere_type, n_params))
@@ -294,3 +296,86 @@ fig2.savefig('./plots/J1808.png')
 print('signal plot saved in plots/J1808.png')
 
 print(np.sum(my_data))
+
+
+################ likelihood check ###############################
+datastring = this_directory + '/data/J1808_synthetic_realisation.dat' 
+settings = dict(counts = np.loadtxt(datastring, dtype=np.double),
+                channels=np.arange(channel_low,channel_hi),
+                phases=phases_space,
+                first=0, last=channel_hi-channel_low-1,
+                exposure_time=exposure_time)
+
+data_for_check = xpsi.Data(**settings)
+
+signal_for_check = CustomSignal(data = data_for_check,
+                        instrument = NICER,  # Instrument
+                        background = None,
+                        interstellar = interstellar,
+                        cache = True,
+                        prefix='Instrument')
+
+# signal_for_check = CustomSignal(data = data_for_check,
+#                         instrument = NICER,
+#                         background = background,
+#                         interstellar = interstellar,
+#                         cache = False,
+#                         epsrel = 1.0e-8,
+#                         epsilon = 1.0e-3,
+#                         sigmas = 10.0,
+#                         support = None)
+
+likelihood_for_check = xpsi.Likelihood(star = star, signals = signal_for_check,
+                             num_energies=128, 
+                             threads=8, #1
+                             externally_updated=True,
+                             prior = prior)
+
+p_cut = p[:-3]
+# p_cut.append(6.5)
+# p_cut.append(0.0)
+p_cut.append(column_density)
+
+print('True Likelihood: ', likelihood_for_check(p_cut, reinitialise=True))
+print('Summed difference: ', np.sum((likelihood_for_check.signal.expected_counts-data_for_check.counts)**2))
+
+
+
+##### max likelihood from sampling
+
+P_MaxL_192 = [0.166089488067012603E+01,
+0.880002192119270887E+01,
+0.346449329423984453E+01,
+0.146451450087112731E-01,
+-0.824004344790990606E-02,
+0.113710559990825955E+01,
+0.334581240206683672E+00,
+0.147006720245396834E-02,
+0.738928142100897958E+02,
+0.119092736886722195E+01,
+0.670045739653590822E+01,
+# 6.5,
+# 0.,
+0.121213084628677747E+01]
+
+
+print('Max Likelihood parameter vector from run with 192 live points: ', likelihood_for_check(P_MaxL_192, reinitialise=True))
+print('Summed difference: ', np.sum((likelihood_for_check.signal.expected_counts-data_for_check.counts)**2))
+
+P_MaxL_1000 = [0.143487922741846097E+01,
+0.105670546531530594E+02,
+0.359702712157563642E+01,
+0.567626751460999612E+00,
+-0.962955296681333728E-03,
+0.947700302807278794E+00,
+0.333738393572487135E+00,
+0.120907353807114988E-02,
+0.541298122468860612E+02,
+0.134618148088802281E+01,
+0.665965052985182204E+01,
+# 6.5,
+# 0.,
+0.896414323034762095E+00]
+
+print('Max Likelihood parameter vector from run with 1000 live points: ', likelihood_for_check(P_MaxL_1000, reinitialise=True))
+print('Summed difference: ', np.sum((likelihood_for_check.signal.expected_counts-data_for_check.counts)**2))

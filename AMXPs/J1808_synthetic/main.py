@@ -37,10 +37,10 @@ except:
 if  isinstance(os.environ.get('machine'),type(None)) or isinstance(os.environ.get('num_energies'),type(None)) or isinstance(os.environ.get('live_points'),type(None)) or isinstance(os.environ.get('max_iter'),type(None)): # if that fails input them here.
     print('E: failed to import some OS environment variables, using defaults.')    
     machine = 'local' # local, helios, snellius
-    num_energies = 40
+    num_energies = 128 # 40
     live_points = 64
-    sqrt_num_cells = 50
-    num_leaves = 30
+    sqrt_num_cells = 128 # 50
+    num_leaves = 128  # 30
     max_iter = 1
     run_type = 'test' #test, sample
     
@@ -197,18 +197,18 @@ distance = 3.5
 inclination = 60
 cos_i = math.cos(inclination*math.pi/180)
 phase_shift = 0
-super_colatitude = 45*math.pi/180
-super_radius = 15.5*math.pi/180
+super_colatitude = 45*math.pi/180 # 20*math.pi/180 #
+super_radius = 15.5*math.pi/180 #  0.001 #
 
 
 # Compton slab model parameters
-tbb=0.0012 #0.001 -0.003 Tbb(data) = Tbb(keV)/511keV, 1 keV = 0.002 data
-te=100. #40-200 corresponds to 20-100 keV (Te(data) = Te(keV)*1000/511keV), 50 keV = 25.55 data
-tau=1 #0.5 - 3.5 tau = ln(Fin/Fout)
+tbb=0.0012 # 0.0017 # #0.001 -0.003 Tbb(data) = Tbb(keV)/511keV, 1 keV = 0.002 data
+te=100. # 50. # 40-200 corresponds to 20-100 keV (Te(data) = Te(keV)*1000/511keV), 50 keV = 100 data
+tau=1. #0.5 - 3.5 tau = ln(Fin/Fout)
 
 
 # elsewhere
-elsewhere_T_keV = 0.4 # keV  for Kajava+ 2011  0.4  # 0.45 # 
+elsewhere_T_keV =  0.4 # 0.5 # keV 
 elsewhere_T_log10_K = get_T_in_log10_Kelvin(elsewhere_T_keV)
 
 # source background
@@ -242,11 +242,12 @@ likelihood = xpsi.Likelihood(star = star, signals = signal,
 
 
 ########## likelihood check
-true_logl = -4.6402898384e+04 
+true_logl = -4.6402898384e+04
+# true_logl = -4.5511338959e+04 # no diskBB
 
-# likelihood(p)
 
-likelihood.check(None, [true_logl], 1.0e-4, physical_points=[p], force_update=True)
+likelihood(p, reinitialise=True)
+# likelihood.check(None, [true_logl], 1.0e-4, physical_points=[p], force_update=True)
 
 wrapped_params = [0]*len(likelihood)
 wrapped_params[likelihood.index('p__phase_shift')] = 1

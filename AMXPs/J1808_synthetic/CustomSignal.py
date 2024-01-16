@@ -71,7 +71,7 @@ class CustomSignal(xpsi.Signal):
                                           self._sigmas,
                                           kwargs.get('llzero'))#,
                                           #slim=-1.0) # default is skipping 10^89s, so some likelihood calculations are skipped
-                                          
+        # print('self.background_signal', self.background_signal)
     
     def synthesise(self,
                    exposure_time,
@@ -82,6 +82,7 @@ class CustomSignal(xpsi.Signal):
             """ Synthesise data set.
     
             """
+            
             self._expected_counts, synthetic = _synthesise(exposure_time,
                                                                        self._data.phases,
                                                                        self._signals,
@@ -91,16 +92,21 @@ class CustomSignal(xpsi.Signal):
                                                                        gsl_seed=42)
             self.synthetic_data = synthetic
             
-            
             try:
                 if not os.path.isdir(directory):
                     os.mkdir(directory)
             except OSError:
                 print('Cannot create write directory.')
                 raise
-    
+
+            # POISSON NOISE
+            # np.savetxt(os.path.join(directory, name+'_realisation.dat'),
+            #             synthetic,
+            #             fmt = '%u')
+            
+            # NO NOISE
             np.savetxt(os.path.join(directory, name+'_realisation.dat'),
-                        synthetic,
+                        self._expected_counts,
                         fmt = '%u')
     
             self._write(self.expected_counts,

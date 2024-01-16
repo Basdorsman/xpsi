@@ -31,7 +31,7 @@ class CustomBackground_DiskBB(xpsi.Background):
         Disk normalisation cos_i*R_in^2/D^2 in (km / 10 kpc)^2.
         """
         background_normalisation = xpsi.Parameter('K_disk',
-                                strict_bounds = (1., 1e8),
+                                strict_bounds = (0., 1e8),
                                 bounds = bounds,
                                 doc = doc,
                                 symbol = r'$K_{BB}$',
@@ -76,11 +76,10 @@ class CustomBackground_DiskBB(xpsi.Background):
         
         flux_integral_array *=K_disk*4*np.pi/3*1.0502650e-35 # photons/s/cm^2/energy_bin
         
-        BB = np.zeros((energy_edges.shape[0] - 1, n_phase_edges)) #phase edges, inclusive [0, 1], which is necessary for phase interpolation.
-        
-        for i in range(n_phase_edges):
-            BB[:,i] = flux_integral_array/n_phase_bins # If you want the counts, sum all phase edges except the last, which is the amount of phase bins.  
-            
+        BB = np.zeros((energy_edges.shape[0] - 1, n_phase_bins)) # I looked at the synthesise.pyx and it is actually expecting phase_edges as an input while expecting registered background to have phase_bins.
+
+        for i in range(n_phase_bins):   
+            BB[:,i] = flux_integral_array/n_phase_bins
             
         bkg=BB
         

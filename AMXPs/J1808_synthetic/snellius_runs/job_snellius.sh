@@ -20,9 +20,9 @@ module load 2022
 
 export atmosphere_type=A
 export n_params=5
-export num_energies=60
-export num_leaves=50
-export sqrt_num_cells=90
+export num_energies=40  # 60
+export num_leaves=30  # 50
+export sqrt_num_cells=50  # 90
 export machine=snellius
 export integrator=x
 export live_points=1000 #$SLURM_TASKS_PER_NODE

@@ -56,6 +56,8 @@ interpolator = 'split'
 
 print('machine: ', machine)
 print('num_energies: ', num_energies)
+print('num_leaves: ', num_leaves)
+print('sqrt_num_cells: ', sqrt_num_cells)
 print('integrator:', integrator)
 print('interpolator:', interpolator)
 

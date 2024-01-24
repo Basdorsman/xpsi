@@ -37,10 +37,10 @@ except:
 if  isinstance(os.environ.get('machine'),type(None)) or isinstance(os.environ.get('num_energies'),type(None)) or isinstance(os.environ.get('live_points'),type(None)) or isinstance(os.environ.get('max_iter'),type(None)): # if that fails input them here.
     print('E: failed to import some OS environment variables, using defaults.')    
     machine = 'local' # local, helios, snellius
-    num_energies = 128 # 40
+    num_energies = 40
     live_points = 64
-    sqrt_num_cells = 128 # 50
-    num_leaves = 128  # 30
+    sqrt_num_cells = 50
+    num_leaves = 30
     max_iter = 1
     run_type = 'test' #test, sample
     
@@ -178,17 +178,34 @@ elif machine=='snellius':
     interstellar_file = "/home/dorsman/xpsi-bas-fork/AMXPs/model_data/interstellar/tbnew/tbnew0.14.txt"
 interstellar=CustomInterstellar.from_SWG(interstellar_file, bounds=(0., 3.), value=None)
 
+################################# BACKGROUND SUPPORT ############################
+bg_spectrum = np.loadtxt(this_directory + '/../' + 'model_data/synthetic/diskbb_background.txt')
+
+allowed_deviation_factor = 1.1  # Must me more than 1
+
+support = np.zeros((len(bg_spectrum), 2), dtype=np.double)
+support[:,0] = bg_spectrum/allowed_deviation_factor #lower limit
+support[support[:,0] < 0.0, 0] = 0.0
+support[:,1] = bg_spectrum*allowed_deviation_factor #upper limit
+
+for i in range(support.shape[0]):
+    if support[i,1] == 0.0:
+        for j in range(i, support.shape[0]):
+            if support[j,1] > 0.0:
+                support[i,0] = support[j,1]
+                break
+
 #################################### SIGNAL ###################################
 
 signal = CustomSignal(data = data,
                         instrument = NICER,
                         background = None,
                         interstellar = interstellar,
+                        support = support,
                         cache = False,
                         epsrel = 1.0e-8,
                         epsilon = 1.0e-3,
-                        sigmas = 10.0,
-                        support = None)
+                        sigmas = 10.0)
 
 ################ parameter vector ########################
 

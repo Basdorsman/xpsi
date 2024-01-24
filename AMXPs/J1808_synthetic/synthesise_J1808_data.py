@@ -102,8 +102,9 @@ spacetime = xpsi.Spacetime(bounds=bounds, values=dict(frequency=401.0))# Fixing 
 
 ############################### SINGLE HOTREGION ##############################
 
-num_leaves = 128
-sqrt_num_cells = 128
+num_leaves = 128  # 30
+sqrt_num_cells = 128  # 50
+num_energies = 128  # 40
 num_rays = 512
 
 kwargs = {'symmetry': 'azimuthal_invariance', #call general integrator instead of for azimuthal invariance
@@ -184,7 +185,7 @@ signal = CustomSignal(data = _data,
 ################################# LIKELIHOOD ###############################
 
 likelihood = xpsi.Likelihood(star = star, signals = signal,
-                             num_energies=128, #384
+                             num_energies=num_energies, 
                              threads=8, #1
                              externally_updated=False,
                              prior = prior)                             

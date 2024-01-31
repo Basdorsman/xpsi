@@ -8,6 +8,7 @@ import numpy as np
 cimport numpy as np
 from libc.math cimport pow, log, floor
 from libc.stdlib cimport malloc, free
+#from libc.stdio cimport printf
 
 from GSL cimport (gsl_interp,
                    gsl_interp_alloc,
@@ -192,16 +193,17 @@ def poisson_likelihood_given_background(double exposure_time,
     free(interp)
 
     cdef:
-        double LOGLIKE = 0.0, EXPEC = 0.0
-        double n = <double>(phases.shape[0] - 1)
+        double summed_loglike = 0.0
+        double[:,::1] EXPEC = np.zeros((components[0].shape[0], phases.shape[0]-1),
+                                       dtype = np.double)
+        double[:,::1] LOGLIKE = np.zeros((components[0].shape[0], phases.shape[0]-1),
+                                       dtype = np.double)
 
     for i in range(STAR.shape[0]):
-        for j in range(STAR.shape[1]):
-            EXPEC = (STAR[i,j] + background[i,j]/n) * exposure_time
-            LOGLIKE -= EXPEC
-            LOGLIKE += counts[i,j] * log(EXPEC)
-
-            STAR[i,j] += background[i,j]/n
+        for j in range(STAR.shape[1]):            
+            EXPEC[i,j] = (STAR[i,j] + background[i,j]) * exposure_time
+            LOGLIKE[i,j] = counts[i,j] * log(EXPEC[i,j]) - EXPEC[i,j]
             STAR[i,j] *= exposure_time
+            summed_loglike += LOGLIKE[i,j]              
 
-    return (LOGLIKE, np.asarray(STAR, order='C', dtype=np.double))
+    return (summed_loglike, np.asarray(LOGLIKE,order='C', dtype=np.double), np.asarray(EXPEC, order='C', dtype=np.double), np.asarray(STAR, order='C', dtype=np.double))

@@ -10,6 +10,7 @@ import numpy as np
 cimport numpy as np
 from libc.stdlib cimport malloc, free
 from libc.math cimport exp, pow, log, sqrt, fabs, floor
+from libc.stdio cimport printf
 import time
 
 from GSL cimport (gsl_interp,
@@ -300,6 +301,8 @@ def synthesise_exposure_no_scaling(double exposure_time,
 
         double[:,::1] STAR = np.zeros((components[0].shape[0], phases.shape[0]-1),
                                        dtype = np.double)
+        double[:,::1] EXPEC = np.zeros((components[0].shape[0], phases.shape[0]-1),
+                                       dtype = np.double)
         double[:,::1] SYNTHETIC = np.zeros((components[0].shape[0], phases.shape[0]-1),
                                            dtype = np.double)
 
@@ -354,31 +357,31 @@ def synthesise_exposure_no_scaling(double exposure_time,
             acc_ptr = acc[p]
             phases_ptr = &(signal_phase_set[0])
             signal_ptr = &(signal[i,0])
-
+            
             gsl_interp_init(interp_ptr, phases_ptr, signal_ptr,
                             signal_phase_set.shape[0])
 
             for j in range(phases.shape[0] - 1):
-                a = phases[j] + phase_shift
-                b = phases[j+1] + phase_shift
+                a = phases[j] + phase_shift # a phase data point
+                b = phases[j+1] + phase_shift # b is next phase data point
 
-                if b - a == 1.0:
+                if b - a == 1.0: # difference could be 1. Then its just the whole period so no shifts
                     a = 0.0
                     b = 1.0
                 else:
-                    a -= floor(a)
+                    a -= floor(a) # if not, take residuals (between 0 and 1)
                     b -= floor(b)
 
-                if a < b:
-                    _val = gsl_interp_eval_integ(interp_ptr,
+                if a < b:  #if b doesn't wrap around to be smaller? That's the only thing I can imagine.
+                    _val = gsl_interp_eval_integ(interp_ptr, 
                                                        phases_ptr,
                                                        signal_ptr,
-                                                       a, b,
+                                                       a, b, #integrate from a to b
                                                        acc_ptr)
                     if _val > 0.0 or _allow_negative[p] == 1:
                         STAR[i,j] += _val
                 else:
-                    _val = gsl_interp_eval_integ(interp_ptr,
+                    _val = gsl_interp_eval_integ(interp_ptr, # if b wraps around, integrate a to the end, and from beginning to b.
                                                        phases_ptr,
                                                        signal_ptr,
                                                        a, 1.0,
@@ -431,15 +434,16 @@ def synthesise_exposure_no_scaling(double exposure_time,
     for i in range(STAR.shape[0]):
         for j in range(STAR.shape[1]):
 
+            EXPEC[i,j] = STAR[i,j]
+            EXPEC[i,j] += background[i,j] # * SCALE_BACKGROUND
+            EXPEC[i,j] *= exposure_time #multiply including background with exposure time
 
-            STAR[i,j] += background[i,j] # * SCALE_BACKGROUND
-            STAR[i,j] *= exposure_time #multiply including background with exposure time
-
-            SYNTHETIC[i,j] = gsl_ran_poisson(r, STAR[i,j])
+            SYNTHETIC[i,j] = gsl_ran_poisson(r, EXPEC[i,j])
 
     gsl_rng_free(r)
 
     return (np.asarray(STAR, order='C', dtype=np.double),
+            np.asarray(EXPEC, order='C', dtype=np.double),
             np.asarray(SYNTHETIC, order='C', dtype=np.double))
 
 def synthesise_given_total_count_number(double[::1] phases,

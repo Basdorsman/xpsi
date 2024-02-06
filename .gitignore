@@ -182,4 +182,10 @@ AMXPs/inference_run/postprocessing/*
 examples/examples_modeling_tutorial/model_data/*
 examples/examples_modeling_tutorial/run/*
 examples/examples_modeling_tutorial/outputs/*
-AMXPs/J1808_synthetic/local_runs*
+AMXPs/J1808_synthetic/local_runs/*
+AMXPs/J1808_synthetic/snellius_runs/*
+
+
+# any figures
+*.png
+*.pdf

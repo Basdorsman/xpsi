@@ -1,9 +1,10 @@
 # reinstall xpsi and plot_pulses.py in one fell swoop.
 echo "atmosphere type: N for NSX, A for accreting, B for blackbody"
-read atmosphere_type
+#read atmosphere_type
+atmosphere_type='A'
 echo "number of parameters in atmosphere: choose 4 or 5 for NSX or accreting atmosphere"
-read n_params
-#n_params="A"
+# read n_params
+n_params="5"
 cd ../../
 
 if [ $atmosphere_type == "N" ] || [ $atmosphere_type == "A" ]

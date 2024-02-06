@@ -37,10 +37,10 @@ except:
 if  isinstance(os.environ.get('machine'),type(None)) or isinstance(os.environ.get('num_energies'),type(None)) or isinstance(os.environ.get('live_points'),type(None)) or isinstance(os.environ.get('max_iter'),type(None)): # if that fails input them here.
     print('E: failed to import some OS environment variables, using defaults.')    
     machine = 'local' # local, helios, snellius
-    num_energies = 40
+    num_energies = 128#40
     live_points = 64
-    sqrt_num_cells = 50
-    num_leaves = 30
+    sqrt_num_cells = 128#50
+    num_leaves = 128#30
     max_iter = 1
     run_type = 'test' #test, sample
     

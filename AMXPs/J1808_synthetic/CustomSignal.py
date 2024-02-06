@@ -12,6 +12,7 @@ import xpsi
 from xpsi.likelihoods.default_background_marginalisation import eval_marginal_likelihood
 from xpsi.likelihoods.default_background_marginalisation import precomputation
 from xpsi.tools.synthesise import synthesise_exposure_no_scaling as _synthesise # no scaling!
+from xpsi.likelihoods._poisson_likelihood_given_background import poisson_likelihood_given_background
 
 class CustomSignal(xpsi.Signal):
     """ A custom calculation of the logarithm of the likelihood.
@@ -73,6 +74,18 @@ class CustomSignal(xpsi.Signal):
                                           #slim=-1.0) # default is skipping 10^89s, so some likelihood calculations are skipped
         # print('self.background_signal', self.background_signal)
     
+    def poisson_likelihood_given_background(self, background_counts):
+        summed_loglike, loglike, expected_counts, star = \
+            poisson_likelihood_given_background(self._data.exposure_time, 
+                                                self._data.phases, 
+                                                self._data.counts,
+                                                self._signals,
+                                                self._phases,
+                                                self._shifts,
+                                                background_counts,
+                                                allow_negative = False)
+        return summed_loglike, loglike, expected_counts, star
+    
     def synthesise(self,
                    exposure_time,
                    name='no_pulse',
@@ -83,7 +96,7 @@ class CustomSignal(xpsi.Signal):
     
             """
             
-            self._expected_counts, synthetic = _synthesise(exposure_time,
+            self.star_counts, self._expected_counts, synthetic = _synthesise(exposure_time,
                                                                        self._data.phases,
                                                                        self._signals,
                                                                        self._phases,
@@ -104,10 +117,15 @@ class CustomSignal(xpsi.Signal):
             #             synthetic,
             #             fmt = '%u')
             
-            # NO NOISE
+            #NO NOISE, FLOATS
             np.savetxt(os.path.join(directory, name+'_realisation.dat'),
                         self._expected_counts,
-                        fmt = '%u')
+                        fmt = '%f')
+            
+            # NO NOISE
+            # np.savetxt(os.path.join(directory, name+'_realisation.dat'),
+            #             self._expected_counts,
+            #             fmt = '%u')
     
             self._write(self.expected_counts,
                         filename = os.path.join(directory, name+'_expected_hreadable.dat'),

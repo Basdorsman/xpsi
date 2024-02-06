@@ -18,7 +18,7 @@ from CustomPrior import CustomPrior
 if __name__ == '__main__':
     data_path = "../Data/xpsi_good_realisation.dat"
 else:
-    data_path = "./Data/xpsi_good_realisation.dat"
+    data_path = "./Data/new_synthetic_v2_realisation.dat"
 
 try:
     data_loaded = np.loadtxt(data_path, dtype=np.double)
@@ -104,7 +104,7 @@ hot_spot = xpsi.HotRegion(bounds=bounds,
                                 sqrt_num_cells=32,
                                 min_sqrt_num_cells=16,
                                 max_sqrt_num_cells=64,
-                                num_leaves=64,
+                                num_leaves=100, #64,
                                 num_rays=512,
                                 is_secondary=True,
                                 image_order_limit=3, # up to tertiary
@@ -126,15 +126,16 @@ prior = CustomPrior()
 # # Likelihood
 
 likelihood = xpsi.Likelihood(star = star, signals = signal,
-                             num_energies = 128,
+                             num_energies = 384, #64,#128,
                              threads = 2,
                              externally_updated = True,
                              prior = prior)
 
 # Crucial step, if the likelihood check fails, then something went terrible wrong :)
-p=[1.4,10,1.,math.cos(60*np.pi/180),0.0,70*np.pi/180, 0.75,6.8]
+p=[1.4,12,1.,math.cos(60*np.pi/180),0.0,70*np.pi/180, 0.75,6.7]
 
-likelihood.check(None, [-47881.27817666349], 1.0e-5, physical_points=[p])
+#likelihood.check(None, [-3.1603740790e+04], 1.0e-5, physical_points=[p])
+likelihood.check(None, [-2.7122069418e+04], 1.0e-5, physical_points=[p])
 
 
 if __name__ == '__main__':
@@ -155,7 +156,7 @@ if __name__ == '__main__':
                       'const_efficiency_mode': False,
                       'wrapped_params': wrapped_params,
                       'evidence_tolerance': 0.1,
-                      'max_iter': 100, #-1,
+                      'max_iter': -1,
                       'seed' : 0, # Fixing the seed
                       'verbose': True}
 

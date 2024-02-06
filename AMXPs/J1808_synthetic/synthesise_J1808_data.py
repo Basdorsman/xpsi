@@ -241,8 +241,8 @@ p.append(elsewhere_T_log10_K) # 10^x Kelvin
 diskbb_T_log10_K = get_T_in_log10_Kelvin(diskbb_T_keV)
 p.append(diskbb_T_log10_K)
 
-# K_disk = cos_i*(r_in/(distance/10))**2  # (km / 10 kpc)^2
-K_disk = 0
+K_disk = cos_i*(r_in/(distance/10))**2  # (km / 10 kpc)^2
+# K_disk = 0
 p.append(K_disk)
 
 if isinstance(interstellar, xpsi.Interstellar):

@@ -201,7 +201,7 @@ signal = CustomSignal(data = data,
                         instrument = NICER,
                         background = None,
                         interstellar = interstellar,
-                        support = support,
+                        support = None,
                         cache = False,
                         epsrel = 1.0e-8,
                         epsilon = 1.0e-3,
@@ -261,12 +261,12 @@ likelihood = xpsi.Likelihood(star = star, signals = signal,
 
 
 ########## likelihood check
-true_logl = -4.6402898384e+04
-# true_logl = -4.5511338959e+04 # no diskBB
+#true_logl = -4.6402898384e+04
+#true_logl = -4.2233157248e+04 # background, support
+true_logl = -4.1076321631e+04 # no background, no support
 
-
-likelihood(p, reinitialise=True)
-# likelihood.check(None, [true_logl], 1.0e-4, physical_points=[p], force_update=True)
+# likelihood(p, reinitialise=True)
+likelihood.check(None, [true_logl], 1.0e-4, physical_points=[p], force_update=True)
 
 wrapped_params = [0]*len(likelihood)
 wrapped_params[likelihood.index('p__phase_shift')] = 1
@@ -285,13 +285,13 @@ except OSError:
         raise
 
 
-sampling_efficiency = 0.03
+sampling_efficiency = 0.1
 max_iter = max_iter
 
 outputfiles_basename = f'./{folderstring}/run_ST_'
 runtime_params = {'resume': False,
                   'importance_nested_sampling': False,
-                  'multimodal': True,
+                  'multimodal': False,
                   'n_clustering_params': None,
                   'outputfiles_basename': outputfiles_basename,
                   'n_iter_before_update': 100,

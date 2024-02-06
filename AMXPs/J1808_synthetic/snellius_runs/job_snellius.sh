@@ -1,9 +1,9 @@
 #!/bin/bash
-#SBATCH -N 5
+#SBATCH -N 1
 #SBATCH --tasks-per-node=192
-#SBATCH -t 1-00:00:00
+#SBATCH -t 01:00:00
 #SBATCH -p genoa
-#SBATCH --job-name=mock1808
+#SBATCH --job-name=no_bg_no_sp
 #SBATCH --mail-user=b.dorsman@uva.nl
 #SBATCH --mail-type=END
 
@@ -25,7 +25,7 @@ export num_leaves=30  # 50
 export sqrt_num_cells=50  # 90
 export machine=snellius
 export integrator=x
-export live_points=1000 #$SLURM_TASKS_PER_NODE
+export live_points=$SLURM_TASKS_PER_NODE
 export max_iter=-1
 export run_type=sample
 

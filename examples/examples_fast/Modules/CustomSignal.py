@@ -8,6 +8,10 @@ import six as _six
 
 from xpsi.likelihoods.default_background_marginalisation import eval_marginal_likelihood
 from xpsi.likelihoods.default_background_marginalisation import precomputation
+from xpsi.likelihoods._poisson_likelihood_given_background import poisson_likelihood_given_background
+
+import os
+this_directory = os.path.dirname(os.path.abspath(__file__))
 
 class CustomSignal(xpsi.Signal):
     """ A custom calculation of the logarithm of the NICER likelihood.
@@ -24,6 +28,8 @@ class CustomSignal(xpsi.Signal):
         """ Perform precomputation. """
 
         super(CustomSignal, self).__init__(*args, **kwargs)
+        
+        self.background_data = np.loadtxt(this_directory+'/../Data/fast_example_background.txt')
 
         try:
             self._precomp = precomputation(self._data.counts.astype(np.int32))
@@ -51,19 +57,31 @@ class CustomSignal(xpsi.Signal):
     def support(self, obj):
         self._support = obj
 
+    # def __call__(self, *args, **kwargs):
+    #     self.loglikelihood, self.expected_counts, self.background_signal,self.background_given_support = \
+    #             eval_marginal_likelihood(self._data.exposure_time,
+    #                                       self._data.phases,
+    #                                       self._data.counts,
+    #                                       self._signals,
+    #                                       self._phases,
+    #                                       self._shifts,
+    #                                       self._precomp,
+    #                                       self._support,
+    #                                       self._workspace_intervals,
+    #                                       self._epsabs,
+    #                                       self._epsrel,
+    #                                       self._epsilon,
+    #                                       self._sigmas,
+    #                                       kwargs.get('llzero'))
+                                          
+    # signal call with background given
     def __call__(self, *args, **kwargs):
-        self.loglikelihood, self.expected_counts, self.background_signal,self.background_given_support = \
-                eval_marginal_likelihood(self._data.exposure_time,
-                                          self._data.phases,
-                                          self._data.counts,
-                                          self._signals,
-                                          self._phases,
-                                          self._shifts,
-                                          self._precomp,
-                                          self._support,
-                                          self._workspace_intervals,
-                                          self._epsabs,
-                                          self._epsrel,
-                                          self._epsilon,
-                                          self._sigmas,
-                                          kwargs.get('llzero'))
+        self.loglikelihood, self.loglikelihood_array, self.expected_counts, self.signal_from_star = \
+            poisson_likelihood_given_background(self._data.exposure_time, 
+                                                self._data.phases, 
+                                                self._data.counts,
+                                                self._signals,
+                                                self._phases,
+                                                self._shifts,
+                                                self.background_data,
+                                                allow_negative = False)

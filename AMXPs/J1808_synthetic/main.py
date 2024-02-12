@@ -34,13 +34,15 @@ except:
 
 
 # default options if os environment not provided
-if  isinstance(os.environ.get('machine'),type(None)) or isinstance(os.environ.get('num_energies'),type(None)) or isinstance(os.environ.get('live_points'),type(None)) or isinstance(os.environ.get('max_iter'),type(None)): # if that fails input them here.
+if isinstance(os.environ.get('machine'),type(None)):
+    machine='local'
+
+if isinstance(os.environ.get('num_energies'),type(None)) or isinstance(os.environ.get('live_points'),type(None)) or isinstance(os.environ.get('max_iter'),type(None)): # if that fails input them here.
     print('E: failed to import some OS environment variables, using defaults.')    
-    machine = 'local' # local, helios, snellius
-    num_energies = 128#40
+    num_energies = 40 # 128
     live_points = 64
-    sqrt_num_cells = 128#50
-    num_leaves = 128#30
+    sqrt_num_cells = 50 # 128
+    num_leaves = 30 # 128
     max_iter = 1
     run_type = 'test' #test, sample
     
@@ -181,7 +183,7 @@ interstellar=CustomInterstellar.from_SWG(interstellar_file, bounds=(0., 3.), val
 ################################# BACKGROUND SUPPORT ############################
 bg_spectrum = np.loadtxt(this_directory + '/../' + 'model_data/synthetic/diskbb_background.txt')
 
-allowed_deviation_factor = 1.001  # Must me more than 1
+allowed_deviation_factor = 1.001  # Must be more than 1
 
 support = np.zeros((len(bg_spectrum), 2), dtype=np.double)
 support[:,0] = bg_spectrum/allowed_deviation_factor #lower limit
@@ -263,11 +265,12 @@ likelihood = xpsi.Likelihood(star = star, signals = signal,
 ########## likelihood check
 #true_logl = -4.6402898384e+04
 #true_logl = -4.2233157248e+04 # background, support
-# true_logl = -1.0929410655e+04  # background, support, floated data, high res
-true_logl = 1.9406875013e+08  # no marginalisation, background, support, floated data, high res,
+true_logl = -1.0931038069e+04 # background, support, floated data, low res
+#true_logl = -1.0929410655e+04  # background, support, floated data, high res
+# true_logl = 1.9406875013e+08  # no marginalisation, background, support, floated data, high res,
 #true_logl = -9.8076308641e+03  # background, no support, floated data, high res 
 #true_logl = -4.1076321631e+04 # no background, no support
-#true_logl = -1.0047370824e+04  # no background, no support, floated data, high res 
+#true_logl = -1.0047370824e+04  # no background, no support, floated data, high res
 
 # likelihood(p, reinitialise=True)
 likelihood.check(None, [true_logl], 1.0e-4, physical_points=[p], force_update=True)

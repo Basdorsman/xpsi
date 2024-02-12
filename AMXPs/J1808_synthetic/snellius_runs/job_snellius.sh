@@ -3,7 +3,7 @@
 #SBATCH --tasks-per-node=192
 #SBATCH -t 01:00:00
 #SBATCH -p genoa
-#SBATCH --job-name=no_bg_no_sp
+#SBATCH --job-name=sf_1001
 #SBATCH --mail-user=b.dorsman@uva.nl
 #SBATCH --mail-type=END
 

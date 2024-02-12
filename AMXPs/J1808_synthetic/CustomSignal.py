@@ -58,35 +58,35 @@ class CustomSignal(xpsi.Signal):
         self._support = obj
 
     # Marginal likelihood
-    # def __call__(self, *args, **kwargs):
-    #     self.loglikelihood, self.expected_counts, self.background_signal, self.background_signal_given_support = \
-    #             eval_marginal_likelihood(self._data.exposure_time,
-    #                                       self._data.phases,
-    #                                       self._data.counts,
-    #                                       self._signals,
-    #                                       self._phases,
-    #                                       self._shifts,
-    #                                       self._precomp,
-    #                                       self._support,
-    #                                       self._workspace_intervals,
-    #                                       self._epsabs,
-    #                                       self._epsrel,
-    #                                       self._epsilon,
-    #                                       self._sigmas,
-    #                                       kwargs.get('llzero'))#,
-    #                                       #slim=-1.0) # default is skipping 10^89s, so some likelihood calculations are skipped
-
-    # signal call with background given
     def __call__(self, *args, **kwargs):
-        self.loglikelihood, self.loglikelihood_array, self.expected_counts, self.signal_from_star = \
-            poisson_likelihood_given_background(self._data.exposure_time, 
-                                                self._data.phases, 
-                                                self._data.counts,
-                                                self._signals,
-                                                self._phases,
-                                                self._shifts,
-                                                self.background_data,
-                                                allow_negative = False)
+        self.loglikelihood, self.expected_counts, self.background_signal, self.background_signal_given_support = \
+                eval_marginal_likelihood(self._data.exposure_time,
+                                          self._data.phases,
+                                          self._data.counts,
+                                          self._signals,
+                                          self._phases,
+                                          self._shifts,
+                                          self._precomp,
+                                          self._support,
+                                          self._workspace_intervals,
+                                          self._epsabs,
+                                          self._epsrel,
+                                          self._epsilon,
+                                          self._sigmas,
+                                          kwargs.get('llzero'))#,
+                                          #slim=-1.0) # default is skipping 10^89s, so some likelihood calculations are skipped
+ 
+    # signal call with background given
+    # def __call__(self, *args, **kwargs):
+    #     self.loglikelihood, self.loglikelihood_array, self.expected_counts, self.signal_from_star = \
+    #         poisson_likelihood_given_background(self._data.exposure_time, 
+    #                                             self._data.phases, 
+    #                                             self._data.counts,
+    #                                             self._signals,
+    #                                             self._phases,
+    #                                             self._shifts,
+    #                                             self.background_data,
+    #                                             allow_negative = False)
     
     def synthesise(self,
                    exposure_time,

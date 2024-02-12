@@ -13,18 +13,20 @@ from CustomSignal import CustomSignal
 from CustomPhotosphere import CustomPhotosphere
 from CustomPrior import CustomPrior
 
+import os
+this_directory = os.path.dirname(os.path.abspath(__file__))
 
 # Data
-if __name__ == '__main__':
-    data_path = "../Data/xpsi_good_realisation.dat"
-else:
-    data_path = "./Data/new_synthetic_v2_realisation.dat"
+# if __name__ == '__main__':
+#     data_path = "../Data/xpsi_good_realisation.dat"
+# else:
+data_path = this_directory+"/../Data/new_synthetic_v2_realisation.dat"
 
-try:
-    data_loaded = np.loadtxt(data_path, dtype=np.double)
-except:
-    print("Loading the data assuming the notebook was run for documentation pages")
-    data_loaded = np.loadtxt('../../examples/examples_fast/Data/xpsi_good_realisation.dat', dtype=np.double)
+# try:
+data_loaded = np.loadtxt(data_path, dtype=np.double)
+# except:
+#     print("Loading the data assuming the notebook was run for documentation pages")
+#     data_loaded = np.loadtxt('../../examples/examples_fast/Data/xpsi_good_realisation.dat', dtype=np.double)
 
 data = xpsi.Data(data_loaded,
                      channels=np.arange(10,301),
@@ -104,7 +106,7 @@ hot_spot = xpsi.HotRegion(bounds=bounds,
                                 sqrt_num_cells=32,
                                 min_sqrt_num_cells=16,
                                 max_sqrt_num_cells=64,
-                                num_leaves=100, #64,
+                                num_leaves=64, #100, #64,
                                 num_rays=512,
                                 is_secondary=True,
                                 image_order_limit=3, # up to tertiary
@@ -126,7 +128,7 @@ prior = CustomPrior()
 # # Likelihood
 
 likelihood = xpsi.Likelihood(star = star, signals = signal,
-                             num_energies = 384, #64,#128,
+                             num_energies = 64,# 384, #64,#128,
                              threads = 2,
                              externally_updated = True,
                              prior = prior)
@@ -134,8 +136,13 @@ likelihood = xpsi.Likelihood(star = star, signals = signal,
 # Crucial step, if the likelihood check fails, then something went terrible wrong :)
 p=[1.4,12,1.,math.cos(60*np.pi/180),0.0,70*np.pi/180, 0.75,6.7]
 
-likelihood(p, reinitialise=True)
-#likelihood.check(None, [-2.7122069418e+04], 1.0e-5, physical_points=[p])
+# likelihood(p, reinitialise=True)
+# likelihood.check(None, [-2.7122069418e+04], 1.0e-5, physical_points=[p])
+# likelihood.check(None, [1.9628439200e+06], 1.0e-5, physical_points=[p]) #given likelihood, medium settings
+likelihood.check(None, [1.9226602671e+06], 1.0e-5, physical_points=[p]) #given likelihood, medium settings, floated data
+# likelihood.check(None, [-9.3455140099e+03], 1.0e-5, physical_points=[p]) #marginalising likelihood, medium settings
+
+
 
 
 if __name__ == '__main__':
@@ -149,7 +156,7 @@ if __name__ == '__main__':
                       'importance_nested_sampling': False,
                       'multimodal': False,
                       'n_clustering_params': None,
-                      'outputfiles_basename': '../Outputs/ST_live_1000_eff_0.3_seed0_v2',
+                      'outputfiles_basename': '../Outputs/ST_live_1000_eff_0.3_seed0_v3',
                       'n_iter_before_update': 50, #100,
                       'n_live_points': 50, #1000,
                       'sampling_efficiency': 0.3,

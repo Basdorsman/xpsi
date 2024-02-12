@@ -75,7 +75,8 @@ class CustomSignal(xpsi.Signal):
                                           self._epsrel,
                                           self._epsilon,
                                           self._sigmas,
-                                          kwargs.get('llzero'))#,
+                                          kwargs.get('llzero'),
+                                          allow_negative_background = False)#,
                                           #slim=-1.0) # default is skipping 10^89s, so some likelihood calculations are skipped
 
     # signal call with background given

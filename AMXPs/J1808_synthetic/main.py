@@ -181,7 +181,7 @@ interstellar=CustomInterstellar.from_SWG(interstellar_file, bounds=(0., 3.), val
 ################################# BACKGROUND SUPPORT ############################
 bg_spectrum = np.loadtxt(this_directory + '/../' + 'model_data/synthetic/diskbb_background.txt')
 
-allowed_deviation_factor = 1.00000001  # Must me more than 1
+allowed_deviation_factor = 1.000005  # Roughly 1 count difference given max count rate of 0.8/s and exp. time of 1.3e5
 
 support = np.zeros((len(bg_spectrum), 2), dtype=np.double)
 support[:,0] = bg_spectrum/allowed_deviation_factor #lower limit
@@ -265,9 +265,10 @@ likelihood = xpsi.Likelihood(star = star, signals = signal,
 #true_logl = -4.2233157248e+04 # background, support
 # true_logl = -1.0929410655e+04  # background, support, floated data, high res
 # true_logl = 1.9406875013e+08  # no marginalisation, background, support, floated data, high res,
-#true_logl = -9.8076308641e+03  # background, no support, floated data, high res 
+true_logl = -9.8076308641e+03  # background, no support, floated data, high res 
+# true_logl = -9.8013206348e+03  # background, no support, floated data, high res, allow neg. bkg. 
 #true_logl = -4.1076321631e+04 # no background, no support
-true_logl = -1.0047370824e+04  # no background, no support, floated data, high res 
+#true_logl = -1.0047370824e+04  # no background, no support, floated data, high res 
 
 # likelihood(p, reinitialise=True)
 likelihood.check(None, [true_logl], 1.0e-4, physical_points=[p], force_update=True)

@@ -14,6 +14,8 @@ from xpsi.likelihoods.default_background_marginalisation import precomputation
 from xpsi.tools.synthesise import synthesise_exposure_no_scaling as _synthesise # no scaling!
 from xpsi.likelihoods._poisson_likelihood_given_background import poisson_likelihood_given_background
 
+this_directory = os.path.dirname(os.path.abspath(__file__))
+
 class CustomSignal(xpsi.Signal):
     """ A custom calculation of the logarithm of the likelihood.
 
@@ -29,7 +31,7 @@ class CustomSignal(xpsi.Signal):
         #print("running CustomSignal init...")
         super(CustomSignal, self).__init__(*args, **kwargs)
 
-        self.background_data = np.loadtxt('data/J1808_synthetic_diskbb_background.txt')
+        self.background_data = np.loadtxt(this_directory+'/data/J1808_synthetic_diskbb_background.txt')
 
         try:
             self._precomp = precomputation(self._data.counts.astype(np.int32))
@@ -73,9 +75,9 @@ class CustomSignal(xpsi.Signal):
                                           self._epsrel,
                                           self._epsilon,
                                           self._sigmas,
-                                          kwargs.get('llzero'))#,
+                                          kwargs.get('llzero'),
+                                          allow_negative_background = False)#,
                                           #slim=-1.0) # default is skipping 10^89s, so some likelihood calculations are skipped
- 
     # signal call with background given
     # def __call__(self, *args, **kwargs):
     #     self.loglikelihood, self.loglikelihood_array, self.expected_counts, self.signal_from_star = \

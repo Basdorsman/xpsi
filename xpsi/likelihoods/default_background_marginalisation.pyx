@@ -129,6 +129,7 @@ def eval_marginal_likelihood(double exposure_time,
                              double sigmas,
                              double llzero,
                              allow_negative = False,
+                             allow_negative_background = False,
                              slim = 20.0,
                              background = None):
     """ Evaluate the Poisson likelihood.
@@ -466,8 +467,9 @@ def eval_marginal_likelihood(double exposure_time,
             a.B = B
             lower = B - sigmas * std_est
 
-            if lower < B_min:
-                lower = B_min
+            if not allow_negative_background:
+                if lower < B_min:
+                    lower = B_min
 
             upper = B + sigmas * std_est
 
@@ -475,20 +477,21 @@ def eval_marginal_likelihood(double exposure_time,
 
             B_for_integrand = B
 
-            if lower < support[i,0]:
-                lower = support[i,0]
-                if upper < support[i,0] and support[i,1] > 0.0:
-                    upper = support[i,1]
-                    B_for_integrand = support[i,0]
-                elif upper < support[i,0]:
-                    upper = support[i,0] + sigmas * std_est
-                    B_for_integrand = support[i,0]
-
-            if upper > support[i,1] and support[i,1] > 0.0:
-                upper = support[i,1]
-                if lower > support[i,1]:
+            if not allow_negative_background:
+                if lower < support[i,0]:
                     lower = support[i,0]
-                    B_for_integrand = support[i,1]
+                    if upper < support[i,0] and support[i,1] > 0.0:
+                        upper = support[i,1]
+                        B_for_integrand = support[i,0]
+                    elif upper < support[i,0]:
+                        upper = support[i,0] + sigmas * std_est
+                        B_for_integrand = support[i,0]
+    
+                if upper > support[i,1] and support[i,1] > 0.0:
+                    upper = support[i,1]
+                    if lower > support[i,1]:
+                        lower = support[i,0]
+                        B_for_integrand = support[i,1]
 
             f.params = &a
 

@@ -95,7 +95,7 @@ class CustomPrior(xpsi.Prior):
 
         idx = ref.index('column_density')
         
-        temporary = truncnorm.ppf(hypercube[idx], -3.0, 3.0, loc=1.17, scale=0.4)
+        temporary = truncnorm.ppf(hypercube[idx], -3.0, 3.0, loc=1.17, scale=0.2)
         if temporary < 0: temporary = 0
         ref['column_density'] = temporary
 

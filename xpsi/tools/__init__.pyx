@@ -16,6 +16,8 @@ from .energy_interpolator import energy_interpolator
 from .synthesise import synthesise_exposure
 from .synthesise import synthesise_given_total_count_number
 
+from .background_integrator import disk_f, disk_f_E, disk_integrand, b_E
+
 __interpolants__ = {'Akima': 0, 'Steffen': 1, 'Cubic': 2}
 
 def get_phase_interpolant():

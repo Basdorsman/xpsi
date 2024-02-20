@@ -16,6 +16,7 @@ from xpsi.likelihoods._poisson_likelihood_given_background import poisson_likeli
 
 this_directory = os.path.dirname(os.path.abspath(__file__))
 
+
 class CustomSignal(xpsi.Signal):
     """ A custom calculation of the logarithm of the likelihood.
 
@@ -26,11 +27,13 @@ class CustomSignal(xpsi.Signal):
     """
 
     def __init__(self, workspace_intervals = 1000, epsabs = 0, epsrel = 1.0e-8,
-                 epsilon = 1.0e-3, sigmas = 10.0, support = None, *args, **kwargs):
+                 epsilon = 1.0e-3, sigmas = 10.0, support = None, ll_function = 'marginalised', allow_negative_background = False, *args, **kwargs):
         """ Perform precomputation. """
         #print("running CustomSignal init...")
         super(CustomSignal, self).__init__(*args, **kwargs)
 
+        self.ll_function = ll_function
+        self.allow_negative_background = allow_negative_background
         self.background_data = np.loadtxt(this_directory+'/data/J1808_synthetic_diskbb_background.txt')
 
         try:
@@ -49,7 +52,8 @@ class CustomSignal(xpsi.Signal):
                 self._support = support
             else:
                 self._support = -1.0 * np.ones((self._data.counts.shape[0],2))
-                self._support[:,0] = 0.0
+                if not allow_negative_background:
+                    self._support[:,0] = 0.0
 
     @property
     def support(self):
@@ -61,34 +65,36 @@ class CustomSignal(xpsi.Signal):
 
     # Marginal likelihood
     def __call__(self, *args, **kwargs):
-        self.loglikelihood, self.expected_counts, self.background_signal, self.background_signal_given_support = \
-                eval_marginal_likelihood(self._data.exposure_time,
-                                          self._data.phases,
-                                          self._data.counts,
-                                          self._signals,
-                                          self._phases,
-                                          self._shifts,
-                                          self._precomp,
-                                          self._support,
-                                          self._workspace_intervals,
-                                          self._epsabs,
-                                          self._epsrel,
-                                          self._epsilon,
-                                          self._sigmas,
-                                          kwargs.get('llzero'),
-                                          allow_negative_background = False)#,
-                                          #slim=-1.0) # default is skipping 10^89s, so some likelihood calculations are skipped
-    # signal call with background given
-    # def __call__(self, *args, **kwargs):
-    #     self.loglikelihood, self.loglikelihood_array, self.expected_counts, self.signal_from_star = \
-    #         poisson_likelihood_given_background(self._data.exposure_time, 
-    #                                             self._data.phases, 
-    #                                             self._data.counts,
-    #                                             self._signals,
-    #                                             self._phases,
-    #                                             self._shifts,
-    #                                             self.background_data,
-    #                                             allow_negative = False)
+        if self.ll_function == 'marginalised':
+            self.loglikelihood, self.expected_counts, self.background_signal, self.background_signal_given_support = \
+                    eval_marginal_likelihood(self._data.exposure_time,
+                                              self._data.phases,
+                                              self._data.counts,
+                                              self._signals,
+                                              self._phases,
+                                              self._shifts,
+                                              self._precomp,
+                                              self._support,
+                                              self._workspace_intervals,
+                                              self._epsabs,
+                                              self._epsrel,
+                                              self._epsilon,
+                                              self._sigmas,
+                                              kwargs.get('llzero'),
+                                              allow_negative_background = self.allow_negative_background)#,
+                                              #slim=-1.0) # default is skipping 10^89s, so some likelihood calculations are skipped
+        elif self.ll_function == 'given':
+            self.loglikelihood, self.loglikelihood_array, self.expected_counts, self.signal_from_star = \
+                poisson_likelihood_given_background(self._data.exposure_time, 
+                                                    self._data.phases, 
+                                                    self._data.counts,
+                                                    self._signals,
+                                                    self._phases,
+                                                    self._shifts,
+                                                    self.background_data,
+                                                    allow_negative = False)
+        else:
+            print('error! pass bkg argument in init!')
     
     def synthesise(self,
                    exposure_time,
@@ -126,9 +132,9 @@ class CustomSignal(xpsi.Signal):
                         self._expected_counts,
                         fmt = '%f')
             
-            # NO NOISE
+            # NO NOISE, WHOLE COUNTS
             # np.savetxt(os.path.join(directory, name+'_realisation.dat'),
-            #             self._expected_counts,
+            #             np.round(self._expected_counts),
             #             fmt = '%u')
     
             self._write(self.expected_counts,

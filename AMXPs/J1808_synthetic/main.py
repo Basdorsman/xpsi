@@ -29,6 +29,7 @@ try:
     sqrt_num_cells = int(os.environ.get('sqrt_num_cells'))
     live_points = int(os.environ.get('live_points'))
     max_iter = int(os.environ.get('max_iter'))
+    background_model = int(os.environ.get('background_model'))
 except:
     pass
 
@@ -39,12 +40,13 @@ if isinstance(os.environ.get('machine'),type(None)):
 
 if isinstance(os.environ.get('num_energies'),type(None)) or isinstance(os.environ.get('live_points'),type(None)) or isinstance(os.environ.get('max_iter'),type(None)): # if that fails input them here.
     print('E: failed to import some OS environment variables, using defaults.')    
-    num_energies = 40 # 128
+    num_energies = 128 # 40 # 128
     live_points = 64
-    sqrt_num_cells = 50 # 128
-    num_leaves = 30 # 128
+    sqrt_num_cells = 128 # 50 # 128
+    num_leaves = 128 # 30 # 128
     max_iter = 1
     run_type = 'test' #test, sample
+    background_model = False
     
 try:
     analysis_name = os.environ.get('LABEL')
@@ -62,6 +64,7 @@ print('num_leaves: ', num_leaves)
 print('sqrt_num_cells: ', sqrt_num_cells)
 print('integrator:', integrator)
 print('interpolator:', interpolator)
+print('background_model: ', background_model)
 
 this_directory = os.path.dirname(os.path.abspath(__file__))
 
@@ -76,6 +79,7 @@ from CustomPhotosphere import CustomPhotosphere
 from CustomInterstellar import CustomInterstellar
 from CustomSignal import CustomSignal
 from CustomHotregion import CustomHotRegion_Accreting
+from CustomBackground import CustomBackground_DiskBB, get_k_disk
 
 from helper_functions import get_T_in_log10_Kelvin, plot_2D_pulse
 
@@ -117,10 +121,13 @@ NICER = CustomInstrument.from_response_files(ARF = ARF_file,
 
 ################################## SPACETIME ##################################
 
-bounds = dict(distance = (3.4, 3.6),                       # (Earth) distance
+distance_bounds = (3.4, 3.6)
+cos_i_bounds = (0.0, 1.0)
+
+bounds = dict(distance = distance_bounds,                       # (Earth) distance
                 mass = (1.0, 3.0),                          # mass
                 radius = (3.0 * gravradius(1.0), 16.0),     # equatorial radius
-                cos_inclination = (0.0, 1.0))               # (Earth) inclination to rotation axis
+                cos_inclination = cos_i_bounds)               # (Earth) inclination to rotation axis
 
 spacetime = xpsi.Spacetime(bounds=bounds, values=dict(frequency=401.0))# Fixing the spin
 
@@ -180,10 +187,10 @@ elif machine=='snellius':
     interstellar_file = "/home/dorsman/xpsi-bas-fork/AMXPs/model_data/interstellar/tbnew/tbnew0.14.txt"
 interstellar=CustomInterstellar.from_SWG(interstellar_file, bounds=(0., 3.), value=None)
 
-################################# BACKGROUND SUPPORT ############################
+################################# SUPPORT ############################
 bg_spectrum = np.loadtxt(this_directory + '/../' + 'model_data/synthetic/diskbb_background.txt')
 
-allowed_deviation_factor = 1.000005  # Roughly 1 count difference given max count rate of 0.8/s and exp. time of 1.3e5
+allowed_deviation_factor = 1.00005  # 1.00005 is Roughly 1 count difference given max count rate of 0.8/s and exp. time of 1.3e5
 
 
 support = np.zeros((len(bg_spectrum), 2), dtype=np.double)
@@ -197,15 +204,33 @@ for i in range(support.shape[0]):
             if support[j,1] > 0.0:
                 support[i,0] = support[j,1]
                 break
+            
+
+#################################### BACKGROUND ##############################
+if background_model:
+    T_in_bounds = (0.01, 0.6) # keV
+    T_in_bounds_K = get_T_in_log10_Kelvin(T_in_bounds)
+    r_in_bounds = (20, 64) # km
+    K_disk_bounds = get_k_disk(cos_i_bounds, r_in_bounds, distance_bounds)
+    
+    bounds = dict(T_in = T_in_bounds_K,
+                  K_disk = K_disk_bounds)
+    
+    background = CustomBackground_DiskBB(bounds=bounds, values={}, interstellar = interstellar)
+elif not background_model:
+    background = None
+else:
+    print('error! must make a decision whether to include a background model.')
 
 #################################### SIGNAL ###################################
 
 signal = CustomSignal(data = data,
                         instrument = NICER,
-                        background = None,
+                        background = background,
                         interstellar = interstellar,
-                        support = None,
+                        support = support,
                         cache = False,
+                        ll_function = 'given',
                         epsrel = 1.0e-8,
                         epsilon = 1.0e-3,
                         sigmas = 10.0)
@@ -236,6 +261,7 @@ elsewhere_T_log10_K = get_T_in_log10_Kelvin(elsewhere_T_keV)
 # source background
 column_density = 1.17 #10^21 cm^-2
 
+
 p = [mass, #1.4, #grav mass
       radius,#12.5, #coordinate equatorial radius
       distance, # earth distance kpc
@@ -246,8 +272,21 @@ p = [mass, #1.4, #grav mass
       tbb,
       te,
       tau,
-      elsewhere_T_log10_K,
-      column_density]
+      elsewhere_T_log10_K]
+
+if background_model:
+    diskbb_T_keV = 0.25 # 0.3  #  keV #0.3 keV for Kajava+ 2011
+    r_in = 30 # 20 #  1 #  km #  for very small diskBB background
+
+    diskbb_T_log10_K = get_T_in_log10_Kelvin(diskbb_T_keV)
+    p.append(diskbb_T_log10_K)
+    
+    K_disk = cos_i*(r_in/(distance/10))**2  # (km / 10 kpc)^2
+    # K_disk = 0
+    p.append(K_disk)
+
+p.append(column_density)
+
 
 ##################################### PRIOR ##############################
 
@@ -264,14 +303,17 @@ likelihood = xpsi.Likelihood(star = star, signals = signal,
 
 
 ########## likelihood check
-#true_logl = -4.6402898384e+04
-#true_logl = -4.2233157248e+04 # background, support
-# true_logl = -1.0929410655e+04  # background, support, floated data, high res
-# true_logl = 1.9406875013e+08  # no marginalisation, background, support, floated data, high res,
-true_logl = -9.8076308641e+03  # background, no support, floated data, high res 
+# true_logl = -4.6402898384e+04
+# true_logl = -4.2233157248e+04 # background, support
+# true_logl = -1.1767530520e+04  # background, sf=1.00005, floated data, high res
+# true_logl = -1.0929410655e+04  # background, sf=1.001, floated data, high res
+# true_logl = -9.9746308842e+03 # # background, sf=1.1, floated data, high res
+# true_logl = -9.8546380529e+03 # # background, sf=1.5, floated data, high res
+#true_logl = -9.8076308641e+03  # background, no support, floated data, high res 
 # true_logl = -9.8013206348e+03  # background, no support, floated data, high res, allow neg. bkg. 
-#true_logl = -4.1076321631e+04 # no background, no support
-#true_logl = -1.0047370824e+04  # no background, no support, floated data, high res
+# true_logl = -4.1076321631e+04 # no background, no support
+# true_logl = -1.0047370824e+04  # no background, no support, floated data, high res
+true_logl = 1.9406875013e+08  # given background, background, support, floated data, high res,
 
 # likelihood(p, reinitialise=True)
 likelihood.check(None, [true_logl], 1.0e-4, physical_points=[p], force_update=True)

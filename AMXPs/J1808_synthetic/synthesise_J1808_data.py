@@ -166,8 +166,8 @@ elif machine=='snellius':
 
 ############################### BACKGROUND ####################################
 
-
-background = CustomBackground_DiskBB(bounds=(None, None), values={}, interstellar = interstellar)
+bounds = dict(T_in = (None, None), K_disk = (None, None))
+background = CustomBackground_DiskBB(bounds=bounds, values={}, interstellar = interstellar)
 
 ###################### SYNTHESISE DATA #################################
 

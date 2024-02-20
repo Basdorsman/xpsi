@@ -10,7 +10,7 @@ Created on Thu Jun 16 10:35:05 2022
 import os
 import numpy as np
 import math
-
+import time
 from matplotlib import rcParams
 import matplotlib.pyplot as plt
 
@@ -29,8 +29,9 @@ try:
     sqrt_num_cells = int(os.environ.get('sqrt_num_cells'))
     live_points = int(os.environ.get('live_points'))
     max_iter = int(os.environ.get('max_iter'))
-    background_model = int(os.environ.get('background_model'))
+    background_model = bool(int(os.environ.get('background_model')))
 except:
+    print('fetching parameters from os failed')
     pass
 
 
@@ -54,8 +55,8 @@ except:
     print('cannot import analysis name, using default name')
     analysis_name = 'analysis_name'
 
-integrator = 'azimuthal_invariance'
-interpolator = 'split'
+integrator = 'azimuthal_invariance' #'general/azimuthal_invariance'
+interpolator = 'split' #'split/combined'
 
 
 print('machine: ', machine)
@@ -136,8 +137,8 @@ spacetime = xpsi.Spacetime(bounds=bounds, values=dict(frequency=401.0))# Fixing 
 
 num_rays = 512
 
-kwargs = {'symmetry': 'azimuthal_invariance', #call general integrator instead of for azimuthal invariance
-          'interpolator': 'split',
+kwargs = {'symmetry': integrator, #call general integrator instead of for azimuthal invariance
+          'interpolator': interpolator,
           'omit': False,
           'cede': False,
           'concentric': False,
@@ -316,7 +317,11 @@ likelihood = xpsi.Likelihood(star = star, signals = signal,
 true_logl = 1.9406875013e+08  # given background, background, support, floated data, high res,
 
 # likelihood(p, reinitialise=True)
+t_check = time.time()
 likelihood.check(None, [true_logl], 1.0e-4, physical_points=[p], force_update=True)
+print('Likelihood check took {:.3f} seconds'.format((time.time()-t_check)))
+
+
 
 wrapped_params = [0]*len(likelihood)
 wrapped_params[likelihood.index('p__phase_shift')] = 1
@@ -387,7 +392,8 @@ if __name__ == '__main__':
     
     if run_type=='sample':
         print("sampling starts ...")
+        t_start = time.time()
         xpsi.Sample.nested(likelihood, prior,**runtime_params)
         print("... sampling done")
-        
+        print('Sampling took {:.3f} seconds'.format((time.time()-t_start)))
     

@@ -1,9 +1,9 @@
 #!/bin/bash
 #SBATCH -N 1
 #SBATCH --tasks-per-node=192
-#SBATCH -t 01:00:00
+#SBATCH -t 03:00:00
 #SBATCH -p genoa
-#SBATCH --job-name=sf_1001
+#SBATCH --job-name=bkg_given
 #SBATCH --mail-user=b.dorsman@uva.nl
 #SBATCH --mail-type=END
 
@@ -28,6 +28,7 @@ export integrator=x
 export live_points=$SLURM_TASKS_PER_NODE
 export max_iter=-1
 export run_type=sample
+export background_model=True
 
 export XPSI_DIR=$HOME/xpsi-bas-fork
 export LABEL=${SLURM_JOB_NAME}_lp${live_points}

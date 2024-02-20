@@ -7,6 +7,7 @@ Created on Mon Dec 11 11:10:37 2023
 """
 import numpy as np
 import os
+import time
 
 import xpsi
 from xpsi.likelihoods.default_background_marginalisation import eval_marginal_likelihood
@@ -95,6 +96,7 @@ class CustomSignal(xpsi.Signal):
                                                     allow_negative = False)
         else:
             print('error! pass bkg argument in init!')
+
     
     def synthesise(self,
                    exposure_time,

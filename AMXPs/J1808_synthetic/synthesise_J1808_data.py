@@ -34,7 +34,7 @@ import sys
 sys.path.append('../')
 from custom_tools import SynthesiseData, plot_one_pulse
 
-from CustomBackground import CustomBackground_DiskBB
+from CustomBackground import CustomBackground_DiskBB, k_disk_derive
 from CustomPrior import CustomPrior
 from CustomInstrument import CustomInstrument
 from CustomPhotosphere import CustomPhotosphere
@@ -166,8 +166,13 @@ elif machine=='snellius':
 
 ############################### BACKGROUND ####################################
 
-bounds = dict(T_in = (None, None), K_disk = (None, None))
-background = CustomBackground_DiskBB(bounds=bounds, values={}, interstellar = interstellar)
+bounds = dict(T_in = (None, None), R_in = (None, None), K_disk = None)
+k_disk = k_disk_derive()
+    
+background = CustomBackground_DiskBB(bounds=bounds, values={'K_disk': k_disk}, interstellar = interstellar)
+k_disk.star = star
+k_disk.background = background
+
 
 ###################### SYNTHESISE DATA #################################
 
@@ -222,7 +227,7 @@ elsewhere_T_keV = 0.4 # 0.5 #  keV
 # source background
 column_density = 1.17 #10^21 cm^-2
 diskbb_T_keV = 0.25 # 0.3  #  keV #0.3 keV for Kajava+ 2011
-r_in = 30 # 20 #  1 #  km #  for very small diskBB background
+R_in = 30 # 20 #  1 #  km #  for very small diskBB background
 
 p = [mass, #1.4, #grav mass
       radius,#12.5, #coordinate equatorial radius
@@ -242,9 +247,9 @@ p.append(elsewhere_T_log10_K) # 10^x Kelvin
 diskbb_T_log10_K = get_T_in_log10_Kelvin(diskbb_T_keV)
 p.append(diskbb_T_log10_K)
 
-K_disk = cos_i*(r_in/(distance/10))**2  # (km / 10 kpc)^2
+# K_disk = cos_i*(r_in/(distance/10))**2  # (km / 10 kpc)^2
 # K_disk = 0
-p.append(K_disk)
+p.append(R_in)
 
 if isinstance(interstellar, xpsi.Interstellar):
 

@@ -46,7 +46,7 @@ if isinstance(os.environ.get('num_energies'),type(None)) or isinstance(os.enviro
     sqrt_num_cells = 50 # 128
     num_leaves = 30 # 128
     max_iter = 1
-    run_type = 'sample' #test, sample
+    run_type = 'test' #test, sample
     background_model = True
     
 try:
@@ -80,7 +80,7 @@ from CustomPhotosphere import CustomPhotosphere
 from CustomInterstellar import CustomInterstellar
 from CustomSignal import CustomSignal
 from CustomHotregion import CustomHotRegion_Accreting
-from CustomBackground import CustomBackground_DiskBB, get_k_disk
+from CustomBackground import CustomBackground_DiskBB, k_disk_derive
 
 from helper_functions import get_T_in_log10_Kelvin, plot_2D_pulse
 
@@ -215,15 +215,6 @@ if background_model:
     bounds = dict(T_in = T_in_bounds_K,
                   R_in = r_in_bounds,
                   K_disk = None) #derived means no bounds?
-    
-    
-    class k_disk_derive(xpsi.Derive):
-        def __init__(self):
-            pass
-
-        def __call__(self, boundto, caller = None):
-            # ref is a reference to another hot region object
-            return get_k_disk(self.star['cos_inclination'], self.background['R_in'], self.star['distance'])
         
     k_disk = k_disk_derive()
     
@@ -341,8 +332,6 @@ true_logl = 1.9406875013e+08  # given background, background, support, floated d
 t_check = time.time()
 likelihood.check(None, [true_logl], 1.0e-4, physical_points=[p], force_update=True)
 print('Likelihood check took {:.3f} seconds'.format((time.time()-t_check)))
-
-print('ref_1:',k_disk(background))
 
 wrapped_params = [0]*len(likelihood)
 wrapped_params[likelihood.index('p__phase_shift')] = 1

@@ -246,3 +246,11 @@ def get_k_disk(cos_i, r_in, distance):
     return tuple(k_disk_values)
   else:
     return cos_i * (r_in / (distance / 10))**2
+
+class k_disk_derive(xpsi.Derive):
+    def __init__(self):
+        pass
+
+    def __call__(self, boundto, caller = None):
+        # ref is a reference to another hot region object
+        return get_k_disk(self.star['cos_inclination'], self.background['R_in'], self.star['distance'])

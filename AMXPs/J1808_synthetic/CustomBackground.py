@@ -28,6 +28,17 @@ class CustomBackground_DiskBB(xpsi.Background):
                                 doc = doc,
                                 symbol = r'$T_{in}$',
                                 value = values.get('T_in', None))
+
+        doc = """
+        Disk R_in in kilometers.
+        """
+        inner_radius = xpsi.Parameter('R_in',
+                                strict_bounds = (0., 1e3),
+                                bounds = bounds.get('R_in', None),
+                                doc = doc,
+                                symbol = r'$R_{in}$',
+                                value = values.get('R_in', None))
+
         
         doc = """
         Disk normalisation cos_i*R_in^2/D^2 in (km / 10 kpc)^2.
@@ -40,16 +51,16 @@ class CustomBackground_DiskBB(xpsi.Background):
                                 value = values.get('K_disk', None))
         
 
-        super(CustomBackground_DiskBB, self).__init__(inner_temperature, background_normalisation)
+        super(CustomBackground_DiskBB, self).__init__(inner_temperature, inner_radius, background_normalisation)
         
-        # Making sure the interstellar object is form Interstall class
-        if interstellar is not None:
-            if not isinstance(interstellar, xpsi.Interstellar):
-                raise TypeError('Invalid type for an interstellar object.')
-            else:
-                self._interstellar = interstellar
-        else:
-            self._interstellar = None
+        # # Making sure the interstellar object is form Interstellar class
+        # if interstellar is not None:
+        #     if not isinstance(interstellar, xpsi.Interstellar):
+        #         raise TypeError('Invalid type for an interstellar object.')
+        #     else:
+        #         self._interstellar = interstellar
+        # else:
+        #     self._interstellar = None
 
     # def __call__(self, energy_edges, phases):
     #     """ Evaluate the incident background field. """
@@ -100,7 +111,7 @@ class CustomBackground_DiskBB(xpsi.Background):
     #     self._incident_background = bkg
         
         
-    def __call__(self, energy_edges, phases):
+    def __call__(self, energy_edges, phases):#, interstellar = None):
         """ Evaluate the incident background field. """
         
         n_phase_edges = phases.shape[0]
@@ -135,10 +146,10 @@ class CustomBackground_DiskBB(xpsi.Background):
             
         bkg=BB
         
-        # Apply Interstellar if not None
-        if self._interstellar is not None:
-            self._energy_mids=(energy_edges[1:]+energy_edges[:-1])/2
-            self._interstellar(self._energy_mids, bkg) # bkg is overwritten here
+        # # Apply Interstellar if not None
+        # if self._interstellar is not None:
+        #     self._energy_mids=(energy_edges[1:]+energy_edges[:-1])/2
+        #     self._interstellar(self._energy_mids, bkg) # bkg is overwritten here
             
 
         self._incident_background = bkg

@@ -41,13 +41,13 @@ if isinstance(os.environ.get('machine'),type(None)):
 
 if isinstance(os.environ.get('num_energies'),type(None)) or isinstance(os.environ.get('live_points'),type(None)) or isinstance(os.environ.get('max_iter'),type(None)): # if that fails input them here.
     print('E: failed to import some OS environment variables, using defaults.')    
-    num_energies = 128 # 40 # 128
+    num_energies = 40 # 128
     live_points = 64
-    sqrt_num_cells = 128 # 50 # 128
-    num_leaves = 128 # 30 # 128
+    sqrt_num_cells = 50 # 128
+    num_leaves = 30 # 128
     max_iter = 1
-    run_type = 'test' #test, sample
-    background_model = False
+    run_type = 'sample' #test, sample
+    background_model = True
     
 try:
     analysis_name = os.environ.get('LABEL')
@@ -193,7 +193,6 @@ bg_spectrum = np.loadtxt(this_directory + '/../' + 'model_data/synthetic/diskbb_
 
 allowed_deviation_factor = 1.00005  # 1.00005 is Roughly 1 count difference given max count rate of 0.8/s and exp. time of 1.3e5
 
-
 support = np.zeros((len(bg_spectrum), 2), dtype=np.double)
 support[:,0] = bg_spectrum/allowed_deviation_factor #lower limit
 support[support[:,0] < 0.0, 0] = 0.0
@@ -205,23 +204,42 @@ for i in range(support.shape[0]):
             if support[j,1] > 0.0:
                 support[i,0] = support[j,1]
                 break
-            
 
 #################################### BACKGROUND ##############################
 if background_model:
     T_in_bounds = (0.01, 0.6) # keV
     T_in_bounds_K = get_T_in_log10_Kelvin(T_in_bounds)
     r_in_bounds = (20, 64) # km
-    K_disk_bounds = get_k_disk(cos_i_bounds, r_in_bounds, distance_bounds)
+    #K_disk_bounds = get_k_disk(cos_i_bounds, r_in_bounds, distance_bounds)
     
     bounds = dict(T_in = T_in_bounds_K,
-                  K_disk = K_disk_bounds)
+                  R_in = r_in_bounds,
+                  K_disk = None) #derived means no bounds?
     
-    background = CustomBackground_DiskBB(bounds=bounds, values={}, interstellar = interstellar)
+    
+    class k_disk_derive(xpsi.Derive):
+        def __init__(self):
+            pass
+
+        def __call__(self, boundto, caller = None):
+            # ref is a reference to another hot region object
+            return get_k_disk(self.star['cos_inclination'], self.background['R_in'], self.star['distance'])
+        
+    k_disk = k_disk_derive()
+    
+    background = CustomBackground_DiskBB(bounds=bounds, values={'K_disk': k_disk}, interstellar = interstellar)
+    
+    k_disk.star = star
+    k_disk.background = background
+    
 elif not background_model:
     background = None
 else:
     print('error! must make a decision whether to include a background model.')
+
+
+
+
 
 #################################### SIGNAL ###################################
 
@@ -277,14 +295,17 @@ p = [mass, #1.4, #grav mass
 
 if background_model:
     diskbb_T_keV = 0.25 # 0.3  #  keV #0.3 keV for Kajava+ 2011
-    r_in = 30 # 20 #  1 #  km #  for very small diskBB background
 
     diskbb_T_log10_K = get_T_in_log10_Kelvin(diskbb_T_keV)
     p.append(diskbb_T_log10_K)
     
-    K_disk = cos_i*(r_in/(distance/10))**2  # (km / 10 kpc)^2
+    R_in = 30 # 20 #  1 #  km #  for very small diskBB background
+    p.append(R_in)
+    
+
+    # K_disk = get_k_disk(cos_i, R_in, distance)
     # K_disk = 0
-    p.append(K_disk)
+    # p.append(K_disk)
 
 p.append(column_density)
 
@@ -321,7 +342,7 @@ t_check = time.time()
 likelihood.check(None, [true_logl], 1.0e-4, physical_points=[p], force_update=True)
 print('Likelihood check took {:.3f} seconds'.format((time.time()-t_check)))
 
-
+print('ref_1:',k_disk(background))
 
 wrapped_params = [0]*len(likelihood)
 wrapped_params[likelihood.index('p__phase_shift')] = 1

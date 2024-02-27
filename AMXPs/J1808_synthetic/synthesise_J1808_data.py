@@ -72,24 +72,22 @@ print("atmosphere_type:", atmosphere_type)
 print("n_params:", n_params)
 
 ################################## INSTRUMENT #################################
-channel_low = 20
-channel_hi = 300 #600
-max_input = 1400 #2000
+min_input = 0 # 900 works with channel_low = 120 (1.2 keV). 
+channel_low = 20 # 20 corresponds to 0.2 keV. 
+channel_hi = 600 # 300 corresponds to 3 keV. 600 corresponds to 6 keV (98.7% of total counts retained)
+max_input = 2000 # 1400 works with channel-hi = 300. 2000 works with channel_hi = 600 (6 keV)
 
 ARF_file=this_directory + '/../model_data/instrument_data/J1808_NICER_2019/merged_saxj1808_2019_arf_aeff.txt'
 RMF_file=this_directory + '/../model_data/instrument_data/J1808_NICER_2019/merged_saxj1808_2019_rmf_matrix.txt'
 channel_edges_file=this_directory + '/../model_data/instrument_data/J1808_NICER_2019/merged_saxj1808_2019_rmf_energymap.txt'
 
-try:   
-    NICER = CustomInstrument.from_response_files(ARF = ARF_file,
+NICER = CustomInstrument.from_response_files(ARF = ARF_file,
             RMF = RMF_file,
             channel_edges = channel_edges_file,
             channel_low=channel_low,
             channel_hi=channel_hi,
+            min_input=min_input,
             max_input=max_input)
-
-except:
-    print('error! No instrument file!')
 
 ############################### SPACETIME #####################################
 

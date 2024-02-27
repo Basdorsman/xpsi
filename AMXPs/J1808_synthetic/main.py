@@ -49,7 +49,7 @@ if isinstance(os.environ.get('num_energies'),type(None)) or isinstance(os.enviro
     run_type = 'test' #test, sample
     background_model = True
     
-try:
+try: # THIS DOESN"T WORK BY THE WAY, IT BECOMES "NONE"
     analysis_name = os.environ.get('LABEL')
 except:
     print('cannot import analysis name, using default name')
@@ -91,16 +91,20 @@ print('Rank reporting: %d' % xpsi._rank)
 ##################################### DATA ####################################
 
 exposure_time = 1.32366e5 #Mason's 2019 data cut
-channel_low = 20
-channel_hi = 300
-max_input = 1400
 phases_space = np.linspace(0.0, 1.0, 33)
+
+min_input = 0 # 900 works with channel_low = 120 (1.2 keV). 
+channel_low = 20 # 20 corresponds to 0.2 keV. 
+channel_hi = 600 # 300 corresponds to 3 keV. 600 corresponds to 6 keV (98.7% of total counts retained)
+max_input = 2000 # 1400 works with channel-hi = 300. 2000 works with channel_hi = 600 (6 keV)
+
 
 datastring = this_directory + '/data/J1808_synthetic_realisation.dat' 
 settings = dict(counts = np.loadtxt(datastring, dtype=np.double),
                 channels=np.arange(channel_low,channel_hi),
                 phases=phases_space,
-                first=0, last=channel_hi-channel_low-1,
+                first=0, 
+                last=channel_hi-channel_low-1,
                 exposure_time=exposure_time)
 
 data = xpsi.Data(**settings)
@@ -117,6 +121,7 @@ NICER = CustomInstrument.from_response_files(ARF = ARF_file,
         channel_edges = channel_edges_file,       
         channel_low=channel_low,
         channel_hi=channel_hi,
+        min_input=min_input,
         max_input=max_input)
 
 
@@ -328,9 +333,10 @@ likelihood = xpsi.Likelihood(star = star, signals = signal,
 # true_logl = -1.0047370824e+04  # no background, no support, floated data, high res
 true_logl = 1.9406875013e+08  # given background, background, support, floated data, high res,
 
-# likelihood(p, reinitialise=True)
 t_check = time.time()
-likelihood.check(None, [true_logl], 1.0e-4, physical_points=[p], force_update=True)
+
+likelihood(p, reinitialise=True)
+# likelihood.check(None, [true_logl], 1.0e-4, physical_points=[p], force_update=True)
 print('Likelihood check took {:.3f} seconds'.format((time.time()-t_check)))
 
 wrapped_params = [0]*len(likelihood)

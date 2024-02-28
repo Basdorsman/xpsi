@@ -10,3 +10,5 @@ from analysis import analysis
 
 
 myAnalysis = analysis('local','test', bkg = 'marginalise', support_factor=0.1)
+myAnalysis()
+

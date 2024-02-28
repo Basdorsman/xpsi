@@ -26,7 +26,6 @@ from helper_functions import get_T_in_log10_Kelvin, plot_2D_pulse
 
 class analysis(object):
     def __init__(self, machine, run_type, bkg, support_factor = "None"):
-        self.this_directory = this_directory
         
         self.machine = machine
         if not isinstance(machine, str):
@@ -98,6 +97,7 @@ class analysis(object):
         self.integrator = 'azimuthal_invariance' #'general/azimuthal_invariance'
         self.interpolator = 'split' #'split/combined'
     
+        self.file_locations()
         self.set_bounds()
         self.set_values()
         self.set_interstellar()
@@ -107,7 +107,25 @@ class analysis(object):
         self.likelihood(self.p, reinitialise=True)
         # likelihood.check(None, [true_logl], 1.0e-4, physical_points=[p], force_update=True)
         print('Likelihood check took {:.3f} seconds'.format((time.time()-t_check)))
+        print(self.likelihood(self.p))
 
+
+    def file_locations(self):
+        self.this_directory = this_directory
+        #self.file_pulse_profile = self.this_directory + '/data/J1808_synthetic_realisation.dat' 
+        self.file_pulse_profile = self.this_directory + '/data/2019_preprocessed.txt' 
+        self.file_arf = self.this_directory + '/../model_data/instrument_data/J1808_NICER_2019/merged_saxj1808_2019_arf_aeff.txt'
+        self.file_rmf = self.this_directory + '/../model_data/instrument_data/J1808_NICER_2019/merged_saxj1808_2019_rmf_matrix.txt'
+        self.file_channel_edges = self.this_directory + '/../model_data/instrument_data/J1808_NICER_2019/merged_saxj1808_2019_rmf_energymap.txt'
+        
+        if self.machine == 'local':
+            self.file_atmosphere = '/home/bas/Documents/Projects/x-psi/model_datas/bobrikova/Bobrikova_compton_slab.npz'
+            self.file_interstellar = "/home/bas/Documents/Projects/x-psi/xpsi-bas-fork/AMXPs/model_data/n_H/TBnew/tbnew0.14.txt"
+        elif self.machine == 'snellius':
+            self.file_atmosphere = self.this_directory + '/../model_data/Bobrikova_compton_slab.npz'
+            self.file_interstellar = "/home/dorsman/xpsi-bas-fork/AMXPs/model_data/interstellar/tbnew/tbnew0.14.txt"
+        
+        self.file_bkg = self.this_directory + '/../model_data/synthetic/diskbb_background.txt'
     
     def set_bounds(self):
         bounds = {}
@@ -138,14 +156,14 @@ class analysis(object):
         self.exposure_time = 1.32366e5 #Mason's 2019 data cut
         self.phases_space = np.linspace(0.0, 1.0, 33)
 
-        self.min_input = 0 # 900 works with channel_low = 120 (1.2 keV). 
-        self.channel_low = 20 # 20 corresponds to 0.2 keV. 
+        self.min_input = 20 # 0 is used with 0.2 keV min input energy in synthetic data # 900 works with channel_low = 120 (1.2 keV). 
+        self.channel_low = 30 # 20 corresponds to 0.2 keV. # 30 corresponds to 0.3 keV
         self.channel_hi = 600 # 300 corresponds to 3 keV. 600 corresponds to 6 keV (98.7% of total counts retained)
         self.max_input = 2000 # 1400 works with channel-hi = 300. 2000 works with channel_hi = 600 (6 keV)
 
 
-        datastring = self.this_directory + '/data/J1808_synthetic_realisation.dat' 
-        settings = dict(counts = np.loadtxt(datastring, dtype=np.double),
+
+        settings = dict(counts = np.loadtxt(self.file_pulse_profile, dtype=np.double),
                         channels=np.arange(self.channel_low,self.channel_hi),
                         phases=self.phases_space,
                         first=0, 
@@ -156,14 +174,9 @@ class analysis(object):
         
         
     def set_instrument(self):
-        ARF_file=self.this_directory + '/../model_data/instrument_data/J1808_NICER_2019/merged_saxj1808_2019_arf_aeff.txt'
-        RMF_file=self.this_directory + '/../model_data/instrument_data/J1808_NICER_2019/merged_saxj1808_2019_rmf_matrix.txt'
-        channel_edges_file=self.this_directory + '/../model_data/instrument_data/J1808_NICER_2019/merged_saxj1808_2019_rmf_energymap.txt'
-
-
-        self.instrument = CustomInstrument.from_response_files(ARF = ARF_file,
-                RMF = RMF_file,
-                channel_edges = channel_edges_file,       
+        self.instrument = CustomInstrument.from_response_files(ARF = self.file_arf,
+                RMF = self.file_rmf,
+                channel_edges = self.file_channel_edges,       
                 channel_low = self.channel_low,
                 channel_hi = self.channel_hi,
                 min_input = self.min_input,
@@ -216,10 +229,8 @@ class analysis(object):
         self.set_elsewhere()
         self.photosphere = CustomPhotosphere(hot = self.hot, elsewhere = self.elsewhere,
                                         values=dict(mode_frequency = self.spacetime['frequency']))
-        if self.machine == 'local':
-            self.photosphere.hot_atmosphere = '/home/bas/Documents/Projects/x-psi/model_datas/bobrikova/Bobrikova_compton_slab.npz'
-        elif self.machine == 'helios' or self.machine == 'snellius':
-            self.photosphere.hot_atmosphere = self.this_directory + '/../model_data/Bobrikova_compton_slab.npz'
+
+        self.photosphere.hot_atmosphere = self.file_atmosphere
 
     def set_star(self):
         self.set_photosphere()
@@ -227,11 +238,7 @@ class analysis(object):
         
         
     def set_interstellar(self):
-        if self.machine=='local':
-            interstellar_file = "/home/bas/Documents/Projects/x-psi/xpsi-bas-fork/AMXPs/model_data/n_H/TBnew/tbnew0.14.txt"
-        elif self.machine=='snellius':
-            interstellar_file = "/home/dorsman/xpsi-bas-fork/AMXPs/model_data/interstellar/tbnew/tbnew0.14.txt"
-        self.interstellar=CustomInterstellar.from_SWG(interstellar_file, bounds=self.bounds['interstellar'], value=None)
+        self.interstellar=CustomInterstellar.from_SWG(self.file_interstellar, bounds=self.bounds['interstellar'], value=None)
     
     def set_support(self):
         support_factor = self.support_factor
@@ -239,7 +246,7 @@ class analysis(object):
             self.support = None
         else:
             support_factor = float(support_factor)
-            bg_spectrum = np.loadtxt(self.this_directory + '/../model_data/synthetic/diskbb_background.txt')
+            bg_spectrum = np.loadtxt(self.file_bkg)
     
             allowed_deviation_factor = 1. + support_factor  # 1.00005 is Roughly 1 count difference given max count rate of 0.8/s and exp. time of 1.3e5
     

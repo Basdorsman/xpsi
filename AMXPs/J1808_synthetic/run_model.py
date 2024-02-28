@@ -10,3 +10,4 @@ from analysis import analysis
 
 
 myAnalysis = analysis('local','test', 'model')
+myAnalysis()

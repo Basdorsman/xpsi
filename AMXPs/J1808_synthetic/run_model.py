@@ -8,6 +8,5 @@ Created on Tue Feb 27 09:45:17 2024
 
 from analysis import analysis
 
-
-myAnalysis = analysis('local','test', 'model')
+myAnalysis = analysis('local','test','model')
 myAnalysis()

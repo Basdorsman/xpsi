@@ -66,8 +66,8 @@ class CustomSignal(xpsi.Signal):
     def support(self, obj):
         self._support = obj
 
-    # Marginal likelihood
     def __call__(self, *args, **kwargs):
+        #print(f'call likelihood: {self.bkg}')
         if self.bkg == 'marginalise':
             self.loglikelihood, self.expected_counts, self.background_signal, self.background_signal_given_support = \
                     eval_marginal_likelihood(self._data.exposure_time,
@@ -97,6 +97,7 @@ class CustomSignal(xpsi.Signal):
                                                     self._shifts,
                                                     self._background.registered_background,
                                                     allow_negative = False)
+            #print(f'loglikelihood: {self.loglikelihood}', flush=True)
         else:
             print('error! pass bkg argument in init!')
 

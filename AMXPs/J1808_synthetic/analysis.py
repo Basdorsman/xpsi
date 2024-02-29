@@ -27,19 +27,24 @@ from helper_functions import get_T_in_log10_Kelvin, plot_2D_pulse
 class analysis(object):
     def __init__(self, machine, run_type, bkg, support_factor = "None"):
         
-        self.machine = machine
-        if not isinstance(machine, str):
-            raise TypeError('machine must be a string.')
-            
-        self.run_type = run_type
-        if not isinstance(run_type, str):
-            raise TypeError('run_type must be a string.')
-            
+        self.machine = os.environ.get('machine')
+        if os.environ.get('machine') == "None":
+            print('machine variable is not in environment variables, using passed argument.')
+            self.machine = machine
+        print(f'machine: {self.machine}')
+
+        self.run_type = os.environ.get('run_type')
+        if os.environ.get('run_type') == "None":
+            print('run_type is not in environment variables, using passed argument.')
+            self.run_type = run_type
+        print(f'run_type: {self.run_type}')
             
         self.analysis_name = os.environ.get('LABEL')
         if not isinstance(self.analysis_name, str):
-                print('cannot import analysis name, using default_analysis_name')
-                self.analysis_name = 'default_analysis_name'
+                print('cannot import analysis name, using test_analysis')
+                self.analysis_name = 'test_analysis'
+        print(f'analysis_name: {self.analysis_name}')
+
         
         try:
             self.num_energies = int(os.environ.get('num_energies'))
@@ -47,42 +52,46 @@ class analysis(object):
             print('num_energies from environment variables failed, proceeding with default.')
             self.num_energies = 40 # 128
             pass
+        print(f'num_energies: {self.num_energies}')
             
         try:
             self.num_leaves = int(os.environ.get('num_leaves'))
         except:
             print('num_leaves from environment variables failed, proceeding with default.')
             self.num_leaves = 30 # 128
-            pass    
+            pass
+        print(f'num_leaves: {self.num_leaves}')
     
         try:
             self.sqrt_num_cells = int(os.environ.get('sqrt_num_cells'))
         except:
             print('sqrt_num_cells from environment variables failed, proceeding with default.')
             self.sqrt_num_cells = 50 # 128
-            pass    
+            pass
+        print(f'sqrt_num_cells: {self.sqrt_num_cells}')
     
         try:
             self.live_points = int(os.environ.get('live_points'))
         except:
             print('live_points from environment variables failed, proceeding with default.')
             self.live_points = 20 # 128
-            pass    
+            pass
+        print(f'live_points: {self.live_points}')
         
         try:
             self.max_iter = int(os.environ.get('max_iter'))
         except:
             print('max_iter from environment variables failed, proceeding with default.')
-            self.max_iter = 1
-            pass    
+            self.max_iter = 10
+            pass
+        print(f'max_iter: {self.max_iter}')
 
         self.bkg = os.environ.get('bkg')
-        if not os.environ.get('bkg') == "None":
+        if os.environ.get('bkg') == "None":
             print(f'bkg environment variable is not allowed to be None, using passed argument: {bkg}.')
             self.bkg = bkg
-            
-        
-        
+        print(f'bkg: {self.bkg}')
+
         if self.bkg == 'marginalise':
             if isinstance(os.environ.get('support_factor'), str):
                 self.support_factor = os.environ.get('support_factor')
@@ -91,7 +100,7 @@ class analysis(object):
                 self.support_factor = support_factor
         elif self.bkg == 'model':
             self.support_factor = 'None'
-                
+        print(f'support_factor: {self.support_factor}')        
                 
         
         self.integrator = 'azimuthal_invariance' #'general/azimuthal_invariance'
@@ -104,8 +113,8 @@ class analysis(object):
         self.set_likelihood()
         
         t_check = time.time()
-        self.likelihood(self.p, reinitialise=True)
-        # likelihood.check(None, [true_logl], 1.0e-4, physical_points=[p], force_update=True)
+        #self.likelihood(self.p, reinitialise=True)
+        self.likelihood.check(None, [self.true_logl], 1.0e-4, physical_points=[self.p], force_update=True)
         print('Likelihood check took {:.3f} seconds'.format((time.time()-t_check)))
         print(self.likelihood(self.p))
 
@@ -130,7 +139,7 @@ class analysis(object):
     def set_bounds(self):
         bounds = {}
         bounds["distance"] = (3.4, 3.6)
-        bounds["cos_i"] = (0.0, 1.0)
+        bounds["cos_i"] = (0.15, 1.0) #updated lower limit due to lack of eclipses, chakrabarty & Morgan 1998
         bounds["mass"] = (1.0, 3.0)
         bounds["radius"] = (3.0 * gravradius(1.0), 16.0)     # equatorial radius
         bounds["super_colatitude"] = (None, None)
@@ -144,7 +153,7 @@ class analysis(object):
         if self.bkg == 'model':
             bounds['T_in'] = (0.01, 0.6) # keV
             bounds['R_in'] = (20, 64) # km
-            
+           
         self.bounds = bounds
         
     def set_values(self):
@@ -384,8 +393,8 @@ class analysis(object):
         # true_logl = -9.8013206348e+03  # background, no support, floated data, high res, allow neg. bkg. 
         # true_logl = -4.1076321631e+04 # no background, no support
         # true_logl = -1.0047370824e+04  # no background, no support, floated data, high res
-        true_logl = 1.9406875013e+08  # given background, background, support, floated data, high res,
-
+        # true_logl = 1.9406875013e+08  # given background, background, support, floated data, high res,
+        true_logl = 1.6202395730e+08 # real data 
         self.true_logl = true_logl
     
     def __call__(self):

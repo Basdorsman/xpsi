@@ -439,11 +439,13 @@ class Likelihood(ParameterSubspace):
             self.clear_cache()
 
         if not self.externally_updated: # do not safely assume already handled
+            # print('not self.externally_updated: # do not safely assume already handled')
             if p is None: # expected a vector of values instead of nothing
                 raise TypeError('Parameter values have not been updated.')
             super(Likelihood, self).__call__(p) # update free parameters
 
         if self.needs_update or force:
+            # print('self.needs_update or force:')
             try:
                 logprior = self._prior(p) # pass vector just in case wanted
             except AttributeError:

@@ -9,5 +9,6 @@ export run_type=sample
 export background_model=1
 
 cd $HOME/xpsi-bas-fork/AMXPs/J1808_synthetic/
-python main.py
+#python main.py
+python run_model.py
 cd $HOME/xpsi-bas-fork/AMXPs/J1808_synthetic/snellius_runs/

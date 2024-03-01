@@ -26,15 +26,14 @@ from helper_functions import get_T_in_log10_Kelvin, plot_2D_pulse
 
 class analysis(object):
     def __init__(self, machine, run_type, bkg, support_factor = "None"):
-        
         self.machine = os.environ.get('machine')
-        if os.environ.get('machine') == "None":
+        if os.environ.get('machine') == None or os.environ.get('machine') =='None':
             print('machine variable is not in environment variables, using passed argument.')
             self.machine = machine
         print(f'machine: {self.machine}')
 
         self.run_type = os.environ.get('run_type')
-        if os.environ.get('run_type') == "None":
+        if os.environ.get('run_type') == None or os.environ.get('run_type') == "None":
             print('run_type is not in environment variables, using passed argument.')
             self.run_type = run_type
         print(f'run_type: {self.run_type}')
@@ -87,17 +86,16 @@ class analysis(object):
         print(f'max_iter: {self.max_iter}')
 
         self.bkg = os.environ.get('bkg')
-        if os.environ.get('bkg') == "None":
+        if os.environ.get('bkg') == None or os.environ.get('bkg') == "None":
             print(f'bkg environment variable is not allowed to be None, using passed argument: {bkg}.')
             self.bkg = bkg
         print(f'bkg: {self.bkg}')
 
         if self.bkg == 'marginalise':
-            if isinstance(os.environ.get('support_factor'), str):
                 self.support_factor = os.environ.get('support_factor')
-            else:
-                print(f'no background support in environment variables, proceeding with passed or default: {support_factor}')
-                self.support_factor = support_factor
+                if os.environ.get('support_factor') == None or os.environ.get('support_factor') == 'None':
+                    print(f'support_factor is taken from passed or default argument: {support_factor}')
+                    self.support_factor = support_factor
         elif self.bkg == 'model':
             self.support_factor = 'None'
         print(f'support_factor: {self.support_factor}')        

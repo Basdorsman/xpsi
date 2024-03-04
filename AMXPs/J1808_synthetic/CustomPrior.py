@@ -95,11 +95,15 @@ class CustomPrior(xpsi.Prior):
 
         idx = ref.index('column_density')
         
-        temporary = truncnorm.ppf(hypercube[idx], -3.0, 3.0, loc=1.17, scale=0.2)
+        temporary = truncnorm.ppf(hypercube[idx], -5.0, 5.0, loc=1.17, scale=0.2)
         if temporary < 0: temporary = 0
         ref['column_density'] = temporary
 
+        idx = ref.index('distance')
         
+        temporary = truncnorm.ppf(hypercube[idx], -5.0, 5.0, loc=2.7, scale=0.3)
+        if temporary < 0: temporary = 0
+        ref['distance'] = temporary
 
         # flat priors in cosine of hot region centre colatitudes (isotropy)
         # support modified by no-overlap rejection condition

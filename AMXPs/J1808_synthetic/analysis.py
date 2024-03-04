@@ -136,7 +136,7 @@ class analysis(object):
     
     def set_bounds(self):
         bounds = {}
-        bounds["distance"] = (3.4, 3.6)
+        bounds["distance"] = (None, None)
         bounds["cos_i"] = (0.15, 1.0) #updated lower limit due to lack of eclipses, chakrabarty & Morgan 1998
         bounds["mass"] = (1.0, 3.0)
         bounds["radius"] = (3.0 * gravradius(1.0), 16.0)     # equatorial radius
@@ -147,7 +147,7 @@ class analysis(object):
         bounds['super_tau'] = (0.5, 3.5)
         bounds['super_te'] = (40., 200.)
         bounds['elsewhere_temperature'] = (5.0,7.0) #log10 K
-        bounds['interstellar'] = (0., 3.)
+        bounds['interstellar'] = (None, None)
         if self.bkg == 'model':
             bounds['T_in'] = (0.01, 0.6) # keV
             bounds['R_in'] = (20, 64) # km

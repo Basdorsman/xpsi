@@ -119,8 +119,10 @@ class analysis(object):
 
     def file_locations(self):
         self.this_directory = this_directory
-        #self.file_pulse_profile = self.this_directory + '/data/J1808_synthetic_realisation.dat' 
-        self.file_pulse_profile = self.this_directory + '/data/2022_preprocessed.txt' 
+        # self.file_pulse_profile = self.this_directory + '/data/J1808_synthetic_realisation.dat' 
+        # self.file_pulse_profile = self.this_directory + '/data/2022_preprocessed.txt' 
+        self.file_pulse_profile = self.this_directory + '/data/2019_preprocessed.txt' 
+        
         self.file_arf = self.this_directory + '/../model_data/instrument_data/J1808_NICER_2019/merged_saxj1808_2019_arf_aeff.txt'
         self.file_rmf = self.this_directory + '/../model_data/instrument_data/J1808_NICER_2019/merged_saxj1808_2019_rmf_matrix.txt'
         self.file_channel_edges = self.this_directory + '/../model_data/instrument_data/J1808_NICER_2019/merged_saxj1808_2019_rmf_energymap.txt'
@@ -160,8 +162,8 @@ class analysis(object):
         self.values = values
 
     def set_data(self):
-        #self.exposure_time = 1.32366e5 #Mason's 2019 data cut
-        self.exposure_time = 7.13422e4 #Mason's 2022 data cut
+        self.exposure_time = 1.32366e5 #Mason's 2019 data cut
+        # self.exposure_time = 7.13422e4 #Mason's 2022 data cut
         self.phases_space = np.linspace(0.0, 1.0, 33)
 
         self.min_input = 20 # 20 is used with 0.3 keV (channel_low=30). 0 is used with 0.2 keV (channel_low=20). 900 works with channel_low = 120 (1.2 keV). 
@@ -393,8 +395,14 @@ class analysis(object):
         # true_logl = -4.1076321631e+04 # no background, no support
         # true_logl = -1.0047370824e+04  # no background, no support, floated data, high res
         # true_logl = 1.9406875013e+08  # given background, background, support, floated data, high res,
-        # true_logl = 1.6202395730e+08 # 2019 data
-        true_logl = 1.1365193823e+08 # 2022 data
+        
+        ## 2019 data
+        # true_logl = 1.6202395730e+08 # 2019 data, modeled background
+        true_logl= -7.9418857894e+89 # 2019 data, marginalized background
+        
+        
+        ### 2022 data
+        # true_logl = 1.1365193823e+08 # 2022 data
         self.true_logl = true_logl
     
     def __call__(self):

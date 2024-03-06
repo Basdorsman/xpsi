@@ -10,6 +10,7 @@ import xpsi
 import math
 from scipy.stats import truncnorm
 from xpsi.global_imports import _c, _G, _dpr, gravradius, _csq, _km, _2pi, _keV, _k_B, _c_cgs
+from helper_functions import get_keV_from_log10_Kelvin
 
 class CustomPrior(xpsi.Prior):
     """ A custom (joint) prior distribution.
@@ -37,7 +38,7 @@ class CustomPrior(xpsi.Prior):
 
     """
 
-    __derived_names__ = ['compactness']#, 'phase_separation',]
+    __derived_names__ = ['compactness', 'T_else_keV', 'T_in_keV', 'tbb_keV', 'te_keV']#, 'phase_separation',]
     __draws_from_support__ = 4 #10^x
 
     def __call__(self, p = None):
@@ -133,5 +134,9 @@ class CustomPrior(xpsi.Prior):
 
         # compactness ratio M/R_eq
         p += [gravradius(ref['mass']) / ref['radius']]
+        p += [get_keV_from_log10_Kelvin(ref['elsewhere_temperature'])]
+        p += [get_keV_from_log10_Kelvin(ref['T_in'])]
+        p += [ref['p__super_tbb']*511]
+        p += [ref['p__super_te']*511/1000]
 
         return p

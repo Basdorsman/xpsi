@@ -25,7 +25,13 @@ from CustomHotregion import CustomHotRegion_Accreting
 from helper_functions import get_T_in_log10_Kelvin, plot_2D_pulse
 
 class analysis(object):
-    def __init__(self, machine, run_type, bkg, support_factor = "None"):
+    def __init__(self, machine, run_type, bkg, support_factor = "None", scenario = 'None'):
+        self.scenario = os.environ.get('scenario')
+        if os.environ.get('scenario') == None or os.environ.get('scenario') =='None':
+            print('scenario is not in environment variables, using passed argument.')
+            self.scenario=scenario
+        print(f'scenario: {self.scenario}')
+        
         self.machine = os.environ.get('machine')
         if os.environ.get('machine') == None or os.environ.get('machine') =='None':
             print('machine variable is not in environment variables, using passed argument.')
@@ -57,7 +63,7 @@ class analysis(object):
             self.num_leaves = int(os.environ.get('num_leaves'))
         except:
             print('num_leaves from environment variables failed, proceeding with default.')
-            self.num_leaves = 30 # 128
+            self.num_leaves = 30 #128
             pass
         print(f'num_leaves: {self.num_leaves}')
     
@@ -98,7 +104,8 @@ class analysis(object):
                     self.support_factor = support_factor
         elif self.bkg == 'model':
             self.support_factor = 'None'
-        print(f'support_factor: {self.support_factor}')        
+        print(f'support_factor: {self.support_factor}')   
+        
                 
         
         self.integrator = 'azimuthal_invariance' #'general/azimuthal_invariance'
@@ -119,9 +126,12 @@ class analysis(object):
 
     def file_locations(self):
         self.this_directory = this_directory
+        if self.scenario == 'kajava':
+            self.file_pulse_profile = self.this_directory + '/data/J1808_synthetic_kajava_realisation.dat' 
+            
         # self.file_pulse_profile = self.this_directory + '/data/J1808_synthetic_realisation.dat' 
         # self.file_pulse_profile = self.this_directory + '/data/2022_preprocessed.txt' 
-        self.file_pulse_profile = self.this_directory + '/data/2019_preprocessed.txt' 
+        # self.file_pulse_profile = self.this_directory + '/data/2019_preprocessed.txt' 
         
         self.file_arf = self.this_directory + '/../model_data/instrument_data/J1808_NICER_2019/merged_saxj1808_2019_arf_aeff.txt'
         self.file_rmf = self.this_directory + '/../model_data/instrument_data/J1808_NICER_2019/merged_saxj1808_2019_rmf_matrix.txt'
@@ -133,9 +143,10 @@ class analysis(object):
         elif self.machine == 'snellius':
             self.file_atmosphere = self.this_directory + '/../model_data/Bobrikova_compton_slab.npz'
             self.file_interstellar = "/home/dorsman/xpsi-bas-fork/AMXPs/model_data/interstellar/tbnew/tbnew0.14.txt"
-        
-        self.file_bkg = self.this_directory + '/../model_data/synthetic/diskbb_background.txt'
-    
+        if self.scenario == 'kajava':
+            self.file_bkg = self.this_directory + '/data/background_countrate_kajava.txt'
+        # self.file_bkg = self.this_directory + '/../model_data/synthetic/diskbb_background.txt'
+
     def set_bounds(self):
         bounds = {}
         bounds["distance"] = (None, None)
@@ -152,7 +163,7 @@ class analysis(object):
         bounds['interstellar'] = (None, None)
         if self.bkg == 'model':
             bounds['T_in'] = (0.01, 0.6) # keV
-            bounds['R_in'] = (20, 64) # km
+            bounds['R_in'] = (20, 200) # km
            
         self.bounds = bounds
         
@@ -305,7 +316,7 @@ class analysis(object):
                             background = self.background,
                             interstellar = self.interstellar,
                             support = self.support,
-                            cache = False,
+                            cache = True, # only true if verifying code implementation otherwise useless slowdown.
                             bkg = self.bkg,
                             epsrel = 1.0e-8,
                             epsilon = 1.0e-3,
@@ -313,30 +324,32 @@ class analysis(object):
         
         
     def set_parameter_vector(self):
-        # SAX J1808-like 
-        mass = 1.4
-        radius = 12.
-        distance = 3.5
-        inclination = 60
-        cos_i = math.cos(inclination*math.pi/180)
-        phase_shift = 0
-        super_colatitude = 45*math.pi/180 # 20*math.pi/180 #
-        super_radius = 15.5*math.pi/180 #  0.001 #
-
-
-        # Compton slab model parameters
-        tbb=0.0012 # 0.0017 # #0.001 -0.003 Tbb(data) = Tbb(keV)/511keV, 1 keV = 0.002 data
-        te=100. # 50. # 40-200 corresponds to 20-100 keV (Te(data) = Te(keV)*1000/511keV), 50 keV = 100 data
-        tau=1. #0.5 - 3.5 tau = ln(Fin/Fout)
-
-
-        # elsewhere
-        elsewhere_T_keV =  0.4 # 0.5 # keV 
-        elsewhere_T_log10_K = get_T_in_log10_Kelvin(elsewhere_T_keV)
-
-        # source background
-        column_density = 1.17 #10^21 cm^-2
-
+        if self.scenario == 'kajava':
+            mass = 1.4
+            radius = 11
+            distance = 3.5
+            inclination = 58
+            cos_i = math.cos(inclination*math.pi/180)
+            
+            # Hotspot
+            phase_shift = 0.20
+            super_colatitude = 11*math.pi/180 # 20*math.pi/180 # 
+            super_radius = 10*math.pi/180
+            
+            # Compton slab model parameters
+            tbb=0.85/511 # 0.0017 #0.001 -0.003 Tbb(data) = Tbb(keV)/511keV, 1 keV = 0.002 data
+            te=50*1000/511. # 50. # 40-200 corresponds to 20-100 keV (Te(data) = Te(keV)*1000/511keV), 50 keV = 100 data
+            tau=1 #0.5 - 3.5 tau = ln(Fin/Fout)
+            
+            # elsewhere
+            elsewhere_T_keV = 0.5 # 0.5 #  keV 
+            elsewhere_T_log10_K = get_T_in_log10_Kelvin(elsewhere_T_keV)
+            if self.bkg == 'model':
+            # source background
+                diskbb_T_keV = 0.29 # 0.3  #  keV #0.3 keV for Kajava+ 2011
+                diskbb_T_log10_K = get_T_in_log10_Kelvin(diskbb_T_keV)
+                R_in = 55 # 20 #  1 #  km #  for very small diskBB background
+            column_density = 1.13 #10^21 cm^-2
 
         p = [mass, #1.4, #grav mass
               radius,#12.5, #coordinate equatorial radius
@@ -351,24 +364,14 @@ class analysis(object):
               elsewhere_T_log10_K]
 
         if self.bkg == 'model':
-            diskbb_T_keV = 0.25 # 0.3  #  keV #0.3 keV for Kajava+ 2011
-
-            diskbb_T_log10_K = get_T_in_log10_Kelvin(diskbb_T_keV)
             p.append(diskbb_T_log10_K)
-            
-            R_in = 30 # 20 #  1 #  km #  for very small diskBB background
             p.append(R_in)
-            
-
-            # K_disk = get_k_disk(cos_i, R_in, distance)
-            # K_disk = 0
-            # p.append(K_disk)
 
         p.append(column_density)
         self.p = p
     
     def set_prior(self):
-        self.prior = CustomPrior()
+        self.prior = CustomPrior(self.scenario)
         
     def set_likelihood(self):
         self.set_star()
@@ -398,11 +401,18 @@ class analysis(object):
         
         ## 2019 data
         # true_logl = 1.6202395730e+08 # 2019 data, modeled background
-        true_logl= -7.9418857894e+89 # 2019 data, marginalized background
-        
+        # true_logl= -7.9418857894e+89 # 2019 data, marginalized background
         
         ### 2022 data
         # true_logl = 1.1365193823e+08 # 2022 data
+        
+        ### Kajava scenario
+        if self.bkg == 'model':
+            true_logl = 8.0022379204e+08 # int counts, low res
+        if self.bkg == 'marginalise':
+            # true_logl = -8.1994031914e+04 # int counts, low res, no support
+            true_logl = -8.2868888993e+04 # int counts, low res, sf=0.5
+        
         self.true_logl = true_logl
     
     def __call__(self):

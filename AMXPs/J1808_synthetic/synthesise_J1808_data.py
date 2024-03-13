@@ -49,6 +49,7 @@ print('this_directory: ', this_directory)
 
 ################################## SETTINGS ###################################
 
+scenario = 'kajava'
 second = False
 te_index = 0
 
@@ -65,15 +66,15 @@ except:
     machine = "local"
 
 
-
-exposure_time=1.32366e5 ## is the same as Mason 2019
+if scenario == 'kajava':
+    exposure_time=1.32366e5 ## is the same as Mason 2019
 
 print("atmosphere_type:", atmosphere_type)
 print("n_params:", n_params)
 
 ################################## INSTRUMENT #################################
-min_input = 0 # 900 works with channel_low = 120 (1.2 keV). 
-channel_low = 20 # 20 corresponds to 0.2 keV. 
+min_input = 20 # 20 is used with 0.3 keV (channel_low=30). 0 is used with 0.2 keV (channel_low=20). 900 works with channel_low = 120 (1.2 keV). 
+channel_low = 30 # 20 corresponds to 0.2 keV. # 30 corresponds to 0.3 keV
 channel_hi = 600 # 300 corresponds to 3 keV. 600 corresponds to 6 keV (98.7% of total counts retained)
 max_input = 2000 # 1400 works with channel-hi = 300. 2000 works with channel_hi = 600 (6 keV)
 
@@ -119,7 +120,7 @@ kwargs = {'symmetry': 'azimuthal_invariance', #call general integrator instead o
 values = {}
 bounds = dict(super_colatitude = (None, None),
               super_radius = (None, None),
-              phase_shift = (0.0, 0.1))
+              phase_shift = (0., 1.))
 if atmosphere_type=='A':
     bounds['super_tbb'] = (0.001, 0.003)
     bounds['super_tau'] = (0.5, 3.5)
@@ -153,7 +154,7 @@ star = xpsi.Star(spacetime = spacetime, photospheres = photosphere)
 
 #################################### PRIOR ####################################
 
-prior = CustomPrior()
+prior = CustomPrior(scenario)
 
 ################################## INTERSTELLAR ###################################
 if machine=='local':
@@ -200,32 +201,81 @@ for h in hot.objects:
 
 print("Prossecco ...")
 
-# SAX J1808-like 
-mass = 1.4
-radius = 12.
-distance = 3.5
-inclination = 60
-cos_i = math.cos(inclination*math.pi/180)
+# # SAX J1808-like 
+# mass = 1.4
+# radius = 12.
+# distance = 3.5
+# inclination = 60
+# cos_i = math.cos(inclination*math.pi/180)
 
-# Hotspot
-phase_shift = 0
-super_colatitude = 45*math.pi/180 # 20*math.pi/180 # 
-super_radius = 15.5*math.pi/180
+# # Hotspot
+# phase_shift = 0
+# super_colatitude = 45*math.pi/180 # 20*math.pi/180 # 
+# super_radius = 15.5*math.pi/180
+
+# # Compton slab model parameters
+# tbb=0.0012 # 0.0017 #0.001 -0.003 Tbb(data) = Tbb(keV)/511keV, 1 keV = 0.002 data
+# te=100. # 50. # 40-200 corresponds to 20-100 keV (Te(data) = Te(keV)*1000/511keV), 50 keV = 100 data
+# tau=1. #0.5 - 3.5 tau = ln(Fin/Fout)
+
+# # elsewhere
+# elsewhere_T_keV = 0.4 # 0.5 #  keV 
+
+# # source background
+# column_density = 1.17 #10^21 cm^-2
+# diskbb_T_keV = 0.25 # 0.3  #  keV #0.3 keV for Kajava+ 2011
+# R_in = 30 # 20 #  1 #  km #  for very small diskBB background
+
+# SAX J1808-like v2
+# mass = 1.706
+# radius = 8.85
+# distance = 3.4
+# inclination = 8.11
+# cos_i = math.cos(inclination*math.pi/180)
+
+# # Hotspot
+# phase_shift = 0.208
+# super_colatitude = 137.7*math.pi/180 # 20*math.pi/180 # 
+# super_radius = 89.9*math.pi/180
+
+# # Compton slab model parameters
+# tbb=0.868/511 # 0.0017 #0.001 -0.003 Tbb(data) = Tbb(keV)/511keV, 1 keV = 0.002 data
+# te=101.9*1000/511. # 50. # 40-200 corresponds to 20-100 keV (Te(data) = Te(keV)*1000/511keV), 50 keV = 100 data
+# tau=0.785 #0.5 - 3.5 tau = ln(Fin/Fout)
+
+# # elsewhere
+# elsewhere_T_keV = 0.453 # 0.5 #  keV 
+
+# # source background
+# column_density = 0.959 #10^21 cm^-2
+# diskbb_T_keV = 0.116 # 0.3  #  keV #0.3 keV for Kajava+ 2011
+# R_in = 64 # 20 #  1 #  km #  for very small diskBB background
 
 
-
-# Compton slab model parameters
-tbb=0.0012 # 0.0017 #0.001 -0.003 Tbb(data) = Tbb(keV)/511keV, 1 keV = 0.002 data
-te=100. # 50. # 40-200 corresponds to 20-100 keV (Te(data) = Te(keV)*1000/511keV), 50 keV = 100 data
-tau=1. #0.5 - 3.5 tau = ln(Fin/Fout)
-
-# elsewhere
-elsewhere_T_keV = 0.4 # 0.5 #  keV 
-
-# source background
-column_density = 1.17 #10^21 cm^-2
-diskbb_T_keV = 0.25 # 0.3  #  keV #0.3 keV for Kajava+ 2011
-R_in = 30 # 20 #  1 #  km #  for very small diskBB background
+if scenario == 'kajava':
+    mass = 1.4
+    radius = 11
+    distance = 3.5
+    inclination = 58
+    cos_i = math.cos(inclination*math.pi/180)
+    
+    # Hotspot
+    phase_shift = 0.20
+    super_colatitude = 11*math.pi/180 # 20*math.pi/180 # 
+    super_radius = 10*math.pi/180
+    
+    # Compton slab model parameters
+    tbb=0.85/511 # 0.0017 #0.001 -0.003 Tbb(data) = Tbb(keV)/511keV, 1 keV = 0.002 data
+    te=50*1000/511. # 50. # 40-200 corresponds to 20-100 keV (Te(data) = Te(keV)*1000/511keV), 50 keV = 100 data
+    tau=1 #0.5 - 3.5 tau = ln(Fin/Fout)
+    
+    # elsewhere
+    elsewhere_T_keV = 0.5 # 0.5 #  keV 
+    
+    # source background
+    column_density = 1.13 #10^21 cm^-2
+    diskbb_T_keV = 0.29 # 0.3  #  keV #0.3 keV for Kajava+ 2011
+    R_in = 55 # 20 #  1 #  km #  for very small diskBB background
 
 p = [mass, #1.4, #grav mass
       radius,#12.5, #coordinate equatorial radius
@@ -245,19 +295,22 @@ p.append(elsewhere_T_log10_K) # 10^x Kelvin
 diskbb_T_log10_K = get_T_in_log10_Kelvin(diskbb_T_keV)
 p.append(diskbb_T_log10_K)
 
-# K_disk = cos_i*(r_in/(distance/10))**2  # (km / 10 kpc)^2
-# K_disk = 0
+
 p.append(R_in)
 
 if isinstance(interstellar, xpsi.Interstellar):
 
     p.append(column_density)
 
-Instrument_kwargs = dict(exposure_time=exposure_time,
-                         name='J1808_synthetic',
-                         directory='./data/')
+if scenario=='kajava':
+    Instrument_kwargs = dict(exposure_time=exposure_time,
+                             name='J1808_synthetic_kajava',
+                             directory='./data/')
 
 likelihood.synthesise(p, force=True, Instrument=Instrument_kwargs) 
+
+
+np.savetxt(f'data/background_countrate_{scenario}.txt', np.sum(background.registered_background, axis=1))
 
 print("Done !")
 

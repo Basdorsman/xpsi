@@ -37,7 +37,7 @@ class CustomSignal(xpsi.Signal):
 
         self.bkg = bkg
         self.allow_negative_background = allow_negative_background
-        self.background_data = np.loadtxt(this_directory+'/data/J1808_synthetic_diskbb_background.txt')
+        #self.background_data = np.loadtxt(this_directory+'/data/J1808_synthetic_diskbb_background.txt')
 
         try:
             self._precomp = precomputation(self._data.counts.astype(np.int32))
@@ -189,9 +189,14 @@ class CustomSignal(xpsi.Signal):
                 if self._interstellar is not None:
                     self._interstellar(self._energy_mids, integrated)
 
+                if self.cache:
+                    self.incident_flux_attenuated = integrated.copy()
+
                 self.signals = self._instrument(integrated,
                                                 self._input_interval_range,
                                                 self._data.index_range)
+                
+
 
             if self._background is not None:
                 try:
@@ -237,14 +242,14 @@ class CustomSignal(xpsi.Signal):
                 raise
 
             # POISSON NOISE
-            # np.savetxt(os.path.join(directory, name+'_realisation.dat'),
-            #             synthetic,
-            #             fmt = '%u')
+            np.savetxt(os.path.join(directory, name+'_realisation.dat'),
+                        np.round(synthetic),
+                        fmt = '%u')
             
             #NO NOISE, FLOATS
-            np.savetxt(os.path.join(directory, name+'_realisation.dat'),
-                        self._expected_counts,
-                        fmt = '%f')
+            # np.savetxt(os.path.join(directory, name+'_realisation.dat'),
+            #             self._expected_counts,
+            #             fmt = '%f')
             
             # NO NOISE, WHOLE COUNTS
             # np.savetxt(os.path.join(directory, name+'_realisation.dat'),

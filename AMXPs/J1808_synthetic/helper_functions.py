@@ -64,10 +64,6 @@ def get_keV_from_log10_Kelvin(T_log10_Kelvin):
   else:
     raise ValueError("Input must be a scalar or a tuple.")
 
-# Example usage
-T_keV = get_keV_from_log10_Kelvin(5)
-print(T_keV)  # Output: 100000.0
-
 def get_mids_from_edges(edges):
     mids_len = len(edges)-1
     mids = np.empty(mids_len)

@@ -40,6 +40,10 @@ class CustomPrior(xpsi.Prior):
 
     __derived_names__ = ['compactness', 'T_else_keV', 'T_in_keV', 'tbb_keV', 'te_keV']#, 'phase_separation',]
     __draws_from_support__ = 4 #10^x
+    
+    def __init__(self, scenario, *args, **kwargs):
+        self.scenario = scenario
+        super(CustomPrior, self).__init__(*args, **kwargs)
 
     def __call__(self, p = None):
         """ Evaluate distribution at ``p``.
@@ -94,17 +98,17 @@ class CustomPrior(xpsi.Prior):
         ref = self.parameters # shortcut
         
 
-        idx = ref.index('column_density')
-        
-        temporary = truncnorm.ppf(hypercube[idx], -5.0, 5.0, loc=1.17, scale=0.2)
-        if temporary < 0: temporary = 0
-        ref['column_density'] = temporary
-
-        idx = ref.index('distance')
-        
-        temporary = truncnorm.ppf(hypercube[idx], -5.0, 5.0, loc=2.7, scale=0.3)
-        if temporary < 0: temporary = 0
-        ref['distance'] = temporary
+        if self.scenario == 'kajava':
+            idx = ref.index('column_density')
+            temporary = truncnorm.ppf(hypercube[idx], -5.0, 5.0, loc=1.13, scale=0.2)
+            if temporary < 0: temporary = 0
+            ref['column_density'] = temporary
+    
+            idx = ref.index('distance')
+            
+            temporary = truncnorm.ppf(hypercube[idx], -5.0, 5.0, loc=3.5, scale=0.3)
+            if temporary < 0: temporary = 0
+            ref['distance'] = temporary
 
         # flat priors in cosine of hot region centre colatitudes (isotropy)
         # support modified by no-overlap rejection condition

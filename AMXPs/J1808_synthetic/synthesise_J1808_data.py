@@ -316,7 +316,8 @@ print("Done !")
 
 ########## DATA PLOT ###############
 
-my_data=np.loadtxt('./data/J1808_synthetic_realisation.dat'.format(atmosphere_type, n_params))
+if scenario == 'kajava':
+    my_data=np.loadtxt('./data/J1808_synthetic_kajava_realisation.dat'.format(atmosphere_type, n_params))
 
 
 figstring = f'J1808_synthetic_realisation_exp_time={exposure_time}.png'

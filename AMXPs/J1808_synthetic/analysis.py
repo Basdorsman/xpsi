@@ -99,8 +99,8 @@ class analysis(object):
 
         if self.bkg == 'marginalise':
                 self.support_factor = os.environ.get('support_factor')
-                if os.environ.get('support_factor') == None or os.environ.get('support_factor') == 'None':
-                    print(f'support_factor is taken from passed or default argument: {support_factor}')
+                if os.environ.get('support_factor') == None: #or os.environ.get('support_factor') == 'None':
+                    print(f'No support_factor in os. Taken from passed or default argument: {support_factor}')
                     self.support_factor = support_factor
         elif self.bkg == 'model':
             self.support_factor = 'None'
@@ -162,9 +162,13 @@ class analysis(object):
         bounds['elsewhere_temperature'] = (5.0,7.0) #log10 K
         bounds['interstellar'] = (None, None)
         if self.bkg == 'model':
-            bounds['T_in'] = (0.01, 0.6) # keV
-            bounds['R_in'] = (20, 200) # km
-           
+            #bounds['T_in'] = (0.01, 0.6) # keV
+            #bounds['R_in'] = (20, 200) # km
+            #tight bounds
+            bounds['T_in'] = (0.289, 0.291) # keV
+            bounds['R_in'] = (54.9, 55.1) #km
+
+
         self.bounds = bounds
         
     def set_values(self):
@@ -409,10 +413,15 @@ class analysis(object):
         ### Kajava scenario
         if self.bkg == 'model':
             true_logl = 8.0022379204e+08 # int counts, low res
-        if self.bkg == 'marginalise':
-            # true_logl = -8.1994031914e+04 # int counts, low res, no support
-            true_logl = -8.2868888993e+04 # int counts, low res, sf=0.5
-        
+        elif self.bkg == 'marginalise':
+            if self.support_factor == 'None':
+                true_logl = -8.1994031914e+04 # int counts, low res, no support
+            elif self.support_factor == '5e-1':
+                true_logl = -8.2868888993e+04 # int counts, low res, sf=0.5
+            elif self.support_factor == '1e-3':
+                true_logl = -8.5416802395e+04
+            else:
+                true_logl = 0
         self.true_logl = true_logl
     
     def __call__(self):

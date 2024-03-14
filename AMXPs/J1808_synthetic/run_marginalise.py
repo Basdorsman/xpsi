@@ -7,7 +7,15 @@ Created on Tue Feb 27 09:45:17 2024
 """
 
 from analysis import analysis
+import os
 
-myAnalysis = analysis('local','test', 'marginalise', support_factor=0.5, scenario='kajava')
+support_factor = os.environ.get('support_factor')
+if os.environ.get('support_factor') == None:
+    print('no support_factor passed')
+
+
+
+
+myAnalysis = analysis('local','test', 'marginalise', support_factor=support_factor, scenario='kajava')
 myAnalysis()
 

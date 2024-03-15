@@ -316,7 +316,10 @@ print("Done !")
 
 ########## DATA PLOT ###############
 
+
 my_data=np.loadtxt(f'./data/J1808_synthetic_{scenario}_realisation.dat')
+
+
 
 
 figstring = f'J1808_synthetic_realisation_exp_time={exposure_time}.png'

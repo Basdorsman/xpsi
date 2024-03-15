@@ -100,8 +100,8 @@ class analysis(object):
 
         if self.bkg == 'marginalise':
                 self.support_factor = os.environ.get('support_factor')
-                if os.environ.get('support_factor') == None or os.environ.get('support_factor') == 'None':
-                    print(f'support_factor is taken from passed or default argument: {support_factor}')
+                if os.environ.get('support_factor') == None: #or os.environ.get('support_factor') == 'None':
+                    print(f'No support_factor in os. Taken from passed or default argument: {support_factor}')
                     self.support_factor = support_factor
         elif self.bkg == 'model' or self.bkg == 'fix':
             self.support_factor = 'None'
@@ -152,6 +152,7 @@ class analysis(object):
 
     def set_bounds(self):
         self.bounds = self.pv.bounds()
+
         
     def set_values(self):
         values = {}
@@ -355,7 +356,7 @@ class analysis(object):
         
         ### 2022 data
         # true_logl = 1.1365193823e+08 # 2022 data
-        
+
         if self.scenario == 'kajava':
             if self.bkg == 'model':
                 true_logl = 8.0022379204e+08 # int counts, low res
@@ -364,8 +365,10 @@ class analysis(object):
                     true_logl = -8.1994031914e+04 # int counts, low res, no support
                 elif self.support_factor == '5e-1':
                     true_logl = -8.2868888993e+04 # int counts, low res, sf=0.5
-
-        
+                elif self.support_factor == '1e-3':
+                    true_logl = -8.5416802395e+04
+                else:
+                    true_logl = 0
         self.true_logl = true_logl
     
     def __call__(self):

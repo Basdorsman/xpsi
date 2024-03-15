@@ -43,6 +43,7 @@ from CustomSignal import CustomSignal
 from CustomHotregion import CustomHotRegion_Accreting
 
 from helper_functions import get_T_in_log10_Kelvin, plot_2D_pulse
+from parameter_values import parameter_values
 
 this_directory = os.path.dirname(os.path.abspath(__file__))
 print('this_directory: ', this_directory)
@@ -50,6 +51,10 @@ print('this_directory: ', this_directory)
 ################################## SETTINGS ###################################
 
 scenario = 'literature' # 'kajava'
+bkg = 'model'
+pv = parameter_values(scenario, bkg)
+
+
 second = False
 te_index = 0
 
@@ -202,106 +207,7 @@ for h in hot.objects:
 
 print("Prossecco ...")
 
-if scenario == 'literature':
-    mass = 1.4
-    radius = 12.
-    distance = 3.5
-    inclination = 60
-    cos_i = math.cos(inclination*math.pi/180)
-    
-    # Hotspot
-    phase_shift = 0
-    super_colatitude = 45*math.pi/180 # 20*math.pi/180 # 
-    super_radius = 15.5*math.pi/180
-    
-    # Compton slab model parameters
-    tbb=0.0012 # 0.0017 #0.001 -0.003 Tbb(data) = Tbb(keV)/511keV, 1 keV = 0.002 data
-    te=100. # 50. # 40-200 corresponds to 20-100 keV (Te(data) = Te(keV)*1000/511keV), 50 keV = 100 data
-    tau=1. #0.5 - 3.5 tau = ln(Fin/Fout)
-    
-    # elsewhere
-    elsewhere_T_keV = 0.4 # 0.5 #  keV 
-    
-    # source background
-    column_density = 1.17 #10^21 cm^-2
-    diskbb_T_keV = 0.25 # 0.3  #  keV #0.3 keV for Kajava+ 2011
-    R_in = 30 # 20 #  1 #  km #  for very small diskBB background
-
-# SAX J1808-like v2
-# mass = 1.706
-# radius = 8.85
-# distance = 3.4
-# inclination = 8.11
-# cos_i = math.cos(inclination*math.pi/180)
-
-# # Hotspot
-# phase_shift = 0.208
-# super_colatitude = 137.7*math.pi/180 # 20*math.pi/180 # 
-# super_radius = 89.9*math.pi/180
-
-# # Compton slab model parameters
-# tbb=0.868/511 # 0.0017 #0.001 -0.003 Tbb(data) = Tbb(keV)/511keV, 1 keV = 0.002 data
-# te=101.9*1000/511. # 50. # 40-200 corresponds to 20-100 keV (Te(data) = Te(keV)*1000/511keV), 50 keV = 100 data
-# tau=0.785 #0.5 - 3.5 tau = ln(Fin/Fout)
-
-# # elsewhere
-# elsewhere_T_keV = 0.453 # 0.5 #  keV 
-
-# # source background
-# column_density = 0.959 #10^21 cm^-2
-# diskbb_T_keV = 0.116 # 0.3  #  keV #0.3 keV for Kajava+ 2011
-# R_in = 64 # 20 #  1 #  km #  for very small diskBB background
-
-
-if scenario == 'kajava':
-    mass = 1.4
-    radius = 11
-    distance = 3.5
-    inclination = 58
-    cos_i = math.cos(inclination*math.pi/180)
-    
-    # Hotspot
-    phase_shift = 0.20
-    super_colatitude = 11*math.pi/180 # 20*math.pi/180 # 
-    super_radius = 10*math.pi/180
-    
-    # Compton slab model parameters
-    tbb=0.85/511 # 0.0017 #0.001 -0.003 Tbb(data) = Tbb(keV)/511keV, 1 keV = 0.002 data
-    te=50*1000/511. # 50. # 40-200 corresponds to 20-100 keV (Te(data) = Te(keV)*1000/511keV), 50 keV = 100 data
-    tau=1 #0.5 - 3.5 tau = ln(Fin/Fout)
-    
-    # elsewhere
-    elsewhere_T_keV = 0.5 # 0.5 #  keV 
-    
-    # source background
-    column_density = 1.13 #10^21 cm^-2
-    diskbb_T_keV = 0.29 # 0.3  #  keV #0.3 keV for Kajava+ 2011
-    R_in = 55 # 20 #  1 #  km #  for very small diskBB background
-
-p = [mass, #1.4, #grav mass
-      radius,#12.5, #coordinate equatorial radius
-      distance, # earth distance kpc
-      cos_i, #cosine of earth inclination
-      phase_shift, #phase of hotregion
-      super_colatitude, #colatitude of centre of superseding region
-      super_radius,  #angular radius superceding region
-      tbb,
-      te,
-      tau
-      ]
-
-elsewhere_T_log10_K = get_T_in_log10_Kelvin(elsewhere_T_keV)
-p.append(elsewhere_T_log10_K) # 10^x Kelvin
-
-diskbb_T_log10_K = get_T_in_log10_Kelvin(diskbb_T_keV)
-p.append(diskbb_T_log10_K)
-
-
-p.append(R_in)
-
-if isinstance(interstellar, xpsi.Interstellar):
-    p.append(column_density)
-
+p = pv.p()
 
 Instrument_kwargs = dict(exposure_time=exposure_time,
                          name=f'J1808_synthetic_{scenario}',
@@ -348,7 +254,7 @@ fig2,ax2 = plot_2D_pulse((photosphere.signal[0][0],),
               res=int(30*num_rotations))
 
 
-ax2.set_title('atm={} params={} te={:.2e} [keV], tbb={:.2e} [keV], tau={:.2e} [-]'.format(atmosphere_type, n_params, te*0.511, tbb*511, tau), loc='center') #unit conversion te and tbb is different due to a cluster leftover according to Anna B.
+# ax2.set_title('atm={} params={} te={:.2e} [keV], tbb={:.2e} [keV], tau={:.2e} [-]'.format(atmosphere_type, n_params, te*0.511, tbb*511, tau), loc='center') #unit conversion te and tbb is different due to a cluster leftover according to Anna B.
 
 
 fig2.savefig('./plots/J1808.png')

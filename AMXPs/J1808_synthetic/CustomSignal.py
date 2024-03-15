@@ -37,7 +37,8 @@ class CustomSignal(xpsi.Signal):
 
         self.bkg = bkg
         self.allow_negative_background = allow_negative_background
-        #self.background_data = np.loadtxt(this_directory+'/data/J1808_synthetic_diskbb_background.txt')
+        if self.bkg == 'fix':
+            self.background_data = np.loadtxt(this_directory+'/data/J1808_synthetic_diskbb_background.txt')
 
         try:
             self._precomp = precomputation(self._data.counts.astype(np.int32))
@@ -96,6 +97,17 @@ class CustomSignal(xpsi.Signal):
                                                     self._phases,
                                                     self._shifts,
                                                     self._background.registered_background,
+                                                    allow_negative = False)
+        
+        elif self.bkg == 'fix':
+            self.loglikelihood, self.loglikelihood_array, self.expected_counts, self.signal_from_star = \
+                poisson_likelihood_given_background(self._data.exposure_time, 
+                                                    self._data.phases, 
+                                                    self._data.counts,
+                                                    self._signals,
+                                                    self._phases,
+                                                    self._shifts,
+                                                    self.background_data,
                                                     allow_negative = False)
             #print(f'loglikelihood: {self.loglikelihood}', flush=True)
         else:
@@ -242,14 +254,14 @@ class CustomSignal(xpsi.Signal):
                 raise
 
             # POISSON NOISE
-            np.savetxt(os.path.join(directory, name+'_realisation.dat'),
-                        np.round(synthetic),
-                        fmt = '%u')
+            # np.savetxt(os.path.join(directory, name+'_realisation.dat'),
+            #             np.round(synthetic),
+            #             fmt = '%u')
             
             #NO NOISE, FLOATS
-            # np.savetxt(os.path.join(directory, name+'_realisation.dat'),
-            #             self._expected_counts,
-            #             fmt = '%f')
+            np.savetxt(os.path.join(directory, name+'_realisation.dat'),
+                        self._expected_counts,
+                        fmt = '%f')
             
             # NO NOISE, WHOLE COUNTS
             # np.savetxt(os.path.join(directory, name+'_realisation.dat'),

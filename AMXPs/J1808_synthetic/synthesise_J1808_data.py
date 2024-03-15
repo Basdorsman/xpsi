@@ -49,7 +49,7 @@ print('this_directory: ', this_directory)
 
 ################################## SETTINGS ###################################
 
-scenario = 'kajava'
+scenario = 'literature' # 'kajava'
 second = False
 te_index = 0
 
@@ -66,17 +66,18 @@ except:
     machine = "local"
 
 
-if scenario == 'kajava':
+if scenario == 'kajava' or scenario == 'literature':
     exposure_time=1.32366e5 ## is the same as Mason 2019
 
 print("atmosphere_type:", atmosphere_type)
 print("n_params:", n_params)
 
 ################################## INSTRUMENT #################################
-min_input = 20 # 20 is used with 0.3 keV (channel_low=30). 0 is used with 0.2 keV (channel_low=20). 900 works with channel_low = 120 (1.2 keV). 
-channel_low = 30 # 20 corresponds to 0.2 keV. # 30 corresponds to 0.3 keV
-channel_hi = 600 # 300 corresponds to 3 keV. 600 corresponds to 6 keV (98.7% of total counts retained)
-max_input = 2000 # 1400 works with channel-hi = 300. 2000 works with channel_hi = 600 (6 keV)
+
+min_input = 0 # 20 is used with 0.3 keV (channel_low=30). 0 is used with 0.2 keV (channel_low=20). 900 works with channel_low = 120 (1.2 keV). 
+channel_low = 20 # 20 corresponds to 0.2 keV. # 30 corresponds to 0.3 keV
+channel_hi = 300 # 300 corresponds to 3 keV. 600 corresponds to 6 keV (98.7% of total counts retained)
+max_input = 1400 # 1400 works with channel-hi = 300. 2000 works with channel_hi = 600 (6 keV)
 
 ARF_file=this_directory + '/../model_data/instrument_data/J1808_NICER_2019/merged_saxj1808_2019_arf_aeff.txt'
 RMF_file=this_directory + '/../model_data/instrument_data/J1808_NICER_2019/merged_saxj1808_2019_rmf_matrix.txt'
@@ -154,7 +155,7 @@ star = xpsi.Star(spacetime = spacetime, photospheres = photosphere)
 
 #################################### PRIOR ####################################
 
-prior = CustomPrior(scenario)
+prior = CustomPrior(scenario, 'model')
 
 ################################## INTERSTELLAR ###################################
 if machine=='local':
@@ -201,30 +202,30 @@ for h in hot.objects:
 
 print("Prossecco ...")
 
-# # SAX J1808-like 
-# mass = 1.4
-# radius = 12.
-# distance = 3.5
-# inclination = 60
-# cos_i = math.cos(inclination*math.pi/180)
-
-# # Hotspot
-# phase_shift = 0
-# super_colatitude = 45*math.pi/180 # 20*math.pi/180 # 
-# super_radius = 15.5*math.pi/180
-
-# # Compton slab model parameters
-# tbb=0.0012 # 0.0017 #0.001 -0.003 Tbb(data) = Tbb(keV)/511keV, 1 keV = 0.002 data
-# te=100. # 50. # 40-200 corresponds to 20-100 keV (Te(data) = Te(keV)*1000/511keV), 50 keV = 100 data
-# tau=1. #0.5 - 3.5 tau = ln(Fin/Fout)
-
-# # elsewhere
-# elsewhere_T_keV = 0.4 # 0.5 #  keV 
-
-# # source background
-# column_density = 1.17 #10^21 cm^-2
-# diskbb_T_keV = 0.25 # 0.3  #  keV #0.3 keV for Kajava+ 2011
-# R_in = 30 # 20 #  1 #  km #  for very small diskBB background
+if scenario == 'literature':
+    mass = 1.4
+    radius = 12.
+    distance = 3.5
+    inclination = 60
+    cos_i = math.cos(inclination*math.pi/180)
+    
+    # Hotspot
+    phase_shift = 0
+    super_colatitude = 45*math.pi/180 # 20*math.pi/180 # 
+    super_radius = 15.5*math.pi/180
+    
+    # Compton slab model parameters
+    tbb=0.0012 # 0.0017 #0.001 -0.003 Tbb(data) = Tbb(keV)/511keV, 1 keV = 0.002 data
+    te=100. # 50. # 40-200 corresponds to 20-100 keV (Te(data) = Te(keV)*1000/511keV), 50 keV = 100 data
+    tau=1. #0.5 - 3.5 tau = ln(Fin/Fout)
+    
+    # elsewhere
+    elsewhere_T_keV = 0.4 # 0.5 #  keV 
+    
+    # source background
+    column_density = 1.17 #10^21 cm^-2
+    diskbb_T_keV = 0.25 # 0.3  #  keV #0.3 keV for Kajava+ 2011
+    R_in = 30 # 20 #  1 #  km #  for very small diskBB background
 
 # SAX J1808-like v2
 # mass = 1.706
@@ -299,13 +300,12 @@ p.append(diskbb_T_log10_K)
 p.append(R_in)
 
 if isinstance(interstellar, xpsi.Interstellar):
-
     p.append(column_density)
 
-if scenario=='kajava':
-    Instrument_kwargs = dict(exposure_time=exposure_time,
-                             name='J1808_synthetic_kajava',
-                             directory='./data/')
+
+Instrument_kwargs = dict(exposure_time=exposure_time,
+                         name=f'J1808_synthetic_{scenario}',
+                         directory='./data/')
 
 likelihood.synthesise(p, force=True, Instrument=Instrument_kwargs) 
 
@@ -316,7 +316,7 @@ print("Done !")
 
 ########## DATA PLOT ###############
 
-my_data=np.loadtxt('./data/J1808_synthetic_realisation.dat'.format(atmosphere_type, n_params))
+my_data=np.loadtxt(f'./data/J1808_synthetic_{scenario}_realisation.dat')
 
 
 figstring = f'J1808_synthetic_realisation_exp_time={exposure_time}.png'

@@ -80,6 +80,17 @@ def poisson_likelihood_given_background(double exposure_time,
         expected count numbers in joint phase-channel intervals from the star
         (the target source).
 
+    Notes from Bas:
+        background is constant. But the flux was divided by number of 
+        data-phases such that the total counts summed over data-phases is the
+        correct total counts.
+
+        components is not constant. These are signal at each simulation-phase
+        point. Here they are gsl_interp_eval_integ (i.e. integrated) between 
+        data-phase edges, such that STAR[i,j] is indeed the counts in each 
+        data-phase (and energy) bin. So if you want the total counts you can do
+        a Riemann sum or integrate.
+
     """
 
     cdef:

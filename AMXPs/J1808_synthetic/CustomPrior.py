@@ -41,8 +41,9 @@ class CustomPrior(xpsi.Prior):
     __derived_names__ = ['compactness', 'T_else_keV', 'T_in_keV', 'tbb_keV', 'te_keV']#, 'phase_separation',]
     __draws_from_support__ = 4 #10^x
     
-    def __init__(self, scenario, *args, **kwargs):
+    def __init__(self, scenario, bkg, *args, **kwargs):
         self.scenario = scenario
+        self.bkg = bkg
         super(CustomPrior, self).__init__(*args, **kwargs)
 
     def __call__(self, p = None):
@@ -97,6 +98,11 @@ class CustomPrior(xpsi.Prior):
 
         ref = self.parameters # shortcut
         
+        if self.scenario == 'literature':
+            idx = ref.index('column_density')
+            temporary = truncnorm.ppf(hypercube[idx], -5.0, 5.0, loc=1.17, scale=0.2)
+            if temporary < 0: temporary = 0
+            ref['column_density'] = temporary
 
         if self.scenario == 'kajava':
             idx = ref.index('column_density')
@@ -104,11 +110,10 @@ class CustomPrior(xpsi.Prior):
             if temporary < 0: temporary = 0
             ref['column_density'] = temporary
     
-            idx = ref.index('distance')
-            
-            temporary = truncnorm.ppf(hypercube[idx], -5.0, 5.0, loc=3.5, scale=0.3)
-            if temporary < 0: temporary = 0
-            ref['distance'] = temporary
+        # idx = ref.index('distance')
+        # temporary = truncnorm.ppf(hypercube[idx], -5.0, 5.0, loc=3.5, scale=0.3)
+        # if temporary < 0: temporary = 0
+        # ref['distance'] = temporary
 
         # flat priors in cosine of hot region centre colatitudes (isotropy)
         # support modified by no-overlap rejection condition
@@ -139,8 +144,10 @@ class CustomPrior(xpsi.Prior):
         # compactness ratio M/R_eq
         p += [gravradius(ref['mass']) / ref['radius']]
         p += [get_keV_from_log10_Kelvin(ref['elsewhere_temperature'])]
-        p += [get_keV_from_log10_Kelvin(ref['T_in'])]
+        if self.bkg == 'model':
+            p += [get_keV_from_log10_Kelvin(ref['T_in'])]
         p += [ref['p__super_tbb']*511]
         p += [ref['p__super_te']*511/1000]
+        
 
         return p

@@ -22,6 +22,7 @@ from CustomInterstellar import CustomInterstellar
 from CustomSignal import CustomSignal
 from CustomHotregion import CustomHotRegion_Accreting
 
+from parameter_values import parameter_values
 from helper_functions import get_T_in_log10_Kelvin, plot_2D_pulse
 
 class analysis(object):
@@ -102,7 +103,7 @@ class analysis(object):
                 if os.environ.get('support_factor') == None or os.environ.get('support_factor') == 'None':
                     print(f'support_factor is taken from passed or default argument: {support_factor}')
                     self.support_factor = support_factor
-        elif self.bkg == 'model':
+        elif self.bkg == 'model' or self.bkg == 'fix':
             self.support_factor = 'None'
         print(f'support_factor: {self.support_factor}')   
         
@@ -110,6 +111,9 @@ class analysis(object):
         
         self.integrator = 'azimuthal_invariance' #'general/azimuthal_invariance'
         self.interpolator = 'split' #'split/combined'
+        
+
+        self.pv = parameter_values(self.scenario, self.bkg)
     
         self.file_locations()
         self.set_bounds()
@@ -126,10 +130,9 @@ class analysis(object):
 
     def file_locations(self):
         self.this_directory = this_directory
-        if self.scenario == 'kajava':
-            self.file_pulse_profile = self.this_directory + '/data/J1808_synthetic_kajava_realisation.dat' 
-            
-        # self.file_pulse_profile = self.this_directory + '/data/J1808_synthetic_realisation.dat' 
+        if self.scenario == 'kajava' or self.scenario == 'literature':
+            self.file_pulse_profile = self.this_directory + f'/data/J1808_synthetic_{self.scenario}_realisation.dat' 
+
         # self.file_pulse_profile = self.this_directory + '/data/2022_preprocessed.txt' 
         # self.file_pulse_profile = self.this_directory + '/data/2019_preprocessed.txt' 
         
@@ -143,29 +146,12 @@ class analysis(object):
         elif self.machine == 'snellius':
             self.file_atmosphere = self.this_directory + '/../model_data/Bobrikova_compton_slab.npz'
             self.file_interstellar = "/home/dorsman/xpsi-bas-fork/AMXPs/model_data/interstellar/tbnew/tbnew0.14.txt"
-        if self.scenario == 'kajava':
-            self.file_bkg = self.this_directory + '/data/background_countrate_kajava.txt'
+        if self.scenario == 'kajava' or self.scenario == 'literature':
+            self.file_bkg = self.this_directory + f'/data/background_countrate_{self.scenario}.txt'
         # self.file_bkg = self.this_directory + '/../model_data/synthetic/diskbb_background.txt'
 
     def set_bounds(self):
-        bounds = {}
-        bounds["distance"] = (None, None)
-        bounds["cos_i"] = (0.15, 1.0) #updated lower limit due to lack of eclipses, chakrabarty & Morgan 1998
-        bounds["mass"] = (1.0, 3.0)
-        bounds["radius"] = (3.0 * gravradius(1.0), 16.0)     # equatorial radius
-        bounds["super_colatitude"] = (None, None)
-        bounds["super_radius"] = (None, None)
-        bounds["phase_shift"] = (-0.25, 0.75)
-        bounds['super_tbb'] = (0.001, 0.003)
-        bounds['super_tau'] = (0.5, 3.5)
-        bounds['super_te'] = (40., 200.)
-        bounds['elsewhere_temperature'] = (5.0,7.0) #log10 K
-        bounds['interstellar'] = (None, None)
-        if self.bkg == 'model':
-            bounds['T_in'] = (0.01, 0.6) # keV
-            bounds['R_in'] = (20, 200) # km
-           
-        self.bounds = bounds
+        self.bounds = self.pv.bounds()
         
     def set_values(self):
         values = {}
@@ -177,10 +163,10 @@ class analysis(object):
         # self.exposure_time = 7.13422e4 #Mason's 2022 data cut
         self.phases_space = np.linspace(0.0, 1.0, 33)
 
-        self.min_input = 20 # 20 is used with 0.3 keV (channel_low=30). 0 is used with 0.2 keV (channel_low=20). 900 works with channel_low = 120 (1.2 keV). 
-        self.channel_low = 30 # 20 corresponds to 0.2 keV. # 30 corresponds to 0.3 keV
-        self.channel_hi = 600 # 300 corresponds to 3 keV. 600 corresponds to 6 keV (98.7% of total counts retained)
-        self.max_input = 2000 # 1400 works with channel-hi = 300. 2000 works with channel_hi = 600 (6 keV)
+        self.min_input = 0 # 20 is used with 0.3 keV (channel_low=30). 0 is used with 0.2 keV (channel_low=20). 900 works with channel_low = 120 (1.2 keV). 
+        self.channel_low = 20 # 20 corresponds to 0.2 keV. # 30 corresponds to 0.3 keV
+        self.channel_hi = 300 # 300 corresponds to 3 keV. 600 corresponds to 6 keV (98.7% of total counts retained)
+        self.max_input = 1400 # 1400 works with channel-hi = 300. 2000 works with channel_hi = 600 (6 keV)
 
 
 
@@ -300,7 +286,7 @@ class analysis(object):
             k_disk.star = self.star
             k_disk.background = self.background
             
-        elif self.bkg == 'marginalise':
+        elif self.bkg == 'marginalise' or self.bkg == 'fix':
             self.background = None
         else:
             print('error! bkg must be either model or marginalised.')
@@ -324,54 +310,10 @@ class analysis(object):
         
         
     def set_parameter_vector(self):
-        if self.scenario == 'kajava':
-            mass = 1.4
-            radius = 11
-            distance = 3.5
-            inclination = 58
-            cos_i = math.cos(inclination*math.pi/180)
-            
-            # Hotspot
-            phase_shift = 0.20
-            super_colatitude = 11*math.pi/180 # 20*math.pi/180 # 
-            super_radius = 10*math.pi/180
-            
-            # Compton slab model parameters
-            tbb=0.85/511 # 0.0017 #0.001 -0.003 Tbb(data) = Tbb(keV)/511keV, 1 keV = 0.002 data
-            te=50*1000/511. # 50. # 40-200 corresponds to 20-100 keV (Te(data) = Te(keV)*1000/511keV), 50 keV = 100 data
-            tau=1 #0.5 - 3.5 tau = ln(Fin/Fout)
-            
-            # elsewhere
-            elsewhere_T_keV = 0.5 # 0.5 #  keV 
-            elsewhere_T_log10_K = get_T_in_log10_Kelvin(elsewhere_T_keV)
-            if self.bkg == 'model':
-            # source background
-                diskbb_T_keV = 0.29 # 0.3  #  keV #0.3 keV for Kajava+ 2011
-                diskbb_T_log10_K = get_T_in_log10_Kelvin(diskbb_T_keV)
-                R_in = 55 # 20 #  1 #  km #  for very small diskBB background
-            column_density = 1.13 #10^21 cm^-2
-
-        p = [mass, #1.4, #grav mass
-              radius,#12.5, #coordinate equatorial radius
-              distance, # earth distance kpc
-              cos_i, #cosine of earth inclination
-              phase_shift, #phase of hotregion
-              super_colatitude, #colatitude of centre of superseding region
-              super_radius,  #angular radius superceding region
-              tbb,
-              te,
-              tau,
-              elsewhere_T_log10_K]
-
-        if self.bkg == 'model':
-            p.append(diskbb_T_log10_K)
-            p.append(R_in)
-
-        p.append(column_density)
-        self.p = p
+        self.p = self.pv.p()
     
     def set_prior(self):
-        self.prior = CustomPrior(self.scenario)
+        self.prior = CustomPrior(self.scenario, self.bkg)
         
     def set_likelihood(self):
         self.set_star()
@@ -386,18 +328,26 @@ class analysis(object):
                                       externally_updated=True)
 
 
-        ########## likelihood check
+        if self.scenario == 'literature':
+            if self.bkg =='marginalise':
         # true_logl = -4.6402898384e+04
         # true_logl = -4.2233157248e+04 # background, support
         # true_logl = -1.1767530520e+04  # background, sf=1.00005, floated data, high res
-        # true_logl = -1.0929410655e+04  # background, sf=1.001, floated data, high res
-        # true_logl = -9.9746308842e+03 # # background, sf=1.1, floated data, high res
-        # true_logl = -9.8546380529e+03 # # background, sf=1.5, floated data, high res
+                if self.support_factor == '1e-3':
+                    # true_logl = -1.0929410655e+04  # background, sf=1.001, floated data, high res
+                    true_logl = -1.0931009125e+04  # probably different because low res?
+                if self.support_factor == '1e-1':
+                    #true_logl = -9.9746308842e+03  # background, sf=1.1, floated data, high res
+                    true_logl = -9.9761447897e+03 # probably different becuase low res?
+                if self.support_factor == '5e-1':
+                    #true_logl = -9.8546380529e+03 # # background, sf=1.5, floated data, high res
+                    true_logl = -9.8560303844e+03 # probably different because low res?
         #true_logl = -9.8076308641e+03  # background, no support, floated data, high res 
         # true_logl = -9.8013206348e+03  # background, no support, floated data, high res, allow neg. bkg. 
         # true_logl = -4.1076321631e+04 # no background, no support
         # true_logl = -1.0047370824e+04  # no background, no support, floated data, high res
-        # true_logl = 1.9406875013e+08  # given background, background, support, floated data, high res,
+            if self.bkg == 'fix' or self.bkg =='model':
+                true_logl = 1.9406875013e+08  # given background, background, support, floated data, high res,
         
         ## 2019 data
         # true_logl = 1.6202395730e+08 # 2019 data, modeled background
@@ -406,12 +356,15 @@ class analysis(object):
         ### 2022 data
         # true_logl = 1.1365193823e+08 # 2022 data
         
-        ### Kajava scenario
-        if self.bkg == 'model':
-            true_logl = 8.0022379204e+08 # int counts, low res
-        if self.bkg == 'marginalise':
-            # true_logl = -8.1994031914e+04 # int counts, low res, no support
-            true_logl = -8.2868888993e+04 # int counts, low res, sf=0.5
+        if self.scenario == 'kajava':
+            if self.bkg == 'model':
+                true_logl = 8.0022379204e+08 # int counts, low res
+            elif self.bkg == 'marginalise':
+                if self.support_factor == 'None':
+                    true_logl = -8.1994031914e+04 # int counts, low res, no support
+                elif self.support_factor == '5e-1':
+                    true_logl = -8.2868888993e+04 # int counts, low res, sf=0.5
+
         
         self.true_logl = true_logl
     

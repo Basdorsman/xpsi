@@ -246,7 +246,7 @@ class analysis(object):
         
         
     def set_interstellar(self):
-        self.interstellar=CustomInterstellar.from_SWG(self.file_interstellar, bounds=self.bounds['interstellar'], value=None)
+        self.interstellar=CustomInterstellar.from_SWG(self.file_interstellar, bounds=self.bounds['column_density'], value=None)
     
     def set_support(self):
         support_factor = self.support_factor
@@ -343,7 +343,8 @@ class analysis(object):
                 if self.support_factor == '5e-1':
                     #true_logl = -9.8546380529e+03 # # background, sf=1.5, floated data, high res
                     true_logl = -9.8560303844e+03 # probably different because low res?
-        #true_logl = -9.8076308641e+03  # background, no support, floated data, high res 
+                if self.support_factor == 'None':
+                    true_logl = -9.8076308641e+03  # background, no support, floated data, high res 
         # true_logl = -9.8013206348e+03  # background, no support, floated data, high res, allow neg. bkg. 
         # true_logl = -4.1076321631e+04 # no background, no support
         # true_logl = -1.0047370824e+04  # no background, no support, floated data, high res

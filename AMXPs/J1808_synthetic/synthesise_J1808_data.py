@@ -65,6 +65,10 @@ try: #try to get parameters from shell input
     n_params = os.environ['n_params']
     os.environ.get('machine')
     machine = os.environ['machine']
+    os.environ.get('poisson_noise')
+    poisson_noise = bool(os.environ['poisson_noise'])
+    os.environ.get('poisson_seed')
+    poisson_seed = int(os.environ['poisson_seed'])
 except:
     atmosphere_type = "A"
     n_params = "5"
@@ -209,8 +213,12 @@ print("Prossecco ...")
 
 p = pv.p()
 
+if poisson_noise:
+    seed = poisson_seed
+
 Instrument_kwargs = dict(exposure_time=exposure_time,
-                         name=f'J1808_synthetic_{scenario}',
+                         seed=seed, 
+                         name=f'synthetic_{scenario}_seed={seed}',
                          directory='./data/')
 
 likelihood.synthesise(p, force=True, Instrument=Instrument_kwargs) 

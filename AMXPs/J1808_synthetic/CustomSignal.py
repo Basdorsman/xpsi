@@ -229,6 +229,7 @@ class CustomSignal(xpsi.Signal):
     
     def synthesise(self,
                    exposure_time,
+                   seed = 42,
                    name='no_pulse',
                    directory='./',
                    **kwargs):
@@ -243,7 +244,7 @@ class CustomSignal(xpsi.Signal):
                                                                        self._phases,
                                                                        self._shifts,
                                                                        self._background.registered_background,
-                                                                       gsl_seed=42)
+                                                                       gsl_seed=seed)
             self.synthetic_data = synthetic
             
             try:
@@ -254,14 +255,14 @@ class CustomSignal(xpsi.Signal):
                 raise
 
             # POISSON NOISE
-            # np.savetxt(os.path.join(directory, name+'_realisation.dat'),
-            #             np.round(synthetic),
-            #             fmt = '%u')
+            np.savetxt(os.path.join(directory, name+'_realisation.dat'),
+                        np.round(synthetic),
+                        fmt = '%u')
             
             #NO NOISE, FLOATS
-            np.savetxt(os.path.join(directory, name+'_realisation.dat'),
-                        self._expected_counts,
-                        fmt = '%f')
+            # np.savetxt(os.path.join(directory, name+'_realisation.dat'),
+            #             self._expected_counts,
+            #             fmt = '%f')
             
             # NO NOISE, WHOLE COUNTS
             # np.savetxt(os.path.join(directory, name+'_realisation.dat'),

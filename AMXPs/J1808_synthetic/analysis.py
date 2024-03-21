@@ -107,11 +107,14 @@ class analysis(object):
             self.support_factor = 'None'
         print(f'support_factor: {self.support_factor}')   
         
-                
+        self.poisson_noise = os.environ.get('poisson_noise')
+        if self.poisson_noise == 'True':
+            self.poisson_seed = int(os.environ.get('poisson_seed'))
+        print(f'poisson_seed: {self.poisson_seed}')
+       
         
         self.integrator = 'azimuthal_invariance' #'general/azimuthal_invariance'
         self.interpolator = 'split' #'split/combined'
-        
 
         self.pv = parameter_values(self.scenario, self.bkg)
     
@@ -131,7 +134,8 @@ class analysis(object):
     def file_locations(self):
         self.this_directory = this_directory
         if self.scenario == 'kajava' or self.scenario == 'literature':
-            self.file_pulse_profile = self.this_directory + f'/data/J1808_synthetic_{self.scenario}_realisation.dat' 
+            if self.poisson_noise:
+                self.file_pulse_profile = self.this_directory + f'/data/synthetic_{self.scenario}_seed={self.poisson_seed}_realisation.dat' 
 
         # self.file_pulse_profile = self.this_directory + '/data/2022_preprocessed.txt' 
         # self.file_pulse_profile = self.this_directory + '/data/2019_preprocessed.txt' 
@@ -342,9 +346,22 @@ class analysis(object):
                     true_logl = -9.9761447897e+03 # probably different becuase low res?
                 if self.support_factor == '5e-1':
                     #true_logl = -9.8546380529e+03 # # background, sf=1.5, floated data, high res
-                    true_logl = -9.8560303844e+03 # probably different because low res?
+                    #true_logl = -9.8560303844e+03 # probably different because low res?
+                    if self.poisson_noise:
+                        if self.poisson_seed == 42:
+                            true_logl = -4.6474098223e+04
+                        if self.poisson_seed == 0:
+                            true_logl = -4.6470534206e+04
+                        if self.poisson_seed == 1:
+                            true_logl = -4.6528445267e+04
+                if self.support_factor == '9e-1':
+                    if self.poisson_noise:
+                        true_logl = -4.6441475553e+04
                 if self.support_factor == 'None':
-                    true_logl = -9.8076308641e+03  # background, no support, floated data, high res 
+                    if self.poisson_noise:
+                        true_logl = -4.6402898384e+04 # 42
+                    elif not self.poisson_noise:
+                        true_logl = -9.8076308641e+03  # background, no support, floated data, high res 
         # true_logl = -9.8013206348e+03  # background, no support, floated data, high res, allow neg. bkg. 
         # true_logl = -4.1076321631e+04 # no background, no support
         # true_logl = -1.0047370824e+04  # no background, no support, floated data, high res

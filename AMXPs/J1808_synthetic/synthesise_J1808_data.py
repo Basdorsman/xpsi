@@ -32,7 +32,7 @@ from xpsi.tools.synthesise import synthesise_exposure_no_scaling as _synthesise 
 
 import sys
 sys.path.append('../')
-from custom_tools import SynthesiseData, plot_one_pulse
+from custom_tools import SynthesiseData#, plot_one_pulse
 
 from CustomBackground import CustomBackground_DiskBB, k_disk_derive
 from CustomPrior import CustomPrior
@@ -42,7 +42,7 @@ from CustomInterstellar import CustomInterstellar
 from CustomSignal import CustomSignal
 from CustomHotregion import CustomHotRegion_Accreting
 
-from helper_functions import get_T_in_log10_Kelvin, plot_2D_pulse
+from helper_functions import get_T_in_log10_Kelvin, get_mids_from_edges
 from parameter_values import parameter_values
 
 this_directory = os.path.dirname(os.path.abspath(__file__))
@@ -73,20 +73,32 @@ except:
     atmosphere_type = "A"
     n_params = "5"
     machine = "local"
+    poisson_noise = True
+    poisson_seed = 42
 
 
 if scenario == 'kajava' or scenario == 'literature':
     exposure_time=1.32366e5 ## is the same as Mason 2019
+    
 
-print("atmosphere_type:", atmosphere_type)
-print("n_params:", n_params)
 
 ################################## INSTRUMENT #################################
 
-min_input = 0 # 20 is used with 0.3 keV (channel_low=30). 0 is used with 0.2 keV (channel_low=20). 900 works with channel_low = 120 (1.2 keV). 
-channel_low = 20 # 20 corresponds to 0.2 keV. # 30 corresponds to 0.3 keV
-channel_hi = 300 # 300 corresponds to 3 keV. 600 corresponds to 6 keV (98.7% of total counts retained)
-max_input = 1400 # 1400 works with channel-hi = 300. 2000 works with channel_hi = 600 (6 keV)
+energy_range = 'large'
+
+if energy_range == 'small':
+    min_input = 0 # 20 is used with 0.3 keV (channel_low=30). 0 is used with 0.2 keV (channel_low=20). 900 works with channel_low = 120 (1.2 keV). 
+    channel_low = 20 # 20 corresponds to 0.2 keV. # 30 corresponds to 0.3 keV
+    channel_hi = 300 # 300 corresponds to 3 keV. 600 corresponds to 6 keV (98.7% of total counts retained)
+    max_input = 1400 # 1400 works with channel-hi = 300. 2000 works with channel_hi = 600 (6 keV)
+
+if energy_range == 'large':
+    min_input = 20 # 20 is used with 0.3 keV (channel_low=30). 0 is used with 0.2 keV (channel_low=20). 900 works with channel_low = 120 (1.2 keV). 
+    channel_low = 30 # 20 corresponds to 0.2 keV. # 30 corresponds to 0.3 keV
+    channel_hi = 600 # 300 corresponds to 3 keV. 600 corresponds to 6 keV (98.7% of total counts retained)
+    max_input = 2000 # 1400 works with channel-hi = 300. 2000 works with channel_hi = 600 (6 keV)
+
+
 
 ARF_file=this_directory + '/../model_data/instrument_data/J1808_NICER_2019/merged_saxj1808_2019_arf_aeff.txt'
 RMF_file=this_directory + '/../model_data/instrument_data/J1808_NICER_2019/merged_saxj1808_2019_rmf_matrix.txt'
@@ -111,9 +123,9 @@ spacetime = xpsi.Spacetime(bounds=bounds, values=dict(frequency=401.0))# Fixing 
 
 ############################### SINGLE HOTREGION ##############################
 
-num_leaves = 128  # 30
-sqrt_num_cells = 128  # 50
-num_energies = 128  # 40
+num_leaves = 30 # 128  # 30
+sqrt_num_cells = 50 # 128  # 50
+num_energies = 40 # 128  # 40
 num_rays = 512
 
 kwargs = {'symmetry': 'azimuthal_invariance', #call general integrator instead of for azimuthal invariance
@@ -231,7 +243,8 @@ print("Done !")
 ########## DATA PLOT ###############
 
 
-my_data=np.loadtxt(f'./data/J1808_synthetic_{scenario}_realisation.dat')
+#my_data=np.loadtxt(f'./data/J1808_synthetic_{scenario}_realisation.dat')
+my_data=np.loadtxt(f'./data/synthetic_{scenario}_seed={poisson_seed}_realisation.dat')
 
 
 
@@ -239,30 +252,48 @@ my_data=np.loadtxt(f'./data/J1808_synthetic_{scenario}_realisation.dat')
 figstring = f'J1808_synthetic_realisation_exp_time={exposure_time}.png'
 
 
-fig1,ax1 = plot_one_pulse(my_data, phases_space, NICER.channel_edges, cm=cm.jet)
+from helper_functions import custom_subplots
+
+
+fig, axes = custom_subplots(2,1, sharex=True, figsize=(5, 5))
+profile = axes[0].plot_2D_counts(my_data, phases_space, NICER.channel_edges, cm=cm.magma)
+cb = plt.colorbar(profile, ax=axes[0])
+cb.set_label(label='Counts', labelpad=10)
+cb.solids.set_edgecolor('face')
+axes[1].plot_bolometric_pulse(phases_space, my_data)
+cb2 = plt.colorbar(profile, ax=axes[1])
+cb2.remove()
+
 
 try:
     os.makedirs('./plots')
 except OSError:
     if not os.path.isdir('./plots'):
         raise
-fig1.savefig('./plots/'+figstring)
-print('data plot saved in plots/{}'.format(figstring))
+
+
+#fig.savefig('./plots/'+figstring)
+#print('data plot saved in plots/{}'.format(figstring))
 
 ################ SIGNAL PLOT ###################################
 
 num_rotations=1
 
-fig2,ax2 = plot_2D_pulse((photosphere.signal[0][0],),
-              x=signal.phases[0],
-              shift=signal.shifts,
-              y=signal.energies,
-              ylabel=r'Energy (keV)',
-              num_rotations=num_rotations,
-              res=int(30*num_rotations))
+fig2, ax2 = custom_subplots(figsize=(5, 3))
+profile = ax2.plot_2D_signal((photosphere.signal[0][0],),x=signal.phases[0],shift=signal.shifts,y=signal.energies,ylabel=r'Energy (keV)',num_rotations=num_rotations,res=int(30*num_rotations))
+cb = plt.colorbar(profile, ax=ax2)
+cb.set_label(label=r'Signal (arbitrary units)', labelpad=25)
+cb.solids.set_edgecolor('face')
+
+# fig2,ax2 = plot_2D_pulse((photosphere.signal[0][0],),
+#               x=signal.phases[0],
+#               shift=signal.shifts,
+#               y=signal.energies,
+#               ylabel=r'Energy (keV)',
+#               num_rotations=num_rotations,
+#               res=int(30*num_rotations))
 
 
-# ax2.set_title('atm={} params={} te={:.2e} [keV], tbb={:.2e} [keV], tau={:.2e} [-]'.format(atmosphere_type, n_params, te*0.511, tbb*511, tau), loc='center') #unit conversion te and tbb is different due to a cluster leftover according to Anna B.
 
 
 fig2.savefig('./plots/J1808.png')

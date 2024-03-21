@@ -26,7 +26,7 @@ from parameter_values import parameter_values
 from helper_functions import get_T_in_log10_Kelvin, plot_2D_pulse
 
 class analysis(object):
-    def __init__(self, machine, run_type, bkg, support_factor = "None", scenario = 'None'):
+    def __init__(self, machine, run_type, bkg, support_factor = "None", scenario = 'None', poisson_noise=True, poisson_seed=42):
         self.scenario = os.environ.get('scenario')
         if os.environ.get('scenario') == None or os.environ.get('scenario') =='None':
             print('scenario is not in environment variables, using passed argument.')
@@ -110,7 +110,11 @@ class analysis(object):
         self.poisson_noise = os.environ.get('poisson_noise')
         if self.poisson_noise == 'True':
             self.poisson_seed = int(os.environ.get('poisson_seed'))
-        print(f'poisson_seed: {self.poisson_seed}')
+        elif self.poisson_noise == None:
+            self.poisson_noise = poisson_noise
+            self.poisson_seed = poisson_seed
+            print(f'No poisson noise decision in os. Taking default poisson')
+        print(f'poisson_noise: {self.poisson_noise}, poisson_seed: {self.poisson_seed} (only relevant if poisson noise is True)')
        
         
         self.integrator = 'azimuthal_invariance' #'general/azimuthal_invariance'
@@ -136,6 +140,8 @@ class analysis(object):
         if self.scenario == 'kajava' or self.scenario == 'literature':
             if self.poisson_noise:
                 self.file_pulse_profile = self.this_directory + f'/data/synthetic_{self.scenario}_seed={self.poisson_seed}_realisation.dat' 
+            elif not self.poisson_noise:
+                self.file_pulse_profile = self.this_directory + f'/data/J1808_synthetic_{self.scenario}_realisation.dat' 
 
         # self.file_pulse_profile = self.this_directory + '/data/2022_preprocessed.txt' 
         # self.file_pulse_profile = self.this_directory + '/data/2019_preprocessed.txt' 
@@ -168,10 +174,24 @@ class analysis(object):
         # self.exposure_time = 7.13422e4 #Mason's 2022 data cut
         self.phases_space = np.linspace(0.0, 1.0, 33)
 
-        self.min_input = 0 # 20 is used with 0.3 keV (channel_low=30). 0 is used with 0.2 keV (channel_low=20). 900 works with channel_low = 120 (1.2 keV). 
-        self.channel_low = 20 # 20 corresponds to 0.2 keV. # 30 corresponds to 0.3 keV
-        self.channel_hi = 300 # 300 corresponds to 3 keV. 600 corresponds to 6 keV (98.7% of total counts retained)
-        self.max_input = 1400 # 1400 works with channel-hi = 300. 2000 works with channel_hi = 600 (6 keV)
+        # self.min_input = 0 # 20 is used with 0.3 keV (channel_low=30). 0 is used with 0.2 keV (channel_low=20). 900 works with channel_low = 120 (1.2 keV). 
+        # self.channel_low = 20 # 20 corresponds to 0.2 keV. # 30 corresponds to 0.3 keV
+        # self.channel_hi = 300 # 300 corresponds to 3 keV. 600 corresponds to 6 keV (98.7% of total counts retained)
+        # self.max_input = 1400 # 1400 works with channel-hi = 300. 2000 works with channel_hi = 600 (6 keV)
+        energy_range = 'large'
+
+        if energy_range == 'small':
+            self.min_input = 0 # 20 is used with 0.3 keV (channel_low=30). 0 is used with 0.2 keV (channel_low=20). 900 works with channel_low = 120 (1.2 keV). 
+            self.channel_low = 20 # 20 corresponds to 0.2 keV. # 30 corresponds to 0.3 keV
+            self.channel_hi = 300 # 300 corresponds to 3 keV. 600 corresponds to 6 keV (98.7% of total counts retained)
+            self.max_input = 1400 # 1400 works with channel-hi = 300. 2000 works with channel_hi = 600 (6 keV)
+        
+        if energy_range == 'large':
+            self.min_input = 20 # 20 is used with 0.3 keV (channel_low=30). 0 is used with 0.2 keV (channel_low=20). 900 works with channel_low = 120 (1.2 keV). 
+            self.channel_low = 30 # 20 corresponds to 0.2 keV. # 30 corresponds to 0.3 keV
+            self.channel_hi = 600 # 300 corresponds to 3 keV. 600 corresponds to 6 keV (98.7% of total counts retained)
+            self.max_input = 2000 # 1400 works with channel-hi = 300. 2000 works with channel_hi = 600 (6 keV)
+        
 
 
 
@@ -366,7 +386,10 @@ class analysis(object):
         # true_logl = -4.1076321631e+04 # no background, no support
         # true_logl = -1.0047370824e+04  # no background, no support, floated data, high res
             if self.bkg == 'fix' or self.bkg =='model':
-                true_logl = 1.9406875013e+08  # given background, background, support, floated data, high res,
+                true_logl = 1.9421715815e+08 # large energy scenario
+                # true_logl = 1.9406875013e+08  # given background, background, support, floated data, high res,
+                
+        
         
         ## 2019 data
         # true_logl = 1.6202395730e+08 # 2019 data, modeled background

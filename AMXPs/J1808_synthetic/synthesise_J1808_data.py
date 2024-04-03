@@ -234,6 +234,7 @@ likelihood.synthesise(p, force=True, Instrument=Instrument_kwargs)
 if __name__ == '__main__':
 
     np.savetxt(f'data/background_countrate_{scenario}.txt', np.sum(background.registered_background, axis=1))
+    np.savetxt(f'data/J1808_synthetic_diskbb_{scenario}.txt', background.registered_background)
     
     print("Done !")
     

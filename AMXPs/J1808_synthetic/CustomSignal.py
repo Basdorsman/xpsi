@@ -38,7 +38,7 @@ class CustomSignal(xpsi.Signal):
         self.bkg = bkg
         self.allow_negative_background = allow_negative_background
         if self.bkg == 'fix':
-            self.background_data = np.loadtxt(this_directory+'/data/J1808_synthetic_diskbb_background.txt')
+            self.background_data = np.loadtxt(this_directory+'/data/J1808_synthetic_diskbb_literature.txt')
 
         try:
             self._precomp = precomputation(self._data.counts.astype(np.int32))

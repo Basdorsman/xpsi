@@ -383,7 +383,7 @@ class analysis(object):
         # true_logl = -4.1076321631e+04 # no background, no support
         # true_logl = -1.0047370824e+04  # no background, no support, floated data, high res
             if self.bkg == 'fix' or self.bkg =='model':
-                true_logl = 1.9421715815e+08 # large energy scenario
+                true_logl = 1.9428352612e+08 # large energy scenario
                 # true_logl = 1.9406875013e+08  # given background, background, support, floated data, high res,
                 
         
@@ -449,7 +449,7 @@ class analysis(object):
 
             
             wrapped_params = [0]*len(self.likelihood)
-            wrapped_params[self.likelihood.index('p__phase_shift')] = 1
+            wrapped_params[self.likelihood.index('phase_shift')] = 1
 
 
             sampling_efficiency = 0.1

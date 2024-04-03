@@ -13,7 +13,7 @@ import os
 support_factor = os.environ.get('support_factor')
 if os.environ.get('support_factor') == None:
     print('no support_factor passed in os, using default')
-    support_factor = '5e-1'
+    support_factor = '9e-1'
 
 
 Analysis = analysis('local','test', 'marginalise', support_factor=support_factor, scenario='literature')

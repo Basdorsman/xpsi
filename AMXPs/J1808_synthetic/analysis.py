@@ -174,10 +174,6 @@ class analysis(object):
         # self.exposure_time = 7.13422e4 #Mason's 2022 data cut
         self.phases_space = np.linspace(0.0, 1.0, 33)
 
-        # self.min_input = 0 # 20 is used with 0.3 keV (channel_low=30). 0 is used with 0.2 keV (channel_low=20). 900 works with channel_low = 120 (1.2 keV). 
-        # self.channel_low = 20 # 20 corresponds to 0.2 keV. # 30 corresponds to 0.3 keV
-        # self.channel_hi = 300 # 300 corresponds to 3 keV. 600 corresponds to 6 keV (98.7% of total counts retained)
-        # self.max_input = 1400 # 1400 works with channel-hi = 300. 2000 works with channel_hi = 600 (6 keV)
         energy_range = 'large'
 
         if energy_range == 'small':
@@ -185,13 +181,12 @@ class analysis(object):
             self.channel_low = 20 # 20 corresponds to 0.2 keV. # 30 corresponds to 0.3 keV
             self.channel_hi = 300 # 300 corresponds to 3 keV. 600 corresponds to 6 keV (98.7% of total counts retained)
             self.max_input = 1400 # 1400 works with channel-hi = 300. 2000 works with channel_hi = 600 (6 keV)
-        
+
         if energy_range == 'large':
             self.min_input = 20 # 20 is used with 0.3 keV (channel_low=30). 0 is used with 0.2 keV (channel_low=20). 900 works with channel_low = 120 (1.2 keV). 
             self.channel_low = 30 # 20 corresponds to 0.2 keV. # 30 corresponds to 0.3 keV
             self.channel_hi = 600 # 300 corresponds to 3 keV. 600 corresponds to 6 keV (98.7% of total counts retained)
             self.max_input = 2000 # 1400 works with channel-hi = 300. 2000 works with channel_hi = 600 (6 keV)
-        
 
 
 
@@ -220,7 +215,7 @@ class analysis(object):
         spacetime_bounds = dict(distance = self.bounds["distance"],                       # (Earth) distance
                                 mass = self.bounds["mass"],                          # mass
                                 radius = self.bounds["radius"],     # equatorial radius
-                                cos_inclination = self.bounds["cos_i"])               # (Earth) inclination to rotation axis
+                                cos_inclination = self.bounds["cos_inclination"])               # (Earth) inclination to rotation axis
 
         self.spacetime = xpsi.Spacetime(bounds=spacetime_bounds, values=dict(frequency=self.values["frequency"]))
         
@@ -236,8 +231,8 @@ class analysis(object):
                   'min_sqrt_num_cells': 10,
                   'max_sqrt_num_cells': 128,
                   'num_leaves': self.num_leaves,
-                  'num_rays': self.num_rays,
-                  'prefix': 'p'}
+                  'num_rays': self.num_rays}
+                  #'prefix': 'p'}
         
         hotregion_bounds = dict(super_colatitude = self.bounds["super_colatitude"],
                                 super_radius = self.bounds["super_radius"],
@@ -376,10 +371,12 @@ class analysis(object):
                             true_logl = -4.6528445267e+04
                 if self.support_factor == '9e-1':
                     if self.poisson_noise:
-                        true_logl = -4.6441475553e+04
+                        # true_logl = -4.6441475553e+04
+                        true_logl = -7.3844835122e+04 # wider energy range
                 if self.support_factor == 'None':
                     if self.poisson_noise:
-                        true_logl = -4.6402898384e+04 # 42
+                        # true_logl = -4.6402898384e+04 # 42
+                        true_logl = -7.2157043502e+04 # wider energy range
                     elif not self.poisson_noise:
                         true_logl = -9.8076308641e+03  # background, no support, floated data, high res 
         # true_logl = -9.8013206348e+03  # background, no support, floated data, high res, allow neg. bkg. 

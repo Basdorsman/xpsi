@@ -195,16 +195,6 @@ def plot_2D_pulse(z, x, shift, y, ylabel,
     return fig, ax
 
 
-# def custom_subplots(*args, **kwargs):
-#     '''written by chatgpt'''
-#     fig, axes = plt.subplots(*args, **kwargs)
-#     if isinstance(axes, np.ndarray):
-#         for ax in axes.flatten():
-#             ax.__class__ = CustomAxes
-#     else:
-#         axes.__class__ = CustomAxes
-#     return fig, axes
-
 def custom_subplots(*args, sharex=False, **kwargs):
     '''written by chatgpt'''
     fig, axes = plt.subplots(*args, sharex=sharex, **kwargs)
@@ -221,7 +211,7 @@ class CustomAxes(Axes):
     def plot_2D_counts(self, signal, phases, channels, label=r'Counts', cm=cm.jet):
         """ Plot a pulse resolved over a single rotational cycle. """
 
-        if (signal <= 0.0).any():
+        if (signal < 0.0).any():
             vmax =  np.max( np.abs( signal ) )
             vmin = -vmax
         else:
@@ -238,7 +228,7 @@ class CustomAxes(Axes):
                                    rasterized = True)
 
         profile.set_edgecolor('face')
-
+        
         self.set_xlim([0.0, 1.0])
         self.set_yscale('log')
         self.set_ylabel(r'Energy (keV)')
@@ -252,7 +242,20 @@ class CustomAxes(Axes):
         
         return profile
 
-    def plot_bolometric_pulse(self, phases_space, my_data):
+    def plot_pulse(self, phases_edges, my_data):
+    
+        # Plot the normalized data
+        self.stairs(my_data, phases_edges)
+    
+        # Label the axes
+        self.set_xlabel('Phase')
+        # self.set_ylabel('Normalized Counts')
+        
+        # set lims
+        self.set_ylim([np.min(my_data), np.max(my_data)])
+
+    
+    def plot_bolometric_pulse(self, phases_edges, my_data):
         """
         Plot a bolometric pulse.
     
@@ -268,7 +271,7 @@ class CustomAxes(Axes):
         """
     
         # Calculate the mids from edges for phases_space
-        phases_mids = get_mids_from_edges(phases_space)
+        phases_mids = get_mids_from_edges(phases_edges)
     
         # Sum the data along the second axis
         summed_data = np.sum(my_data, axis=0)
@@ -281,7 +284,7 @@ class CustomAxes(Axes):
     
         # Label the axes
         self.set_xlabel('Phase')
-        self.set_ylabel('Normalized Bolometric Counts')
+        # self.set_ylabel('Normalized Counts')
 
 
     def plot_2D_signal(self, z, x, shift, y, ylabel, num_rotations=1.0, 
@@ -323,3 +326,45 @@ class CustomAxes(Axes):
         veneer((0.1, 0.5), (None,None), self)
         
         return profile
+    
+import xpsi
+class SynthesiseData(xpsi.Data):
+    """ Custom data container to enable synthesis. """
+
+    def __init__(self, channels, phases, first, last):
+
+        self.channels = channels
+        # print(channels)
+        # print(len(channels))
+        self._phases = phases
+
+        try:
+            self._first = int(first)
+            self._last = int(last)
+        except TypeError:
+            raise TypeError('The first and last channels must be integers.')
+        if self._first >= self._last:
+            raise ValueError('The first channel number must be lower than the '
+                             'the last channel number.')
+            
+            
+def shift_phase_data(phase_edges, bolometric_data, start_phase_index):
+    """
+    Shifts the phase data to start from a specified phase bin index.
+
+    Parameters:
+        phases_edges (array-like): Array of phase edges.
+        bolometric_data (array-like): Bolometric data corresponding to the phase bins.
+        start_phase_index (int): Index of the phase bin to start from.
+
+    Returns:
+        shifted_phases_edges (array): Shifted array of phase edges.
+        shifted_bolometric_data (array): Shifted bolometric data.
+    """
+    num_phases = len(phase_edges)
+    start_phase_index %= num_phases  # Ensure start_phase_index is within range
+
+    shifted_phases_edges = np.concatenate([phase_edges[start_phase_index:], phase_edges[:start_phase_index] + 1])
+    shifted_bolometric_data = np.concatenate([bolometric_data[start_phase_index:], bolometric_data[:start_phase_index]])
+
+    return shifted_phases_edges, shifted_bolometric_data

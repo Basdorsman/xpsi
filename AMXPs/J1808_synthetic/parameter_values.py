@@ -93,8 +93,8 @@ class parameter_values(object):
     def names(self):
         if self.bkg == 'marginalise' or self.bkg == 'fix':
             self.names=['mass','radius','distance','cos_inclination',
-                        'p__phase_shift','p__super_colatitude','p__super_radius',
-                        'p__super_tbb','p__super_te','p__super_tau','elsewhere_temperature',
+                        'phase_shift','super_colatitude','super_radius',
+                        'super_tbb','super_te','super_tau','elsewhere_temperature',
                         'column_density', 'compactness', 'T_else_keV', 'tbb_keV','te_keV' ]
         elif self.bkg =='model':
             self.names=['mass','radius','distance','cos_inclination',
@@ -105,49 +105,49 @@ class parameter_values(object):
         return self.names
 
     def bounds(self):
-        # bounds = {'mass':(1.0,3.0),
-        #      'radius':(3.0 * gravradius(1.0), 16.0),
-        #      'compactness': (0., 10.),
-        #      'distance':(1., 5.),  # (2.5, 3.6), #(3.4, 3.6),
-        #      'cos_inclination':(0.,1.),
-        #      'p__phase_shift':(-0.25, 0.75),
-        #      'p__super_colatitude':(0.001, math.pi - 0.001),
-        #      'p__super_radius':(0.001, math.pi/2.0 - 0.001),
-        #      'p__super_tbb':(0.001, 0.003),
-        #      'tbb_keV': (None, None),
-        #      'p__super_te': (40., 200.),
-        #      'te_keV': (None, None),
-        #      'p__super_tau': (0.5, 3.5),
-        #      'elsewhere_temperature': (5., 7.), #(6.5, 7.),
-        #      'T_else_keV': (None, None),
-        #      'column_density': (0., 3.)}
-        # bounds['T_else_keV'] = (None, None)
-        # if self.bkg == 'model':
-        #     bounds['T_in'] = (None, None)
-        #     bounds['T_in_keV'] = (None, None)
-        #     bounds['R_in'] = (None, None)
-        
-        bounds = {}
-        bounds["mass"] = (1.0, 3.0)
-        bounds["radius"] = (3.0 * gravradius(1.0), 16.0)     # equatorial radius
-        bounds["compactness"] = (0., 10.)
-        bounds["distance"] = (3.4, 3.6)  # old prior
-        bounds["cos_i"] = (0.15, 1.0) #updated lower limit due to lack of eclipses, chakrabarty & Morgan 1998
-        bounds["super_colatitude"] = (None, None)
-        bounds["super_radius"] = (None, None)
-        bounds["phase_shift"] = (-0.25, 0.75)
-        bounds['super_tbb'] = (0.001, 0.003)
-        bounds['Tbb_keV'] = (None, None)
-        bounds['super_tau'] = (0.5, 3.5)
-        bounds['super_te'] = (40., 200.)
-        bounds['Te_keV'] = (None, None)
-        bounds['elsewhere_temperature'] = (5.0,7.0) #log10 K
+        bounds = {'mass':(1.0,3.0),
+              'radius':(3.0 * gravradius(1.0), 16.0),
+              'compactness': (0., 10.),
+              'distance':(3.4, 3.6),  # (2.5, 3.6), #(3.4, 3.6),
+              'cos_inclination':(0.,1.),
+              'phase_shift':(-0.25, 0.75),
+              'super_colatitude':(0.001, math.pi - 0.001),
+              'super_radius':(0.001, math.pi/2.0 - 0.001),
+              'super_tbb':(0.001, 0.003),
+              'tbb_keV': (0.511, 1.533),
+              'super_te': (40., 200.),
+              'te_keV': (40*511/1000, 200*511/1000),
+              'super_tau': (0.5, 3.5),
+              'elsewhere_temperature': (5., 7.), #(6.5, 7.),
+              'T_else_keV': (None, None),
+              'column_density': (0., 3.)}
         bounds['T_else_keV'] = (None, None)
-        bounds['column_density'] = (None, None)
         if self.bkg == 'model':
             bounds['T_in'] = (0.01, 0.6) # keV
             bounds['R_in'] = (20, 200) # km
             bounds['T_in_keV'] = (None, None)
+        
+        # bounds = {}
+        # bounds["mass"] = (1.0, 3.0)
+        # bounds["radius"] = (3.0 * gravradius(1.0), 16.0)     # equatorial radius
+        # bounds["compactness"] = (0., 10.)
+        # bounds["distance"] = (3.4, 3.6)  # old prior
+        # bounds["cos_inclination"] = (0.15, 1.0) #updated lower limit due to lack of eclipses, chakrabarty & Morgan 1998
+        # bounds["super_colatitude"] = (None, None)
+        # bounds["super_radius"] = (None, None)
+        # bounds["phase_shift"] = (-0.25, 0.75)
+        # bounds['super_tbb'] = (0.001, 0.003)
+        # bounds['Tbb_keV'] = (None, None)
+        # bounds['super_tau'] = (0.5, 3.5)
+        # bounds['super_te'] = (40., 200.)
+        # bounds['Te_keV'] = (None, None)
+        # bounds['elsewhere_temperature'] = (5.0,7.0) #log10 K
+        # bounds['T_else_keV'] = (None, None)
+        # bounds['column_density'] = (None, None)
+        # if self.bkg == 'model':
+        #     bounds['T_in'] = (0.01, 0.6) # keV
+        #     bounds['R_in'] = (20, 200) # km
+        #     bounds['T_in_keV'] = (None, None)
         
         return bounds
 
@@ -157,14 +157,14 @@ class parameter_values(object):
           'compactness': gravradius(self.mass/self.radius),
           'distance': self.distance,                            # Distance in kpc
           'cos_inclination': self.cos_i,          # Cosine of Earth inclination to rotation axis
-          'p__phase_shift': self.phase_shift,                    # Phase shift
-          'p__super_colatitude': self.super_colatitude,                # Colatitude of the centre of the superseding region
-          'p__super_radius': self.super_radius,                 # Angular radius of the (circular) superseding region
-          'p__super_tbb': self.tbb,                      # Blackbody temperature
+          'phase_shift': self.phase_shift,                    # Phase shift
+          'super_colatitude': self.super_colatitude,                # Colatitude of the centre of the superseding region
+          'super_radius': self.super_radius,                 # Angular radius of the (circular) superseding region
+          'super_tbb': self.tbb,                      # Blackbody temperature
           'tbb_keV': self.tbb*511,
-          'p__super_te': self.te,                          # Electron temperature
+          'super_te': self.te,                          # Electron temperature
           'te_keV': self.te*511/1000,
-          'p__super_tau': self.tau,
+          'super_tau': self.tau,
           'elsewhere_temperature': self.elsewhere_T_log10_K,
           'T_else_keV': self.elsewhere_T_keV,
           'column_density': self.column_density}
@@ -182,14 +182,14 @@ class parameter_values(object):
               'compactness': r"M/R_{\mathrm{eq}}",
               'distance': r"D \;\mathrm{[kpc]}",
               'cos_inclination': r"\cos(i)",
-              'p__phase_shift': r"\phi_{p}\;\mathrm{[cycles]}",
-              'p__super_colatitude': r"\Theta_{spot}\;\mathrm{[rad]}",
-              'p__super_radius': r"\zeta_{spot}\;\mathrm{[rad]}",
-              'p__super_tbb': r"t_{bb}\;\mathrm{[data units]}",
+              'phase_shift': r"\phi_{p}\;\mathrm{[cycles]}",
+              'super_colatitude': r"\Theta_{spot}\;\mathrm{[rad]}",
+              'super_radius': r"\zeta_{spot}\;\mathrm{[rad]}",
+              'super_tbb': r"t_{bb}\;\mathrm{[data units]}",
               'tbb_keV': r"T_{bb} (keV)",
-              'p__super_te': r"t_e data units",
+              'super_te': r"t_e data units",
               'te_keV': r"T_{e} (keV)",
-              'p__super_tau': r"\tau [-]",
+              'super_tau': r"\tau [-]",
               'elsewhere_temperature': r"T_e log10 of Kelvin",
               'T_else_keV': r"T_{\mathrm{else}} (keV)",
               'column_density': r"n_H 10\^21 cm\^{-2}"}

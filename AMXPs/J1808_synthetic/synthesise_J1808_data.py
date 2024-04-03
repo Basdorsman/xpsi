@@ -30,10 +30,6 @@ from scipy.interpolate import Akima1DInterpolator
 from xpsi.global_imports import _c, _G, _dpr, gravradius, _csq, _km, _2pi
 from xpsi.tools.synthesise import synthesise_exposure_no_scaling as _synthesise # no scaling!
 
-import sys
-sys.path.append('../')
-from custom_tools import SynthesiseData#, plot_one_pulse
-
 from CustomBackground import CustomBackground_DiskBB, k_disk_derive
 from CustomPrior import CustomPrior
 from CustomInstrument import CustomInstrument
@@ -42,7 +38,7 @@ from CustomInterstellar import CustomInterstellar
 from CustomSignal import CustomSignal
 from CustomHotregion import CustomHotRegion_Accreting
 
-from helper_functions import get_T_in_log10_Kelvin, get_mids_from_edges
+from helper_functions import get_T_in_log10_Kelvin, get_mids_from_edges, SynthesiseData
 from parameter_values import parameter_values
 
 this_directory = os.path.dirname(os.path.abspath(__file__))
@@ -123,9 +119,9 @@ spacetime = xpsi.Spacetime(bounds=bounds, values=dict(frequency=401.0))# Fixing 
 
 ############################### SINGLE HOTREGION ##############################
 
-num_leaves = 30 # 128  # 30
-sqrt_num_cells = 50 # 128  # 50
-num_energies = 40 # 128  # 40
+num_leaves = 128  # 30
+sqrt_num_cells = 128  # 50
+num_energies = 128  # 40
 num_rays = 512
 
 kwargs = {'symmetry': 'azimuthal_invariance', #call general integrator instead of for azimuthal invariance
@@ -235,68 +231,55 @@ Instrument_kwargs = dict(exposure_time=exposure_time,
 
 likelihood.synthesise(p, force=True, Instrument=Instrument_kwargs) 
 
+if __name__ == '__main__':
 
-np.savetxt(f'data/background_countrate_{scenario}.txt', np.sum(background.registered_background, axis=1))
+    np.savetxt(f'data/background_countrate_{scenario}.txt', np.sum(background.registered_background, axis=1))
+    
+    print("Done !")
+    
+    ########## DATA PLOT ###############
+    
+    
+    my_data=np.loadtxt(f'./data/synthetic_{scenario}_seed={poisson_seed}_realisation.dat')
+    
+    
+    
+    
+    figstring = f'J1808_synthetic_{poisson_seed}_{scenario}'
+    
+    
+    from helper_functions import custom_subplots
+    
+    
+    fig, axes = custom_subplots(2,1, sharex=True, figsize=(5, 5))
+    profile = axes[0].plot_2D_counts(my_data, phases_space, NICER.channel_edges, cm=cm.magma)
+    cb = plt.colorbar(profile, ax=axes[0])
+    cb.set_label(label='Counts', labelpad=10)
+    cb.solids.set_edgecolor('face')
+    axes[1].plot_bolometric_pulse(phases_space, my_data)
+    cb2 = plt.colorbar(profile, ax=axes[1])
+    cb2.remove()
+    
 
-print("Done !")
+    try:
+        os.makedirs('./plots')
+    except OSError:
+        if not os.path.isdir('./plots'):
+            raise
+    
+    
+    fig.savefig(f'./plots/counts_and_bolometric_{figstring}.png')
 
-########## DATA PLOT ###############
+    
+    num_rotations=1
+    
+    fig2, ax2 = custom_subplots(figsize=(5, 3))
+    profile = ax2.plot_2D_signal((photosphere.signal[0][0],),x=signal.phases[0],shift=signal.shifts,y=signal.energies,ylabel=r'Energy (keV)',num_rotations=num_rotations,res=int(30*num_rotations))
+    cb = plt.colorbar(profile, ax=ax2)
+    cb.set_label(label=r'Signal (arbitrary units)', labelpad=25)
+    cb.solids.set_edgecolor('face')
+    
+    fig2.savefig(f'./plots/signal_{figstring}_.png')
+    print('plot saved in plots/')
+    
 
-
-#my_data=np.loadtxt(f'./data/J1808_synthetic_{scenario}_realisation.dat')
-my_data=np.loadtxt(f'./data/synthetic_{scenario}_seed={poisson_seed}_realisation.dat')
-
-
-
-
-figstring = f'J1808_synthetic_realisation_exp_time={exposure_time}.png'
-
-
-from helper_functions import custom_subplots
-
-
-fig, axes = custom_subplots(2,1, sharex=True, figsize=(5, 5))
-profile = axes[0].plot_2D_counts(my_data, phases_space, NICER.channel_edges, cm=cm.magma)
-cb = plt.colorbar(profile, ax=axes[0])
-cb.set_label(label='Counts', labelpad=10)
-cb.solids.set_edgecolor('face')
-axes[1].plot_bolometric_pulse(phases_space, my_data)
-cb2 = plt.colorbar(profile, ax=axes[1])
-cb2.remove()
-
-
-try:
-    os.makedirs('./plots')
-except OSError:
-    if not os.path.isdir('./plots'):
-        raise
-
-
-#fig.savefig('./plots/'+figstring)
-#print('data plot saved in plots/{}'.format(figstring))
-
-################ SIGNAL PLOT ###################################
-
-num_rotations=1
-
-fig2, ax2 = custom_subplots(figsize=(5, 3))
-profile = ax2.plot_2D_signal((photosphere.signal[0][0],),x=signal.phases[0],shift=signal.shifts,y=signal.energies,ylabel=r'Energy (keV)',num_rotations=num_rotations,res=int(30*num_rotations))
-cb = plt.colorbar(profile, ax=ax2)
-cb.set_label(label=r'Signal (arbitrary units)', labelpad=25)
-cb.solids.set_edgecolor('face')
-
-# fig2,ax2 = plot_2D_pulse((photosphere.signal[0][0],),
-#               x=signal.phases[0],
-#               shift=signal.shifts,
-#               y=signal.energies,
-#               ylabel=r'Energy (keV)',
-#               num_rotations=num_rotations,
-#               res=int(30*num_rotations))
-
-
-
-
-fig2.savefig('./plots/J1808.png')
-print('signal plot saved in plots/J1808.png')
-
-print(np.sum(my_data))

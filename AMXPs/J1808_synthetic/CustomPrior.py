@@ -110,17 +110,17 @@ class CustomPrior(xpsi.Prior):
             if temporary < 0: temporary = 0
             ref['column_density'] = temporary
     
-        idx = ref.index('distance')
-        temporary = truncnorm.ppf(hypercube[idx], -5.0, 5.0, loc=3.5, scale=0.3)
-        if temporary < 0: temporary = 0
-        ref['distance'] = temporary
+        # idx = ref.index('distance')
+        # temporary = truncnorm.ppf(hypercube[idx], -5.0, 5.0, loc=2.7, scale=0.3)
+        # if temporary < 0: temporary = 0
+        # ref['distance'] = temporary
 
         # flat priors in cosine of hot region centre colatitudes (isotropy)
         # support modified by no-overlap rejection condition
-        idx = ref.index('p__super_colatitude')
-        a, b = ref.get_param('p__super_colatitude').bounds
+        idx = ref.index('super_colatitude')
+        a, b = ref.get_param('super_colatitude').bounds
         a = math.cos(a); b = math.cos(b)
-        ref['p__super_colatitude'] = math.acos(b + (a - b) * hypercube[idx])
+        ref['super_colatitude'] = math.acos(b + (a - b) * hypercube[idx])
 
 
 
@@ -146,8 +146,8 @@ class CustomPrior(xpsi.Prior):
         p += [get_keV_from_log10_Kelvin(ref['elsewhere_temperature'])]
         if self.bkg == 'model':
             p += [get_keV_from_log10_Kelvin(ref['T_in'])]
-        p += [ref['p__super_tbb']*511]
-        p += [ref['p__super_te']*511/1000]
+        p += [ref['super_tbb']*511]
+        p += [ref['super_te']*511/1000]
         
 
         return p

@@ -6,9 +6,13 @@ export sqrt_num_cells=50
 export live_points=20
 export max_iter=1
 export run_type=sample
-export background_model=1
+export bkg=fix
+export support_factor=None
+export scenario=literature
+export poisson_noise=True
+export poisson_seed=42
+
 
 cd $HOME/xpsi-bas-fork/AMXPs/J1808_synthetic/
-#python main.py
-python run_model.py
+python run.py
 cd $HOME/xpsi-bas-fork/AMXPs/J1808_synthetic/snellius_runs/

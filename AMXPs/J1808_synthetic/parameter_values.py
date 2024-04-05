@@ -123,8 +123,8 @@ class parameter_values(object):
               'column_density': (0., 3.)}
         bounds['T_else_keV'] = (None, None)
         if self.bkg == 'model':
-            bounds['T_in'] = (0.01, 0.6) # keV
-            bounds['R_in'] = (20, 200) # km
+            bounds['T_in'] = (0.225, 0.275 )  # (0.01, 0.6) # keV
+            bounds['R_in'] = (27, 33)  # (20, 200) # km
             bounds['T_in_keV'] = (None, None)
         
         # bounds = {}

@@ -141,10 +141,10 @@ class analysis(object):
             if self.poisson_noise:
                 self.file_pulse_profile = self.this_directory + f'/data/synthetic_{self.scenario}_seed={self.poisson_seed}_realisation.dat' 
             elif not self.poisson_noise:
-                self.file_pulse_profile = self.this_directory + f'/data/J1808_synthetic_{self.scenario}_realisation.dat' 
-
-        # self.file_pulse_profile = self.this_directory + '/data/2022_preprocessed.txt' 
-        # self.file_pulse_profile = self.this_directory + '/data/2019_preprocessed.txt' 
+                self.file_pulse_profile = self.this_directory + f'/data/J1808_synthetic_{self.scenario}_realisation.dat'
+        
+        if self.scenario == '2019' or self.scenario == '2022':
+            self.file_pulse_profile = self.this_directory + f'/data/{self.scenario}_preprocessed.txt'
         
         self.file_arf = self.this_directory + '/../model_data/instrument_data/J1808_NICER_2019/merged_saxj1808_2019_arf_aeff.txt'
         self.file_rmf = self.this_directory + '/../model_data/instrument_data/J1808_NICER_2019/merged_saxj1808_2019_rmf_matrix.txt'
@@ -253,8 +253,8 @@ class analysis(object):
     def set_photosphere(self):
         self.set_spacetime()
         self.set_hotregions()
-        self.set_elsewhere()
-        self.photosphere = CustomPhotosphere(hot = self.hot, elsewhere = self.elsewhere,
+        # self.set_elsewhere()
+        self.photosphere = CustomPhotosphere(hot = self.hot, elsewhere = None, #self.elsewhere,
                                         values=dict(mode_frequency = self.spacetime['frequency']))
 
         self.photosphere.hot_atmosphere = self.file_atmosphere
@@ -383,17 +383,19 @@ class analysis(object):
         # true_logl = -4.1076321631e+04 # no background, no support
         # true_logl = -1.0047370824e+04  # no background, no support, floated data, high res
             if self.bkg == 'fix' or self.bkg =='model':
-                true_logl = 1.9428352612e+08 # large energy scenario
+                true_logl = 1.8103167777e+08 # no elsewhere
+                #true_logl = 1.9428352612e+08 # large energy scenario
                 # true_logl = 1.9406875013e+08  # given background, background, support, floated data, high res,
                 
         
         
-        ## 2019 data
-        # true_logl = 1.6202395730e+08 # 2019 data, modeled background
-        # true_logl= -7.9418857894e+89 # 2019 data, marginalized background
+        if self.scenario == '2019':
+            true_logl = 1.4782421382e+08 # no elsewhere
+            # true_logl= -7.9418857894e+89 # 2019 data, marginalized background
         
-        ### 2022 data
-        # true_logl = 1.1365193823e+08 # 2022 data
+        if self.scenario == '2022':
+            true_logl = 1.0772521784e+08 # no elsewhere
+            # true_logl = 1.1365193823e+08 # 2022 data
 
         if self.scenario == 'kajava':
             if self.bkg == 'model':

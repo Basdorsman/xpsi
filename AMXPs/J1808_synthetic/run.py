@@ -16,6 +16,6 @@ if os.environ.get('support_factor') == None:
     support_factor = '9e-1'
 
 
-Analysis = analysis('local','test', 'marginalise', support_factor=support_factor, scenario='literature')
+Analysis = analysis('local','test', 'model', support_factor=None, scenario='2022')
 Analysis()
 

@@ -46,7 +46,7 @@ print('this_directory: ', this_directory)
 
 ################################## SETTINGS ###################################
 
-scenario = 'literature' # 'kajava'
+scenario = '2019' # 'kajava', 'literature'
 bkg = 'model'
 pv = parameter_values(scenario, bkg)
 
@@ -73,7 +73,7 @@ except:
     poisson_seed = 42
 
 
-if scenario == 'kajava' or scenario == 'literature':
+if scenario == 'kajava' or scenario == 'literature' or scenario == '2019':
     exposure_time=1.32366e5 ## is the same as Mason 2019
     
 
@@ -133,8 +133,8 @@ kwargs = {'symmetry': 'azimuthal_invariance', #call general integrator instead o
           'min_sqrt_num_cells': 10,
           'max_sqrt_num_cells': 128,
           'num_leaves': num_leaves,
-          'num_rays': num_rays,
-          'prefix': 'p'}
+          'num_rays': num_rays}#,
+          #'prefix': 'p'}
 values = {}
 bounds = dict(super_colatitude = (None, None),
               super_radius = (None, None),
@@ -156,7 +156,7 @@ elsewhere = Elsewhere(bounds=dict(elsewhere_temperature = (None,None)))
 ################################ ATMOSPHERE ################################### 
       
 
-photosphere = CustomPhotosphere(hot = hot, elsewhere = elsewhere,
+photosphere = CustomPhotosphere(hot = hot, elsewhere = None, #elsewhere, #None
                                 values=dict(mode_frequency = spacetime['frequency']))
 # LOCAL
 if machine=='local':
@@ -226,7 +226,7 @@ if poisson_noise:
 
 Instrument_kwargs = dict(exposure_time=exposure_time,
                          seed=seed, 
-                         name=f'synthetic_{scenario}_seed={seed}',
+                         name=f'synthetic_{scenario}_seed={seed}_no_else',
                          directory='./data/')
 
 likelihood.synthesise(p, force=True, Instrument=Instrument_kwargs) 

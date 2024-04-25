@@ -42,7 +42,7 @@ class parameter_values(object):
                 self.R_in = 55 # 20 #  1 #  km #  for very small diskBB background
             self.column_density = 1.13 #10^21 cm^-2
 
-        if self.scenario =='literature':
+        if self.scenario =='literature' or self.scenario == '2019' or self.scenario == '2022':
             self.mass = 1.4
             self.radius = 12.
             self.distance = 3.5
@@ -69,6 +69,34 @@ class parameter_values(object):
                 self.diskbb_T_log10_K = get_T_in_log10_Kelvin(self.diskbb_T_keV)
                 self.R_in = 30 # 20 #  1 #  km #  for very small diskBB background
             self.column_density = 1.17 #10^21 cm^-2
+            
+        # if self.scenario =='2019':
+        #     self.mass = 1.706
+        #     self.radius = 8.85
+        #     self.distance = 3.4
+        #     self.inclination = 8.11
+        #     self.cos_i = math.cos(self.inclination*math.pi/180)
+            
+        #     # Hotspot
+        #     self.phase_shift = 0.208
+        #     self.super_colatitude = 137.7*math.pi/180 # 20*math.pi/180 # 
+        #     self.super_radius = 90*math.pi/180
+            
+        #     # Compton slab model parameters
+        #     self.tbb=0.868/511 # 0.0017 #0.001 -0.003 Tbb(data) = Tbb(keV)/511keV, 1 keV = 0.002 data
+        #     self.te=101.9*1000/511 # 50. # 40-200 corresponds to 20-100 keV (Te(data) = Te(keV)*1000/511keV), 50 keV = 100 data
+        #     self.tau=0.785 #0.5 - 3.5 tau = ln(Fin/Fout)
+            
+        #     # elsewhere
+        #     self.elsewhere_T_keV = 0.453 # 0.5 #  keV 
+        #     self.elsewhere_T_log10_K = get_T_in_log10_Kelvin(self.elsewhere_T_keV)
+    
+        #     if self.bkg == 'model':
+        #     # source background
+        #         self.diskbb_T_keV = 0.116 # 0.3  #  keV #0.3 keV for Kajava+ 2011
+        #         self.diskbb_T_log10_K = get_T_in_log10_Kelvin(self.diskbb_T_keV)
+        #         self.R_in = 64.0 # 20 #  1 #  km #  for very small diskBB background
+        #     self.column_density = 1.17 #10^21 cm^-2
         
     def p(self):
         self.p = [self.mass, #1.4, #grav mass
@@ -80,8 +108,8 @@ class parameter_values(object):
               self.super_radius,  #angular radius superceding region
               self.tbb,
               self.te,
-              self.tau,
-              self.elsewhere_T_log10_K]
+              self.tau]#,
+              #self.elsewhere_T_log10_K]
 
         if self.bkg == 'model':
             self.p.append(self.diskbb_T_log10_K)
@@ -98,8 +126,8 @@ class parameter_values(object):
                         'column_density', 'compactness', 'T_else_keV', 'tbb_keV','te_keV' ]
         elif self.bkg =='model':
             self.names=['mass','radius','distance','cos_inclination',
-                        'p__phase_shift','p__super_colatitude','p__super_radius',
-                        'p__super_tbb','p__super_te','p__super_tau','elsewhere_temperature',
+                        'phase_shift','super_colatitude','super_radius',
+                        'super_tbb','super_te','super_tau','elsewhere_temperature',
                         'T_in', 'R_in', 'column_density', 'compactness', 'T_else_keV',
                         'T_in_keV', 'tbb_keV','te_keV' ]
         return self.names
@@ -108,8 +136,8 @@ class parameter_values(object):
         bounds = {'mass':(1.0,3.0),
               'radius':(3.0 * gravradius(1.0), 16.0),
               'compactness': (0., 10.),
-              'distance':(3.4, 3.6),  # (2.5, 3.6), #(3.4, 3.6),
-              'cos_inclination':(0.,1.),
+              'distance': (1.2, 4.2), #5 sigma around 2.7   #(3.4, 3.6),  # (2.5, 3.6), #(3.4, 3.6),
+              'cos_inclination':(0.15, 1.),
               'phase_shift':(-0.25, 0.75),
               'super_colatitude':(0.001, math.pi - 0.001),
               'super_radius':(0.001, math.pi/2.0 - 0.001),
@@ -123,8 +151,8 @@ class parameter_values(object):
               'column_density': (0., 3.)}
         bounds['T_else_keV'] = (None, None)
         if self.bkg == 'model':
-            bounds['T_in'] = (0.225, 0.275 )  # (0.01, 0.6) # keV
-            bounds['R_in'] = (27, 33)  # (20, 200) # km
+            bounds['T_in'] = (0.01, 0.6) # (0.225, 0.275 )  # (0.01, 0.6) # keV
+            bounds['R_in'] = (20, 200) # (27, 33)  # (20, 200) # km
             bounds['T_in_keV'] = (None, None)
         
         # bounds = {}
@@ -185,10 +213,10 @@ class parameter_values(object):
               'phase_shift': r"\phi_{p}\;\mathrm{[cycles]}",
               'super_colatitude': r"\Theta_{spot}\;\mathrm{[rad]}",
               'super_radius': r"\zeta_{spot}\;\mathrm{[rad]}",
-              'super_tbb': r"t_{bb}\;\mathrm{[data units]}",
-              'tbb_keV': r"T_{bb} (keV)",
-              'super_te': r"t_e data units",
-              'te_keV': r"T_{e} (keV)",
+              'super_tbb': r"T_{seed}\;\mathrm{[data units]}",
+              'tbb_keV': r"T_{seed} (keV)",
+              'super_te': r"T_\mathrm{electrons}\;\mathrm{[data units]}",
+              'te_keV': r"T_\mathrm{electrons} (keV)",
               'super_tau': r"\tau [-]",
               'elsewhere_temperature': r"T_e log10 of Kelvin",
               'T_else_keV': r"T_{\mathrm{else}} (keV)",
@@ -197,7 +225,7 @@ class parameter_values(object):
         if self.bkg == 'model':
             labels['T_in'] = r"T_{in} log10 of Kelvin"
             labels['T_in_keV'] = r"T_{\mathrm{in}} (keV)"
-            labels['R_in'] =  r"R_{in} km"
+            labels['R_in'] =  r"R_\mathrm{in} (km)"
 
         
         return labels

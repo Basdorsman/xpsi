@@ -80,8 +80,13 @@ class CustomPrior(xpsi.Prior):
         # for high spin frequenies
         if mu < 1.0:
             return -np.inf
-
-        ref = self.parameters # redefine shortcut
+        
+        
+        # inner disk must be smaller than corotation radius, otherwise we enter (weak) propeller regime
+        if not self.parameters['R_in'] < 1.49790e3*self.parameters['mass']**(1/3)*ref['frequency']**(-2/3): # 1.49790e3 = (G*M_sol/4pi^2)^(1/3) in km
+            return -np.inf
+        
+        # ref = self.parameters # redefine shortcut
 
         return 0.0
 
@@ -98,7 +103,7 @@ class CustomPrior(xpsi.Prior):
 
         ref = self.parameters # shortcut
         
-        if self.scenario == 'literature':
+        if self.scenario == 'literature' or self.scenario == '2019':
             idx = ref.index('column_density')
             temporary = truncnorm.ppf(hypercube[idx], -5.0, 5.0, loc=1.17, scale=0.2)
             if temporary < 0: temporary = 0
@@ -110,10 +115,10 @@ class CustomPrior(xpsi.Prior):
             if temporary < 0: temporary = 0
             ref['column_density'] = temporary
     
-        # idx = ref.index('distance')
-        # temporary = truncnorm.ppf(hypercube[idx], -5.0, 5.0, loc=2.7, scale=0.3)
-        # if temporary < 0: temporary = 0
-        # ref['distance'] = temporary
+        idx = ref.index('distance')
+        temporary = truncnorm.ppf(hypercube[idx], -5.0, 5.0, loc=2.7, scale=0.3)
+        if temporary < 0: temporary = 0
+        ref['distance'] = temporary
 
         # flat priors in cosine of hot region centre colatitudes (isotropy)
         # support modified by no-overlap rejection condition

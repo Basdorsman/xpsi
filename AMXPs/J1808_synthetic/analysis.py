@@ -124,7 +124,7 @@ class analysis(object):
     
         self.file_locations()
         self.set_bounds()
-        self.set_values()
+        # self.set_values()
         self.set_interstellar()
         self.set_likelihood()
         
@@ -164,10 +164,10 @@ class analysis(object):
         self.bounds = self.pv.bounds()
 
         
-    def set_values(self):
-        values = {}
-        values['frequency'] = 401.0
-        self.values = values
+    # def set_values(self):
+    #     values = {}
+    #     values['frequency'] = 401.0
+    #     self.values = values
 
     def set_data(self):
         if self.scenario == '2019':
@@ -215,13 +215,24 @@ class analysis(object):
 
     def set_spacetime(self):
     
-        spacetime_bounds = dict(distance = self.bounds["distance"],                       # (Earth) distance
-                                mass = self.bounds["mass"],                          # mass
-                                radius = self.bounds["radius"],     # equatorial radius
-                                cos_inclination = self.bounds["cos_inclination"])               # (Earth) inclination to rotation axis
-
-        self.spacetime = xpsi.Spacetime(bounds=spacetime_bounds, values=dict(frequency=self.values["frequency"]))
+        # values = dict(frequency = 401.)
+        values = dict(frequency = 401.,
+                      mass = self.pv.mass,
+                      radius = self.pv.radius)
         
+        
+    
+        # spacetime_bounds = dict(distance = self.bounds["distance"],                       # (Earth) distance
+        #                         mass = self.bounds["mass"],                          # mass
+        #                         radius = self.bounds["radius"],     # equatorial radius
+        #                         cos_inclination = self.bounds["cos_inclination"])               # (Earth) inclination to rotation axis
+
+        spacetime_bounds = dict(distance = self.bounds["distance"],                       # (Earth) distance
+                                cos_inclination = self.bounds["cos_inclination"])
+
+
+        self.spacetime = xpsi.Spacetime(bounds=spacetime_bounds, values=values) # values=dict(frequency=self.values["frequency"]))
+
     def set_hotregions(self):
         self.num_rays = 512
 

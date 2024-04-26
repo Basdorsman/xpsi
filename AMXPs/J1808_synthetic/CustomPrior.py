@@ -58,12 +58,13 @@ class CustomPrior(xpsi.Prior):
         if not np.isfinite(temp):
             return temp
 
-        # based on contemporary EOS theory
-        if not self.parameters['radius'] <= 16.0:
-            return -np.inf
-
         ref = self.parameters.star.spacetime # shortcut
 
+        # based on contemporary EOS theory
+        if not ref['radius'] <= 16.0:
+            return -np.inf
+
+      
         # causality limit for compactness
         R_p = 1.0 + ref.epsilon * (-0.788 + 1.030 * ref.zeta)
         if R_p < 1.45 / ref.R_r_s:
@@ -83,7 +84,7 @@ class CustomPrior(xpsi.Prior):
         
         
         # inner disk must be smaller than corotation radius, otherwise we enter (weak) propeller regime
-        if not self.parameters['R_in'] < 1.49790e3*self.parameters['mass']**(1/3)*ref['frequency']**(-2/3): # 1.49790e3 = (G*M_sol/4pi^2)^(1/3) in km
+        if not self.parameters['R_in'] < 1.49790e3*ref['mass']**(1/3)*ref['frequency']**(-2/3): # 1.49790e3 = (G*M_sol/4pi^2)^(1/3) in km
             return -np.inf
         
         # ref = self.parameters # redefine shortcut

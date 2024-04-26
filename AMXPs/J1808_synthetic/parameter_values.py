@@ -99,8 +99,8 @@ class parameter_values(object):
         #     self.column_density = 1.17 #10^21 cm^-2
         
     def p(self):
-        self.p = [self.mass, #1.4, #grav mass
-              self.radius,#12.5, #coordinate equatorial radius
+        self.p = [#self.mass, #1.4, #grav mass
+              #self.radius,#12.5, #coordinate equatorial radius
               self.distance, # earth distance kpc
               self.cos_i, #cosine of earth inclination
               self.phase_shift, #phase of hotregion
@@ -154,28 +154,6 @@ class parameter_values(object):
             bounds['T_in'] = (0.01, 0.6) # (0.225, 0.275 )  # (0.01, 0.6) # keV
             bounds['R_in'] = (10, 50) # from star radius to around corotation radius for the heaviest saxJ1808 possible # (27, 33)  # (20, 200) # km
             bounds['T_in_keV'] = (None, None)
-        
-        # bounds = {}
-        # bounds["mass"] = (1.0, 3.0)
-        # bounds["radius"] = (3.0 * gravradius(1.0), 16.0)     # equatorial radius
-        # bounds["compactness"] = (0., 10.)
-        # bounds["distance"] = (3.4, 3.6)  # old prior
-        # bounds["cos_inclination"] = (0.15, 1.0) #updated lower limit due to lack of eclipses, chakrabarty & Morgan 1998
-        # bounds["super_colatitude"] = (None, None)
-        # bounds["super_radius"] = (None, None)
-        # bounds["phase_shift"] = (-0.25, 0.75)
-        # bounds['super_tbb'] = (0.001, 0.003)
-        # bounds['Tbb_keV'] = (None, None)
-        # bounds['super_tau'] = (0.5, 3.5)
-        # bounds['super_te'] = (40., 200.)
-        # bounds['Te_keV'] = (None, None)
-        # bounds['elsewhere_temperature'] = (5.0,7.0) #log10 K
-        # bounds['T_else_keV'] = (None, None)
-        # bounds['column_density'] = (None, None)
-        # if self.bkg == 'model':
-        #     bounds['T_in'] = (0.01, 0.6) # keV
-        #     bounds['R_in'] = (20, 200) # km
-        #     bounds['T_in_keV'] = (None, None)
         
         return bounds
 

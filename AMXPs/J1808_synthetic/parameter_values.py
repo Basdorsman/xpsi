@@ -101,7 +101,7 @@ class parameter_values(object):
     def p(self):
         self.p = [#self.mass, #1.4, #grav mass
               #self.radius,#12.5, #coordinate equatorial radius
-              self.distance, # earth distance kpc
+              # self.distance, # earth distance kpc
               self.cos_i, #cosine of earth inclination
               self.phase_shift, #phase of hotregion
               self.super_colatitude, #colatitude of centre of superseding region
@@ -115,7 +115,7 @@ class parameter_values(object):
             self.p.append(self.diskbb_T_log10_K)
             self.p.append(self.R_in)
 
-        self.p.append(self.column_density)
+        # self.p.append(self.column_density)
         return self.p
         
     def names(self):

@@ -218,7 +218,8 @@ class analysis(object):
         # values = dict(frequency = 401.)
         values = dict(frequency = 401.,
                       mass = self.pv.mass,
-                      radius = self.pv.radius)
+                      radius = self.pv.radius,
+                      distance = self.pv.distance)
         
         
     
@@ -227,8 +228,7 @@ class analysis(object):
         #                         radius = self.bounds["radius"],     # equatorial radius
         #                         cos_inclination = self.bounds["cos_inclination"])               # (Earth) inclination to rotation axis
 
-        spacetime_bounds = dict(distance = self.bounds["distance"],                       # (Earth) distance
-                                cos_inclination = self.bounds["cos_inclination"])
+        spacetime_bounds = dict(cos_inclination = self.bounds["cos_inclination"])
 
 
         self.spacetime = xpsi.Spacetime(bounds=spacetime_bounds, values=values) # values=dict(frequency=self.values["frequency"]))
@@ -279,7 +279,11 @@ class analysis(object):
         
         
     def set_interstellar(self):
-        self.interstellar=CustomInterstellar.from_SWG(self.file_interstellar, bounds=self.bounds['column_density'], value=None)
+        bounds = None # self.bounds['column_density']
+        values = self.pv.column_density # None
+        
+        
+        self.interstellar=CustomInterstellar.from_SWG(self.file_interstellar, bounds=bounds, value=values)
     
     def set_support(self):
         support_factor = self.support_factor
@@ -313,12 +317,12 @@ class analysis(object):
                           R_in = self.bounds["R_in"],
                           K_disk = None) #derived means no bounds
                 
-            k_disk = k_disk_derive()
+            self.k_disk = k_disk_derive()
             
-            self.background = CustomBackground_DiskBB(bounds=bounds, values={'K_disk': k_disk}, interstellar = self.interstellar)
+            self.background = CustomBackground_DiskBB(bounds=bounds, values={'K_disk': self.k_disk}, interstellar = self.interstellar)
             
-            k_disk.star = self.star
-            k_disk.background = self.background
+            self.k_disk.spacetime = self.spacetime
+            self.k_disk.background = self.background
             
         elif self.bkg == 'marginalise' or self.bkg == 'fix':
             self.background = None

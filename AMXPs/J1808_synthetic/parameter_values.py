@@ -152,7 +152,7 @@ class parameter_values(object):
         bounds['T_else_keV'] = (None, None)
         if self.bkg == 'model':
             bounds['T_in'] = (0.01, 0.6) # (0.225, 0.275 )  # (0.01, 0.6) # keV
-            bounds['R_in'] = (20, 200) # (27, 33)  # (20, 200) # km
+            bounds['R_in'] = (10, 50) # from star radius to around corotation radius for the heaviest saxJ1808 possible # (27, 33)  # (20, 200) # km
             bounds['T_in_keV'] = (None, None)
         
         # bounds = {}

@@ -218,8 +218,8 @@ class analysis(object):
         # values = dict(frequency = 401.)
         values = dict(frequency = 401.,
                       mass = self.pv.mass,
-                      radius = self.pv.radius,
-                      distance = self.pv.distance)
+                      radius = self.pv.radius) #,
+                      # distance = self.pv.distance)
         
         
     
@@ -228,7 +228,8 @@ class analysis(object):
         #                         radius = self.bounds["radius"],     # equatorial radius
         #                         cos_inclination = self.bounds["cos_inclination"])               # (Earth) inclination to rotation axis
 
-        spacetime_bounds = dict(cos_inclination = self.bounds["cos_inclination"])
+        spacetime_bounds = dict(distance = self.bounds["distance"],
+                                cos_inclination = self.bounds["cos_inclination"])
 
 
         self.spacetime = xpsi.Spacetime(bounds=spacetime_bounds, values=values) # values=dict(frequency=self.values["frequency"]))
@@ -279,7 +280,7 @@ class analysis(object):
         
         
     def set_interstellar(self):
-        bounds = None # self.bounds['column_density']
+        bounds = None # self.bounds['column_density'] #  
         values = self.pv.column_density # None
         
         

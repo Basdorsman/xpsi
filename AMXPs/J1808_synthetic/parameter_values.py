@@ -137,7 +137,7 @@ class parameter_values(object):
               'radius':(3.0 * gravradius(1.0), 16.0),
               'compactness': (0., 10.),
               'distance': (1.2, 4.2), #5 sigma around 2.7   #(3.4, 3.6),  # (2.5, 3.6), #(3.4, 3.6),
-              'cos_inclination':(0.15, 1.),
+              'cos_inclination':(0.15, 0.77), #lower limit 40 degrees = upper limit cos_i = 0.77
               'phase_shift':(-0.25, 0.75),
               'super_colatitude':(0.001, math.pi - 0.001),
               'super_radius':(0.001, math.pi/2.0 - 0.001),
@@ -198,7 +198,7 @@ class parameter_values(object):
               'super_tau': r"\tau [-]",
               'elsewhere_temperature': r"T_e log10 of Kelvin",
               'T_else_keV': r"T_{\mathrm{else}} (keV)",
-              'column_density': r"n_H 10\^21 cm\^{-2}"}
+              'column_density': r"n_H 10^{21} cm^{-2}"}
         
         if self.bkg == 'model':
             labels['T_in'] = r"T_{in} log10 of Kelvin"

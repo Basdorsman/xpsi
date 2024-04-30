@@ -104,7 +104,7 @@ class CustomPrior(xpsi.Prior):
 
         ref = self.parameters # shortcut
         
-        if self.scenario == 'literature' or self.scenario == '2019':
+        if self.scenario == 'literature' or self.scenario == '2019' or self.scenario == '2022':
             idx = ref.index('column_density')
             temporary = truncnorm.ppf(hypercube[idx], -5.0, 5.0, loc=1.17, scale=0.2)
             if temporary < 0: temporary = 0
@@ -148,8 +148,8 @@ class CustomPrior(xpsi.Prior):
         ref = dict(zip(self.parameters.names, p))
 
         # compactness ratio M/R_eq
-        p += [gravradius(ref['mass']) / ref['radius']]
-        p += [get_keV_from_log10_Kelvin(ref['elsewhere_temperature'])]
+        # p += [gravradius(ref['mass']) / ref['radius']]
+        # p += [get_keV_from_log10_Kelvin(ref['elsewhere_temperature'])]
         if self.bkg == 'model':
             p += [get_keV_from_log10_Kelvin(ref['T_in'])]
         p += [ref['super_tbb']*511]

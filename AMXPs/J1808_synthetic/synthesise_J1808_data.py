@@ -178,7 +178,7 @@ prior = CustomPrior(scenario, 'model')
 if machine=='local':
     interstellar = CustomInterstellar.from_SWG("/home/bas/Documents/Projects/x-psi/xpsi-bas-fork/AMXPs/model_data/n_H/TBnew/tbnew0.14.txt", bounds=(0, 3.), value=None)
 elif machine=='snellius':
-    interstellar = CustomInterstellar.from_SWG("/home/dorsman/xpsi-bas-fork/AMXPs/model_data/interstellar/tbnew/tbnew0.14.txt", bounds=bounds, value=None)
+    interstellar = CustomInterstellar.from_SWG("/home/dorsman/xpsi-bas-fork/AMXPs/model_data/interstellar/tbnew/tbnew0.14.txt", bounds=(0, 3.), value=None)
 
 
 ############################### BACKGROUND ####################################

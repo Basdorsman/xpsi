@@ -46,10 +46,10 @@ print('this_directory: ', this_directory)
 
 ################################## SETTINGS ###################################
 
-scenario = '2019' # 'kajava', 'literature'
+scenario = 'large_r' # 'kajava', 'literature'
 bkg = 'model'
 pv = parameter_values(scenario, bkg)
-
+p = pv.p()
 
 second = False
 te_index = 0
@@ -73,7 +73,7 @@ except:
     poisson_seed = 42
 
 
-if scenario == 'kajava' or scenario == 'literature' or scenario == '2019':
+if scenario == 'kajava' or scenario == 'literature' or scenario == '2019' or scenario == 'large_r':
     exposure_time=1.32366e5 ## is the same as Mason 2019
     
 
@@ -151,7 +151,7 @@ hot = HotRegions((primary,))
 
 ################################### ELSEWHERE ################################
 
-elsewhere = Elsewhere(bounds=dict(elsewhere_temperature = (None,None)))
+# elsewhere = Elsewhere(bounds=dict(elsewhere_temperature = (None,None)))
 
 ################################ ATMOSPHERE ################################### 
       
@@ -176,9 +176,9 @@ prior = CustomPrior(scenario, 'model')
 
 ################################## INTERSTELLAR ###################################
 if machine=='local':
-    interstellar = CustomInterstellar.from_SWG("/home/bas/Documents/Projects/x-psi/xpsi-bas-fork/AMXPs/model_data/n_H/TBnew/tbnew0.14.txt", bounds=(None, None), value=None)
+    interstellar = CustomInterstellar.from_SWG("/home/bas/Documents/Projects/x-psi/xpsi-bas-fork/AMXPs/model_data/n_H/TBnew/tbnew0.14.txt", bounds=(0, 3.), value=None)
 elif machine=='snellius':
-    interstellar = CustomInterstellar.from_SWG("/home/dorsman/xpsi-bas-fork/AMXPs/model_data/interstellar/tbnew/tbnew0.14.txt", bounds=(None, None), value=None)
+    interstellar = CustomInterstellar.from_SWG("/home/dorsman/xpsi-bas-fork/AMXPs/model_data/interstellar/tbnew/tbnew0.14.txt", bounds=bounds, value=None)
 
 
 ############################### BACKGROUND ####################################
@@ -189,7 +189,7 @@ k_disk = k_disk_derive()
 background = CustomBackground_DiskBB(bounds=bounds, values={'K_disk': k_disk}, interstellar = interstellar)
 k_disk.star = star
 k_disk.background = background
-
+k_disk.spacetime = spacetime
 
 ###################### SYNTHESISE DATA #################################
 
@@ -219,14 +219,13 @@ for h in hot.objects:
 
 print("Prossecco ...")
 
-p = pv.p()
 
 if poisson_noise:
     seed = poisson_seed
 
 Instrument_kwargs = dict(exposure_time=exposure_time,
                          seed=seed, 
-                         name=f'synthetic_{scenario}_seed={seed}_no_else',
+                         name=f'synthetic_{scenario}_seed={seed}',
                          directory='./data/')
 
 likelihood.synthesise(p, force=True, Instrument=Instrument_kwargs) 

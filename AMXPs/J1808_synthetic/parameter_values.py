@@ -8,6 +8,7 @@ Created on Fri Mar 15 10:32:15 2024
 import math
 from helper_functions import get_T_in_log10_Kelvin
 from xpsi.global_imports import gravradius
+import numpy as np
 
 class parameter_values(object):
     def __init__(self, scenario, bkg):
@@ -44,8 +45,8 @@ class parameter_values(object):
 
         if self.scenario =='literature' or self.scenario == '2019' or self.scenario == '2022':
             self.mass = 1.4
-            self.radius = 12.
-            self.distance = 3.5
+            self.radius = 11. #12.
+            self.distance = 2.7 # 3.5
             self.inclination = 60
             self.cos_i = math.cos(self.inclination*math.pi/180)
             
@@ -70,52 +71,47 @@ class parameter_values(object):
                 self.R_in = 30 # 20 #  1 #  km #  for very small diskBB background
             self.column_density = 1.17 #10^21 cm^-2
             
-        # if self.scenario =='2019':
-        #     self.mass = 1.706
-        #     self.radius = 8.85
-        #     self.distance = 3.4
-        #     self.inclination = 8.11
-        #     self.cos_i = math.cos(self.inclination*math.pi/180)
+        if self.scenario =='large_r':
+            self.mass = 1.4
+            self.radius = 11.
+            self.distance = 2.7
+            self.inclination = 40
+            self.cos_i = math.cos(self.inclination*math.pi/180)
             
-        #     # Hotspot
-        #     self.phase_shift = 0.208
-        #     self.super_colatitude = 137.7*math.pi/180 # 20*math.pi/180 # 
-        #     self.super_radius = 90*math.pi/180
+            # Hotspot
+            self.phase_shift = 0
+            self.super_colatitude = 0.18  # 45*math.pi/180 # 20*math.pi/180 # 
+            self.super_radius = np.pi/2 - 0.001  # 15.5*math.pi/180
             
-        #     # Compton slab model parameters
-        #     self.tbb=0.868/511 # 0.0017 #0.001 -0.003 Tbb(data) = Tbb(keV)/511keV, 1 keV = 0.002 data
-        #     self.te=101.9*1000/511 # 50. # 40-200 corresponds to 20-100 keV (Te(data) = Te(keV)*1000/511keV), 50 keV = 100 data
-        #     self.tau=0.785 #0.5 - 3.5 tau = ln(Fin/Fout)
-            
-        #     # elsewhere
-        #     self.elsewhere_T_keV = 0.453 # 0.5 #  keV 
-        #     self.elsewhere_T_log10_K = get_T_in_log10_Kelvin(self.elsewhere_T_keV)
+            # Compton slab model parameters
+            self.tbb=0.52/511 # 0.0017 #0.001 -0.003 Tbb(data) = Tbb(keV)/511keV, 1 keV = 0.002 data
+            self.te=37*1000/511 # 50. # 40-200 corresponds to 20-100 keV (Te(data) = Te(keV)*1000/511keV), 50 keV = 100 data
+            self.tau=1.5 #0.5 - 3.5 tau = ln(Fin/Fout)
     
-        #     if self.bkg == 'model':
-        #     # source background
-        #         self.diskbb_T_keV = 0.116 # 0.3  #  keV #0.3 keV for Kajava+ 2011
-        #         self.diskbb_T_log10_K = get_T_in_log10_Kelvin(self.diskbb_T_keV)
-        #         self.R_in = 64.0 # 20 #  1 #  km #  for very small diskBB background
-        #     self.column_density = 1.17 #10^21 cm^-2
+            if self.bkg == 'model':
+            # source background
+                self.diskbb_T_keV = 0.17 # 0.3  #  keV #0.3 keV for Kajava+ 2011
+                self.diskbb_T_log10_K = get_T_in_log10_Kelvin(self.diskbb_T_keV)
+                self.R_in = 30 # 20 #  1 #  km #  for very small diskBB background
+            self.column_density = 1.17 #10^21 cm^-2
         
     def p(self):
-        self.p = [#self.mass, #1.4, #grav mass
-              #self.radius,#12.5, #coordinate equatorial radius
-              # self.distance, # earth distance kpc
+        self.p = [self.mass, #1.4, #grav mass
+               self.radius,#12.5, #coordinate equatorial radius
+               self.distance, # earth distance kpc
               self.cos_i, #cosine of earth inclination
               self.phase_shift, #phase of hotregion
               self.super_colatitude, #colatitude of centre of superseding region
               self.super_radius,  #angular radius superceding region
               self.tbb,
               self.te,
-              self.tau]#,
-              #self.elsewhere_T_log10_K]
+              self.tau]
 
         if self.bkg == 'model':
             self.p.append(self.diskbb_T_log10_K)
             self.p.append(self.R_in)
 
-        # self.p.append(self.column_density)
+        self.p.append(self.column_density)
         return self.p
         
     def names(self):
@@ -140,7 +136,7 @@ class parameter_values(object):
               'cos_inclination':(0.15, 0.77), #lower limit 40 degrees = upper limit cos_i = 0.77
               'phase_shift':(-0.25, 0.75),
               'super_colatitude':(0.001, math.pi - 0.001),
-              'super_radius':(0.001, math.pi/2.0 - 0.001),
+              'super_radius':(0.001, math.pi/2.0),
               'super_tbb':(0.001, 0.003),
               'tbb_keV': (0.511, 1.533),
               'super_te': (40., 200.),

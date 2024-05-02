@@ -137,19 +137,29 @@ class analysis(object):
 
     def file_locations(self):
         self.this_directory = this_directory
-        if self.scenario == 'kajava' or self.scenario == 'literature':
-            if self.poisson_noise:
-                self.file_pulse_profile = self.this_directory + f'/data/synthetic_{self.scenario}_seed={self.poisson_seed}_realisation.dat' 
-            elif not self.poisson_noise:
-                self.file_pulse_profile = self.this_directory + f'/data/J1808_synthetic_{self.scenario}_realisation.dat'
+        # if self.scenario == 'kajava' or self.scenario == 'literature':
+        #     if self.poisson_noise:
+        #         self.file_pulse_profile = self.this_directory + f'/data/synthetic_{self.scenario}_seed={self.poisson_seed}_realisation.dat' 
+        #     elif not self.poisson_noise:
+        #         self.file_pulse_profile = self.this_directory + f'/data/J1808_synthetic_{self.scenario}_realisation.dat'
         
+        if self.scenario == 'large_r':
+                self.file_pulse_profile = self.this_directory + f'/data/synthetic_{self.scenario}_seed={self.poisson_seed}_realisation.dat' 
+        
+        # real data
         if self.scenario == '2019' or self.scenario == '2022':
             self.file_pulse_profile = self.this_directory + f'/data/{self.scenario}_preprocessed.txt'
         
-        self.file_arf = self.this_directory + f'/../model_data/instrument_data/J1808_NICER_{self.scenario}/merged_saxj1808_{self.scenario}_arf_aeff.txt'
-        self.file_rmf = self.this_directory + f'/../model_data/instrument_data/J1808_NICER_{self.scenario}/merged_saxj1808_{self.scenario}_rmf_matrix.txt'
-        self.file_channel_edges = self.this_directory + f'/../model_data/instrument_data/J1808_NICER_{self.scenario}/merged_saxj1808_{self.scenario}_rmf_energymap.txt'
-        
+            self.file_arf = self.this_directory + f'/../model_data/instrument_data/J1808_NICER_{self.scenario}/merged_saxj1808_{self.scenario}_arf_aeff.txt'
+            self.file_rmf = self.this_directory + f'/../model_data/instrument_data/J1808_NICER_{self.scenario}/merged_saxj1808_{self.scenario}_rmf_matrix.txt'
+            self.file_channel_edges = self.this_directory + f'/../model_data/instrument_data/J1808_NICER_{self.scenario}/merged_saxj1808_{self.scenario}_rmf_energymap.txt'
+
+        elif self.scenario == 'large_r':
+            self.file_arf = self.this_directory + f'/../model_data/instrument_data/J1808_NICER_2019/merged_saxj1808_2019_arf_aeff.txt'
+            self.file_rmf = self.this_directory + f'/../model_data/instrument_data/J1808_NICER_2019/merged_saxj1808_2019_rmf_matrix.txt'
+            self.file_channel_edges = self.this_directory + f'/../model_data/instrument_data/J1808_NICER_2019/merged_saxj1808_2019_rmf_energymap.txt'
+            
+            
         if self.machine == 'local':
             self.file_atmosphere = '/home/bas/Documents/Projects/x-psi/model_datas/bobrikova/Bobrikova_compton_slab.npz'
             self.file_interstellar = "/home/bas/Documents/Projects/x-psi/xpsi-bas-fork/AMXPs/model_data/n_H/TBnew/tbnew0.14.txt"
@@ -170,7 +180,7 @@ class analysis(object):
     #     self.values = values
 
     def set_data(self):
-        if self.scenario == '2019':
+        if self.scenario == '2019' or self.scenario == 'large_r':
             self.exposure_time = 1.32366e5 #Mason's 2019 data cut
         if self.scenario == '2022':
             self.exposure_time = 7.13422e4 #Mason's 2022 data cut
@@ -215,23 +225,23 @@ class analysis(object):
 
     def set_spacetime(self):
     
-        # values = dict(frequency = 401.)
-        values = dict(frequency = 401.,
-                      mass = self.pv.mass,
-                      radius = self.pv.radius,
-                      distance = self.pv.distance)
+        values = dict(frequency = 401.)
+        # values = dict(frequency = 401.,
+        #               mass = self.pv.mass,
+        #               radius = self.pv.radius,
+        #               distance = self.pv.distance)
         
         
     
-        # spacetime_bounds = dict(distance = self.bounds["distance"],                       # (Earth) distance
-        #                         mass = self.bounds["mass"],                          # mass
-        #                         radius = self.bounds["radius"],     # equatorial radius
-        #                         cos_inclination = self.bounds["cos_inclination"])               # (Earth) inclination to rotation axis
+        spacetime_bounds = dict(distance = self.bounds["distance"],                       # (Earth) distance
+                                mass = self.bounds["mass"],                          # mass
+                                radius = self.bounds["radius"],     # equatorial radius
+                                cos_inclination = self.bounds["cos_inclination"])               # (Earth) inclination to rotation axis
 
         # spacetime_bounds = dict(distance = self.bounds["distance"],
         #                         cos_inclination = self.bounds["cos_inclination"])
 
-        spacetime_bounds = dict(cos_inclination = self.bounds["cos_inclination"])
+        # spacetime_bounds = dict(cos_inclination = self.bounds["cos_inclination"])
 
 
         self.spacetime = xpsi.Spacetime(bounds=spacetime_bounds, values=values) # values=dict(frequency=self.values["frequency"]))
@@ -282,8 +292,10 @@ class analysis(object):
         
         
     def set_interstellar(self):
-        bounds = None # self.bounds['column_density'] #  
-        values = self.pv.column_density # None
+        # bounds = None 
+        bounds = self.bounds['column_density']
+        values = None #self.pv.column_density
+
         
         
         self.interstellar=CustomInterstellar.from_SWG(self.file_interstellar, bounds=bounds, value=values)
@@ -411,12 +423,15 @@ class analysis(object):
         
         
         if self.scenario == '2019':
-            true_logl = 1.4782421382e+08 # no elsewhere
+            true_logl = 1.5315129891e+08 # no elsewhere
             # true_logl= -7.9418857894e+89 # 2019 data, marginalized background
         
         if self.scenario == '2022':
-            true_logl = 1.0016540982e+08 # no elsewhere
+            true_logl = 1.0540960782e+08 # no elsewhere
             # true_logl = 1.1365193823e+08 # 2022 data
+            
+        if self.scenario == 'large_r':
+            true_logl = 1.6178660601e+08
 
         if self.scenario == 'kajava':
             if self.bkg == 'model':

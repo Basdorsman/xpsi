@@ -189,3 +189,7 @@ AMXPs/J1808_synthetic/snellius_runs/*
 # any figures
 *.png
 *.pdf
+
+# any data or txt files
+*.dat
+*.txt

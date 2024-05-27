@@ -76,23 +76,23 @@ class parameter_values(object):
             self.radius = 11.
             self.distance = 2.7
             self.inclination = 40
-            self.cos_i = math.cos(self.inclination*math.pi/180) #0.769901773079812224E+00 
+            self.cos_i = 0.769901773079812224E+00 # math.cos(self.inclination*math.pi/180) # 
             
             # Hotspot
-            self.phase_shift = 0 #0.226365126031355196E+00 #0
-            self.super_colatitude =  0.18 #0.175993450466385537E+00 # # 45*math.pi/180 # 20*math.pi/180 # 
-            self.super_radius = np.pi/2 - 0.001 #0.156951249537834525E+01 #  # 15.5*math.pi/180
+            self.phase_shift = 0.226365126031355196E+00 # #0
+            self.super_colatitude = 0.175993450466385537E+00 # 0.18 # # # 45*math.pi/180 # 20*math.pi/180 # 
+            self.super_radius = 0.156951249537834525E+01 #np.pi/2 - 0.001 # #  # 15.5*math.pi/180
             
             # Compton slab model parameters
-            self.tbb=0.52/511# 0.103616176435110115E-02 #0.52/511 # 0.0017 #0.001 -0.003 Tbb(data) = Tbb(keV)/511keV, 1 keV = 0.002 data
-            self.te=37*1000/511# 0.729440224892133244E+02 #37*1000/511 # 50. # 40-200 corresponds to 20-100 keV (Te(data) = Te(keV)*1000/511keV), 50 keV = 100 data
-            self.tau=1.5 #0.153014380768402769E+01 # #0.5 - 3.5 tau = ln(Fin/Fout)
+            self.tbb=0.103616176435110115E-02# 0.52/511#  #0.52/511 # 0.0017 #0.001 -0.003 Tbb(data) = Tbb(keV)/511keV, 1 keV = 0.002 data
+            self.te=0.729440224892133244E+02#37*1000/511#  #37*1000/511 # 50. # 40-200 corresponds to 20-100 keV (Te(data) = Te(keV)*1000/511keV), 50 keV = 100 data
+            self.tau=0.153014380768402769E+01#1.5 # # #0.5 - 3.5 tau = ln(Fin/Fout)
     
             if self.bkg == 'model':
             # source background
-                self.diskbb_T_keV = 0.17# 0.16845756373108872 # # 0.3  #  keV #0.3 keV for Kajava+ 2011
+                self.diskbb_T_keV = 0.16845756373108872# 0.17#  # # 0.3  #  keV #0.3 keV for Kajava+ 2011
                 self.diskbb_T_log10_K = get_T_in_log10_Kelvin(self.diskbb_T_keV)
-                self.R_in = 30# 0.308122224729265000E+02  # 20 #  1 #  km #  for very small diskBB background
+                self.R_in = 0.308122224729265000E+02# 30#   # 20 #  1 #  km #  for very small diskBB background
             self.column_density = 1.17 #10^21 cm^-2
         
     def p(self):

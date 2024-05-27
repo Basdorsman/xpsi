@@ -38,7 +38,7 @@ class CustomPrior(xpsi.Prior):
 
     """
 
-    __derived_names__ = ['compactness', 'T_else_keV', 'T_in_keV', 'tbb_keV', 'te_keV']#, 'phase_separation',]
+    __derived_names__ = ['compactness', 'T_in_keV', 'tbb_keV', 'te_keV', 'inclination_deg', 'colatitude_deg', 'radius_deg']#, 'phase_separation',] , 'T_else_keV'
     __draws_from_support__ = 4 #10^x
     
     def __init__(self, scenario, bkg, *args, **kwargs):
@@ -84,8 +84,12 @@ class CustomPrior(xpsi.Prior):
         
         
         # inner disk must be smaller than corotation radius, otherwise we enter (weak) propeller regime
-        # if not self.parameters['R_in'] < 1.49790e3*ref['mass']**(1/3)*ref['frequency']**(-2/3): # 1.49790e3 = (G*M_sol/4pi^2)^(1/3) in km
-        #     return -np.inf
+        if not self.parameters['R_in'] < 1.49790e3*ref['mass']**(1/3)*ref['frequency']**(-2/3): # 1.49790e3 = (G*M_sol/4pi^2)^(1/3) in km
+            return -np.inf
+
+        # inner disk must be larger than neutron star equatorial radius
+        if not self.parameters['R_in'] > ref['radius']:
+            return -np.inf
         
         # ref = self.parameters # redefine shortcut
 
@@ -104,11 +108,11 @@ class CustomPrior(xpsi.Prior):
 
         ref = self.parameters # shortcut
         
-        if self.scenario == 'literature' or self.scenario == '2019' or self.scenario == '2022':
-            idx = ref.index('column_density')
-            temporary = truncnorm.ppf(hypercube[idx], -5.0, 5.0, loc=1.17, scale=0.2)
-            if temporary < 0: temporary = 0
-            ref['column_density'] = temporary
+        # if self.scenario == 'literature' or self.scenario == '2019' or self.scenario == '2022':
+        idx = ref.index('column_density')
+        temporary = truncnorm.ppf(hypercube[idx], -5.0, 5.0, loc=1.17, scale=0.2)
+        if temporary < 0: temporary = 0
+        ref['column_density'] = temporary
 
         if self.scenario == 'kajava':
             idx = ref.index('column_density')
@@ -148,12 +152,15 @@ class CustomPrior(xpsi.Prior):
         ref = dict(zip(self.parameters.names, p))
 
         # compactness ratio M/R_eq
-        # p += [gravradius(ref['mass']) / ref['radius']]
+        p += [gravradius(ref['mass']) / ref['radius']]
         # p += [get_keV_from_log10_Kelvin(ref['elsewhere_temperature'])]
         if self.bkg == 'model':
             p += [get_keV_from_log10_Kelvin(ref['T_in'])]
         p += [ref['super_tbb']*511]
         p += [ref['super_te']*511/1000]
         
+        p += [np.arccos(ref['cos_inclination'])*180/np.pi]
+        p += [ref['super_colatitude']*180/np.pi]
+        p += [ref['super_radius']*180/np.pi]
 
         return p

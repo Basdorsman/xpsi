@@ -232,13 +232,12 @@ class CustomAxes(Axes):
         self.set_xlim([0.0, 1.0])
         self.set_yscale('log')
         self.set_ylabel(r'Energy (keV)')
-        #self.set_xlabel(r'Phase')
+        self.set_xlabel(r'Phase')
 
 
 
-        veneer((0.05, 0.2), (None, None), self)
-
-        #plt.subplots_adjust(wspace = 0.025)
+        #veneer((0.05, 0.2), (None, None), self)
+        #plt.subplots_adjust(wspace = 1)#0.025)
         
         return profile
 

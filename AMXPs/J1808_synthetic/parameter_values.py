@@ -95,6 +95,32 @@ class parameter_values(object):
                 self.R_in = 0.308122224729265000E+02# 30#   # 20 #  1 #  km #  for very small diskBB background
             self.column_density = 1.17 #10^21 cm^-2
         
+        if self.scenario =='small_r':
+            self.mass = 1.4
+            self.radius = 11.
+            self.distance = 2.7
+            self.inclination = 80.
+            self.cos_i = math.cos(self.inclination*math.pi/180) #
+            
+            # Hotspot
+            self.phase_shift = 0.0
+            self.super_colatitude = 0.175993450466385537E+00 # # # 45*math.pi/180 # 20*math.pi/180 # 
+            self.super_radius = 30.*math.pi/180
+            
+            # Compton slab model parameters
+            self.tbb=0.0025 #0.001 -0.003 Tbb(data) = Tbb(keV)/511keV, 1 keV = 0.002 data
+            self.te=100. #  #37*1000/511 # 50. # 40-200 corresponds to 20-100 keV (Te(data) = Te(keV)*1000/511keV), 50 keV = 100 data
+            self.tau=2.0 #0.5 - 3.5 tau = ln(Fin/Fout)
+    
+            if self.bkg == 'model':
+            # source background
+                self.diskbb_T_keV = 0.16845756373108872# 0.17#  # # 0.3  #  keV #0.3 keV for Kajava+ 2011
+                self.diskbb_T_log10_K = get_T_in_log10_Kelvin(self.diskbb_T_keV)
+                self.R_in = 0.308122224729265000E+02# 30#   # 20 #  1 #  km #  for very small diskBB background
+            self.column_density = 1.17 #10^21 cm^-2
+        
+        
+        
     def p(self):
         self.p = [self.mass, #1.4, #grav mass
                self.radius,#12.5, #coordinate equatorial radius

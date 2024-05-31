@@ -143,7 +143,7 @@ class analysis(object):
         #     elif not self.poisson_noise:
         #         self.file_pulse_profile = self.this_directory + f'/data/J1808_synthetic_{self.scenario}_realisation.dat'
         
-        if self.scenario == 'large_r':
+        if self.scenario == 'large_r' or self.scenario == 'small_r':
                 self.file_pulse_profile = self.this_directory + f'/data/synthetic_{self.scenario}_seed={self.poisson_seed}_realisation.dat' 
         
         # real data
@@ -154,7 +154,7 @@ class analysis(object):
             self.file_rmf = self.this_directory + f'/../model_data/instrument_data/J1808_NICER_{self.scenario}/merged_saxj1808_{self.scenario}_rmf_matrix.txt'
             self.file_channel_edges = self.this_directory + f'/../model_data/instrument_data/J1808_NICER_{self.scenario}/merged_saxj1808_{self.scenario}_rmf_energymap.txt'
 
-        elif self.scenario == 'large_r':
+        elif self.scenario == 'large_r' or self.scenario == 'small_r':
             self.file_arf = self.this_directory + f'/../model_data/instrument_data/J1808_NICER_2019/merged_saxj1808_2019_arf_aeff.txt'
             self.file_rmf = self.this_directory + f'/../model_data/instrument_data/J1808_NICER_2019/merged_saxj1808_2019_rmf_matrix.txt'
             self.file_channel_edges = self.this_directory + f'/../model_data/instrument_data/J1808_NICER_2019/merged_saxj1808_2019_rmf_energymap.txt'
@@ -180,7 +180,7 @@ class analysis(object):
     #     self.values = values
 
     def set_data(self):
-        if self.scenario == '2019' or self.scenario == 'large_r':
+        if self.scenario == '2019' or self.scenario == 'large_r' or self.scenario == 'small_r':
             self.exposure_time = 1.32366e5 #Mason's 2019 data cut
         if self.scenario == '2022':
             self.exposure_time = 7.13422e4 #Mason's 2022 data cut
@@ -433,6 +433,9 @@ class analysis(object):
         if self.scenario == 'large_r':
             true_logl = 1.6881974660e+08 # precise values 
             #true_logl =  1.6876535955e+08 # rounded values, but remember that data should be updated
+
+        if self.scenario == 'small_r':
+            true_logl = 7.9264371582e+07 # precise values 
 
         if self.scenario == 'kajava':
             if self.bkg == 'model':

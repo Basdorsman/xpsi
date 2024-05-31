@@ -73,7 +73,7 @@ except:
     poisson_seed = 42
 
 
-if scenario == 'kajava' or scenario == 'literature' or scenario == '2019' or scenario == 'large_r':
+if scenario == 'kajava' or scenario == 'literature' or scenario == '2019' or scenario == 'large_r' or scenario == 'small_r':
     exposure_time=1.32366e5 ## is the same as Mason 2019
     
 

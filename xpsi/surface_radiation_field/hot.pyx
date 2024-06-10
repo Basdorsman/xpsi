@@ -498,6 +498,7 @@ cdef double eval_hot(size_t THREAD,
     #printf("\nBase-nodes [%d,%d,%d,%d] ",
                 #<int>BN[0], <int>BN[1], <int>BN[2], <int>BN[3])
 
+    # printf('hot_data %.8e, \n', D.p.I[0])  
     # printf("\nI:  %.8e", I)
 
     if I < 0.0:

@@ -46,7 +46,7 @@ print('this_directory: ', this_directory)
 
 ################################## SETTINGS ###################################
 
-scenario = 'large_r' # 'kajava', 'literature'
+scenario = 'small_r' # 'kajava', 'literature'
 bkg = 'model'
 pv = parameter_values(scenario, bkg)
 p = pv.p()

@@ -9,7 +9,7 @@ import numpy as np
 import xpsi
 import math
 from scipy.stats import truncnorm
-from xpsi.global_imports import _c, _G, _dpr, gravradius, _csq, _km, _2pi, _keV, _k_B, _c_cgs
+from xpsi.global_imports import gravradius
 from helper_functions import get_keV_from_log10_Kelvin
 
 class CustomPrior(xpsi.Prior):

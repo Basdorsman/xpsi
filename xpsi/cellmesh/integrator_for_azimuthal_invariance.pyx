@@ -138,7 +138,7 @@ def integrate(size_t numThreads,
         double eta # Doppler boost factor in the NRF; TP
         double mu # NRF and then CRF emission angle w.r.t surface normal; TP
         double E_prime # Photon energy in the CRF, given an energy at infinity; TP
-        double I_E # Radiant and or spectral intensity in the CRF; TP
+        double I_E, test_I # Radiant and or spectral intensity in the CRF; TP
         double _PHASE, _PHASE_plusShift, _GEOM, _Z, _ABB # TP
         double phi_shift # TP
         double superlum # TP
@@ -433,19 +433,24 @@ def integrate(size_t numThreads,
                                 # specific intensities
                                 for p in range(N_E):
                                     E_prime = energies[p] / _Z
-                                    # printf("\ninput parameters reporting:")
-                                    # printf("E_prime: %.8e, ", E_prime)
-                                    # printf("__ABB: %.8e, ", _ABB)
-                                    # printf("srcCellParams[i,j,0]: %.8e, ", srcCellParams[i,J,0])
-                                    # printf("srcCellParams[i,j,1]: %.8e, ", srcCellParams[i,J,1])
-
                                     E_electronrest=E_prime*0.001956951 #kev to electron rest energy conversion
+
+                                    # printf("\ninput parameters reporting:")
+                                    # printf("E_electronrest: %.8e, \n", E_electronrest)
+                                    # printf("__ABB: %.8e, \n", _ABB)
+                                    # printf("srcCellParams[i,j,0]: %.8e, \n", srcCellParams[i,J,0])
+                                    # printf("srcCellParams[i,j,1]: %.8e, \n", srcCellParams[i,J,1])
+                                    # printf("srcCellParams[i,j,2]: %.8e, \n", srcCellParams[i,J,2])
                                     
                                     I_E = eval_hot(T,
                                                    E_electronrest,
                                                    _ABB,
                                                    &(srcCellParams[i,J,0]),
                                                    hot_data)
+
+                                    # printf("I_E: %.8e, \n", I_E)
+
+
 
                                     if perform_correction == 1:
                                         correction_I_E = eval_elsewhere(T,

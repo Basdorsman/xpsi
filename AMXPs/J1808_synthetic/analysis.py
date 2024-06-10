@@ -118,7 +118,7 @@ class analysis(object):
        
         
         self.integrator = 'azimuthal_invariance' #'general/azimuthal_invariance'
-        self.interpolator = 'split' #'split/combined'
+        self.interpolator = 'combined'  #'split/combined'
 
         self.pv = parameter_values(self.scenario, self.bkg)
     
@@ -355,7 +355,7 @@ class analysis(object):
                             background = self.background,
                             interstellar = self.interstellar,
                             support = self.support,
-                            cache = True, # only true if verifying code implementation otherwise useless slowdown.
+                            cache = False, # only true if verifying code implementation otherwise useless slowdown.
                             bkg = self.bkg,
                             epsrel = 1.0e-8,
                             epsilon = 1.0e-3,
@@ -520,3 +520,6 @@ class analysis(object):
             print("... sampling done")
             print('Sampling took {:.3f} seconds'.format((time.time()-t_start)))
             
+if __name__ == '__main__':
+    Analysis = analysis('local','test', 'model', support_factor=None, scenario='small_r')
+    Analysis()

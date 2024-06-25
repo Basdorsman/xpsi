@@ -161,7 +161,7 @@ class parameter_values(object):
         bounds = {'mass':(1.0,3.0),
               'radius':(3.0 * gravradius(1.0), 16.0),
               'distance': (1.2, 4.2), #5 sigma around 2.7   #(3.4, 3.6),  # (2.5, 3.6), #(3.4, 3.6),
-              'cos_inclination':(0.15, 0.77), #lower limit 40 degrees = upper limit cos_i = 0.77
+              'cos_inclination':(0.15, 0.87), #lower limit 30 degrees = upper limit cos_i = 0.87
               'phase_shift':(-0.25, 0.75),
               'super_colatitude':(0.001, math.pi - 0.001),
               'super_radius':(0.001, math.pi/2.0),
@@ -174,7 +174,7 @@ class parameter_values(object):
               # 'T_else_keV': (None, None),
               'column_density': (0., 3.),
               'compactness': (0., 10.),
-              'inclination_deg': (39, 90),
+              'inclination_deg': (30, 90),
               'colatitude_deg': (0.001, 180-0.001),
               'radius_deg': (0.001, 90)              
               }

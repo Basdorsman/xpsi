@@ -144,7 +144,7 @@ class analysis(object):
         #         self.file_pulse_profile = self.this_directory + f'/data/J1808_synthetic_{self.scenario}_realisation.dat'
         
         if self.scenario == 'large_r' or self.scenario == 'small_r':
-                self.file_pulse_profile = self.this_directory + f'/data/synthetic_{self.scenario}_seed={self.poisson_seed}_realisation_bas_fork.dat' # bas fork data
+                self.file_pulse_profile = self.this_directory + f'/data/synthetic_{self.scenario}_seed={self.poisson_seed}_realisation.dat'
         
         # real data
         if self.scenario == '2019' or self.scenario == '2022':
@@ -172,12 +172,6 @@ class analysis(object):
 
     def set_bounds(self):
         self.bounds = self.pv.bounds()
-
-        
-    # def set_values(self):
-    #     values = {}
-    #     values['frequency'] = 401.0
-    #     self.values = values
 
     def set_data(self):
         if self.scenario == '2019' or self.scenario == 'large_r' or self.scenario == 'small_r':
@@ -431,11 +425,14 @@ class analysis(object):
             # true_logl = 1.1365193823e+08 # 2022 data
             
         if self.scenario == 'large_r':
-            true_logl = 1.6881974660e+08 # precise values 
+            true_logl = 1.6881742360e+08 # precise values, new disk 
             #true_logl =  1.6876535955e+08 # rounded values, but remember that data should be updated
 
         if self.scenario == 'small_r':
-            true_logl = 7.9264371582e+07 # precise values 
+            if self.poisson_seed == 42:
+                true_logl = 7.9264371582e+07 # precise values 
+            if self.poisson_seed == 0:
+                true_logl = 7.9283242548e+07
 
         if self.scenario == 'kajava':
             if self.bkg == 'model':
@@ -526,5 +523,5 @@ class analysis(object):
             print('Sampling took {:.3f} seconds'.format((time.time()-t_start)))
             
 if __name__ == '__main__':
-    Analysis = analysis('local','test', 'model', support_factor=None, scenario='small_r')
+    Analysis = analysis('local','test', 'model', support_factor=None, scenario='small_r', poisson_seed=0)
     Analysis()

@@ -260,14 +260,19 @@ class CustomSignal(xpsi.Signal):
                 raise
 
             # POISSON NOISE
+            np.savetxt(os.path.join(directory, name+'_realisation.dat'),
+                        np.round(synthetic),
+                        fmt = '%u')
+
+            # POISSON NOISE, Floats
             # np.savetxt(os.path.join(directory, name+'_realisation.dat'),
-            #             np.round(synthetic),
-            #             fmt = '%u')
+            #             synthetic,
+            #             fmt = '%f')
             
             #NO NOISE, FLOATS
-            np.savetxt(os.path.join(directory, name+'_realisation.dat'),
-                        self._expected_counts,
-                        fmt = '%f')
+            # np.savetxt(os.path.join(directory, name+'_realisation.dat'),
+            #             self._expected_counts,
+            #             fmt = '%f')
             
             # NO NOISE, WHOLE COUNTS
             # np.savetxt(os.path.join(directory, name+'_realisation.dat'),

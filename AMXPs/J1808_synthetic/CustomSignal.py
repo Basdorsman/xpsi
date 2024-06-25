@@ -238,13 +238,22 @@ class CustomSignal(xpsi.Signal):
     
             """
             
-            self.star_counts, self._expected_counts, synthetic = _synthesise(exposure_time,
-                                                                       self._data.phases,
-                                                                       self._signals,
-                                                                       self._phases,
-                                                                       self._shifts,
-                                                                       self._background.registered_background,
-                                                                       gsl_seed=seed)
+            if self.background == None:
+                self.star_counts, self._expected_counts, synthetic = _synthesise(exposure_time,
+                                                                           self._data.phases,
+                                                                           self._signals,
+                                                                           self._phases,
+                                                                           self._shifts,
+                                                                           np.zeros(np.asarray(self._signals[0]).shape),
+                                                                           gsl_seed=seed)
+            else:
+                self.star_counts, self._expected_counts, synthetic = _synthesise(exposure_time,
+                                                                           self._data.phases,
+                                                                           self._signals,
+                                                                           self._phases,
+                                                                           self._shifts,
+                                                                           self._background.registered_background,
+                                                                           gsl_seed=seed)
             self.synthetic_data = synthetic
             
             try:
@@ -258,6 +267,11 @@ class CustomSignal(xpsi.Signal):
             np.savetxt(os.path.join(directory, name+'_realisation.dat'),
                         np.round(synthetic),
                         fmt = '%u')
+            
+            # POISSON NOISE, Floats
+            # np.savetxt(os.path.join(directory, name+'_realisation.dat'),
+            #             synthetic,
+            #             fmt = '%f')
             
             #NO NOISE, FLOATS
             # np.savetxt(os.path.join(directory, name+'_realisation.dat'),

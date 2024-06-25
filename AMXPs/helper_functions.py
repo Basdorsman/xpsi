@@ -208,15 +208,16 @@ def custom_subplots(*args, sharex=False, **kwargs):
 from matplotlib.axes import Axes
 
 class CustomAxes(Axes):
-    def plot_2D_counts(self, signal, phases, channels, label=r'Counts', cm=cm.jet):
+    def plot_2D_counts(self, signal, phases, channels, label=r'Counts', vmin = None, vmax = None, cm=cm.jet):
         """ Plot a pulse resolved over a single rotational cycle. """
 
-        if (signal < 0.0).any():
-            vmax =  np.max( np.abs( signal ) )
-            vmin = -vmax
-        else:
-            vmax = np.max(signal)
-            vmin = np.min(signal)
+        if (vmin == None and vmax == None): 
+    	    if (signal < 0.0).any():
+    	        vmax =  np.max( np.abs( signal ) )
+    	        vmin = -vmax
+    	    else:
+    	        vmax = np.max(signal)
+    	        vmin = np.min(signal)
 
         profile = self.pcolormesh(phases,
                                    channels,

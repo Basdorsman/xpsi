@@ -13,6 +13,9 @@ import os
 import numpy as np
 import math
 
+import sys
+this_directory = os.path.dirname(os.path.abspath(__file__))
+sys.path.append(this_directory+'/../')
 
 from matplotlib import pyplot as plt
 from matplotlib import rcParams
@@ -41,7 +44,6 @@ from CustomHotregion import CustomHotRegion_Accreting
 from helper_functions import get_T_in_log10_Kelvin, get_mids_from_edges, SynthesiseData
 from parameter_values import parameter_values
 
-this_directory = os.path.dirname(os.path.abspath(__file__))
 print('this_directory: ', this_directory)
 
 ################################## SETTINGS ###################################
@@ -200,7 +202,7 @@ _data = SynthesiseData(np.arange(channel_low,channel_hi), phases_space, 0, chann
 
 signal = CustomSignal(data = _data,
                         instrument = NICER,  # Instrument
-                        background = background,
+                        background = background, #background,
                         interstellar = interstellar,
                         cache = True,
                         prefix='Instrument') # I can't change this?
@@ -231,9 +233,9 @@ Instrument_kwargs = dict(exposure_time=exposure_time,
 likelihood.synthesise(p, force=True, Instrument=Instrument_kwargs) 
 
 if __name__ == '__main__':
-
-    np.savetxt(f'data/background_countrate_{scenario}.txt', np.sum(background.registered_background, axis=1))
-    np.savetxt(f'data/J1808_synthetic_diskbb_{scenario}.txt', background.registered_background)
+    if bkg is not None:
+        np.savetxt(f'data/background_countrate_{scenario}.txt', np.sum(background.registered_background, axis=1))
+        np.savetxt(f'data/J1808_synthetic_diskbb_{scenario}.txt', background.registered_background)
     
     print("Done !")
     

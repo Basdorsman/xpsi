@@ -46,10 +46,8 @@ from parameter_values import parameter_values
 
 ################################## SETTINGS ###################################
 
-scenario = 'small_r' # 'kajava', 'literature'
+
 bkg = 'model'
-pv = parameter_values(scenario, bkg)
-p = pv.p()
 
 second = False
 te_index = 0
@@ -65,12 +63,20 @@ try: #try to get parameters from shell input
     poisson_noise = bool(os.environ['poisson_noise'])
     os.environ.get('poisson_seed')
     poisson_seed = int(os.environ['poisson_seed'])
+    os.environ.get('scenario')
+    scenario = os.environ['scenario']
+
 except:
     atmosphere_type = "A"
     n_params = "5"
     machine = "local"
     poisson_noise = True
-    poisson_seed = 42
+    poisson_seed = 0
+    scenario = 'small_r' # 'kajava', 'literature
+  
+
+pv = parameter_values(scenario, bkg)
+p = pv.p()
 
 
 if scenario == 'kajava' or scenario == 'literature' or scenario == '2019' or scenario == 'large_r' or scenario == 'small_r':
@@ -126,6 +132,7 @@ num_rays = 512
 
 kwargs = {'symmetry': True, #call for azimuthal invariance
           'split': True,
+          'atm_ext':'Num5D',
           'omit': False,
           'cede': False,
           'concentric': False,
@@ -183,7 +190,7 @@ k_disk.star = star
 
 #################################### PRIOR ####################################
 
-prior = CustomPrior(scenario, 'model')
+prior = CustomPrior(scenario, bkg)
 
 ################################## INTERSTELLAR ###################################
 if machine=='local':

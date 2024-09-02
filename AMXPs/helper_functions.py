@@ -255,7 +255,7 @@ class CustomAxes(Axes):
         self.set_ylim([np.min(my_data), np.max(my_data)])
 
     
-    def plot_bolometric_pulse(self, phases_edges, my_data):
+    def plot_bolometric_pulse(self, phases_edges, my_data, normalized=True):
         """
         Plot a bolometric pulse.
     
@@ -280,7 +280,10 @@ class CustomAxes(Axes):
         normalized_data = summed_data / np.max(summed_data)
     
         # Plot the normalized data
-        self.plot(phases_mids, normalized_data)
+        if normalized:
+            self.plot(phases_mids, normalized_data)
+        if not normalized:
+            self.plot(phases_mids, summed_data)
     
         # Label the axes
         self.set_xlabel('Phase')

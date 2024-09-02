@@ -82,15 +82,15 @@ class CustomPrior(xpsi.Prior):
         if mu < 1.0:
             return -np.inf
         
-        if self.bkg == 'model':
+        #if self.bkg == 'model':
         
             # inner disk must be smaller than corotation radius, otherwise we enter (weak) propeller regime
-            if not self.parameters['R_in'] < 1.49790e3*ref['mass']**(1/3)*ref['frequency']**(-2/3): # 1.49790e3 = (G*M_sol/4pi^2)^(1/3) in km
-                return -np.inf
+        #    if not self.parameters['R_in'] < 1.49790e3*ref['mass']**(1/3)*ref['frequency']**(-2/3): # 1.49790e3 = (G*M_sol/4pi^2)^(1/3) in km
+        #        return -np.inf
     
             # inner disk must be larger than neutron star equatorial radius
-            if not self.parameters['R_in'] > ref['radius']:
-                return -np.inf
+        #    if not self.parameters['R_in'] > ref['radius']:
+        #        return -np.inf
         
         # ref = self.parameters # redefine shortcut
 

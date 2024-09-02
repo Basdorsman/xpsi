@@ -88,7 +88,7 @@ class analysis(object):
             self.max_iter = int(os.environ.get('max_iter'))
         except:
             print('max_iter from environment variables failed, proceeding with default.')
-            self.max_iter = 10
+            self.max_iter = 100
             pass
         print(f'max_iter: {self.max_iter}')
 
@@ -252,7 +252,8 @@ class analysis(object):
                   'min_sqrt_num_cells': 10,
                   'max_sqrt_num_cells': 128,
                   'num_leaves': self.num_leaves,
-                  'num_rays': self.num_rays}
+                  'num_rays': self.num_rays,
+                  'atm_ext':'Num5D'}
                   #'prefix': 'p'}
         
         hotregion_bounds = dict(super_colatitude = self.bounds["super_colatitude"],
@@ -425,14 +426,28 @@ class analysis(object):
             # true_logl = 1.1365193823e+08 # 2022 data
             
         if self.scenario == 'large_r':
-            true_logl = 1.6881742360e+08 # precise values, new disk 
-            #true_logl =  1.6876535955e+08 # rounded values, but remember that data should be updated
+            if self.poisson_seed == 42:
+                true_logl = 1.6881742360e+08 # precise values, new disk
+            if self.poisson_seed == 0:
+                true_logl = 1.6868845136e+08
+            if self.poisson_seed == 1:
+                true_logl = 1.6881507891e+08
+
 
         if self.scenario == 'small_r':
             if self.poisson_seed == 42:
                 true_logl = 7.9264371582e+07 # precise values 
             if self.poisson_seed == 0:
                 true_logl = 7.9283242548e+07
+            if self.poisson_seed == 1:
+                true_logl = 7.9250709759e+07
+            if self.poisson_seed == 2:
+                true_logl = 7.9240208362e+07
+            if self.poisson_seed == 3:
+                true_logl = 7.9278427079e+07
+            if self.poisson_seed == 4:
+                true_logl = 7.9252664294e+07
+
 
         if self.scenario == 'kajava':
             if self.bkg == 'model':
@@ -523,5 +538,5 @@ class analysis(object):
             print('Sampling took {:.3f} seconds'.format((time.time()-t_start)))
             
 if __name__ == '__main__':
-    Analysis = analysis('local','test', 'model', support_factor=None, scenario='small_r', poisson_seed=0)
+    Analysis = analysis('local','sample', 'model', support_factor=None, scenario='small_r', poisson_seed=0)
     Analysis()

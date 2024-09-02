@@ -75,14 +75,14 @@ class parameter_values(object):
             self.mass = 1.4
             self.radius = 11.
             self.distance = 2.7
-            self.inclination = 40
-            self.cos_i = 0.769901773079812224E+00 # math.cos(self.inclination*math.pi/180) # 
+            self.inclination =  39.6549310187694 ##
+            self.cos_i = math.cos(self.inclination*math.pi/180)
             
             # Hotspot
             self.phase_shift = 0.226365126031355196E+00 # #0
-            self.super_colatitude = 0.175993450466385537E+00 # 0.18 # # # 45*math.pi/180 # 20*math.pi/180 # 
-            self.super_radius = 0.156951249537834525E+01 #np.pi/2 - 0.001 # #  # 15.5*math.pi/180
-            
+            self.super_colatitude = 0.175993450466385537E+00 #  0.18 # # # 45*math.pi/180 # 20*math.pi/180 # 
+            self.super_radius = 0.156951249537834525E+01 # 1.5184364492350666 # #np.pi/2 - 0.001 # #  # 15.5*math.pi/180
+
             # Compton slab model parameters
             self.tbb=0.103616176435110115E-02# 0.52/511#  #0.52/511 # 0.0017 #0.001 -0.003 Tbb(data) = Tbb(keV)/511keV, 1 keV = 0.002 data
             self.te=0.729440224892133244E+02#37*1000/511#  #37*1000/511 # 50. # 40-200 corresponds to 20-100 keV (Te(data) = Te(keV)*1000/511keV), 50 keV = 100 data
@@ -96,7 +96,7 @@ class parameter_values(object):
             self.column_density = 1.17 #10^21 cm^-2
         
         if self.scenario =='small_r':
-            self.mass = 1.4
+            self.mass = 1.4 #1.2
             self.radius = 11.
             self.distance = 2.7
             self.inclination = 80.
@@ -104,11 +104,11 @@ class parameter_values(object):
             
             # Hotspot
             self.phase_shift = 0.0
-            self.super_colatitude = 0.175993450466385537E+00 # # # 45*math.pi/180 # 20*math.pi/180 # 
+            self.super_colatitude = 0.175993450466385537E+00 #0.21642082724729686 # 45*math.pi/180 # 20*math.pi/180 # 
             self.super_radius = 30.*math.pi/180
             
             # Compton slab model parameters
-            self.tbb=0.0025 #0.001 -0.003 Tbb(data) = Tbb(keV)/511keV, 1 keV = 0.002 data
+            self.tbb=0.0025#0.0025 #0.001 -0.003 Tbb(data) = Tbb(keV)/511keV, 1 keV = 0.002 data
             self.te=100. #  #37*1000/511 # 50. # 40-200 corresponds to 20-100 keV (Te(data) = Te(keV)*1000/511keV), 50 keV = 100 data
             self.tau=2.0 #0.5 - 3.5 tau = ln(Fin/Fout)
     
@@ -116,7 +116,7 @@ class parameter_values(object):
             # source background
                 self.diskbb_T_keV = 0.16845756373108872# 0.17#  # # 0.3  #  keV #0.3 keV for Kajava+ 2011
                 self.diskbb_T_log10_K = get_T_in_log10_Kelvin(self.diskbb_T_keV)
-                self.R_in = 0.308122224729265000E+02# 30#   # 20 #  1 #  km #  for very small diskBB background
+                self.R_in = 0.308122224729265000E+02 # 24#   # 20 #  1 #  km #  for very small diskBB background
             self.column_density = 1.17 #10^21 cm^-2
         
         
@@ -170,11 +170,9 @@ class parameter_values(object):
               'super_te': (40., 200.),
               'te_keV': (40*511/1000, 200*511/1000),
               'super_tau': (0.5, 3.5),
-              # 'elsewhere_temperature': (5., 7.), #(6.5, 7.),
-              # 'T_else_keV': (None, None),
               'column_density': (0., 3.),
               'compactness': (0., 10.),
-              'inclination_deg': (30, 90),
+              'inclination_deg': (np.arccos(0.87)*180/np.pi, np.arccos(0.15)*180/np.pi),
               'colatitude_deg': (0.001, 180-0.001),
               'radius_deg': (0.001, 90)              
               }
@@ -199,8 +197,6 @@ class parameter_values(object):
           'super_te': self.te,                          # Electron temperature
           'te_keV': self.te*511/1000,
           'super_tau': self.tau,
-          # 'elsewhere_temperature': self.elsewhere_T_log10_K,
-          # 'T_else_keV': self.elsewhere_T_keV,
           'column_density': self.column_density,
           'inclination_deg':self.inclination,
           'colatitude_deg': self.super_colatitude*180/np.pi,
@@ -218,26 +214,24 @@ class parameter_values(object):
               'radius': r"R_{\mathrm{eq}}\;\mathrm{[km]}",
               'compactness': r"M/R_{\mathrm{eq}}",
               'distance': r"D \;\mathrm{[kpc]}",
-              'cos_inclination': r"\cos(i)",
-              'phase_shift': r"\phi_{p}\;\mathrm{[cycles]}",
+              'cos_inclination': r"\mathrm{cos}(i)",
+              'phase_shift': r"\phi\;\mathrm{[cycles]}",
               'super_colatitude': r"\Theta_{spot}\;\mathrm{[rad]}",
               'super_radius': r"\zeta_{spot}\;\mathrm{[rad]}",
-              'super_tbb': r"T_{seed}\;\mathrm{[data units]}",
-              'tbb_keV': r"T_{seed} (keV)",
+              'super_tbb': r"T_\{seed}\;\mathrm{[data units]}",
+              'tbb_keV': r"T_\mathrm{seed}\;\mathrm{[keV]}",
               'super_te': r"T_\mathrm{electrons}\;\mathrm{[data units]}",
-              'te_keV': r"T_\mathrm{electrons} (keV)",
-              'super_tau': r"\tau [-]",
-              # 'elsewhere_temperature': r"T_e log10 of Kelvin",
-              # 'T_else_keV': r"T_{\mathrm{else}} (keV)",
-              'column_density': r"n_H\;10^{21} cm^{-2}",
-              'inclination_deg': r'i \mathrm{[deg]}',
-              'colatitude_deg': r'\theta_\mathrm{spot} \mathrm{[deg]}',
-              'radius_deg': r'\zeta_\mathrm{spot} \mathrm{[deg]}'}
+              'te_keV': r"T_\mathrm{electrons}\;\mathrm{[keV]}",
+              'super_tau': r"\tau\;[-]",
+              'column_density': r"N_\mathrm{H}\;[10^{21} \mathrm{cm}^{-2}]",
+              'inclination_deg': r'i\;\mathrm{[deg]}',
+              'colatitude_deg': r'\theta\;\mathrm{[deg]}',
+              'radius_deg': r'\zeta\;\mathrm{[deg]}'}
         
         if self.bkg == 'model':
             labels['T_in'] = r"T_{in} log10 of Kelvin"
-            labels['T_in_keV'] = r"T_{\mathrm{in}} (keV)"
-            labels['R_in'] =  r"R_\mathrm{in} (km)"
+            labels['T_in_keV'] = r"T_\mathrm{in}\;\mathrm{[keV]}"
+            labels['R_in'] =  r"R_\mathrm{in}\;\mathrm{[km]}"
 
         
         return labels

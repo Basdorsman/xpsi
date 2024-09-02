@@ -17,13 +17,13 @@ from xpsi.global_imports import gravradius
 
 from CustomPrior import CustomPrior
 from CustomInstrument import CustomInstrument
-from CustomPhotosphere import CustomPhotosphere
+from CustomPhotosphereDisk import CustomPhotosphereDisk
 from CustomInterstellar import CustomInterstellar
 from CustomSignal import CustomSignal
 from CustomHotregion import CustomHotRegion_Accreting
 
 from parameter_values import parameter_values
-from helper_functions import get_T_in_log10_Kelvin, plot_2D_pulse
+from helper_functions import get_T_in_log10_Kelvin, plot_2D_pulse, CustomAxes, get_mids_from_edges
 
 class analysis(object):
     def __init__(self, machine, run_type, bkg, support_factor = "None", scenario = 'None', poisson_noise=True, poisson_seed=42):
@@ -88,7 +88,7 @@ class analysis(object):
             self.max_iter = int(os.environ.get('max_iter'))
         except:
             print('max_iter from environment variables failed, proceeding with default.')
-            self.max_iter = 10
+            self.max_iter = 2
             pass
         print(f'max_iter: {self.max_iter}')
 
@@ -117,8 +117,8 @@ class analysis(object):
         print(f'poisson_noise: {self.poisson_noise}, poisson_seed: {self.poisson_seed} (only relevant if poisson noise is True)')
        
         
-        self.integrator = 'azimuthal_invariance' #'general/azimuthal_invariance'
-        self.interpolator = 'split'  #'split/combined'
+        #self.integrator = 'azimuthal_invariance' #'general/azimuthal_invariance'
+        # self.interpolator = 'split' #'split/combined'
 
         self.pv = parameter_values(self.scenario, self.bkg)
     
@@ -144,7 +144,7 @@ class analysis(object):
         #         self.file_pulse_profile = self.this_directory + f'/data/J1808_synthetic_{self.scenario}_realisation.dat'
         
         if self.scenario == 'large_r' or self.scenario == 'small_r':
-                self.file_pulse_profile = self.this_directory + f'/data/synthetic_{self.scenario}_seed={self.poisson_seed}_realisation.dat' 
+                self.file_pulse_profile = self.this_directory + f'/data/synthetic_{self.scenario}_seed={self.poisson_seed}_realisation.dat'
         
         # real data
         if self.scenario == '2019' or self.scenario == '2022':
@@ -172,12 +172,6 @@ class analysis(object):
 
     def set_bounds(self):
         self.bounds = self.pv.bounds()
-
-        
-    # def set_values(self):
-    #     values = {}
-    #     values['frequency'] = 401.0
-    #     self.values = values
 
     def set_data(self):
         if self.scenario == '2019' or self.scenario == 'large_r' or self.scenario == 'small_r':
@@ -249,8 +243,8 @@ class analysis(object):
     def set_hotregions(self):
         self.num_rays = 512
 
-        kwargs = {'symmetry': self.integrator, #call general integrator instead of for azimuthal invariance
-                  'interpolator': self.interpolator,
+        kwargs = {'symmetry': True, #call for azimuthal invariance
+                  'split': True,
                   'omit': False,
                   'cede': False,
                   'concentric': False,
@@ -280,8 +274,8 @@ class analysis(object):
     def set_photosphere(self):
         self.set_spacetime()
         self.set_hotregions()
-        # self.set_elsewhere()
-        self.photosphere = CustomPhotosphere(hot = self.hot, elsewhere = None, #self.elsewhere,
+        self.set_disk()
+        self.photosphere = CustomPhotosphereDisk(hot = self.hot, elsewhere = None, stokes=False, custom=self.disk,
                                         values=dict(mode_frequency = self.spacetime['frequency']))
 
         self.photosphere.hot_atmosphere = self.file_atmosphere
@@ -325,19 +319,19 @@ class analysis(object):
             self.support = support
         
         
-    def set_background(self):
-        from CustomBackground import CustomBackground_DiskBB, k_disk_derive
+    def set_disk(self):
+        from Disk import Disk, k_disk_derive
         if self.bkg == 'model':            
             bounds = dict(T_in = get_T_in_log10_Kelvin(self.bounds["T_in"]),
-                          R_in = self.bounds["R_in"],
+                          #R_in = self.bounds["R_in"],
                           K_disk = None) #derived means no bounds
                 
             self.k_disk = k_disk_derive()
             
-            self.background = CustomBackground_DiskBB(bounds=bounds, values={'K_disk': self.k_disk}, interstellar = self.interstellar)
+            self.disk = Disk(bounds=bounds, values=dict(K_disk = self.k_disk, R_in = self.pv.R_in))
             
-            self.k_disk.spacetime = self.spacetime
-            self.k_disk.background = self.background
+
+            self.k_disk.disk = self.disk
             
         elif self.bkg == 'marginalise' or self.bkg == 'fix':
             self.background = None
@@ -347,12 +341,11 @@ class analysis(object):
     def set_signal(self):
         self.set_data()
         self.set_instrument()
-        self.set_background()
         self.set_support()
 
         self.signal = CustomSignal(data = self.data,
                             instrument = self.instrument,
-                            background = self.background,
+                            background = None, #self.background,
                             interstellar = self.interstellar,
                             support = self.support,
                             cache = False, # only true if verifying code implementation otherwise useless slowdown.
@@ -370,6 +363,7 @@ class analysis(object):
         
     def set_likelihood(self):
         self.set_star()
+        self.k_disk.star = self.star
         self.set_signal()
         self.set_parameter_vector()
         self.set_prior()
@@ -431,11 +425,14 @@ class analysis(object):
             # true_logl = 1.1365193823e+08 # 2022 data
             
         if self.scenario == 'large_r':
-            true_logl = 1.6881974660e+08 # precise values 
+            true_logl = 1.6881742360e+08 # precise values, new disk 
             #true_logl =  1.6876535955e+08 # rounded values, but remember that data should be updated
 
         if self.scenario == 'small_r':
-            true_logl = 7.9264371582e+07 # precise values 
+            if self.poisson_seed == 42:
+                true_logl = 7.9264371582e+07 # precise values 
+            if self.poisson_seed == 0:
+                true_logl = 7.9283242548e+07
 
         if self.scenario == 'kajava':
             if self.bkg == 'model':
@@ -484,8 +481,13 @@ class analysis(object):
                       cm=cm.jet)
 
         
-        plt.savefig('pre_sampling_plot.png')
+        plt.savefig('{}/pre_sampling_plot.png'.format(folderstring))
         print('figure saved in {}'.format(folderstring))
+        
+        
+        fig, ax = plt.subplots()
+        profile = CustomAxes.plot_2D_counts(ax, self.data.counts-self.signal.expected_counts, get_mids_from_edges(self.data.phases), self.data.channels)
+        fig.colorbar(profile, ax=ax)
         
         if self.run_type == 'sample':
 
@@ -521,5 +523,5 @@ class analysis(object):
             print('Sampling took {:.3f} seconds'.format((time.time()-t_start)))
             
 if __name__ == '__main__':
-    Analysis = analysis('local','test', 'model', support_factor=None, scenario='small_r')
+    Analysis = analysis('local','sample', 'model', support_factor=None, scenario='small_r', poisson_seed=0)
     Analysis()

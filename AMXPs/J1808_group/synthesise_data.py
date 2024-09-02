@@ -47,7 +47,7 @@ from parameter_values import parameter_values
 ################################## SETTINGS ###################################
 
 
-bkg = 'model'
+bkg = 'model' #'model' 'fix'
 
 second = False
 te_index = 0
@@ -62,7 +62,7 @@ try: #try to get parameters from shell input
     os.environ.get('poisson_noise')
     poisson_noise = bool(os.environ['poisson_noise'])
     os.environ.get('poisson_seed')
-    poisson_seed = int(os.environ['poisson_seed'])
+    poisson_seed = int(os.environ['poisson_seed']) 
     os.environ.get('scenario')
     scenario = os.environ['scenario']
 
@@ -71,8 +71,8 @@ except:
     n_params = "5"
     machine = "local"
     poisson_noise = True
-    poisson_seed = 0
-    scenario = 'small_r' # 'kajava', 'literature
+    poisson_seed = 42
+    scenario = 'large_r' # 'kajava', 'literature
   
 
 pv = parameter_values(scenario, bkg)
@@ -266,7 +266,7 @@ if __name__ == '__main__':
     cb = plt.colorbar(profile, ax=axes[0])
     cb.set_label(label='Counts', labelpad=10)
     cb.solids.set_edgecolor('face')
-    axes[1].plot_bolometric_pulse(phases_space, my_data)
+    axes[1].plot_bolometric_pulse(phases_space, my_data, normalized=True)
     cb2 = plt.colorbar(profile, ax=axes[1])
     cb2.remove()
     
@@ -279,6 +279,7 @@ if __name__ == '__main__':
     
     
     fig.savefig(f'./plots/counts_and_bolometric_{figstring}.png')
+
 
     
     num_rotations=1

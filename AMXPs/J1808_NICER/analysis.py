@@ -75,14 +75,14 @@ class analysis(object):
             self.sqrt_num_cells = 50 # 128
             pass
         print(f'sqrt_num_cells: {self.sqrt_num_cells}')
-
+    
         try:
             self.num_rays = int(os.environ.get('num_rays'))
         except:
             print('num_rays from env. var. failed, proceeding with default.')
             self.num_rays = 512
         print(f'num_rays: {self.num_rays}')
-   
+    
         try:
             self.live_points = int(os.environ.get('live_points'))
         except:
@@ -95,7 +95,7 @@ class analysis(object):
             self.max_iter = int(os.environ.get('max_iter'))
         except:
             print('max_iter from environment variables failed, proceeding with default.')
-            self.max_iter = 100
+            self.max_iter = 2
             pass
         print(f'max_iter: {self.max_iter}')
 
@@ -248,8 +248,8 @@ class analysis(object):
         self.spacetime = xpsi.Spacetime(bounds=spacetime_bounds, values=values) # values=dict(frequency=self.values["frequency"]))
 
     def set_hotregions(self):
-        #self.num_rays = 512
-
+        # self.num_rays = 16
+        
         kwargs = {'symmetry': True, #call for azimuthal invariance
                   'split': True,
                   'omit': False,
@@ -383,46 +383,7 @@ class analysis(object):
                                       externally_updated=True)
 
 
-        if self.scenario == 'literature':
-            if self.bkg =='marginalise':
-        # true_logl = -4.6402898384e+04
-        # true_logl = -4.2233157248e+04 # background, support
-        # true_logl = -1.1767530520e+04  # background, sf=1.00005, floated data, high res
-                if self.support_factor == '1e-3':
-                    # true_logl = -1.0929410655e+04  # background, sf=1.001, floated data, high res
-                    true_logl = -1.0931009125e+04  # probably different because low res?
-                if self.support_factor == '1e-1':
-                    #true_logl = -9.9746308842e+03  # background, sf=1.1, floated data, high res
-                    true_logl = -9.9761447897e+03 # probably different becuase low res?
-                if self.support_factor == '5e-1':
-                    #true_logl = -9.8546380529e+03 # # background, sf=1.5, floated data, high res
-                    #true_logl = -9.8560303844e+03 # probably different because low res?
-                    if self.poisson_noise:
-                        if self.poisson_seed == 42:
-                            true_logl = -4.6474098223e+04
-                        if self.poisson_seed == 0:
-                            true_logl = -4.6470534206e+04
-                        if self.poisson_seed == 1:
-                            true_logl = -4.6528445267e+04
-                if self.support_factor == '9e-1':
-                    if self.poisson_noise:
-                        # true_logl = -4.6441475553e+04
-                        true_logl = -7.3844835122e+04 # wider energy range
-                if self.support_factor == 'None':
-                    if self.poisson_noise:
-                        # true_logl = -4.6402898384e+04 # 42
-                        true_logl = -7.2157043502e+04 # wider energy range
-                    elif not self.poisson_noise:
-                        true_logl = -9.8076308641e+03  # background, no support, floated data, high res 
-        # true_logl = -9.8013206348e+03  # background, no support, floated data, high res, allow neg. bkg. 
-        # true_logl = -4.1076321631e+04 # no background, no support
-        # true_logl = -1.0047370824e+04  # no background, no support, floated data, high res
-            if self.bkg == 'fix' or self.bkg =='model':
-                true_logl = 1.8103167777e+08 # no elsewhere
-                #true_logl = 1.9428352612e+08 # large energy scenario
-                # true_logl = 1.9406875013e+08  # given background, background, support, floated data, high res,
-                
-        
+
         
         if self.scenario == '2019':
             true_logl = 1.5315129891e+08 # no elsewhere
@@ -433,41 +394,12 @@ class analysis(object):
             # true_logl = 1.1365193823e+08 # 2022 data
             
         if self.scenario == 'large_r':
-            if self.poisson_seed == 42:
-                true_logl = 1.6881742360e+08 # precise values, new disk
-            if self.poisson_seed == 0:
-                true_logl = 1.6868845136e+08
-            if self.poisson_seed == 1:
-                true_logl = 1.6881507891e+08
-
-
+            true_logl = 1.6881742361e+08
+            
         if self.scenario == 'small_r':
-            if self.poisson_seed == 42:
-                true_logl = 7.9264371582e+07 # precise values 
-            if self.poisson_seed == 0:
-                true_logl = 7.9283242548e+07
-            if self.poisson_seed == 1:
-                true_logl = 7.9250709759e+07
-            if self.poisson_seed == 2:
-                true_logl = 7.9240208362e+07
-            if self.poisson_seed == 3:
-                true_logl = 7.9278427079e+07
-            if self.poisson_seed == 4:
-                true_logl = 7.9252664294e+07
+            true_logl = 7.9265215639e+07
+            
 
-
-        if self.scenario == 'kajava':
-            if self.bkg == 'model':
-                true_logl = 8.0022379204e+08 # int counts, low res
-            elif self.bkg == 'marginalise':
-                if self.support_factor == 'None':
-                    true_logl = -8.1994031914e+04 # int counts, low res, no support
-                elif self.support_factor == '5e-1':
-                    true_logl = -8.2868888993e+04 # int counts, low res, sf=0.5
-                elif self.support_factor == '1e-3':
-                    true_logl = -8.5416802395e+04
-                else:
-                    true_logl = 0
         self.true_logl = true_logl
     
     def __call__(self):
@@ -508,7 +440,11 @@ class analysis(object):
         
         
         fig, ax = plt.subplots()
-        profile = CustomAxes.plot_2D_counts(ax, self.data.counts-self.signal.expected_counts, get_mids_from_edges(self.data.phases), self.data.channels)
+        #profile = CustomAxes.plot_2D_counts(ax, self.data.counts-self.signal.expected_counts, get_mids_from_edges(self.data.phases), self.data.channels)
+        #profile = CustomAxes.plot_2D_counts(ax, self.data.counts, get_mids_from_edges(self.data.phases), self.data.channels)
+        profile = CustomAxes.plot_2D_counts(ax, self.signal.expected_counts, get_mids_from_edges(self.data.phases), self.data.channels)
+        
+        
         fig.colorbar(profile, ax=ax)
         
         if self.run_type == 'sample':
@@ -544,6 +480,17 @@ class analysis(object):
             print("... sampling done")
             print('Sampling took {:.3f} seconds'.format((time.time()-t_start)))
             
+        elif self.run_type == 'test':
+            print('test starts')
+            n_repeats = 100
+            t_start = time.time()
+            for repeat in range(n_repeats):
+                #self.star.update(force_update=True)
+                # self.likelihood.check(None, [self.true_logl], 1.0e-4, physical_points=[self.p], force_update=True)
+                self.likelihood(self.p, reinitialise=True)
+            print('Test took {:.3f} seconds'.format((time.time()-t_start)))
+            
+            
 if __name__ == '__main__':
-    Analysis = analysis('local','sample', 'model', support_factor=None, scenario='small_r', poisson_seed=0)
+    Analysis = analysis('local','test', 'model', support_factor=None, scenario='2019', poisson_seed=42)
     Analysis()

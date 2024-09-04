@@ -12,7 +12,7 @@ module load matplotlib/3.5.2-foss-2022a
 source $HOME/xpsi-group/venv_xpsi_group/bin/activate
 
 cd $HOME/xpsi-group/
-rm -r build dist *egg* xpsi/*/*.c xpsi/include/rayXpanda/*.o
+#rm -r build dist *egg* xpsi/*/*.c xpsi/include/rayXpanda/*.o
 LDSHARED="gcc -shared" CC=gcc python setup.py install
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$HOME/multinest/MultiNest_v3.12_CMake/multinest/lib/
 

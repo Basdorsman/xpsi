@@ -3,6 +3,7 @@ export compiler=foss
 export num_energies=40 #60 #40
 export num_leaves=30 # 50 #30
 export sqrt_num_cells=50 #90 #50
+export num_rays=512
 export live_points=20
 export max_iter=2
 export run_type=sample

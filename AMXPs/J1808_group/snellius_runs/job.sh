@@ -1,9 +1,9 @@
 #!/bin/bash
-#SBATCH -N 5
+#SBATCH -N 1
 #SBATCH --tasks-per-node=192
-#SBATCH -t 2-00:00:00
+#SBATCH -t 1-00:00:00
 #SBATCH -p genoa
-#SBATCH --job-name=small_r
+#SBATCH --job-name=num_rays
 #SBATCH --mail-user=b.dorsman@uva.nl
 #SBATCH --mail-type=END
 
@@ -23,16 +23,17 @@ export n_params=5
 export num_energies=40  # 60
 export num_leaves=30  # 50
 export sqrt_num_cells=50  # 90
+export num_rays=16
 export machine=snellius
 export integrator=x
-export live_points=1000 #$SLURM_TASKS_PER_NODE
+export live_points=$SLURM_TASKS_PER_NODE
 export max_iter=-1
 export run_type=sample
 export bkg=model
 export support_factor=None
 export scenario=small_r
 export poisson_noise=True
-export poisson_seed=3
+export poisson_seed=42
 
 export XPSI_DIR=$HOME/xpsi-bas-fork
 export LABEL=${SLURM_JOB_NAME}_lp${live_points}

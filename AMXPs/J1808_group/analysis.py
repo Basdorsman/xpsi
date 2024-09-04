@@ -75,7 +75,13 @@ class analysis(object):
             self.sqrt_num_cells = 50 # 128
             pass
         print(f'sqrt_num_cells: {self.sqrt_num_cells}')
-    
+        try:
+            self.num_rays = int(os.environ.get('num_rays'))
+        except:
+            print('num_rays from env. var. failed, proceeding with default.')
+            self.num_rays = 512
+        print(f'num_rays: {self.num_rays}')
+   
         try:
             self.live_points = int(os.environ.get('live_points'))
         except:
@@ -241,7 +247,7 @@ class analysis(object):
         self.spacetime = xpsi.Spacetime(bounds=spacetime_bounds, values=values) # values=dict(frequency=self.values["frequency"]))
 
     def set_hotregions(self):
-        self.num_rays = 512
+        #self.num_rays = 512
 
         kwargs = {'symmetry': True, #call for azimuthal invariance
                   'split': True,

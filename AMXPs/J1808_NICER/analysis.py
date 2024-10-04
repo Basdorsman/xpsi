@@ -450,33 +450,43 @@ class analysis(object):
         if self.run_type == 'sample':
 
             
-            wrapped_params = [0]*len(self.likelihood)
-            wrapped_params[self.likelihood.index('phase_shift')] = 1
+            sampler = 'ultra'
 
+            if sampler == 'multi':
+                wrapped_params = [0]*len(self.likelihood)
+                wrapped_params[self.likelihood.index('phase_shift')] = 1
+                outputfiles_basename = f'./{folderstring}/run_ST_'
+                runtime_params = {'resume': False,
+                                  'importance_nested_sampling': False,
+                                  'multimodal': False,
+                                  'n_clustering_params': None,
+                                  'outputfiles_basename': outputfiles_basename,
+                                  'n_iter_before_update': 100,
+                                  'n_live_points': self.live_points,
+                                  'sampling_efficiency': 0.1,
+                                  'const_efficiency_mode': False,
+                                  'wrapped_params': wrapped_params,
+                                  'evidence_tolerance': 0.5,
+                                  'seed': 7,
+                                  'verbose': True}
+            elif sampler == 'ultra':
+                wrapped_params = [False]*len(self.likelihood)
+                wrapped_params[self.likelihood.index('phase_shift')] = True
+                sampler_params = {'wrapped_params': wrapped_params, 
+                                  'log_dir': folderstring}
+                runtime_params={'max_iters':self.max_iter}
 
-            sampling_efficiency = 0.1
-
-            outputfiles_basename = f'./{folderstring}/run_ST_'
-            runtime_params = {'resume': False,
-                              'importance_nested_sampling': False,
-                              'multimodal': False,
-                              'n_clustering_params': None,
-                              'outputfiles_basename': outputfiles_basename,
-                              'n_iter_before_update': 100,
-                              'n_live_points': self.live_points,
-                              'sampling_efficiency': sampling_efficiency,
-                              'const_efficiency_mode': False,
-                              'wrapped_params': wrapped_params,
-                              'evidence_tolerance': 0.5,
-                              'seed': 7,
-                              'max_iter': self.max_iter, # manual termination condition for short test
-                              'verbose': True}
 
             print('runtime_params: ', runtime_params)
             
             print("sampling starts ...")
             t_start = time.time()
-            xpsi.Sample.nested(self.likelihood, self.prior,**runtime_params)
+            
+            
+            if sampler == 'multi':
+                xpsi.Sample.nested(self.likelihood, self.prior,**runtime_params)
+            elif sampler == 'ultra':
+                xpsi.Sample.ultranested(self.likelihood, self.prior, sampler_params=sampler_params,runtime_params=runtime_params, use_stepsampler=True)
             print("... sampling done")
             print('Sampling took {:.3f} seconds'.format((time.time()-t_start)))
             

@@ -545,5 +545,5 @@ class analysis(object):
             print('Sampling took {:.3f} seconds'.format((time.time()-t_start)))
             
 if __name__ == '__main__':
-    Analysis = analysis('local','sample', 'model', support_factor=None, scenario='small_r', poisson_seed=0)
+    Analysis = analysis('snellius','sample', 'model', support_factor=None, scenario='small_r', poisson_seed=0)
     Analysis()

@@ -128,7 +128,7 @@ spacetime = xpsi.Spacetime(bounds=bounds, values=dict(frequency=401.0))# Fixing 
 num_leaves = 128  # 30
 sqrt_num_cells = 128  # 50
 num_energies = 128  # 40
-num_rays = 512
+num_rays = 2048 # changed from 512 in order to research effect of num_rays
 
 kwargs = {'symmetry': True, #call for azimuthal invariance
           'split': True,

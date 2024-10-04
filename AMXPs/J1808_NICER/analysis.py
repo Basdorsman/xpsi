@@ -492,5 +492,5 @@ class analysis(object):
             
             
 if __name__ == '__main__':
-    Analysis = analysis('local','test', 'model', support_factor=None, scenario='2019', poisson_seed=42)
+    Analysis = analysis('local','sample', 'model', support_factor=None, scenario='2019', poisson_seed=42)
     Analysis()

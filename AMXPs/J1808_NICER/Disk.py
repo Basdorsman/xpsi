@@ -131,7 +131,8 @@ class Disk(ParameterSubspace):
             B_E in keV/s/keV/cm^2/sr (you will integrate over keV)
         '''
         # print(f'E and T for B_E: {E,T}')
-        B = 2*E**3/(_h_keV**3*_c_cgs**2)/(np.exp(E/T)-1)
+        safe_ET = np.float128(E/T)
+        B = 2*E**3/(_h_keV**3*_c_cgs**2)/(np.exp(safe_ET)-1)
         return B
 
 

@@ -5,7 +5,6 @@ unset LD_LIBRARY_PATH
 module purge
 module load 2022
 module load foss/2022a
-#module load OpenSSL/1.1
 module load SciPy-bundle/2022.05-foss-2022a
 module load wrapt/1.15.0-foss-2022a
 module load matplotlib/3.5.2-foss-2022a

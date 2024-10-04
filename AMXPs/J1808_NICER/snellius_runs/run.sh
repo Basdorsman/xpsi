@@ -9,7 +9,7 @@ export max_iter=2
 export run_type=sample
 export bkg=model
 export support_factor=None
-export scenario=small_r
+export scenario=2022
 export poisson_noise=True
 export poisson_seed=42
 

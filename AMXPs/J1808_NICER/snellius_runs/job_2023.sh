@@ -1,8 +1,8 @@
 #!/bin/bash
 #SBATCH -N 5
-#SBATCH --tasks-per-node=128
-#SBATCH -t 03:00:00
-#SBATCH -p rome
+#SBATCH --tasks-per-node=192
+#SBATCH -t 1-00:00:00
+#SBATCH -p genoa
 #SBATCH --job-name=2022
 #SBATCH --mail-user=b.dorsman@uva.nl
 #SBATCH --mail-type=END
@@ -23,7 +23,7 @@ export sqrt_num_cells=50  # 90
 export num_rays=512
 export machine=snellius
 export integrator=x
-export live_points=2000 #$SLURM_TASKS_PER_NODE
+export live_points=400 #$SLURM_TASKS_PER_NODE
 export max_iter=-1
 export run_type=sample
 export bkg=model
@@ -31,6 +31,7 @@ export support_factor=None
 export scenario=2022
 export poisson_noise=True
 export poisson_seed=42
+export sampler=ultra
 
 export XPSI_DIR=$HOME/xpsi-bas-fork
 export LABEL=${SLURM_JOB_NAME}_lp${live_points}

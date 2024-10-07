@@ -1,8 +1,8 @@
 #!/bin/bash
 #SBATCH -N 5
-#SBATCH --tasks-per-node=126
+#SBATCH --tasks-per-node=128
 #SBATCH -t 2-00:00:00
-#SBATCH -p rome
+#SBATCH -p genoa
 #SBATCH --job-name=num_rays
 #SBATCH --mail-user=b.dorsman@uva.nl
 #SBATCH --mail-type=END

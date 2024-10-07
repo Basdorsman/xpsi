@@ -22,4 +22,4 @@ cd $HOME/xpsi-group/
 LDSHARED="gcc -shared" CC=gcc python setup.py install
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$HOME/multinest/MultiNest_v3.12_CMake/multinest/lib/
 
-cd $HOME/xpsi-bas-fork/AMXPs/J1808_group/snellius_runs
+cd $HOME/xpsi-bas-fork/AMXPs/J1808_NICER/snellius_runs

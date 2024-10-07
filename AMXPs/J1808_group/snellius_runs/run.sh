@@ -9,9 +9,10 @@ export max_iter=2
 export run_type=sample
 export bkg=model
 export support_factor=None
-export scenario=small_r
+export scenario=2019
 export poisson_noise=True
-export poisson_seed=4
+export poisson_seed=42
+export LABEL=2022_lp400
 
 
 cd $HOME/xpsi-bas-fork/AMXPs/J1808_group/

@@ -15,7 +15,7 @@ print('Rank reporting: %d' % xpsi._rank)
 
 from xpsi.global_imports import gravradius
 
-from CustomPrior import CustomPrior
+from CustomPrior import CustomPrior_STU
 from CustomInstrument import CustomInstrument
 from CustomPhotosphereDisk import CustomPhotosphereDisk
 from CustomInterstellar import CustomInterstellar
@@ -50,7 +50,6 @@ class analysis(object):
             print('sampler is not in environment variables, using passed argument.')
             self.sampler = sampler
         print(f'sampler: {self.sampler}')
-
             
         self.analysis_name = os.environ.get('LABEL')
         if not isinstance(self.analysis_name, str):
@@ -257,7 +256,7 @@ class analysis(object):
     def set_hotregions(self):
         # self.num_rays = 16
         
-        kwargs = {'symmetry': True, #call for azimuthal invariance
+        p_kwargs = {'symmetry': True, #call for azimuthal invariance
                   'split': True,
                   'omit': False,
                   'cede': False,
@@ -267,8 +266,8 @@ class analysis(object):
                   'max_sqrt_num_cells': 128,
                   'num_leaves': self.num_leaves,
                   'num_rays': self.num_rays,
-                  'atm_ext':'Num5D'}
-                  #'prefix': 'p'}
+                  'atm_ext':'Num5D',
+                  'prefix': 'p'}
         
         hotregion_bounds = dict(super_colatitude = self.bounds["super_colatitude"],
                                 super_radius = self.bounds["super_radius"],
@@ -278,10 +277,34 @@ class analysis(object):
                                 super_te = self.bounds['super_te'])
         values = {}
         
-        primary = CustomHotRegion_Accreting(hotregion_bounds, values, **kwargs)
+        primary = CustomHotRegion_Accreting(hotregion_bounds, values, **p_kwargs)
+
+        s_kwargs = {'symmetry': True, #call for azimuthal invariance
+                  'split': True,
+                  'omit': False,
+                  'cede': False,
+                  'concentric': False,
+                  'sqrt_num_cells': self.sqrt_num_cells,
+                  'min_sqrt_num_cells': 10,
+                  'max_sqrt_num_cells': 128,
+                  'num_leaves': self.num_leaves,
+                  'num_rays': self.num_rays,
+                  'is_antiphased': True,
+                  'atm_ext':'Num5D',
+                  'prefix': 's'}
+        
+        hotregion_bounds = dict(super_colatitude = self.bounds["super_colatitude"],
+                                super_radius = self.bounds["super_radius"],
+                                phase_shift = self.bounds["phase_shift"], 
+                                super_tbb = self.bounds['super_tbb'],
+                                super_tau = self.bounds['super_tau'],
+                                super_te = self.bounds['super_te'])
+        values = {}
+        
+        secondary = CustomHotRegion_Accreting(hotregion_bounds, values, **s_kwargs)
 
 
-        self.hot = xpsi.HotRegions((primary,))
+        self.hot = xpsi.HotRegions((primary, secondary))
 
     def set_elsewhere(self):
         self.elsewhere = xpsi.Elsewhere(bounds=dict(elsewhere_temperature = self.bounds['elsewhere_temperature']))
@@ -298,7 +321,7 @@ class analysis(object):
     def set_star(self):
         self.set_photosphere()
         self.star = xpsi.Star(spacetime = self.spacetime, photospheres = self.photosphere)
-        
+        # print('self.star: ',self.star)
         
     def set_interstellar(self):
         # bounds = None 
@@ -371,10 +394,16 @@ class analysis(object):
         
         
     def set_parameter_vector(self):
-        self.p = self.pv.p()
+        parameters_single_hotspot = self.pv.p()
+        
+        # add second hotspot
+        n_shift = 3
+        n_hs_params = 6
+        self.p = parameters_single_hotspot[:-n_shift] + parameters_single_hotspot[-(n_shift+n_hs_params):-n_shift] + parameters_single_hotspot[-n_shift:]
+        # print('self.p: ',self.p)     
     
     def set_prior(self):
-        self.prior = CustomPrior(self.scenario, self.bkg)
+        self.prior = CustomPrior_STU(self.scenario, self.bkg)
         
     def set_likelihood(self):
         self.set_star()
@@ -384,7 +413,7 @@ class analysis(object):
         self.set_prior()
         
         self.likelihood = xpsi.Likelihood(star = self.star, signals = self.signal,
-                                      num_energies=self.num_energies, #128
+                  num_energies=self.num_energies, #128
                                       threads=1,
                                       prior=self.prior,
                                       externally_updated=True)
@@ -393,11 +422,13 @@ class analysis(object):
 
         
         if self.scenario == '2019':
-            true_logl = 1.5315129891e+08 # no elsewhere
+            true_logl = 1.5844462356e+08 # ST-U
+            # true_logl = 1.5315129891e+08 # no elsewhere
             # true_logl= -7.9418857894e+89 # 2019 data, marginalized background
         
         if self.scenario == '2022':
-            true_logl = 1.0540960782e+08 # no elsewhere
+            true_logl = 1.5844462356e+08 # ST-U
+            #true_logl = 1.0540960782e+08 # no elsewhere
             # true_logl = 1.1365193823e+08 # 2022 data
             
         if self.scenario == 'large_r':
@@ -461,7 +492,8 @@ class analysis(object):
 
             if self.sampler == 'multi':
                 wrapped_params = [0]*len(self.likelihood)
-                wrapped_params[self.likelihood.index('phase_shift')] = 1
+                wrapped_params[self.likelihood.index('p__phase_shift')] = 1
+                wrapped_params[self.likelihood.index('s__phase_shift')] = 1
                 outputfiles_basename = f'./{folderstring}/run_ST_'
                 runtime_params = {'resume': False,
                                   'importance_nested_sampling': False,
@@ -506,15 +538,15 @@ class analysis(object):
             
         elif self.run_type == 'test':
             print('test starts')
-            n_repeats = 100
+            n_repeats = 10
             t_start = time.time()
             for repeat in range(n_repeats):
                 #self.star.update(force_update=True)
-                # self.likelihood.check(None, [self.true_logl], 1.0e-4, physical_points=[self.p], force_update=True)
+                #self.likelihood.check(None, [self.true_logl], 1.0e-4, physical_points=[self.p], force_update=True)
                 self.likelihood(self.p, reinitialise=True)
             print('Test took {:.3f} seconds'.format((time.time()-t_start)))
             
             
 if __name__ == '__main__':
-    Analysis = analysis('local','sample', 'model', sampler='multi', scenario='2019', poisson_seed=42)
+    Analysis = analysis('local','sample', 'model', sampler='multi', scenario='2019')
     Analysis()

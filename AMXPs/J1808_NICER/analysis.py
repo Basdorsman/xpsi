@@ -120,14 +120,17 @@ class analysis(object):
         elif self.bkg == 'model' or self.bkg == 'fix':
             self.support_factor = 'None'
         print(f'support_factor: {self.support_factor}')   
-        
-        self.poisson_noise = os.environ.get('poisson_noise')
-        if self.poisson_noise == 'True':
+       
+        try:
+            poisson_noise = os.environ.get('poisson_noise')
+        except:
+            print('No poisson noise decision in os. Taking default choice')
+        if poisson_noise == 'True' or poisson_noise == True:
             self.poisson_seed = int(os.environ.get('poisson_seed'))
-        elif self.poisson_noise == None:
+            self.poisson_noise = poisson_noise
+        elif poisson_noise == None or poisson_noise == 'None':
             self.poisson_noise = poisson_noise
             self.poisson_seed = poisson_seed
-            print(f'No poisson noise decision in os. Taking default poisson')
         print(f'poisson_noise: {self.poisson_noise}, poisson_seed: {self.poisson_seed} (only relevant if poisson noise is True)')
        
         
@@ -516,5 +519,5 @@ class analysis(object):
             
             
 if __name__ == '__main__':
-    Analysis = analysis('local','sample', 'model', sampler='multi', scenario='2019', poisson_seed=42)
+    Analysis = analysis('local','sample', 'model', sampler='multi', scenario='2019')
     Analysis()

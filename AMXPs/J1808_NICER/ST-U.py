@@ -494,7 +494,7 @@ class analysis(object):
                 wrapped_params = [0]*len(self.likelihood)
                 wrapped_params[self.likelihood.index('p__phase_shift')] = 1
                 wrapped_params[self.likelihood.index('s__phase_shift')] = 1
-                outputfiles_basename = f'./{folderstring}/run_ST_'
+                outputfiles_basename = f'./{folderstring}/run_ST_U_'
                 runtime_params = {'resume': False,
                                   'importance_nested_sampling': False,
                                   'multimodal': False,

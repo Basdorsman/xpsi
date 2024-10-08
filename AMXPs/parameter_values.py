@@ -43,7 +43,7 @@ class parameter_values(object):
                 self.R_in = 55 # 20 #  1 #  km #  for very small diskBB background
             self.column_density = 1.13 #10^21 cm^-2
 
-        if self.scenario =='literature' or self.scenario == '2019' or self.scenario == '2022':
+        if self.scenario =='literature' or self.scenario == '2022':
             self.mass = 1.4
             self.radius = 11. #12.
             self.distance = 2.7 # 3.5
@@ -71,7 +71,7 @@ class parameter_values(object):
                 self.R_in = 30 # 20 #  1 #  km #  for very small diskBB background
             self.column_density = 1.17 #10^21 cm^-2
             
-        if self.scenario =='large_r':
+        if self.scenario =='large_r' or self.scenario == '2019':
             self.mass = 1.4
             self.radius = 11.
             self.distance = 2.7

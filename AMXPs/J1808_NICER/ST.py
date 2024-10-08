@@ -114,8 +114,8 @@ class analysis(object):
 
         if self.bkg == 'marginalise':
                 self.support_factor = os.environ.get('support_factor')
-                if os.environ.get('support_factor') == None: #or os.environ.get('support_factor') == 'None':
-                    print(f'No support_factor in os. Taken from passed or default argument: {support_factor}')
+                if os.environ.get('support_factor') == None or os.environ.get('support_factor') == 'None':
+                    print('No support_factor in os. Taking from passed or default argument')
                     self.support_factor = support_factor
         elif self.bkg == 'model' or self.bkg == 'fix':
             self.support_factor = 'None'
@@ -183,8 +183,8 @@ class analysis(object):
         elif self.machine == 'snellius':
             self.file_atmosphere = self.this_directory + '/../model_data/Bobrikova_compton_slab.npz'
             self.file_interstellar = "/home/dorsman/xpsi-bas-fork/AMXPs/model_data/interstellar/tbnew/tbnew0.14.txt"
-        if self.scenario == 'kajava' or self.scenario == 'literature':
-            self.file_bkg = self.this_directory + f'/data/background_countrate_{self.scenario}.txt'
+        if self.scenario == 'kajava' or self.scenario == 'literature' or self.scenario == '2019':
+            self.file_bkg = self.this_directory + f'/data/corrected_disk.txt'
         # self.file_bkg = self.this_directory + '/../model_data/synthetic/diskbb_background.txt'
 
     def set_bounds(self):
@@ -302,7 +302,6 @@ class analysis(object):
         self.set_photosphere()
         self.star = xpsi.Star(spacetime = self.spacetime, photospheres = self.photosphere)
         
-        
     def set_interstellar(self):
         # bounds = None 
         bounds = self.bounds['column_density']
@@ -314,18 +313,21 @@ class analysis(object):
     
     def set_support(self):
         support_factor = self.support_factor
-        if support_factor == "None":
+        if support_factor == "None" or support_factor == None:
             self.support = None
         else:
+    
+            data_spectrum = np.sum(self.data.counts, axis=1)/self.data.exposure_time        
+    
             support_factor = float(support_factor)
             bg_spectrum = np.loadtxt(self.file_bkg)
     
-            allowed_deviation_factor = 1. + support_factor  # 1.00005 is Roughly 1 count difference given max count rate of 0.8/s and exp. time of 1.3e5
+            allowed_deviation_factor = support_factor  # used to be 1. + support_factor
     
             support = np.zeros((len(bg_spectrum), 2), dtype=np.double)
             support[:,0] = bg_spectrum/allowed_deviation_factor #lower limit
             support[support[:,0] < 0.0, 0] = 0.0
-            support[:,1] = bg_spectrum*allowed_deviation_factor #upper limit
+            support[:,1] = np.minimum(bg_spectrum*allowed_deviation_factor, data_spectrum) #upper limit
     
             for i in range(support.shape[0]):
                 if support[i,1] == 0.0:
@@ -352,7 +354,7 @@ class analysis(object):
             self.k_disk.disk = self.disk
             
         elif self.bkg == 'marginalise' or self.bkg == 'fix':
-            self.background = None
+            self.disk = None
         else:
             print('error! bkg must be either model or marginalised.')
             
@@ -363,7 +365,7 @@ class analysis(object):
 
         self.signal = CustomSignal(data = self.data,
                             instrument = self.instrument,
-                            background = None, #self.background,
+                            background = None,
                             interstellar = self.interstellar,
                             support = self.support,
                             cache = False, # only true if verifying code implementation otherwise useless slowdown.
@@ -381,7 +383,8 @@ class analysis(object):
         
     def set_likelihood(self):
         self.set_star()
-        self.k_disk.star = self.star
+        if self.bkg == 'model':
+            self.k_disk.star = self.star
         self.set_signal()
         self.set_parameter_vector()
         self.set_prior()
@@ -392,19 +395,29 @@ class analysis(object):
                                       prior=self.prior,
                                       externally_updated=True)
 
-
-
         
         if self.scenario == '2019':
-            true_logl = 1.5315129891e+08 # no elsewhere
-            # true_logl= -7.9418857894e+89 # 2019 data, marginalized background
+            if self.bkg == 'marginalise':
+                true_logl = -8.8549011385e+04 # marginalise
+                if self.support_factor == 100:
+                    true_logl = -9.2194659551e+04
+            elif self.bkg == 'fix':
+                true_logl = 1.6789503475e+08 # empty background
+            elif self.bkg == 'model':
+                true_logl = 1.6880517943e+08
         
         if self.scenario == '2022':
             true_logl = 1.0540960782e+08 # no elsewhere
             # true_logl = 1.1365193823e+08 # 2022 data
             
         if self.scenario == 'large_r':
-            true_logl = 1.6881742361e+08
+            if self.bkg == 'marginalise':
+                true_logl = -8.7237365668e+04 # marginalise
+            elif self.bkg == 'fix':
+                true_logl = 1.6792913585e+08 # empty background
+            elif self.bkg == 'model':
+                true_logl = 1.6880517943e+08
+        
             
         if self.scenario == 'small_r':
             true_logl = 7.9265215639e+07
@@ -509,7 +522,7 @@ class analysis(object):
             
         elif self.run_type == 'test':
             print('test starts')
-            n_repeats = 100
+            n_repeats = 10
             t_start = time.time()
             for repeat in range(n_repeats):
                 #self.star.update(force_update=True)
@@ -519,5 +532,5 @@ class analysis(object):
             
             
 if __name__ == '__main__':
-    Analysis = analysis('local','sample', 'model', sampler='multi', scenario='2019')
+    Analysis = analysis('local','test', 'marginalise', sampler='multi', scenario='2019', support_factor=100)
     Analysis()

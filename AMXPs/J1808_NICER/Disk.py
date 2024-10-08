@@ -103,6 +103,49 @@ class Disk(ParameterSubspace):
         
         return f_disk_array
 
+    def get_F_disk(self, energy_edges, spectral_radiance, attenuate = False):
+        """ Evaluate F_disk(energy_bins, phase_bins).
+        
+        F_disk(E) = 4/3*pi * K_disk * int [l_disk(b_E/B_E, E)] dE, in this case
+        we integrate to get the flux from edge to edge to get the flux in each
+        energy bin. 
+        
+        parameters
+        energy_edges[keV], the edges from the bins
+        spectral_radiance can be b_E or B_E
+        
+        returns
+        F_disk in each energy bin. [photons/s/cm^2] or 
+        [keV/s/cm^2] 
+        
+        """
+
+        
+        T_in = self['T_in']
+        K_disk = self['K_disk']
+
+        # KbT in keV
+        T_in_keV = k_B_over_keV * pow(10.0, T_in)
+        
+        T_out_keV = T_in_keV*1e-1
+        
+        epsrel = 1e-4
+
+        F_disk_array = np.array([]) #photons/s/cm^2/sr/energy_bin
+        for i in range(len(energy_edges)-1):
+            # diskbb_flux_integral = disk_f(energy_edges[i], energy_edges[i+1], T_in_keV, T_out_keV, epsrel)
+            F_disk_value,_ = quad(self.l_disk, energy_edges[i], energy_edges[i+1], args=(T_in_keV, T_out_keV, spectral_radiance, epsrel), epsrel=epsrel)
+            F_disk_array=np.append(F_disk_array,F_disk_value)
+        
+        # K_disk is cos_i*R_in^2/D^2 in (km / 10 kpc)^2.
+        # (1 km / 10 kpc)^2 = 1.0502650e-35 [ cm/cm ]
+        
+        F_disk_array *=K_disk*4*np.pi/3*1.0502650e-35 # photons/s/cm^2/energy_bin
+        
+        
+        return F_disk_array
+
+
     def b_E(self, E, T):
         '''
         photon radiance of a blackbody

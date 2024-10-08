@@ -36,9 +36,9 @@ class CustomSignal(xpsi.Signal):
         super(CustomSignal, self).__init__(*args, **kwargs)
 
         self.bkg = bkg
-        self.allow_negative_background = allow_negative_background
-        if self.bkg == 'fix':
-            self.background_data = np.loadtxt(this_directory+'/data/J1808_synthetic_diskbb_literature.txt')
+        # self.allow_negative_background = allow_negative_background
+        #if self.bkg == 'fix':
+        #    self.background_data = np.loadtxt(this_directory+'/data/J1808_synthetic_diskbb_literature.txt')
 
         try:
             self._precomp = precomputation(self._data.counts.astype(np.int32))
@@ -56,8 +56,8 @@ class CustomSignal(xpsi.Signal):
                 self._support = support
             else:
                 self._support = -1.0 * np.ones((self._data.counts.shape[0],2))
-                if not allow_negative_background:
-                    self._support[:,0] = 0.0
+                # if not allow_negative_background:
+                self._support[:,0] = 0.0
                 
 
     @property
@@ -87,8 +87,8 @@ class CustomSignal(xpsi.Signal):
                                               self._epsrel,
                                               self._epsilon,
                                               self._sigmas,
-                                              kwargs.get('llzero'),
-                                              allow_negative_background = self.allow_negative_background)#,
+                                              kwargs.get('llzero'))#,
+                                              # allow_negative_background = self.allow_negative_background)#,
                                               #slim=-1.0) # default is skipping 10^89s, so some likelihood calculations are skipped
 
         elif self.bkg == 'model':
@@ -103,14 +103,14 @@ class CustomSignal(xpsi.Signal):
                                                     allow_negative = False)
         
         elif self.bkg == 'fix':
-            self.loglikelihood, self.loglikelihood_array, self.expected_counts, self.signal_from_star = \
+            self.loglikelihood, self.expected_counts = \
                 poisson_likelihood_given_background(self._data.exposure_time, 
                                                     self._data.phases, 
                                                     self._data.counts,
                                                     self._signals,
                                                     self._phases,
                                                     self._shifts,
-                                                    self.background_data,
+                                                    self.empty_background, #self.background_data,
                                                     allow_negative = False)
         else:
             print('error! pass bkg argument in init!')
@@ -211,7 +211,7 @@ class CustomSignal(xpsi.Signal):
                                                 self._data.index_range)
                 
 
-
+            # deprecated since I am not usring self.background anymore, now I use self.disk, which is added to the photosphere.integrate
             if self._background is not None:
                 try:
                     self._background(self._energy_edges,

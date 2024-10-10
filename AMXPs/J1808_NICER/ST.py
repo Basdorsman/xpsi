@@ -184,7 +184,7 @@ class analysis(object):
             self.file_atmosphere = self.this_directory + '/../model_data/Bobrikova_compton_slab.npz'
             self.file_interstellar = "/home/dorsman/xpsi-bas-fork/AMXPs/model_data/interstellar/tbnew/tbnew0.14.txt"
         if self.scenario == 'kajava' or self.scenario == 'literature' or self.scenario == '2019':
-            self.file_bkg = self.this_directory + f'/data/corrected_disk.txt'
+            self.file_bkg = self.this_directory + f'/data/disk_2019.txt'
         # self.file_bkg = self.this_directory + '/../model_data/synthetic/diskbb_background.txt'
 
     def set_bounds(self):
@@ -320,14 +320,14 @@ class analysis(object):
             data_spectrum = np.sum(self.data.counts, axis=1)/self.data.exposure_time        
     
             support_factor = float(support_factor)
-            bg_spectrum = np.loadtxt(self.file_bkg)
+            self.bg_spectrum = np.loadtxt(self.file_bkg)
     
             allowed_deviation_factor = support_factor  # used to be 1. + support_factor
     
-            support = np.zeros((len(bg_spectrum), 2), dtype=np.double)
-            support[:,0] = bg_spectrum/allowed_deviation_factor #lower limit
+            support = np.zeros((len(self.bg_spectrum), 2), dtype=np.double)
+            support[:,0] = self.bg_spectrum/allowed_deviation_factor #lower limit
             support[support[:,0] < 0.0, 0] = 0.0
-            support[:,1] = np.minimum(bg_spectrum*allowed_deviation_factor, data_spectrum) #upper limit
+            support[:,1] = np.minimum(self.bg_spectrum*allowed_deviation_factor, data_spectrum) #upper limit
     
             for i in range(support.shape[0]):
                 if support[i,1] == 0.0:
@@ -532,5 +532,5 @@ class analysis(object):
             
             
 if __name__ == '__main__':
-    Analysis = analysis('local','test', 'marginalise', sampler='multi', scenario='2019', support_factor=100)
+    Analysis = analysis('local','test', 'marginalise', sampler='multi', scenario='2019', support_factor='None')
     Analysis()

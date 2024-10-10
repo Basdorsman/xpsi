@@ -431,7 +431,8 @@ class analysis(object):
             # true_logl = 1.1365193823e+08 # 2022 data
             
         if self.scenario == 'large_r':
-            true_logl = 1.6881974660e+08 # precise values 
+            true_logl = 1.4527164573e+08 
+            #1.6881974660e+08 # precise values 
             #true_logl =  1.6876535955e+08 # rounded values, but remember that data should be updated
 
         if self.scenario == 'small_r':

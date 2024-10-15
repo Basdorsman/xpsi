@@ -210,6 +210,7 @@ class CustomPrior_STU(xpsi.Prior):
         super(CustomPrior_STU, self).__init__(*args, **kwargs)
 
     def __call__(self, p = None):
+
         """ Evaluate distribution at ``p``.
 
         :param list p: Model parameter values.
@@ -269,7 +270,9 @@ class CustomPrior_STU(xpsi.Prior):
  
         # hot regions cannot overlap
         if ang_sep < ref['p__super_radius'] + ref['s__super_radius']:
+
             return -np.inf
+
 
         return 0.0
 
@@ -343,12 +346,14 @@ class CustomPrior_STU(xpsi.Prior):
         # p += [get_keV_from_log10_Kelvin(ref['elsewhere_temperature'])]
         if self.bkg == 'model':
             p += [get_keV_from_log10_Kelvin(ref['T_in'])]
-        p += [ref['super_tbb']*511]
-        p += [ref['super_te']*511/1000]
+        p += [ref['p__super_tbb']*511]
+        p += [ref['s__super_tbb']*511]
+        p += [ref['p__super_te']*511/1000]
+        p += [ref['s__super_te']*511/1000]
         
         p += [np.arccos(ref['cos_inclination'])*180/np.pi]
         p += [ref['p__super_colatitude']*180/np.pi]
         p += [ref['s__super_colatitude']*180/np.pi]
-        p += [ref['super_radius']*180/np.pi]
-
+        p += [ref['p__super_radius']*180/np.pi]
+        p += [ref['s__super_radius']*180/np.pi]
         return p

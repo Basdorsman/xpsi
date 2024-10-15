@@ -88,11 +88,17 @@ class parameter_values(object):
             self.te=0.729440224892133244E+02#37*1000/511#  #37*1000/511 # 50. # 40-200 corresponds to 20-100 keV (Te(data) = Te(keV)*1000/511keV), 50 keV = 100 data
             self.tau=0.153014380768402769E+01#1.5 # # #0.5 - 3.5 tau = ln(Fin/Fout)
     
-            if self.bkg == 'model':
+            if 'disk' in self.bkg:
             # source background
                 self.diskbb_T_keV = 0.16845756373108872# 0.17#  # # 0.3  #  keV #0.3 keV for Kajava+ 2011
                 self.diskbb_T_log10_K = get_T_in_log10_Kelvin(self.diskbb_T_keV)
                 self.R_in = 0.308122224729265000E+02# 30#   # 20 #  1 #  km #  for very small diskBB background
+            
+            if 'line' in self.bkg:
+                self.mu = 0.9
+                self.sigma = 0.1
+                self.N = 2e37
+            
             self.column_density = 1.17 #10^21 cm^-2
         
         if self.scenario =='small_r':
@@ -133,11 +139,19 @@ class parameter_values(object):
               self.te,
               self.tau]
 
-        if self.bkg == 'model':
+        if 'disk' in self.bkg:
             self.p.append(self.diskbb_T_log10_K)
             self.p.append(self.R_in)
+            
+        if 'line' in self.bkg:
+            self.p.append(self.mu)
+            self.p.append(self.sigma)
+            self.p.append(self.N)
 
         self.p.append(self.column_density)
+        
+        
+        # print('parameter vector:', self.p)
         return self.p
         
     def names(self):
@@ -145,10 +159,8 @@ class parameter_values(object):
             self.names=['mass','radius','distance','cos_inclination',
                         'phase_shift','super_colatitude','super_radius',
                         'super_tbb','super_te','super_tau',
-                        'elsewhere_temperature',
-                        'column_density', 'compactness', 
-                        'T_else_keV', 
-                        'tbb_keV','te_keV' ]
+                        'column_density', 'compactness',  
+                        'tbb_keV','te_keV','inclination_deg', 'colatitude_deg', 'radius_deg' ]
         elif self.bkg =='model':                
             self.names=['mass','radius','distance','cos_inclination',
                         'phase_shift','super_colatitude','super_radius', 
@@ -176,10 +188,15 @@ class parameter_values(object):
               'colatitude_deg': (0.001, 180-0.001),
               'radius_deg': (0.001, 90)              
               }
-        if self.bkg == 'model':
+        if 'disk' in self.bkg:
             bounds['T_in'] = (0.01, 0.6) # (0.225, 0.275 )  # (0.01, 0.6) # keV
             bounds['R_in'] = (5, 50) # from star radius to around corotation radius for the heaviest saxJ1808 possible # (27, 33)  # (20, 200) # km
             bounds['T_in_keV'] = (None, None)
+            
+        if 'line' in self.bkg:
+            bounds['mu'] = (0.8,1.1)
+            bounds['sigma'] = (1e-2,5e-1)
+            bounds['N'] = (1e35,1e38)
         
         return bounds
 
@@ -202,7 +219,7 @@ class parameter_values(object):
           'colatitude_deg': self.super_colatitude*180/np.pi,
           'radius_deg': self.super_radius*180/np.pi}
     
-        if self.bkg == 'model':
+        if 'disk' in self.bkg:
             truths['T_in'] = self.diskbb_T_log10_K
             truths['T_in_keV'] = self.diskbb_T_keV
             truths['R_in'] = self.R_in
@@ -221,14 +238,14 @@ class parameter_values(object):
               'super_tbb': r"T_\{seed}\;\mathrm{[data units]}",
               'tbb_keV': r"T_\mathrm{seed}\;\mathrm{[keV]}",
               'super_te': r"T_\mathrm{electrons}\;\mathrm{[data units]}",
-              'te_keV': r"T_\mathrm{electrons}\;\mathrm{[keV]}",
+              'te_keV': r"T_\mathrm{e}\;\mathrm{[keV]}",
               'super_tau': r"\tau\;[-]",
               'column_density': r"N_\mathrm{H}\;[10^{21} \mathrm{cm}^{-2}]",
               'inclination_deg': r'i\;\mathrm{[deg]}',
               'colatitude_deg': r'\theta\;\mathrm{[deg]}',
               'radius_deg': r'\zeta\;\mathrm{[deg]}'}
         
-        if self.bkg == 'model':
+        if 'disk' in self.bkg:
             labels['T_in'] = r"T_{in} log10 of Kelvin"
             labels['T_in_keV'] = r"T_\mathrm{in}\;\mathrm{[keV]}"
             labels['R_in'] =  r"R_\mathrm{in}\;\mathrm{[km]}"

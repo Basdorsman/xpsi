@@ -12,7 +12,7 @@ import numpy as np
 
 
 
-class CustomPhotosphereDisk(xpsi.Photosphere):
+class CustomPhotosphereDiskLine(xpsi.Photosphere):
     """ A photosphere extension to preload the numerical 5D accretion atmosphere. """
     
     
@@ -21,7 +21,8 @@ class CustomPhotosphereDisk(xpsi.Photosphere):
                  everywhere = None,
                  bounds = None, values = None,
                  stokes=False,
-                 custom = None,
+                 disk = None,
+                 line = None,
                  **kwargs):
 
         if everywhere is not None:
@@ -59,10 +60,8 @@ class CustomPhotosphereDisk(xpsi.Photosphere):
         self._elsewhere = elsewhere
         self._everywhere = everywhere
         self._stokes = stokes
-        self._custom = custom
-
-        if custom is not None:
-            self._disk = custom
+        self._disk = disk
+        self._line = line
 
         if hot is not None:
             self._surface = self._hot
@@ -97,23 +96,33 @@ class CustomPhotosphereDisk(xpsi.Photosphere):
                                        symbol = r'$\chi_{0}$',
                                        value = values.get('spin_axis_position_angle', None))
             
-            super(CustomPhotosphereDisk, self).__init__(mode_frequency=mode_frequency, spin_axis_position_angle=spin_axis_position_angle,
+            super(CustomPhotosphereDiskLine, self).__init__(mode_frequency=mode_frequency, spin_axis_position_angle=spin_axis_position_angle,
                                               hot=hot, elsewhere=elsewhere, everywhere=everywhere,
                                               bounds=bounds, values=values,
                                               stokes=stokes,
-                                              custom=custom,
                                               **kwargs)
         else:
-            super(CustomPhotosphereDisk, self).__init__(mode_frequency=mode_frequency,
+            custom = []
+            if disk:
+                custom.append(disk)
+            if line:
+                custom.append(line)
+            super(CustomPhotosphereDiskLine, self).__init__(mode_frequency=mode_frequency,
                                               hot=hot, elsewhere=elsewhere, everywhere=everywhere,
                                               bounds=bounds, values=values,
                                               custom=custom,
                                               **kwargs)
 
+
     @property
     def disk(self):
         """ Get the instance of :class:`~.Disk.Disk`. """
         return self._disk
+
+    @property
+    def line(self):
+        """ Get the instance of :class:`~.GaussianLine.GaussianLine`. """
+        return self._line
 
     @xpsi.Photosphere.hot_atmosphere.setter
     def hot_atmosphere(self, path):
@@ -227,11 +236,19 @@ class CustomPhotosphereDisk(xpsi.Photosphere):
                         self._signal[0][0][:,i] += spectrum    
     
             # print('signal inside customphotosphere: ', self._signal)
-            if self._custom is not None:
-                if self._disk is not None: 
-                    disk_spectrum = self._disk(energies)
-                    for i in range(self._signal[0][0].shape[1]):
-                        self._signal[0][0][:,i] += disk_spectrum    
+
+
+            # add disk spectrum to primary hotregion
+            if self._disk is not None: 
+                disk_spectrum = self._disk(energies)
+                for i in range(self._signal[0][0].shape[1]):
+                    self._signal[0][0][:,i] += disk_spectrum
+            
+            # add line spectrum to primary hotregion
+            if self._line is not None: 
+                line_spectrum = self._line(energies)
+                for i in range(self._signal[0][0].shape[1]):
+                    self._signal[0][0][:,i] += line_spectrum    
 
 
                     

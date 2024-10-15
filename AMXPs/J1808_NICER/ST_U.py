@@ -548,5 +548,5 @@ class analysis(object):
             
             
 if __name__ == '__main__':
-    Analysis = analysis('local','sample', 'model', sampler='multi', scenario='2019')
+    Analysis = analysis('local','sample', 'model', sampler='multi', scenario='2022')
     Analysis()

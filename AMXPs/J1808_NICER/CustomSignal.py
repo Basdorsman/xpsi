@@ -91,7 +91,7 @@ class CustomSignal(xpsi.Signal):
                                               # allow_negative_background = self.allow_negative_background)#,
                                               #slim=-1.0) # default is skipping 10^89s, so some likelihood calculations are skipped
 
-        elif self.bkg == 'model':
+        elif 'disk' in self.bkg or 'line' in self.bkg:
             self.loglikelihood, self.expected_counts = \
                 poisson_likelihood_given_background(self._data.exposure_time, 
                                                     self._data.phases, 
@@ -113,7 +113,7 @@ class CustomSignal(xpsi.Signal):
                                                     self.empty_background, #self.background_data,
                                                     allow_negative = False)
         else:
-            print('error! pass bkg argument in init!')
+            print('error in CustomSignal! pass bkg argument in init!')
 
 
     def register(self, signals, fast_mode=False, threads=1):

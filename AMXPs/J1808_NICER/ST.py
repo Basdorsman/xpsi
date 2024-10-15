@@ -17,7 +17,7 @@ from xpsi.global_imports import gravradius
 
 from CustomPrior import CustomPrior
 from CustomInstrument import CustomInstrument
-from CustomPhotosphereDisk import CustomPhotosphereDisk
+from CustomPhotosphere import CustomPhotosphereDiskLine
 from CustomInterstellar import CustomInterstellar
 from CustomSignal import CustomSignal
 from CustomHotregion import CustomHotRegion_Accreting
@@ -117,7 +117,7 @@ class analysis(object):
                 if os.environ.get('support_factor') == None or os.environ.get('support_factor') == 'None':
                     print('No support_factor in os. Taking from passed or default argument')
                     self.support_factor = support_factor
-        elif self.bkg == 'model' or self.bkg == 'fix':
+        elif 'disk' in self.bkg or 'line' in self.bkg or self.bkg == 'fix':
             self.support_factor = 'None'
         print(f'support_factor: {self.support_factor}')   
        
@@ -147,6 +147,10 @@ class analysis(object):
         
         t_check = time.time()
         #self.likelihood(self.p, reinitialise=True)
+        
+        # print('parameters:', self.p)
+        # print(self.likelihood)
+
         self.likelihood.check(None, [self.true_logl], 1.0e-4, physical_points=[self.p], force_update=True)
         print('Likelihood check took {:.3f} seconds'.format((time.time()-t_check)))
         print(self.likelihood(self.p))
@@ -293,7 +297,9 @@ class analysis(object):
         self.set_spacetime()
         self.set_hotregions()
         self.set_disk()
-        self.photosphere = CustomPhotosphereDisk(hot = self.hot, elsewhere = None, stokes=False, custom=self.disk,
+        self.set_line()
+        
+        self.photosphere = CustomPhotosphereDiskLine(hot = self.hot, elsewhere = None, stokes=False, disk=self.disk, line=self.line,
                                         values=dict(mode_frequency = self.spacetime['frequency']))
 
         self.photosphere.hot_atmosphere = self.file_atmosphere
@@ -306,9 +312,6 @@ class analysis(object):
         # bounds = None 
         bounds = self.bounds['column_density']
         values = None #self.pv.column_density
-
-        
-        
         self.interstellar=CustomInterstellar.from_SWG(self.file_interstellar, bounds=bounds, value=values)
     
     def set_support(self):
@@ -316,9 +319,8 @@ class analysis(object):
         if support_factor == "None" or support_factor == None:
             self.support = None
         else:
-    
             data_spectrum = np.sum(self.data.counts, axis=1)/self.data.exposure_time        
-    
+
             support_factor = float(support_factor)
             self.bg_spectrum = np.loadtxt(self.file_bkg)
     
@@ -341,23 +343,35 @@ class analysis(object):
         
     def set_disk(self):
         from Disk import Disk, k_disk_derive
-        if self.bkg == 'model':            
+        if 'disk' in self.bkg:    
             bounds = dict(T_in = get_T_in_log10_Kelvin(self.bounds["T_in"]),
                           R_in = self.bounds["R_in"],
                           K_disk = None) #derived means no bounds
                 
             self.k_disk = k_disk_derive()
-            
             self.disk = Disk(bounds=bounds, values={'K_disk': self.k_disk})
-            
-
             self.k_disk.disk = self.disk
             
-        elif self.bkg == 'marginalise' or self.bkg == 'fix':
-            self.disk = None
         else:
-            print('error! bkg must be either model or marginalised.')
+            self.disk = None
             
+    def set_line(self):
+        from GaussianLine import GaussianLine
+              
+        if 'line' in self.bkg:
+            line_values = {}
+            
+            line_bounds = dict(
+                mu = self.bounds['mu'],
+                sigma = self.bounds['sigma'],
+                N = self.bounds['N'],
+                )
+                
+            self.line = GaussianLine(bounds=line_bounds, values=line_values)
+        else:
+            self.line = None
+            print('no line')
+
     def set_signal(self):
         self.set_data()
         self.set_instrument()
@@ -383,7 +397,7 @@ class analysis(object):
         
     def set_likelihood(self):
         self.set_star()
-        if self.bkg == 'model':
+        if 'disk' in self.bkg:
             self.k_disk.star = self.star
         self.set_signal()
         self.set_parameter_vector()
@@ -394,17 +408,23 @@ class analysis(object):
                                       threads=1,
                                       prior=self.prior,
                                       externally_updated=True)
+        
+        
 
         
         if self.scenario == '2019':
             if self.bkg == 'marginalise':
-                true_logl = -8.8549011385e+04 # marginalise
-                if self.support_factor == 100:
+                true_logl = -1.1307400098e+05#-8.8549011385e+04 # marginalise
+                if self.support_factor == 100 or self.support_factor == '100':
                     true_logl = -9.2194659551e+04
             elif self.bkg == 'fix':
                 true_logl = 1.6789503475e+08 # empty background
-            elif self.bkg == 'model':
-                true_logl = 1.6880517943e+08
+            elif self.bkg == 'disk':
+                true_logl = 1.6880517943e+08 # 1.5315194624e+08 #1.6880517943e+08
+            elif self.bkg == 'line':
+                true_logl = 1.6789503475e+08
+            elif self.bkg == 'diskline':
+                true_logl = 1.6880218740e+08
         
         if self.scenario == '2022':
             true_logl = 1.0540960782e+08 # no elsewhere
@@ -415,7 +435,7 @@ class analysis(object):
                 true_logl = -8.7237365668e+04 # marginalise
             elif self.bkg == 'fix':
                 true_logl = 1.6792913585e+08 # empty background
-            elif self.bkg == 'model':
+            elif self.bkg == 'disk':
                 true_logl = 1.6880517943e+08
         
             
@@ -462,13 +482,16 @@ class analysis(object):
         print('figure saved in {}'.format(folderstring))
         
         
-        fig, ax = plt.subplots()
-        #profile = CustomAxes.plot_2D_counts(ax, self.data.counts-self.signal.expected_counts, get_mids_from_edges(self.data.phases), self.data.channels)
-        #profile = CustomAxes.plot_2D_counts(ax, self.data.counts, get_mids_from_edges(self.data.phases), self.data.channels)
-        profile = CustomAxes.plot_2D_counts(ax, self.signal.expected_counts, get_mids_from_edges(self.data.phases), self.data.channels)
-        
-        
-        fig.colorbar(profile, ax=ax)
+        fig, axes = plt.subplots(3,1,figsize=(5,8))
+       
+        profile = CustomAxes.plot_2D_counts(axes[0], self.data.counts, get_mids_from_edges(self.data.phases), get_mids_from_edges(self.instrument.channel_edges))
+        profile = CustomAxes.plot_2D_counts(axes[1], self.signal.expected_counts, get_mids_from_edges(self.data.phases), get_mids_from_edges(self.instrument.channel_edges))
+        profile = CustomAxes.plot_2D_counts(axes[2], self.signal.expected_counts-self.data.counts, get_mids_from_edges(self.data.phases), get_mids_from_edges(self.instrument.channel_edges))
+        fig.colorbar(profile, ax=axes[0])
+        fig.colorbar(profile, ax=axes[1])
+        fig.colorbar(profile, ax=axes[2])     
+        axes[2].set_title('expected-data')
+        fig.tight_layout()
         
         if self.run_type == 'sample':
 
@@ -532,5 +555,5 @@ class analysis(object):
             
             
 if __name__ == '__main__':
-    Analysis = analysis('local','test', 'marginalise', sampler='multi', scenario='2019', support_factor='None')
+    Analysis = analysis('local', 'test', 'diskline', sampler='multi', scenario='2019', support_factor='100')
     Analysis()

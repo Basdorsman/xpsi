@@ -143,6 +143,7 @@ class analysis(object):
         
         t_check = time.time()
         #self.likelihood(self.p, reinitialise=True)
+        print(self.likelihood)
         self.likelihood.check(None, [self.true_logl], 1.0e-4, physical_points=[self.p], force_update=True)
         print('Likelihood check took {:.3f} seconds'.format((time.time()-t_check)))
         print(self.likelihood(self.p))
@@ -408,11 +409,20 @@ class analysis(object):
         
     def set_parameter_vector(self):
         parameters_single_hotspot = self.pv.p()
-        
+        print('parameters_single_hotspot:',parameters_single_hotspot)
         # add second hotspot
-        n_shift = 3
+        n_begin = 4
         n_hs_params = 6
-        self.p = parameters_single_hotspot[:-n_shift] + parameters_single_hotspot[-(n_shift+n_hs_params):-n_shift] + parameters_single_hotspot[-n_shift:]
+        if self.bkg=='marginalise':
+            n_end = 1
+        elif self.bkg=='disk':
+            n_end = 3
+        else:
+            raise NotImplementedError
+        uptofirsthotspot = parameters_single_hotspot[:(n_begin+n_hs_params)]
+        hotspot = parameters_single_hotspot[n_begin:(n_begin+n_hs_params)]
+        last = parameters_single_hotspot[-n_end:]
+        self.p = uptofirsthotspot+hotspot+last
         self.p[11] += np.pi/2 # small non overlapping secondary
         self.p[12] = np.pi/12
         print('self.p: ',self.p)     
@@ -422,7 +432,8 @@ class analysis(object):
         
     def set_likelihood(self):
         self.set_star()
-        self.k_disk.star = self.star
+        if 'disk' in self.bkg:
+            self.k_disk.star = self.star
         self.set_signal()
         self.set_parameter_vector()
         self.set_prior()
@@ -437,7 +448,11 @@ class analysis(object):
 
         
         if self.scenario == '2019':
-            true_logl = 1.6880114959e+08 # ST-U
+            if self.bkg == 'disk':
+                true_logl = 1.6880114959e+08 # ST-U
+            elif self.bkg == 'marginalise':
+                true_logl = -9.3117243901e+04
+            
             # true_logl = 1.5315129891e+08 # no elsewhere
             # true_logl= -7.9418857894e+89 # 2019 data, marginalized background
         
@@ -563,5 +578,5 @@ class analysis(object):
             
             
 if __name__ == '__main__':
-    Analysis = analysis('local','sample', 'disk', sampler='multi', scenario='2019')
+    Analysis = analysis('local','sample', 'marginalise', sampler='multi', scenario='2019')
     Analysis()

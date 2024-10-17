@@ -161,10 +161,16 @@ class parameter_values(object):
                         'super_tbb','super_te','super_tau',
                         'column_density', 'compactness',  
                         'tbb_keV','te_keV','inclination_deg', 'colatitude_deg', 'radius_deg' ]
-        elif self.bkg =='model':                
+        elif self.bkg == 'disk':                
             self.names=['mass','radius','distance','cos_inclination',
                         'phase_shift','super_colatitude','super_radius', 
                         'super_tbb','super_te','super_tau', 'T_in', 'R_in', 
+                        'column_density','compactness', 'T_in_keV', 'tbb_keV',
+                        'te_keV','inclination_deg', 'colatitude_deg', 'radius_deg']
+        elif self.bkg == 'diskline':
+            self.names=['mass','radius','distance','cos_inclination',
+                        'phase_shift','super_colatitude','super_radius', 
+                        'super_tbb','super_te','super_tau', 'T_in', 'R_in', 'mu', 'sigma', 'N',
                         'column_density','compactness', 'T_in_keV', 'tbb_keV',
                         'te_keV','inclination_deg', 'colatitude_deg', 'radius_deg']
         return self.names
@@ -224,6 +230,11 @@ class parameter_values(object):
             truths['T_in_keV'] = self.diskbb_T_keV
             truths['R_in'] = self.R_in
         
+        if 'line' in self.bkg:
+            truths['mu'] = self.mu
+            truths['sigma'] = self.sigma
+            truths['N'] = self.N
+        
         return truths
     
     def labels(self):
@@ -249,6 +260,11 @@ class parameter_values(object):
             labels['T_in'] = r"T_{in} log10 of Kelvin"
             labels['T_in_keV'] = r"T_\mathrm{in}\;\mathrm{[keV]}"
             labels['R_in'] =  r"R_\mathrm{in}\;\mathrm{[km]}"
+            
+        if 'line' in self.bkg:
+            labels['mu'] = r"\mu\;\mathrm{[keV]}"
+            labels['sigma'] = r"\sigma;\mathrm{[keV]}"
+            labels['N'] =  r"N\;\mathrm{[photons/cm^2/s]}"
 
         
         return labels

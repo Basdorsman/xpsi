@@ -17,7 +17,7 @@ from xpsi.global_imports import gravradius
 
 from CustomPrior import CustomPrior_STU
 from CustomInstrument import CustomInstrument
-from CustomPhotosphereDisk import CustomPhotosphereDisk
+from CustomPhotosphere import CustomPhotosphereDiskLine
 from CustomInterstellar import CustomInterstellar
 from CustomSignal import CustomSignal
 from CustomHotregion import CustomHotRegion_Accreting
@@ -113,12 +113,12 @@ class analysis(object):
 
         if self.bkg == 'marginalise':
                 self.support_factor = os.environ.get('support_factor')
-                if os.environ.get('support_factor') == None: #or os.environ.get('support_factor') == 'None':
-                    print(f'No support_factor in os. Taken from passed or default argument: {support_factor}')
+                if os.environ.get('support_factor') == None or os.environ.get('support_factor') == 'None':
+                    print('No support_factor in os. Taking from passed or default argument')
                     self.support_factor = support_factor
-        elif self.bkg == 'model' or self.bkg == 'fix':
+        elif 'disk' in self.bkg or 'line' in self.bkg or self.bkg == 'fix':
             self.support_factor = 'None'
-        print(f'support_factor: {self.support_factor}')   
+        print(f'support_factor: {self.support_factor}')     
         
         self.poisson_noise = os.environ.get('poisson_noise')
         if self.poisson_noise == 'True':
@@ -313,7 +313,8 @@ class analysis(object):
         self.set_spacetime()
         self.set_hotregions()
         self.set_disk()
-        self.photosphere = CustomPhotosphereDisk(hot = self.hot, elsewhere = None, stokes=False, custom=self.disk,
+        self.set_line()
+        self.photosphere = CustomPhotosphereDiskLine(hot = self.hot, elsewhere = None, stokes=False, disk=self.disk, line=self.line,
                                         values=dict(mode_frequency = self.spacetime['frequency']))
 
         self.photosphere.hot_atmosphere = self.file_atmosphere
@@ -359,22 +360,34 @@ class analysis(object):
         
     def set_disk(self):
         from Disk import Disk, k_disk_derive
-        if self.bkg == 'model':            
+        if 'disk' in self.bkg:    
             bounds = dict(T_in = get_T_in_log10_Kelvin(self.bounds["T_in"]),
                           R_in = self.bounds["R_in"],
                           K_disk = None) #derived means no bounds
                 
             self.k_disk = k_disk_derive()
-            
             self.disk = Disk(bounds=bounds, values={'K_disk': self.k_disk})
-            
-
             self.k_disk.disk = self.disk
             
-        elif self.bkg == 'marginalise' or self.bkg == 'fix':
-            self.background = None
         else:
-            print('error! bkg must be either model or marginalised.')
+            self.disk = None
+            
+    def set_line(self):
+        from GaussianLine import GaussianLine
+              
+        if 'line' in self.bkg:
+            line_values = {}
+            
+            line_bounds = dict(
+                mu = self.bounds['mu'],
+                sigma = self.bounds['sigma'],
+                N = self.bounds['N'],
+                )
+                
+            self.line = GaussianLine(bounds=line_bounds, values=line_values)
+        else:
+            self.line = None
+            print('no line')
             
     def set_signal(self):
         self.set_data()
@@ -400,7 +413,9 @@ class analysis(object):
         n_shift = 3
         n_hs_params = 6
         self.p = parameters_single_hotspot[:-n_shift] + parameters_single_hotspot[-(n_shift+n_hs_params):-n_shift] + parameters_single_hotspot[-n_shift:]
-        # print('self.p: ',self.p)     
+        self.p[11] += np.pi/2 # small non overlapping secondary
+        self.p[12] = np.pi/12
+        print('self.p: ',self.p)     
     
     def set_prior(self):
         self.prior = CustomPrior_STU(self.scenario, self.bkg)
@@ -422,7 +437,7 @@ class analysis(object):
 
         
         if self.scenario == '2019':
-            true_logl = 1.5844462356e+08 # ST-U
+            true_logl = 1.6880114959e+08 # ST-U
             # true_logl = 1.5315129891e+08 # no elsewhere
             # true_logl= -7.9418857894e+89 # 2019 data, marginalized background
         
@@ -548,5 +563,5 @@ class analysis(object):
             
             
 if __name__ == '__main__':
-    Analysis = analysis('local','sample', 'model', sampler='multi', scenario='2022')
+    Analysis = analysis('local','sample', 'disk', sampler='multi', scenario='2019')
     Analysis()

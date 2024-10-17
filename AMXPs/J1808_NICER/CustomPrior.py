@@ -82,7 +82,7 @@ class CustomPrior(xpsi.Prior):
         if mu < 1.0:
             return -np.inf
         
-        if self.bkg == 'model':
+        if 'disk' in self.bkg:
         
             # inner disk must be smaller than corotation radius, otherwise we enter (weak) propeller regime
            if not self.parameters['R_in'] < 1.49790e3*ref['mass']**(1/3)*ref['frequency']**(-2/3): # 1.49790e3 = (G*M_sol/4pi^2)^(1/3) in km
@@ -154,8 +154,8 @@ class CustomPrior(xpsi.Prior):
 
         # compactness ratio M/R_eq
         p += [gravradius(ref['mass']) / ref['radius']]
-        # p += [get_keV_from_log10_Kelvin(ref['elsewhere_temperature'])]
-        if self.bkg == 'model':
+
+        if 'disk' in self.bkg:
             p += [get_keV_from_log10_Kelvin(ref['T_in'])]
         p += [ref['super_tbb']*511]
         p += [ref['super_te']*511/1000]
@@ -260,6 +260,7 @@ class CustomPrior_STU(xpsi.Prior):
         
         # enforce order in hot region colatitude
         if ref['p__super_colatitude'] > ref['s__super_colatitude']:
+            # print('no order in hotregions')
             return -np.inf
  
         phi = (ref['p__phase_shift'] - 0.5 - ref['s__phase_shift']) * _2pi
@@ -268,9 +269,10 @@ class CustomPrior_STU(xpsi.Prior):
                                      phi,
                                      ref['p__super_colatitude'])
  
+
         # hot regions cannot overlap
         if ang_sep < ref['p__super_radius'] + ref['s__super_radius']:
-
+            # print('overlapping hotregions')
             return -np.inf
 
 
@@ -344,7 +346,7 @@ class CustomPrior_STU(xpsi.Prior):
         # compactness ratio M/R_eq
         p += [gravradius(ref['mass']) / ref['radius']]
         # p += [get_keV_from_log10_Kelvin(ref['elsewhere_temperature'])]
-        if self.bkg == 'model':
+        if 'disk' in self.bkg:
             p += [get_keV_from_log10_Kelvin(ref['T_in'])]
         p += [ref['p__super_tbb']*511]
         p += [ref['s__super_tbb']*511]

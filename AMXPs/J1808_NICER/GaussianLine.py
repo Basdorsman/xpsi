@@ -36,7 +36,7 @@ class GaussianLine(ParameterSubspace):
 
         
         doc = """
-        Line normalisation (photons/s/cm^2)
+        Line normalisation (photons/s/cm^2/phase_bin)
         """
         line_normalisation = Parameter('N',
                                 strict_bounds = (1e-10,1e50),

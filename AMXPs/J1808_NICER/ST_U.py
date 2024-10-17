@@ -180,8 +180,8 @@ class analysis(object):
         elif self.machine == 'snellius':
             self.file_atmosphere = self.this_directory + '/../model_data/Bobrikova_compton_slab.npz'
             self.file_interstellar = "/home/dorsman/xpsi-bas-fork/AMXPs/model_data/interstellar/tbnew/tbnew0.14.txt"
-        if self.scenario == 'kajava' or self.scenario == 'literature':
-            self.file_bkg = self.this_directory + f'/data/background_countrate_{self.scenario}.txt'
+        if self.scenario == 'kajava' or self.scenario == 'literature' or self.scenario == '2019':
+            self.file_bkg = self.this_directory + f'/data/disk_2019.txt'
         # self.file_bkg = self.this_directory + '/../model_data/synthetic/diskbb_background.txt'
 
     def set_bounds(self):
@@ -451,7 +451,7 @@ class analysis(object):
             if self.bkg == 'disk':
                 true_logl = 1.6880114959e+08 # ST-U
             elif self.bkg == 'marginalise':
-                true_logl = -9.3117243901e+04
+                true_logl = -9.6201946218e+04
             
             # true_logl = 1.5315129891e+08 # no elsewhere
             # true_logl= -7.9418857894e+89 # 2019 data, marginalized background
@@ -578,5 +578,5 @@ class analysis(object):
             
             
 if __name__ == '__main__':
-    Analysis = analysis('local','sample', 'marginalise', sampler='multi', scenario='2019')
+    Analysis = analysis('local','sample', 'marginalise', support_factor='100',sampler='multi', scenario='2019')
     Analysis()

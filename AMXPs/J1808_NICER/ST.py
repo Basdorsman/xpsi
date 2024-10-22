@@ -424,11 +424,22 @@ class analysis(object):
             elif self.bkg == 'line':
                 true_logl = 1.6789503475e+08
             elif self.bkg == 'diskline':
-                true_logl = 1.6880218740e+08
+                true_logl = 1.6880517943e+08
         
         if self.scenario == '2022':
-            true_logl = 1.0540960782e+08 # no elsewhere
-            # true_logl = 1.1365193823e+08 # 2022 data
+            if self.bkg == 'marginalise':
+                true_logl = -1.1307400098e+05#-8.8549011385e+04 # marginalise
+                if self.support_factor == 100 or self.support_factor == '100':
+                    true_logl = -9.2194659551e+04
+            elif self.bkg == 'fix':
+                true_logl = 1.6789503475e+08 # empty background
+            elif self.bkg == 'disk':
+                true_logl = 1.1730546413e+08
+            elif self.bkg == 'line':
+                true_logl = 1.6789503475e+08
+            elif self.bkg == 'diskline':
+                true_logl = 1.1740674355e+08
+
             
         if self.scenario == 'large_r':
             if self.bkg == 'marginalise':

@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH -N 5
+#SBATCH -N 1
 #SBATCH --tasks-per-node=192
 #SBATCH -t 1-00:00:00
 #SBATCH -p genoa
@@ -23,15 +23,15 @@ export sqrt_num_cells=50  # 90
 export num_rays=512
 export machine=snellius
 export integrator=x
-export live_points=400 #$SLURM_TASKS_PER_NODE
+export live_points=192 #$SLURM_TASKS_PER_NODE
 export max_iter=-1
 export run_type=sample
-export bkg=model
+export bkg=diskline
 export support_factor=None
 export scenario=2022
 export poisson_noise=True
 export poisson_seed=42
-export sampler=ultra
+export sampler=multi
 
 export XPSI_DIR=$HOME/xpsi-bas-fork
 export LABEL=${SLURM_JOB_NAME}_lp${live_points}
@@ -60,7 +60,7 @@ cd $TMPDIR/J1808_NICER/
 
 echo 'srun python'
 #python synthesise_J1808_data.py > std.out 2> std.err #create data? you can do this before running job.
-srun python analysis.py > std.out 2> std.err
+srun python ST.py > std.out 2> std.err
 
 mkdir $HOME/outputs
 mkdir $HOME/outputs/$LABEL
@@ -71,7 +71,7 @@ cp -r $LABEL/ $STORAGE_DIR
 
 # copy analysis files for posterity
 mkdir $STORAGE_DIR/analysis_files
-cp $TMPDIR/J1808_NICER/analysis.py $STORAGE_DIR/analysis_files
+cp $TMPDIR/J1808_NICER/ST.py $STORAGE_DIR/analysis_files
 cp $TMPDIR/parameter_values.py $STORAGE_DIR/analysis_files
 cp $TMPDIR/J1808_NICER/Custom* $STORAGE_DIR/analysis_files
 cp $TMPDIR/J1808_NICER/synthesise_data.py $STORAGE_DIR/analysis_files

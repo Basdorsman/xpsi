@@ -196,6 +196,7 @@ class CustomSignal(xpsi.Signal):
                         integrated += temp
                     except TypeError:
                         integrated = temp
+                        
 
                 if self.cache:
                     self.incident_flux_signals = integrated.copy()
@@ -301,3 +302,29 @@ class CustomSignal(xpsi.Signal):
                     array[i*len(phases) + j,:] = self._data.channels[i], phases[j], counts[i,j]
     
                 np.savetxt(filename, array, fmt=['%u', '%.6f'] + [fmt])
+
+
+    # def _identify_waveband(self):
+    #         """ Bound the waveband for signal integration.
+
+    #         Constructs an array of energy edges for instrument operation.
+    #         This method thus automatically constructs energy bounds for this
+    #         a particular instrument. At energies between these bounds signals
+    #         are calculated. This requires details about the contiguous
+    #         subset of output channels the photon data spans (in an instance of
+    #         the :class:`~.Data.Data` class) and the redistribution matrix of the
+    #         model instrument (in an instance of the
+    #         :class:`~.Instrument.Instrument` class).
+
+    #         :raises IndexError:
+    #             If the channel range of the data object is not consistent with
+    #             the instrument object.
+
+    #         """
+    #         a = 0
+    #         b = 2048
+
+
+    #         self._input_interval_range = (a, b)
+    #         self._energy_edges = self._instrument.energy_edges[a:b + 1]
+    #         self._energy_mids = (self._energy_edges[:-1] + self._energy_edges[1:])/2.0

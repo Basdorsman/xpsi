@@ -37,7 +37,7 @@ class Disk(ParameterSubspace):
         Disk normalisation cos_i*R_in^2/D^2 in (km / 10 kpc)^2.
         """
         background_normalisation = Parameter('K_disk',
-                                strict_bounds = (0., 1e8),
+                                strict_bounds = (0., 1e100),
                                 bounds = bounds.get('K_disk', None),
                                 doc = doc,
                                 symbol = r'$K_{BB}$',

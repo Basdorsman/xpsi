@@ -133,13 +133,16 @@ class analysis(object):
             self.poisson_seed = poisson_seed
         print(f'poisson_noise: {self.poisson_noise}, poisson_seed: {self.poisson_seed} (only relevant if poisson noise is True)')
        
-        try:
-            self.fix_mass = os.environ.get('fix_mass')
-        except:
-            print('fix mass from so environ failed, proceeding with passed argument.')
+        if os.environ.get('fix_mass') == None or os.environ.get('fix_mass') =='None':
+            print('fix_mass is not in environment variables, using passed argument.')
             self.fix_mass = fix_mass
-            pass
+        if self.fix_mass == "True" or self.fix_mass == True:
+            self.fix_mass = True
+        else:
+            self.fix_mass = False
+
         print(f'fix_mass: {self.fix_mass}')
+
 
         
         #self.integrator = 'azimuthal_invariance' #'general/azimuthal_invariance'
@@ -249,20 +252,21 @@ class analysis(object):
     def set_spacetime(self):
         fix_mass = self.fix_mass
 
-        values = dict(frequency = 401.)
+
         if fix_mass:
             values = dict(frequency = 401., mass = self.pv.mass)
-        
-        
-    
-        spacetime_bounds = dict(distance = self.bounds["distance"],                       # (Earth) distance
-                                mass = self.bounds["mass"],                          # mass
-                                radius = self.bounds["radius"],     # equatorial radius
-                                cos_inclination = self.bounds["cos_inclination"])               # (Earth) inclination to rotation axis
+        if not fix_mass:
+            values = dict(frequency = 401.)
+
         if fix_mass:
             spacetime_bounds = dict(distance = self.bounds["distance"],
                                     radius = self.bounds["radius"],
                                     cos_inclination = self.bounds["cos_inclination"])
+        if not fix_mass:
+            spacetime_bounds = dict(distance = self.bounds["distance"],                       # (Earth) distance
+                                    mass = self.bounds["mass"],                          # mass
+                                    radius = self.bounds["radius"],     # equatorial radius
+                                    cos_inclination = self.bounds["cos_inclination"])   
 
         self.spacetime = xpsi.Spacetime(bounds=spacetime_bounds, values=values)
 
@@ -398,7 +402,7 @@ class analysis(object):
         self.p = self.pv.p()
    
     def set_prior(self):
-        self.prior = CustomPrior(self.scenario, self.bkg)
+        self.prior = CustomPrior(self.scenario, self.bkg, self.fix_mass)
         
     def set_likelihood(self):
         self.set_star()
@@ -573,5 +577,5 @@ class analysis(object):
             
             
 if __name__ == '__main__':
-    Analysis = analysis('local', 'test', 'diskline', sampler='multi', scenario='2019', support_factor='100')
+    Analysis = analysis('local', 'test', 'marginalise', sampler='multi', scenario='2019', support_factor='100', fix_mass=False)
     Analysis()

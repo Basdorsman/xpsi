@@ -38,12 +38,13 @@ class CustomPrior(xpsi.Prior):
 
     """
 
-    __derived_names__ = ['compactness', 'T_in_keV', 'tbb_keV', 'te_keV', 'inclination_deg', 'colatitude_deg', 'radius_deg']#, 'phase_separation',] , 'T_else_keV'
+    __derived_names__ = ['compactness', 'T_in_keV', 'tbb_keV', 'te_keV', 'inclination_deg', 'colatitude_deg', 'radius_deg', 'N_norm']#, 'phase_separation',] , 'T_else_keV'
     __draws_from_support__ = 4 #10^x
     
-    def __init__(self, scenario, bkg, *args, **kwargs):
+    def __init__(self, scenario, bkg, fix_mass, *args, **kwargs):
         self.scenario = scenario
         self.bkg = bkg
+        self.fix_mass = fix_mass
         super(CustomPrior, self).__init__(*args, **kwargs)
 
     def __call__(self, p = None):
@@ -85,12 +86,12 @@ class CustomPrior(xpsi.Prior):
         if 'disk' in self.bkg:
         
             # inner disk must be smaller than corotation radius, otherwise we enter (weak) propeller regime
-           if not self.parameters['R_in'] < 1.49790e3*ref['mass']**(1/3)*ref['frequency']**(-2/3): # 1.49790e3 = (G*M_sol/4pi^2)^(1/3) in km
-               return -np.inf
+            if not self.parameters['R_in'] < 1.49790e3*ref['mass']**(1/3)*ref['frequency']**(-2/3): # 1.49790e3 = (G*M_sol/4pi^2)^(1/3) in km
+                return -np.inf
     
             # inner disk must be larger than neutron star equatorial radius
-           if not self.parameters['R_in'] > ref['radius']:
-               return -np.inf
+            if not self.parameters['R_in'] > ref['radius']:
+                return -np.inf
         
         # ref = self.parameters # redefine shortcut
 
@@ -108,7 +109,6 @@ class CustomPrior(xpsi.Prior):
         _ = super(CustomPrior, self).inverse_sample(hypercube)
 
         ref = self.parameters # shortcut
-        
         # if self.scenario == 'literature' or self.scenario == '2019' or self.scenario == '2022':
         idx = ref.index('column_density')
         temporary = truncnorm.ppf(hypercube[idx], -5.0, 5.0, loc=1.17, scale=0.2)
@@ -151,9 +151,15 @@ class CustomPrior(xpsi.Prior):
 
         # used ordered names and values
         ref = dict(zip(self.parameters.names, p))
+        # print('ref', ref)
 
         # compactness ratio M/R_eq
-        p += [gravradius(ref['mass']) / ref['radius']]
+        if not self.fix_mass:
+            p += [gravradius(ref['mass']) / ref['radius']]
+        elif self.scenario == '2019':
+            p += [gravradius(1.4) / ref['radius']]
+        else:
+            raise(NotImplementedError)
 
         if 'disk' in self.bkg:
             p += [get_keV_from_log10_Kelvin(ref['T_in'])]
@@ -163,7 +169,12 @@ class CustomPrior(xpsi.Prior):
         p += [np.arccos(ref['cos_inclination'])*180/np.pi]
         p += [ref['super_colatitude']*180/np.pi]
         p += [ref['super_radius']*180/np.pi]
+        
+        if 'line' in self.bkg:
+            p+=[ref['N']*1e-37]
 
+        # print('length of parameter vector after transform: ', len(p))
+        # print('parameter vector after transform:', p)
         return p
 
 

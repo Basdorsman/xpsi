@@ -152,33 +152,33 @@ class parameter_values(object):
         self.p = [x for x in self.p if x is not None]
         
         
-        # print('parameter vector:', self.p)
+        #print('parameter vector:', self.p)
         return self.p
         
     def names(self):
-        if self.bkg == 'marginalise' or self.bkg == 'fix':
-            self.names=['mass','radius','distance','cos_inclination',
-                        'phase_shift','super_colatitude','super_radius',
-                        'super_tbb','super_te','super_tau',
-                        'column_density', 'compactness',  
-                        'tbb_keV','te_keV','inclination_deg', 'colatitude_deg', 'radius_deg' ]
-        elif self.bkg == 'disk':                
-            self.names=['mass','radius','distance','cos_inclination',
-                        'phase_shift','super_colatitude','super_radius', 
-                        'super_tbb','super_te','super_tau', 'T_in', 'R_in', 
-                        'column_density','compactness', 'T_in_keV', 'tbb_keV',
-                        'te_keV','inclination_deg', 'colatitude_deg', 'radius_deg']
-        elif self.bkg == 'diskline':
-            self.names=['mass','radius','distance','cos_inclination',
-                        'phase_shift','super_colatitude','super_radius', 
-                        'super_tbb','super_te','super_tau', 'T_in', 'R_in', 'mu', 'sigma', 'N',
-                        'column_density','compactness', 'T_in_keV', 'tbb_keV',
-                        'te_keV','inclination_deg', 'colatitude_deg', 'radius_deg']
+        # Base list with placeholders for optional items
+        self.names = [
+            'mass' if not self.fix_mass else None, 
+            'radius', 'distance', 'cos_inclination', 'phase_shift', 
+            'super_colatitude', 'super_radius', 'super_tbb', 'super_te', 
+            'super_tau', 
+            'T_in' if self.bkg in ['disk', 'diskline'] else None,
+            'R_in' if self.bkg in ['disk', 'diskline'] else None,
+            'mu' if self.bkg == 'diskline' else None,
+            'sigma' if self.bkg == 'diskline' else None,
+            'N' if self.bkg == 'diskline' else None,
+            'column_density', 'compactness', 
+            'T_in_keV' if self.bkg in ['disk', 'diskline'] else None,
+            'tbb_keV', 'te_keV', 'inclination_deg', 'colatitude_deg', 'radius_deg', 
+            'N_norm' if self.bkg == 'diskline' else None
+        ]
+        
+        # Filter out None values
+        self.names = [name for name in self.names if name is not None]
         return self.names
 
     def bounds(self):
-        bounds = {'mass':(1.0,3.0),
-              'radius':(3.0 * gravradius(1.0), 16.0),
+        bounds = {'radius':(3.0 * gravradius(1.0), 16.0),
               'distance': (1.2, 4.2), #5 sigma around 2.7   #(3.4, 3.6),  # (2.5, 3.6), #(3.4, 3.6),
               'cos_inclination':(0.15, 0.87), #lower limit 30 degrees = upper limit cos_i = 0.87
               'phase_shift':(-0.25, 0.75),
@@ -195,6 +195,9 @@ class parameter_values(object):
               'colatitude_deg': (0.001, 180-0.001),
               'radius_deg': (0.001, 90)              
               }
+        if not self.fix_mass:
+            bounds['mass'] = (1.0, 3.0)
+
         if 'disk' in self.bkg:
             bounds['T_in'] = (0.01, 0.6) # (0.225, 0.275 )  # (0.01, 0.6) # keV
             bounds['R_in'] = (5, 50) # from star radius to around corotation radius for the heaviest saxJ1808 possible # (27, 33)  # (20, 200) # km
@@ -204,12 +207,12 @@ class parameter_values(object):
             bounds['mu'] = (0.8,1.1)
             bounds['sigma'] = (1e-2,5e-1)
             bounds['N'] = (1e35,1e38)
+            bounds['N_norm'] = (1e-2,1e1)
         
         return bounds
 
     def truths(self):
-        truths={'mass': self.mass,                               # Mass in solar Mass
-          'radius': self.radius,                              # Equatorial radius in km
+        truths={'radius': self.radius,                              # Equatorial radius in km
           'compactness': gravradius(self.mass/self.radius),
           'distance': self.distance,                            # Distance in kpc
           'cos_inclination': self.cos_i,          # Cosine of Earth inclination to rotation axis
@@ -226,6 +229,9 @@ class parameter_values(object):
           'colatitude_deg': self.super_colatitude*180/np.pi,
           'radius_deg': self.super_radius*180/np.pi}
     
+        if not self.fix_mass:
+            truths['mass'] = self.mass
+
         if 'disk' in self.bkg:
             truths['T_in'] = self.diskbb_T_log10_K
             truths['T_in_keV'] = self.diskbb_T_keV
@@ -235,12 +241,12 @@ class parameter_values(object):
             truths['mu'] = self.mu
             truths['sigma'] = self.sigma
             truths['N'] = self.N
+            truths['N_norm'] = self.N*1e-37
         
         return truths
     
     def labels(self):
-        labels = {'mass': r"M\;\mathrm{[M}_{\odot}\mathrm{]}",
-              'radius': r"R_{\mathrm{eq}}\;\mathrm{[km]}",
+        labels = {'radius': r"R_{\mathrm{eq}}\;\mathrm{[km]}",
               'compactness': r"M/R_{\mathrm{eq}}",
               'distance': r"D \;\mathrm{[kpc]}",
               'cos_inclination': r"\mathrm{cos}(i)",
@@ -257,6 +263,9 @@ class parameter_values(object):
               'colatitude_deg': r'\theta\;\mathrm{[deg]}',
               'radius_deg': r'\zeta\;\mathrm{[deg]}'}
         
+        if not self.fix_mass:
+            labels['mass'] =  r"M\;\mathrm{[M}_{\odot}\mathrm{]}"
+        
         if 'disk' in self.bkg:
             labels['T_in'] = r"T_{in} log10 of Kelvin"
             labels['T_in_keV'] = r"T_\mathrm{in}\;\mathrm{[keV]}"
@@ -266,6 +275,7 @@ class parameter_values(object):
             labels['mu'] = r"\mu\;\mathrm{[keV]}"
             labels['sigma'] = r"\sigma;\mathrm{[keV]}"
             labels['N'] =  r"N\;\mathrm{[photons/cm^2/s]}"
+            labels['N_norm'] =  r"N_\mathrm{norm}\;\mathrm{[photons/cm^2/s]}"
 
         
         return labels

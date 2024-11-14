@@ -483,7 +483,7 @@ runtime_params = {'resume': False,
                   'wrapped_params': wrapped_params,
                   'evidence_tolerance': 0.5,
                   'seed': 7,
-                  'max_iter': 100,# manual termination condition for short test
+                  'max_iter': 1,# manual termination condition for short test
                   'verbose': True}
 
 # let's require that checks pass before starting to sample

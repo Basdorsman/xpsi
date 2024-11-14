@@ -11,9 +11,10 @@ from xpsi.global_imports import gravradius
 import numpy as np
 
 class parameter_values(object):
-    def __init__(self, scenario, bkg):
+    def __init__(self, scenario, bkg, fix_mass=False):
         self.scenario = scenario
         self.bkg = bkg
+        self.fix_mass = fix_mass
 
 
         if self.scenario == 'kajava':
@@ -128,27 +129,27 @@ class parameter_values(object):
         
         
     def p(self):
-        self.p = [self.mass, #1.4, #grav mass
-               self.radius,#12.5, #coordinate equatorial radius
-               self.distance, # earth distance kpc
-              self.cos_i, #cosine of earth inclination
-              self.phase_shift, #phase of hotregion
-              self.super_colatitude, #colatitude of centre of superseding region
-              self.super_radius,  #angular radius superceding region
-              self.tbb,
-              self.te,
-              self.tau]
+        self.p = [
+        self.mass if not self.fix_mass else None,  # gravitational mass
+        self.radius,  # coordinate equatorial radius
+        self.distance,  # earth distance in kpc
+        self.cos_i,  # cosine of earth inclination
+        self.phase_shift,  # phase of hot region
+        self.super_colatitude,  # colatitude of center of superseding region
+        self.super_radius,  # angular radius of superseding region
+        self.tbb,
+        self.te,
+        self.tau,
+        self.diskbb_T_log10_K if 'disk' in self.bkg else None,
+        self.R_in if 'disk' in self.bkg else None,
+        self.mu if 'line' in self.bkg else None,
+        self.sigma if 'line' in self.bkg else None,
+        self.N if 'line' in self.bkg else None,
+        self.column_density
+        ]
 
-        if 'disk' in self.bkg:
-            self.p.append(self.diskbb_T_log10_K)
-            self.p.append(self.R_in)
-            
-        if 'line' in self.bkg:
-            self.p.append(self.mu)
-            self.p.append(self.sigma)
-            self.p.append(self.N)
-
-        self.p.append(self.column_density)
+        # Remove any None values (e.g., mass if fix_mass is True, or optional elements)
+        self.p = [x for x in self.p if x is not None]
         
         
         # print('parameter vector:', self.p)

@@ -26,7 +26,7 @@ from parameter_values import parameter_values
 from helper_functions import get_T_in_log10_Kelvin, plot_2D_pulse, CustomAxes, get_mids_from_edges
 
 class analysis(object):
-    def __init__(self, machine, run_type, bkg, sampler='multi', support_factor = "None", scenario = 'None', poisson_noise=True, poisson_seed=42):
+    def __init__(self, machine, run_type, bkg, sampler='multi', support_factor = "None", scenario = 'None', poisson_noise=True, poisson_seed=42, fix_mass=False):
         self.scenario = os.environ.get('scenario')
         if os.environ.get('scenario') == None or os.environ.get('scenario') =='None':
             print('scenario is not in environment variables, using passed argument.')
@@ -133,11 +133,19 @@ class analysis(object):
             self.poisson_seed = poisson_seed
         print(f'poisson_noise: {self.poisson_noise}, poisson_seed: {self.poisson_seed} (only relevant if poisson noise is True)')
        
+        try:
+            self.fix_mass = os.environ.get('fix_mass')
+        except:
+            print('fix mass from so environ failed, proceeding with passed argument.')
+            self.fix_mass = fix_mass
+            pass
+        print(f'fix_mass: {self.fix_mass}')
+
         
         #self.integrator = 'azimuthal_invariance' #'general/azimuthal_invariance'
         # self.interpolator = 'split' #'split/combined'
 
-        self.pv = parameter_values(self.scenario, self.bkg)
+        self.pv = parameter_values(self.scenario, self.bkg, self.fix_mass)
     
         self.file_locations()
         self.set_bounds()
@@ -187,7 +195,7 @@ class analysis(object):
         elif self.machine == 'snellius' or 'helios':
             self.file_atmosphere = self.this_directory + '/../model_data/Bobrikova_compton_slab.npz'
             self.file_interstellar = self.this_directory + "/../model_data/interstellar/tbnew/tbnew0.14.txt"
-        if self.scenario == 'kajava' or self.scenario == 'literature' or self.scenario == '2019':
+        if self.scenario == 'kajava' or self.scenario == 'literature' or self.scenario == '2019' or self.scenario == '2022':
             self.file_bkg = self.this_directory + f'/data/disk_2019.txt'
         # self.file_bkg = self.this_directory + '/../model_data/synthetic/diskbb_background.txt'
 
@@ -239,12 +247,11 @@ class analysis(object):
 
 
     def set_spacetime(self):
-    
+        fix_mass = self.fix_mass
+
         values = dict(frequency = 401.)
-        # values = dict(frequency = 401.,
-        #               mass = self.pv.mass,
-        #               radius = self.pv.radius,
-        #               distance = self.pv.distance)
+        if fix_mass:
+            values = dict(frequency = 401., mass = self.pv.mass)
         
         
     
@@ -252,14 +259,12 @@ class analysis(object):
                                 mass = self.bounds["mass"],                          # mass
                                 radius = self.bounds["radius"],     # equatorial radius
                                 cos_inclination = self.bounds["cos_inclination"])               # (Earth) inclination to rotation axis
+        if fix_mass:
+            spacetime_bounds = dict(distance = self.bounds["distance"],
+                                    radius = self.bounds["radius"],
+                                    cos_inclination = self.bounds["cos_inclination"])
 
-        # spacetime_bounds = dict(distance = self.bounds["distance"],
-        #                         cos_inclination = self.bounds["cos_inclination"])
-
-        # spacetime_bounds = dict(cos_inclination = self.bounds["cos_inclination"])
-
-
-        self.spacetime = xpsi.Spacetime(bounds=spacetime_bounds, values=values) # values=dict(frequency=self.values["frequency"]))
+        self.spacetime = xpsi.Spacetime(bounds=spacetime_bounds, values=values)
 
     def set_hotregions(self):
         # self.num_rays = 16
@@ -391,7 +396,7 @@ class analysis(object):
         
     def set_parameter_vector(self):
         self.p = self.pv.p()
-    
+   
     def set_prior(self):
         self.prior = CustomPrior(self.scenario, self.bkg)
         
@@ -417,6 +422,10 @@ class analysis(object):
                 true_logl = -1.1307400098e+05#-8.8549011385e+04 # marginalise
                 if self.support_factor == 100 or self.support_factor == '100':
                     true_logl = -9.2194659551e+04
+                if self.support_factor == 10 or self.support_factor == '10':
+                    true_logl = -9.3134985012e+04
+                if self.support_factor == 2 or self.support_factor == '2':
+                    true_logl = -9.4081343510e+04
             elif self.bkg == 'fix':
                 true_logl = 1.6789503475e+08 # empty background
             elif self.bkg == 'disk':
@@ -430,7 +439,7 @@ class analysis(object):
             if self.bkg == 'marginalise':
                 true_logl = -1.1307400098e+05#-8.8549011385e+04 # marginalise
                 if self.support_factor == 100 or self.support_factor == '100':
-                    true_logl = -9.2194659551e+04
+                    true_logl = -2.3127321809e+05
             elif self.bkg == 'fix':
                 true_logl = 1.6789503475e+08 # empty background
             elif self.bkg == 'disk':
@@ -511,7 +520,7 @@ class analysis(object):
                 wrapped_params = [0]*len(self.likelihood)
                 wrapped_params[self.likelihood.index('phase_shift')] = 1
                 outputfiles_basename = f'./{folderstring}/run_ST_'
-                runtime_params = {'resume': False,
+                runtime_params = {'resume': True,
                                   'importance_nested_sampling': False,
                                   'multimodal': False,
                                   'n_clustering_params': None,

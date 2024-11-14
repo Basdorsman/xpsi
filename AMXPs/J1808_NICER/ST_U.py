@@ -417,8 +417,8 @@ class analysis(object):
             n_end = 1
         elif self.bkg=='disk':
             n_end = 3
-        else:
-            raise NotImplementedError
+        elif self.bkg=='diskline':
+            n_end = 6
         uptofirsthotspot = parameters_single_hotspot[:(n_begin+n_hs_params)]
         hotspot = parameters_single_hotspot[n_begin:(n_begin+n_hs_params)]
         last = parameters_single_hotspot[-n_end:]
@@ -449,6 +449,8 @@ class analysis(object):
         
         if self.scenario == '2019':
             if self.bkg == 'disk':
+                true_logl = 1.6880114959e+08 # ST-U
+            elif self.bkg == 'diskline':
                 true_logl = 1.6880114959e+08 # ST-U
             elif self.bkg == 'marginalise':
                 true_logl = -9.6201946218e+04

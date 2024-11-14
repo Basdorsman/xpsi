@@ -1,9 +1,9 @@
 #!/bin/bash
-#SBATCH -N 1
+#SBATCH -N 5
 #SBATCH --tasks-per-node=192
-#SBATCH -t 1-00:00:00
+#SBATCH -t 5-00:00:00
 #SBATCH -p genoa
-#SBATCH --job-name=2022
+#SBATCH --job-name=ST_2019_diskline_fix_mass
 #SBATCH --mail-user=b.dorsman@uva.nl
 #SBATCH --mail-type=END
 
@@ -23,12 +23,12 @@ export sqrt_num_cells=50  # 90
 export num_rays=512
 export machine=snellius
 export integrator=x
-export live_points=192 #$SLURM_TASKS_PER_NODE
+export live_points=1000 #$SLURM_TASKS_PER_NODE
 export max_iter=-1
 export run_type=sample
 export bkg=diskline
-export support_factor=None
-export scenario=2022
+export support_factor=100
+export scenario=2019
 export poisson_noise=True
 export poisson_seed=42
 export sampler=multi
@@ -71,7 +71,7 @@ cp -r $LABEL/ $STORAGE_DIR
 
 # copy analysis files for posterity
 mkdir $STORAGE_DIR/analysis_files
-cp $TMPDIR/J1808_NICER/ST.py $STORAGE_DIR/analysis_files
+cp $TMPDIR/J1808_NICER/ST* $STORAGE_DIR/analysis_files
 cp $TMPDIR/parameter_values.py $STORAGE_DIR/analysis_files
 cp $TMPDIR/J1808_NICER/Custom* $STORAGE_DIR/analysis_files
 cp $TMPDIR/J1808_NICER/synthesise_data.py $STORAGE_DIR/analysis_files

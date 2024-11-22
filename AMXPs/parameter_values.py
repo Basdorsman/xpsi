@@ -119,7 +119,7 @@ class parameter_values(object):
             self.te=100. #  #37*1000/511 # 50. # 40-200 corresponds to 20-100 keV (Te(data) = Te(keV)*1000/511keV), 50 keV = 100 data
             self.tau=2.0 #0.5 - 3.5 tau = ln(Fin/Fout)
     
-            if self.bkg == 'model':
+            if 'disk' in self.bkg:
             # source background
                 self.diskbb_T_keV = 0.16845756373108872# 0.17#  # # 0.3  #  keV #0.3 keV for Kajava+ 2011
                 self.diskbb_T_log10_K = get_T_in_log10_Kelvin(self.diskbb_T_keV)

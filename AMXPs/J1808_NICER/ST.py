@@ -273,7 +273,7 @@ class analysis(object):
     def set_hotregions(self):
         # self.num_rays = 16
         
-        kwargs = {'symmetry': True, #call for azimuthal invariance
+        self.hot_kwargs = {'symmetry': True, #call for azimuthal invariance
                   'split': True,
                   'omit': False,
                   'cede': False,
@@ -286,15 +286,15 @@ class analysis(object):
                   'atm_ext':'Num5D'}
                   #'prefix': 'p'}
         
-        hotregion_bounds = dict(super_colatitude = self.bounds["super_colatitude"],
+        self.hotregion_bounds = dict(super_colatitude = self.bounds["super_colatitude"],
                                 super_radius = self.bounds["super_radius"],
                                 phase_shift = self.bounds["phase_shift"], 
                                 super_tbb = self.bounds['super_tbb'],
                                 super_tau = self.bounds['super_tau'],
                                 super_te = self.bounds['super_te'])
-        values = {}
+        self.hot_values = {}
         
-        primary = CustomHotRegion_Accreting(hotregion_bounds, values, **kwargs)
+        primary = CustomHotRegion_Accreting(self.hotregion_bounds, self.hot_values, **self.hot_kwargs)
 
 
         self.hot = xpsi.HotRegions((primary,))
@@ -400,6 +400,7 @@ class analysis(object):
         
     def set_parameter_vector(self):
         self.p = self.pv.p()
+        
    
     def set_prior(self):
         self.prior = CustomPrior(self.scenario, self.bkg, self.fix_mass)
@@ -567,12 +568,29 @@ class analysis(object):
             
         elif self.run_type == 'test':
             print('test starts')
-            n_repeats = 10
+            num_rays = [20, 512]
             t_start = time.time()
-            for repeat in range(n_repeats):
+            
+            for num_ray in num_rays:
+                self.hot_kwargs['num_rays']=num_ray
+                print(self.hot_kwargs)
+                primary = CustomHotRegion_Accreting(self.hotregion_bounds, self.hot_values, **self.hot_kwargs)
+                self.hot = xpsi.HotRegions((primary,))
+                self.hot.print_settings()
+
+                self.photosphere = CustomPhotosphereDiskLine(hot = self.hot, elsewhere = None, stokes=False, disk=self.disk, line=self.line,
+                                                values=dict(mode_frequency = self.spacetime['frequency']))
+                self.photosphere.hot_atmosphere = self.file_atmosphere
+                self.star = xpsi.Star(spacetime = self.spacetime, photospheres = self.photosphere)
                 #self.star.update(force_update=True)
-                # self.likelihood.check(None, [self.true_logl], 1.0e-4, physical_points=[self.p], force_update=True)
-                self.likelihood(self.p, reinitialise=True)
+                
+                self.likelihood = xpsi.Likelihood(star = self.star, signals = self.signal,
+                                              num_energies=self.num_energies, #128
+                                              threads=1,
+                                              prior=self.prior,
+                                              externally_updated=True)
+                self.likelihood.check(None, [self.true_logl], 1.0e-4, physical_points=[self.p], force_update=True)
+                #self.likelihood(self.p, reinitialise=True)
             print('Test took {:.3f} seconds'.format((time.time()-t_start)))
             
             

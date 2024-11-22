@@ -165,7 +165,10 @@ class CustomPrior(xpsi.Prior):
             p += [get_keV_from_log10_Kelvin(ref['T_in'])]
         p += [ref['super_tbb']*511]
         p += [ref['super_te']*511/1000]
-        
+        # print('ref[mass]', ref['mass'])
+        # print('ref[radius]', ref['radius'])
+        # print('ref[distance]', ref['distance'])
+        # print("ref['cos_inclination']: ", ref['cos_inclination'])
         p += [np.arccos(ref['cos_inclination'])*180/np.pi]
         p += [ref['super_colatitude']*180/np.pi]
         p += [ref['super_radius']*180/np.pi]

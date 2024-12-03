@@ -65,6 +65,8 @@ class TACO(xpsi.Instrument):
                 parsed_dataset.append(lines[i].split())
         except:
             print('RMF file could not be loaded at ', RMF_file)
+            
+        #print(parsed_dataset)
 
         n_detection_chans_file = ebounds.shape[0]
         responses = np.zeros((n_detection_chans_file, n_incident_chans_file))
@@ -104,8 +106,8 @@ if __name__ == '__main__':
     incident_channels = 2048
     
     instrument = TACO.from_response_files(
-            RMF_file = 'TACO_4mod_matrix.txt',
-            ebounds_file = 'TACO_4mod_ebounds.txt',
+            RMF_file = 'instrument_files/TACO_4mod_matrix.txt',
+            ebounds_file = 'instrument_files/TACO_4mod_ebounds.txt',
             max_detection_channel = 1310,
             max_input = incident_channels)
     

@@ -155,7 +155,7 @@ class CustomPrior(xpsi.Prior):
         # compactness ratio M/R_eq
         p += [gravradius(ref['mass']) / ref['radius']]
         # p += [get_keV_from_log10_Kelvin(ref['elsewhere_temperature'])]
-        if self.bkg == 'model':
+        if self.bkg == 'disk':
             p += [get_keV_from_log10_Kelvin(ref['T_in'])]
         p += [ref['super_tbb']*511]
         p += [ref['super_te']*511/1000]

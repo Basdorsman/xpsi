@@ -91,7 +91,7 @@ class CustomSignal(xpsi.Signal):
                                               allow_negative_background = self.allow_negative_background)#,
                                               #slim=-1.0) # default is skipping 10^89s, so some likelihood calculations are skipped
 
-        elif self.bkg == 'model':
+        elif self.bkg == 'disk':
             self.loglikelihood, self.expected_counts = \
                 poisson_likelihood_given_background(self._data.exposure_time, 
                                                     self._data.phases, 

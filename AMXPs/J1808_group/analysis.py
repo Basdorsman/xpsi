@@ -107,12 +107,12 @@ class analysis(object):
 
         if self.bkg == 'marginalise':
                 self.support_factor = os.environ.get('support_factor')
-                if os.environ.get('support_factor') == None: #or os.environ.get('support_factor') == 'None':
-                    print(f'No support_factor in os. Taken from passed or default argument: {support_factor}')
+                if os.environ.get('support_factor') == None or os.environ.get('support_factor') == 'None':
+                    print('No support_factor in os. Taking from passed or default argument')
                     self.support_factor = support_factor
-        elif self.bkg == 'model' or self.bkg == 'fix':
+        elif 'disk' in self.bkg or 'line' in self.bkg or self.bkg == 'fix':
             self.support_factor = 'None'
-        print(f'support_factor: {self.support_factor}')   
+        print(f'support_factor: {self.support_factor}')    
         
         self.poisson_noise = os.environ.get('poisson_noise')
         if self.poisson_noise == 'True':
@@ -329,7 +329,7 @@ class analysis(object):
         
     def set_disk(self):
         from Disk import Disk, k_disk_derive
-        if self.bkg == 'model':            
+        if self.bkg == 'disk':            
             bounds = dict(T_in = get_T_in_log10_Kelvin(self.bounds["T_in"]),
                           R_in = self.bounds["R_in"],
                           K_disk = None) #derived means no bounds

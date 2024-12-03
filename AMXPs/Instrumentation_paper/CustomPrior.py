@@ -41,9 +41,10 @@ class CustomPrior(xpsi.Prior):
     __derived_names__ = ['compactness', 'T_in_keV', 'tbb_keV', 'te_keV', 'inclination_deg', 'colatitude_deg', 'radius_deg']#, 'phase_separation',] , 'T_else_keV'
     __draws_from_support__ = 4 #10^x
     
-    def __init__(self, scenario, bkg, *args, **kwargs):
+    def __init__(self, scenario, bkg, fix_mass, *args, **kwargs):
         self.scenario = scenario
         self.bkg = bkg
+        self.fix_mass = fix_mass
         super(CustomPrior, self).__init__(*args, **kwargs)
 
     def __call__(self, p = None):
@@ -153,7 +154,12 @@ class CustomPrior(xpsi.Prior):
         ref = dict(zip(self.parameters.names, p))
 
         # compactness ratio M/R_eq
-        p += [gravradius(ref['mass']) / ref['radius']]
+        if not self.fix_mass:
+            p += [gravradius(ref['mass']) / ref['radius']]
+        elif self.scenario == '2019':
+            p += [gravradius(1.4) / ref['radius']]
+        else:
+            raise(NotImplementedError)
 
         if 'disk' in self.bkg:
             p += [get_keV_from_log10_Kelvin(ref['T_in'])]

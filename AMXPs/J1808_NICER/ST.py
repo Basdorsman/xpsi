@@ -136,6 +136,9 @@ class analysis(object):
         if os.environ.get('fix_mass') == None or os.environ.get('fix_mass') =='None':
             print('fix_mass is not in environment variables, using passed argument.')
             self.fix_mass = fix_mass
+        else:
+            self.fix_mass = os.environ.get('fix_mass')
+
         if self.fix_mass == "True" or self.fix_mass == True:
             self.fix_mass = True
         else:

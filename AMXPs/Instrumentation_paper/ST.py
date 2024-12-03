@@ -17,6 +17,7 @@ from xpsi.global_imports import gravradius
 
 
 from CustomInstrument_TACO import TACO
+from CustomInstrument_LAD6 import LAD6
 from CustomPrior import CustomPrior
 
 sys.path.append(this_directory+'/../J1808_NICER/')
@@ -28,7 +29,7 @@ from parameter_values import parameter_values
 from helper_functions import get_T_in_log10_Kelvin, plot_2D_pulse, CustomAxes, get_mids_from_edges
 
 class analysis(object):
-    def __init__(self, machine, run_type, bkg, sampler='multi', support_factor = "None", scenario = 'None', poisson_noise=True, poisson_seed=42):
+    def __init__(self, machine, run_type, bkg, sampler='multi', support_factor = "None", scenario = 'None', poisson_noise=True, poisson_seed=42, fix_mass=False):
         self.scenario = os.environ.get('scenario')
         if os.environ.get('scenario') == None or os.environ.get('scenario') =='None':
             print('scenario is not in environment variables, using passed argument.')
@@ -135,6 +136,16 @@ class analysis(object):
             self.poisson_seed = poisson_seed
         print(f'poisson_noise: {self.poisson_noise}, poisson_seed: {self.poisson_seed} (only relevant if poisson noise is True)')
        
+        if os.environ.get('fix_mass') == None or os.environ.get('fix_mass') =='None':
+            print('fix_mass is not in environment variables, using passed argument.')
+            self.fix_mass = fix_mass
+        if self.fix_mass == "True" or self.fix_mass == True:
+            self.fix_mass = True
+        else:
+            self.fix_mass = False
+
+        print(f'fix_mass: {self.fix_mass}')
+       
         
         #self.integrator = 'azimuthal_invariance' #'general/azimuthal_invariance'
         # self.interpolator = 'split' #'split/combined'
@@ -201,7 +212,7 @@ class analysis(object):
         self.bounds = self.pv.bounds()
 
     def set_data(self):
-        
+        self.phases_space =  np.linspace(0.0, 1.0, 33)
         self.channel_low = 0
         self.channel_hi = 300
         self.phases_space = np.linspace(0.0, 1.0, 33)
@@ -219,13 +230,22 @@ class analysis(object):
         
         
     def set_instrument(self):
-        self.instrument = TACO.from_response_files(
-                RMF_file = 'instrument_files/TACO_4mod_matrix.txt',
-                ebounds_file = 'instrument_files/TACO_4mod_ebounds.txt',
-                max_detection_channel = self.channel_hi, #1310,
-                max_input = 2048)
+        instrument = 'LAD6'
+        if instrument == 'LAD6':
+            incident_channels = 2048
+            self.instrument = LAD6.from_response_files(
+                RMF_file = 'instrument_files/eXTP_LAD_260eV-oar75_v3.rmf',
+                ARF_file = 'instrument_files/eXTP_LAD6_260eV-oar75_v3.arf',
+                max_detection_channel = 300, #1310,
+                max_input = incident_channels)
+        elif instrument == 'TACO':
+            self.instrument = TACO.from_response_files(
+                    RMF_file = self.this_directory+'/instrument_files/TACO_4mod_matrix.txt',
+                    ebounds_file = self.this_directory+'/instrument_files/TACO_4mod_ebounds.txt',
+                    max_detection_channel = self.channel_hi, #1310,
+                    max_input = 2048)
 
-        print('self.instrument.energy_edges.shape: ',self.instrument.energy_edges.shape)
+        #print('self.instrument.energy_edges.shape: ',self.instrument.energy_edges.shape)
 
 
     def set_spacetime(self):
@@ -383,7 +403,7 @@ class analysis(object):
         self.p = self.pv.p()
     
     def set_prior(self):
-        self.prior = CustomPrior(self.scenario, self.bkg)
+        self.prior = CustomPrior(self.scenario, self.bkg, self.fix_mass)
         
     def set_likelihood(self):
         self.set_star()
@@ -550,7 +570,7 @@ class analysis(object):
             
             
 if __name__ == '__main__':
-    Analysis = analysis('local', 'sample', 'disk', sampler='multi', scenario='small_r', support_factor=None)
+    Analysis = analysis('local', 'test', 'disk', sampler='multi', scenario='small_r', support_factor=None)
     Analysis()
 
     expected = Analysis.signal.expected_counts
@@ -558,12 +578,12 @@ if __name__ == '__main__':
 
     from matplotlib import cm
     fig, ax = plt.subplots()
-    #profile = ax.pcolormesh(get_mids_from_edges(Analysis.data.phases), get_mids_from_edges(Analysis.instrument.channel_edges), data, cmap=cm.jet)
-    profile = ax.pcolormesh(get_mids_from_edges(Analysis.data.phases), Analysis.instrument.channels, data, cmap=cm.jet)
+    profile = ax.pcolormesh(get_mids_from_edges(Analysis.data.phases), get_mids_from_edges(Analysis.instrument.channel_edges), data, cmap=cm.jet)
+    #profile = ax.pcolormesh(get_mids_from_edges(Analysis.data.phases), Analysis.instrument.channels, data, cmap=cm.jet)
     
     fig.colorbar(profile, ax=ax, label='counts')
     #ax.set_yscale('log')
-    ax.set_ylabel('channel')
+    ax.set_ylabel('E (keV)')
     ax.set_xlabel('phase (cycles)')
     
     

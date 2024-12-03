@@ -33,11 +33,13 @@ from scipy.interpolate import Akima1DInterpolator
 from xpsi.global_imports import _c, _G, _dpr, gravradius, _csq, _km, _2pi
 from xpsi.tools.synthesise import synthesise_exposure as _synthesise # no scaling!
 
-from Disk import Disk, k_disk_derive
+
 from CustomPrior import CustomPrior
-from CustomInstrument_TACO import TACO as CustomInstrument
+from CustomInstrument_TACO import TACO
+from CustomInstrument_LAD6 import LAD6 
 
 sys.path.append(this_directory+'/../J1808_NICER/')
+from Disk import Disk, k_disk_derive
 from CustomPhotosphere import CustomPhotosphereDiskLine
 from CustomInterstellar import CustomInterstellar
 from CustomSignal import CustomSignal
@@ -75,6 +77,7 @@ except:
     poisson_noise = True
     poisson_seed = 42
     scenario = 'small_r' # 'kajava', 'literature
+    fix_mass = False
   
 
 pv = parameter_values(scenario, bkg)
@@ -87,15 +90,27 @@ exposure_time=1e5
 
 ################################## INSTRUMENT #################################
 
-channel_hi = 300
+
+
 channel_low = 0
+instrument_string = 'LAD6'
 
+if instrument_string == 'LAD6':
+    channel_hi = 300 #1310
+    incident_channels = 2048
+    instrument = LAD6.from_response_files(
+        RMF_file = 'instrument_files/eXTP_LAD_260eV-oar75_v3.rmf',
+        ARF_file = 'instrument_files/eXTP_LAD6_260eV-oar75_v3.arf',
+        max_detection_channel = channel_hi,
+        max_input = incident_channels)
 
-TACO = CustomInstrument.from_response_files(
-                RMF_file = 'instrument_files/TACO_4mod_matrix.txt',
-                ebounds_file = 'instrument_files/TACO_4mod_ebounds.txt',
-                max_detection_channel = channel_hi, #1310,
-                max_input = 2048)
+elif instrument_string == 'TACO':
+    channel_hi = 300
+    instrument = TACO.from_response_files(
+                    RMF_file = 'instrument_files/TACO_4mod_matrix.txt',
+                    ebounds_file = 'instrument_files/TACO_4mod_ebounds.txt',
+                    max_detection_channel = channel_hi, #1310,
+                    max_input = 2048)
 
 ############################### SPACETIME #####################################
 
@@ -173,7 +188,7 @@ k_disk.star = star
 
 #################################### PRIOR ####################################
 
-prior = CustomPrior(scenario, bkg)
+prior = CustomPrior(scenario, bkg, fix_mass)
 
 ################################## INTERSTELLAR ###################################
 if machine=='local':
@@ -192,7 +207,7 @@ _data = SynthesiseData(np.arange(channel_low,channel_hi), phases_space, 0, chann
 ################################## SIGNAL ###################################
 
 signal = CustomSignal(data = _data,
-                        instrument = TACO,  # Instrument
+                        instrument = instrument,  # Instrument
                         background = None,
                         interstellar = interstellar,
                         cache = True,
@@ -245,7 +260,7 @@ if __name__ == '__main__':
     
     
     fig, axes = custom_subplots(2,1, sharex=True, figsize=(5, 5))
-    profile = axes[0].plot_2D_counts(my_data, phases_space, TACO.channel_edges, cm=cm.magma)
+    profile = axes[0].plot_2D_counts(my_data, phases_space, instrument.channel_edges, cm=cm.magma)
     cb = plt.colorbar(profile, ax=axes[0])
     cb.set_label(label='Counts', labelpad=10)
     cb.solids.set_edgecolor('face')

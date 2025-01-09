@@ -1,9 +1,9 @@
 #!/bin/bash
-#SBATCH -N 5
-#SBATCH --tasks-per-node=128
-#SBATCH -t 2-00:00:00
+#SBATCH -N 1
+#SBATCH --tasks-per-node=192
+#SBATCH -t 1-00:00:00
 #SBATCH -p genoa
-#SBATCH --job-name=num_rays
+#SBATCH --job-name=less_than_llzero
 #SBATCH --mail-user=b.dorsman@uva.nl
 #SBATCH --mail-type=END
 
@@ -13,25 +13,21 @@ echo the allocated nodes are:
 echo $SLURM_JOB_NODELIST
 
 unset LD_LIBRARY_PATH
-#export SLURM_JOB_ID='test_job_id'
-
-module purge
-module load 2022
 
 export atmosphere_type=A
 export n_params=5
 export num_energies=40  # 60
 export num_leaves=30  # 50
 export sqrt_num_cells=50  # 90
-export num_rays=256
+export num_rays=512
 export machine=snellius
 export integrator=x
-export live_points=1000 #$SLURM_TASKS_PER_NODE
+export live_points=$SLURM_TASKS_PER_NODE
 export max_iter=-1
 export run_type=sample
-export bkg=model
+export bkg=disk
 export support_factor=None
-export scenario=small_r
+export scenario=large_r
 export poisson_noise=True
 export poisson_seed=42
 
@@ -42,11 +38,14 @@ export STORAGE_DIR=$HOME/outputs/$LABEL/$SLURM_JOB_ID
 echo This job $LABEL will go to $STORAGE_DIR.
 
 cd $HOME/xpsi-group/
-module load foss/2022a
-module load SciPy-bundle/2022.05-foss-2022a
-module load wrapt/1.15.0-foss-2022a
-module load matplotlib/3.5.2-foss-2022a
-source $HOME/xpsi-group/venv_xpsi_group/bin/activate
+
+module purge
+module load 2023 #2022
+module load foss/2023a #foss/2022a
+module load SciPy-bundle/2023.07-gfbf-2023a #SciPy-bundle/2022.05-foss-2022a
+module load wrapt/1.15.0-gfbf-2023a  #wrapt/1.15.0-foss-2022a
+module load matplotlib/3.7.2-gfbf-2023a #matplotlib/3.5.2-foss-2022a
+source $HOME/xpsi-group/venv_xpsi_group_2023/bin/activate
 pwd
 LDSHARED="gcc -shared" CC=gcc python $HOME/xpsi-group/setup.py install
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$HOME/multinest/MultiNest_v3.12_CMake/multinest/lib/

@@ -234,8 +234,8 @@ class analysis(object):
         if instrument == 'LAD6':
             incident_channels = 2048
             self.instrument = LAD6.from_response_files(
-                RMF_file = 'instrument_files/eXTP_LAD_260eV-oar75_v3.rmf',
-                ARF_file = 'instrument_files/eXTP_LAD6_260eV-oar75_v3.arf',
+                RMF_file = self.this_directory+'/instrument_files/eXTP_LAD_260eV-oar75_v3.rmf',
+                ARF_file = self.this_directory+'/instrument_files/eXTP_LAD6_260eV-oar75_v3.arf',
                 max_detection_channel = 300, #1310,
                 max_input = incident_channels)
         elif instrument == 'TACO':
@@ -570,7 +570,7 @@ class analysis(object):
             
             
 if __name__ == '__main__':
-    Analysis = analysis('local', 'test', 'disk', sampler='multi', scenario='small_r', support_factor=None)
+    Analysis = analysis('snellius', 'test', 'disk', sampler='multi', scenario='small_r', support_factor=None)
     Analysis()
 
     expected = Analysis.signal.expected_counts

@@ -180,7 +180,7 @@ class analysis(object):
         elif self.machine == 'snellius':
             self.file_atmosphere = self.this_directory + '/../model_data/Bobrikova_compton_slab.npz'
             self.file_interstellar = "/home/dorsman/xpsi-bas-fork/AMXPs/model_data/interstellar/tbnew/tbnew0.14.txt"
-        if self.scenario == 'kajava' or self.scenario == 'literature' or self.scenario == '2019':
+        if self.scenario == 'kajava' or self.scenario == 'literature' or self.scenario == '2019' or self.scenario == '2022':
             self.file_bkg = self.this_directory + f'/data/disk_2019.txt'
         # self.file_bkg = self.this_directory + '/../model_data/synthetic/diskbb_background.txt'
 
@@ -459,7 +459,12 @@ class analysis(object):
             # true_logl= -7.9418857894e+89 # 2019 data, marginalized background
         
         if self.scenario == '2022':
-            true_logl = 1.5844462356e+08 # ST-U
+            if self.bkg == 'disk':
+                true_logl = 1.1736696459e+08
+            if self.bkg == 'diskline':
+                 true_logl = 1.1746454348e+08
+            elif self.bkg == 'marginalise':
+                true_logl = -2.1620430587e+05
             #true_logl = 1.0540960782e+08 # no elsewhere
             # true_logl = 1.1365193823e+08 # 2022 data
             

@@ -7,7 +7,7 @@ export num_rays=512
 export live_points=200
 export max_iter=1
 export run_type=sample
-export bkg=diskline
+export bkg=marginalise
 export support_factor=100
 export scenario=2019
 export poisson_noise=True
@@ -15,8 +15,8 @@ export poisson_seed=42
 export fix_mass=False
 export sampler=multi
 export LABEL=test_analysis
-
+export eos_informed=True
 
 cd $HOME/xpsi-bas-fork/AMXPs/J1808_NICER/
-python ST_U.py
+python ST.py
 cd $HOME/xpsi-bas-fork/AMXPs/J1808_NICER/snellius_runs/

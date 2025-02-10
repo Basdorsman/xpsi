@@ -156,7 +156,7 @@ class analysis(object):
         else:
             self.eos_informed = False
 
-
+        print(f'eos_informed: {self.eos_informed}')
         
         #self.integrator = 'azimuthal_invariance' #'general/azimuthal_invariance'
         # self.interpolator = 'split' #'split/combined'
@@ -538,7 +538,7 @@ class analysis(object):
                 wrapped_params = [0]*len(self.likelihood)
                 wrapped_params[self.likelihood.index('phase_shift')] = 1
                 outputfiles_basename = f'./{folderstring}/run_ST_'
-                runtime_params = {'resume': True,
+                runtime_params = {'resume': False,
                                   'importance_nested_sampling': False,
                                   'multimodal': False,
                                   'n_clustering_params': None,

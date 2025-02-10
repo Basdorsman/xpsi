@@ -1,9 +1,9 @@
 #!/bin/bash
 #SBATCH -N 5
 #SBATCH --tasks-per-node=192
-#SBATCH -t 5-00:00:00
+#SBATCH -t 2-00:00:00
 #SBATCH -p genoa
-#SBATCH --job-name=ST_2019_diskline_fix_mass
+#SBATCH --job-name=ST_2022_marginalise_eos
 #SBATCH --mail-user=b.dorsman@uva.nl
 #SBATCH --mail-type=END
 
@@ -26,12 +26,13 @@ export integrator=x
 export live_points=1000 #$SLURM_TASKS_PER_NODE
 export max_iter=-1
 export run_type=sample
-export bkg=diskline
+export bkg=marginalise
 export support_factor=100
-export scenario=2019
+export scenario=2022
 export poisson_noise=True
 export poisson_seed=42
 export sampler=multi
+export eos_informed=True
 
 export XPSI_DIR=$HOME/xpsi-bas-fork
 export LABEL=${SLURM_JOB_NAME}_lp${live_points}

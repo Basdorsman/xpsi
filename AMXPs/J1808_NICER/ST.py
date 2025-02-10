@@ -26,7 +26,7 @@ from parameter_values import parameter_values
 from helper_functions import get_T_in_log10_Kelvin, plot_2D_pulse, CustomAxes, get_mids_from_edges
 
 class analysis(object):
-    def __init__(self, machine, run_type, bkg, sampler='multi', support_factor = "None", scenario = 'None', poisson_noise=True, poisson_seed=42, fix_mass=False):
+    def __init__(self, machine, run_type, bkg, sampler='multi', support_factor = "None", scenario = 'None', poisson_noise=True, poisson_seed=42, fix_mass=False, eos_informed=False):
         self.scenario = os.environ.get('scenario')
         if os.environ.get('scenario') == None or os.environ.get('scenario') =='None':
             print('scenario is not in environment variables, using passed argument.')
@@ -143,8 +143,18 @@ class analysis(object):
             self.fix_mass = True
         else:
             self.fix_mass = False
-
         print(f'fix_mass: {self.fix_mass}')
+        
+        if os.environ.get('eos_informed') == None or os.environ.get('eos_informed') =='None':
+            print('eos_informed is not in environment variables, using passed argument.')
+            self.eos_informed = eos_informed
+        else:
+            self.eos_informed = os.environ.get('eos_informed')
+
+        if self.eos_informed == "True" or self.eos_informed == True:
+            self.eos_informed = True
+        else:
+            self.eos_informed = False
 
 
         
@@ -406,7 +416,7 @@ class analysis(object):
         
    
     def set_prior(self):
-        self.prior = CustomPrior(self.scenario, self.bkg, self.fix_mass)
+        self.prior = CustomPrior(self.scenario, self.bkg, fix_mass = self.fix_mass, eos_informed=self.eos_informed)
         
     def set_likelihood(self):
         self.set_star()
@@ -571,32 +581,37 @@ class analysis(object):
             
         elif self.run_type == 'test':
             print('test starts')
-            num_rays = [20, 512]
+            # num_rays = [20, 512]
             t_start = time.time()
-            
-            for num_ray in num_rays:
-                self.hot_kwargs['num_rays']=num_ray
-                print(self.hot_kwargs)
-                primary = CustomHotRegion_Accreting(self.hotregion_bounds, self.hot_values, **self.hot_kwargs)
-                self.hot = xpsi.HotRegions((primary,))
-                self.hot.print_settings()
+            # for num_ray in num_rays:
+            #     self.hot_kwargs['num_rays']=num_ray
+            #     print(self.hot_kwargs)
+            #     primary = CustomHotRegion_Accreting(self.hotregion_bounds, self.hot_values, **self.hot_kwargs)
+            #     self.hot = xpsi.HotRegions((primary,))
+            #     self.hot.print_settings()
 
-                self.photosphere = CustomPhotosphereDiskLine(hot = self.hot, elsewhere = None, stokes=False, disk=self.disk, line=self.line,
-                                                values=dict(mode_frequency = self.spacetime['frequency']))
-                self.photosphere.hot_atmosphere = self.file_atmosphere
-                self.star = xpsi.Star(spacetime = self.spacetime, photospheres = self.photosphere)
-                #self.star.update(force_update=True)
+            #     self.photosphere = CustomPhotosphereDiskLine(hot = self.hot, elsewhere = None, stokes=False, disk=self.disk, line=self.line,
+            #                                     values=dict(mode_frequency = self.spacetime['frequency']))
+            #     self.photosphere.hot_atmosphere = self.file_atmosphere
+            #     self.star = xpsi.Star(spacetime = self.spacetime, photospheres = self.photosphere)
+            #     #self.star.update(force_update=True)
                 
-                self.likelihood = xpsi.Likelihood(star = self.star, signals = self.signal,
-                                              num_energies=self.num_energies, #128
-                                              threads=1,
-                                              prior=self.prior,
-                                              externally_updated=True)
-                self.likelihood.check(None, [self.true_logl], 1.0e-4, physical_points=[self.p], force_update=True)
-                #self.likelihood(self.p, reinitialise=True)
+            #     self.likelihood = xpsi.Likelihood(star = self.star, signals = self.signal,
+            #                                   num_energies=self.num_energies, #128
+            #                                   threads=1,
+            #                                   prior=self.prior,
+            #                                   externally_updated=True)
+            #     self.likelihood.check(None, [self.true_logl], 1.0e-4, physical_points=[self.p], force_update=True)
+            
+            self.likelihood(self.p, reinitialise=True)
+            # inverse sampling test
+            test=self.prior.draw(ndraws=10000)[0][:,0:2]
+            print(test.shape)
+            import corner
+            figure=corner.corner(test)
             print('Test took {:.3f} seconds'.format((time.time()-t_start)))
             
             
 if __name__ == '__main__':
-    Analysis = analysis('local', 'test', 'marginalise', sampler='multi', scenario='2019', support_factor='100', fix_mass=False)
+    Analysis = analysis('local', 'test', 'diskline', sampler='multi', scenario='2019', support_factor='100', fix_mass=False, eos_informed=True)
     Analysis()

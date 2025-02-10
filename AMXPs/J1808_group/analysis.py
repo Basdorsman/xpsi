@@ -126,8 +126,8 @@ class analysis(object):
         
         #self.integrator = 'azimuthal_invariance' #'general/azimuthal_invariance'
         # self.interpolator = 'split' #'split/combined'
-
-        self.pv = parameter_values(self.scenario, self.bkg)
+        self.ew = False
+        self.pv = parameter_values(self.scenario, self.bkg, fix_mass=False, ew = self.ew)
     
         self.file_locations()
         self.set_bounds()
@@ -144,12 +144,9 @@ class analysis(object):
 
     def file_locations(self):
         self.this_directory = this_directory
-        # if self.scenario == 'kajava' or self.scenario == 'literature':
-        #     if self.poisson_noise:
-        #         self.file_pulse_profile = self.this_directory + f'/data/synthetic_{self.scenario}_seed={self.poisson_seed}_realisation.dat' 
-        #     elif not self.poisson_noise:
-        #         self.file_pulse_profile = self.this_directory + f'/data/J1808_synthetic_{self.scenario}_realisation.dat'
-        
+        if self.scenario == 'kajava' or self.scenario == 'literature':
+            if self.poisson_noise:
+                self.file_pulse_profile = self.this_directory + f'/data/synthetic_literature_seed={self.poisson_seed}_realisation.dat' 
         if self.scenario == 'large_r' or self.scenario == 'small_r':
                 self.file_pulse_profile = self.this_directory + f'/data/synthetic_{self.scenario}_seed={self.poisson_seed}_realisation.dat'
         
@@ -161,7 +158,7 @@ class analysis(object):
             self.file_rmf = self.this_directory + f'/../model_data/instrument_data/J1808_NICER_{self.scenario}/merged_saxj1808_{self.scenario}_rmf_matrix.txt'
             self.file_channel_edges = self.this_directory + f'/../model_data/instrument_data/J1808_NICER_{self.scenario}/merged_saxj1808_{self.scenario}_rmf_energymap.txt'
 
-        elif self.scenario == 'large_r' or self.scenario == 'small_r':
+        elif self.scenario == 'large_r' or self.scenario == 'small_r' or self.scenario == 'literature' or self.scenario == 'kajava':
             self.file_arf = self.this_directory + f'/../model_data/instrument_data/J1808_NICER_2019/merged_saxj1808_2019_arf_aeff.txt'
             self.file_rmf = self.this_directory + f'/../model_data/instrument_data/J1808_NICER_2019/merged_saxj1808_2019_rmf_matrix.txt'
             self.file_channel_edges = self.this_directory + f'/../model_data/instrument_data/J1808_NICER_2019/merged_saxj1808_2019_rmf_energymap.txt'
@@ -181,7 +178,7 @@ class analysis(object):
         self.bounds = self.pv.bounds()
 
     def set_data(self):
-        if self.scenario == '2019' or self.scenario == 'large_r' or self.scenario == 'small_r':
+        if self.scenario == '2019' or self.scenario == 'large_r' or self.scenario == 'small_r' or self.scenario == 'literature' or self.scenario == 'kajava':
             self.exposure_time = 1.32366e5 #Mason's 2019 data cut
         if self.scenario == '2022':
             self.exposure_time = 7.13422e4 #Mason's 2022 data cut
@@ -283,7 +280,12 @@ class analysis(object):
         self.set_spacetime()
         self.set_hotregions()
         self.set_disk()
-        self.photosphere = CustomPhotosphereDisk(hot = self.hot, elsewhere = None, stokes=False, custom=self.disk,
+        if self.ew:
+            self.set_elsewhere()
+        else:
+            self.elsewhere = None
+
+        self.photosphere = CustomPhotosphereDisk(hot = self.hot, elsewhere = self.elsewhere, stokes=False, custom=self.disk,
                                         values=dict(mode_frequency = self.spacetime['frequency']))
 
         self.photosphere.hot_atmosphere = self.file_atmosphere
@@ -417,8 +419,8 @@ class analysis(object):
         # true_logl = -9.8013206348e+03  # background, no support, floated data, high res, allow neg. bkg. 
         # true_logl = -4.1076321631e+04 # no background, no support
         # true_logl = -1.0047370824e+04  # no background, no support, floated data, high res
-            if self.bkg == 'fix' or self.bkg =='model':
-                true_logl = 1.8103167777e+08 # no elsewhere
+            if self.bkg == 'fix' or self.bkg =='disk':
+                true_logl = 1.9210607871e+08 # elsewhere
                 #true_logl = 1.9428352612e+08 # large energy scenario
                 # true_logl = 1.9406875013e+08  # given background, background, support, floated data, high res,
                 
@@ -457,8 +459,8 @@ class analysis(object):
 
 
         if self.scenario == 'kajava':
-            if self.bkg == 'model':
-                true_logl = 8.0022379204e+08 # int counts, low res
+            if self.bkg == 'disk':
+                true_logl = 1.6115181807e+08 #8.0022379204e+08 # int counts, low res
             elif self.bkg == 'marginalise':
                 if self.support_factor == 'None':
                     true_logl = -8.1994031914e+04 # int counts, low res, no support

@@ -11,10 +11,11 @@ from xpsi.global_imports import gravradius
 import numpy as np
 
 class parameter_values(object):
-    def __init__(self, scenario, bkg, fix_mass=False):
+    def __init__(self, scenario, bkg, fix_mass=False, ew=False):
         self.scenario = scenario
         self.bkg = bkg
         self.fix_mass = fix_mass
+        self.ew = ew
 
 
         if self.scenario == 'kajava':
@@ -35,9 +36,11 @@ class parameter_values(object):
             self.tau=1 #0.5 - 3.5 tau = ln(Fin/Fout)
             
             # elsewhere
-            self.elsewhere_T_keV = 0.5 # 0.5 #  keV 
-            self.elsewhere_T_log10_K = get_T_in_log10_Kelvin(self.elsewhere_T_keV)
-            if self.bkg == 'model':
+            if self.ew:
+                self.elsewhere_T_keV = 0.5 # 0.5 #  keV 
+                self.elsewhere_T_log10_K = get_T_in_log10_Kelvin(self.elsewhere_T_keV)
+
+            if 'disk' in self.bkg:
             # source background
                 self.diskbb_T_keV = 0.29 # 0.3  #  keV #0.3 keV for Kajava+ 2011
                 self.diskbb_T_log10_K = get_T_in_log10_Kelvin(self.diskbb_T_keV)
@@ -62,10 +65,11 @@ class parameter_values(object):
             self.tau=1. #0.5 - 3.5 tau = ln(Fin/Fout)
             
             # elsewhere
-            self.elsewhere_T_keV = 0.4 # 0.5 #  keV 
-            self.elsewhere_T_log10_K = get_T_in_log10_Kelvin(self.elsewhere_T_keV)
+            if self.ew:
+                self.elsewhere_T_keV = 0.4 # 0.5 #  keV 
+                self.elsewhere_T_log10_K = get_T_in_log10_Kelvin(self.elsewhere_T_keV)
     
-            if self.bkg == 'model':
+            if 'disk' in self.bkg:
             # source background
                 self.diskbb_T_keV = 0.25 # 0.3  #  keV #0.3 keV for Kajava+ 2011
                 self.diskbb_T_log10_K = get_T_in_log10_Kelvin(self.diskbb_T_keV)
@@ -140,6 +144,7 @@ class parameter_values(object):
         self.tbb,
         self.te,
         self.tau,
+        self.elsewhere_T_log10_K if self.ew else None,
         self.diskbb_T_log10_K if 'disk' in self.bkg else None,
         self.R_in if 'disk' in self.bkg else None,
         self.mu if 'line' in self.bkg else None,
@@ -197,10 +202,13 @@ class parameter_values(object):
               }
         if not self.fix_mass:
             bounds['mass'] = (1.0, 3.0)
+            
+        if self.ew:
+            bounds['elsewhere_temperature'] = (None, None)
 
         if 'disk' in self.bkg:
             bounds['T_in'] = (0.01, 0.6) # (0.225, 0.275 )  # (0.01, 0.6) # keV
-            bounds['R_in'] = (5, 50) # from star radius to around corotation radius for the heaviest saxJ1808 possible # (27, 33)  # (20, 200) # km
+            bounds['R_in'] = (5, 60) # from star radius to around corotation radius for the heaviest saxJ1808 possible # (27, 33)  # (20, 200) # km
             bounds['T_in_keV'] = (None, None)
             
         if 'line' in self.bkg:

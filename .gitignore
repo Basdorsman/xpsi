@@ -193,3 +193,6 @@ AMXPs/J1808_synthetic/snellius_runs/*
 # any data or txt files
 *.dat
 *.txt
+*.ipynb
+
+

@@ -229,9 +229,9 @@ class CustomPhotosphereDisk(xpsi.Photosphere):
             # print('signal inside customphotosphere: ', self._signal)
             if self._custom is not None:
                 if self._disk is not None: 
-                    disk_spectrum = self._disk(energies)
+                    self.disk_spectrum = self._disk(energies)
                     for i in range(self._signal[0][0].shape[1]):
-                        self._signal[0][0][:,i] += disk_spectrum    
+                        self._signal[0][0][:,i] += self.disk_spectrum    
 
 
                     

@@ -45,7 +45,7 @@ class CustomPrior(xpsi.Prior):
     __derived_names__ = ['compactness', 'T_in_keV', 'tbb_keV', 'te_keV', 'inclination_deg', 'colatitude_deg', 'radius_deg', 'N_norm']#, 'phase_separation',] , 'T_else_keV'
     __draws_from_support__ = 4 #10^x
     
-    def __init__(self, scenario, bkg, fix_mass, *args, **kwargs):
+    def __init__(self, scenario, bkg, *args, **kwargs):
         self.scenario = scenario
         self.bkg = bkg
         self.fix_mass = kwargs.pop('fix_mass', None)
@@ -249,10 +249,39 @@ class CustomPrior_STU(xpsi.Prior):
     __derived_names__ = ['p__phase_shift_shifted','s__phase_shift_shifted', 'compactness', 'T_in_keV', 'tbb_keV', 'te_keV', 'inclination_deg', 'p__colatitude_deg', 's__colatitude_deg', 'radius_deg']#, 'phase_separation',] , 'T_else_keV'
     __draws_from_support__ = 4 #10^x
     
+    
     def __init__(self, scenario, bkg, *args, **kwargs):
         self.scenario = scenario
         self.bkg = bkg
+        self.fix_mass = kwargs.pop('fix_mass', None)
+        self.eos_informed = kwargs.pop('eos_informed', None)
+
+        
+        if self.eos_informed:
+            #Loading the equally weighted posterior samples from Rutherford+2024:
+            masses=np.loadtxt(this_directory+"/../model_data/mr_priors/Posterior_N3LO_15pp_new_MR_prpr.txt", usecols=0)
+            radii=np.loadtxt(this_directory+"/../model_data/mr_priors/Posterior_N3LO_15pp_new_MR_prpr.txt", usecols=1)
+            
+            prior_pdf_radius = np.ones((len(radii)))/len(radii)
+            prior_pdf_mass = np.ones((len(masses)))/len(masses)       
+    
+            # Building cdf
+            cdf_mass = np.cumsum(prior_pdf_mass)
+            cdf_mass /=cdf_mass[-1]
+            cdf_radius = np.cumsum(prior_pdf_radius)
+            cdf_radius /=cdf_radius[-1]
+    
+            self.interpolator_mass = Akima1DInterpolator(cdf_mass,np.sort(masses))
+            self.interpolator_mass.extrapolate = True
+            self.interpolator_radius = Akima1DInterpolator(cdf_radius,np.sort(radii))
+            self.interpolator_radius.extrapolate = True
+        
         super(CustomPrior_STU, self).__init__(*args, **kwargs)
+    
+    # def __init__(self, scenario, bkg, *args, **kwargs):
+    #     self.scenario = scenario
+    #     self.bkg = bkg
+    #     super(CustomPrior_STU, self).__init__(*args, **kwargs)
 
     def __call__(self, p = None):
 
@@ -365,9 +394,19 @@ class CustomPrior_STU(xpsi.Prior):
         a = math.cos(a); b = math.cos(b)
         ref['s__super_colatitude'] = math.acos(b + (a - b) * hypercube[idx])
 
+        # Inverse sampling for mass+radius by interpolating over their 1D-cdfs
+        if self.eos_informed:
+            idx = ref.index('mass')
+            ref['mass'] = float(self.interpolator_mass(hypercube[idx]))
+            idx = ref.index('radius')
+            ref['radius'] = float(self.interpolator_radius(hypercube[idx]))
+
         # restore proper cache
         for parameter, cache in zip(ref, to_cache):
             parameter.cached = cache
+
+
+
 
         # it is important that we return the desired vector because it is
         # automatically written to disk by MultiNest and only by MultiNest

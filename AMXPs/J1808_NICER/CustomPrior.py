@@ -11,6 +11,10 @@ import math
 from scipy.stats import truncnorm
 from xpsi.global_imports import gravradius, _2pi
 from helper_functions import get_keV_from_log10_Kelvin
+from scipy.interpolate import Akima1DInterpolator
+
+import os
+this_directory = os.path.dirname(os.path.abspath(__file__))
 
 class CustomPrior(xpsi.Prior):
     """ A custom (joint) prior distribution.
@@ -44,7 +48,29 @@ class CustomPrior(xpsi.Prior):
     def __init__(self, scenario, bkg, fix_mass, *args, **kwargs):
         self.scenario = scenario
         self.bkg = bkg
-        self.fix_mass = fix_mass
+        self.fix_mass = kwargs.pop('fix_mass', None)
+        self.eos_informed = kwargs.pop('eos_informed', None)
+        
+        
+        if self.eos_informed:
+            #Loading the equally weighted posterior samples from Rutherford+2024:
+            masses=np.loadtxt(this_directory+"/../model_data/mr_priors/Posterior_N3LO_15pp_new_MR_prpr.txt", usecols=0)
+            radii=np.loadtxt(this_directory+"/../model_data/mr_priors/Posterior_N3LO_15pp_new_MR_prpr.txt", usecols=1)
+            
+            prior_pdf_radius = np.ones((len(radii)))/len(radii)
+            prior_pdf_mass = np.ones((len(masses)))/len(masses)       
+    
+            # Building cdf
+            cdf_mass = np.cumsum(prior_pdf_mass)
+            cdf_mass /=cdf_mass[-1]
+            cdf_radius = np.cumsum(prior_pdf_radius)
+            cdf_radius /=cdf_radius[-1]
+    
+            self.interpolator_mass = Akima1DInterpolator(cdf_mass,np.sort(masses))
+            self.interpolator_mass.extrapolate = True
+            self.interpolator_radius = Akima1DInterpolator(cdf_radius,np.sort(radii))
+            self.interpolator_radius.extrapolate = True
+        
         super(CustomPrior, self).__init__(*args, **kwargs)
 
     def __call__(self, p = None):
@@ -133,7 +159,12 @@ class CustomPrior(xpsi.Prior):
         a = math.cos(a); b = math.cos(b)
         ref['super_colatitude'] = math.acos(b + (a - b) * hypercube[idx])
 
-
+        # Inverse sampling for mass+radius by interpolating over their 1D-cdfs
+        if self.eos_informed:
+            idx = ref.index('mass')
+            ref['mass'] = float(self.interpolator_mass(hypercube[idx]))
+            idx = ref.index('radius')
+            ref['radius'] = float(self.interpolator_radius(hypercube[idx]))
 
 
         # restore proper cache

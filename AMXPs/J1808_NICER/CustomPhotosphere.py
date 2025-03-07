@@ -238,12 +238,18 @@ class CustomPhotosphereDiskLine(xpsi.Photosphere):
             # print('signal inside customphotosphere: ', self._signal[0][0])
 
 
-            # add disk spectrum to primary hotregion
+            # # add disk spectrum to primary hotregion
             # if self._disk is not None: 
             #     self.disk_spectrum = self._disk(energies)
             #     for i in range(self._signal[0][0].shape[1]):
             #         self._signal[0][0][:,i] += self.disk_spectrum
+            
+            # if self._line is not None:
+            #     self.line_spectrum = self._line(energies)
+            #     for i in range(self._signal[0][0].shape[1]):
+            #         self._signal[0][0][:,i] += self.line_spectrum 
 
+            # here disk and line are stored separately, but then the phases also need to be stored separately in customsignal, and this breaks posprocessing.
             if self._disk is not None: 
                 # Determine the index for the new hot region
                 new_hot_region_index = len(self._signal)
@@ -275,9 +281,5 @@ class CustomPhotosphereDiskLine(xpsi.Photosphere):
                 # Add line spectrum to the newly created hot region
                 self.line_spectrum = self._line(energies)
                 for i in range(self._signal[0][0].shape[1]):
-                    self._signal[new_hot_region_index][0][:, i] += self.line_spectrum
-
-                # self.line_spectrum = self._line(energies)
-                # for i in range(self._signal[0][0].shape[1]):
-                #     self._signal[0][0][:,i] += self.line_spectrum    
+                    self._signal[new_hot_region_index][0][:, i] += self.line_spectrum   
 

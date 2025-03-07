@@ -18,7 +18,7 @@ from CustomInterstellar import CustomInterstellar
 
 class plot_pulse(object):
     def __init__(self):
-        self.scenario = '2019'
+        self.scenario = '2022'
         self.bkg = 'disk'
         self.sqrt_num_cells = 50
         self.num_leaves = 30
@@ -36,7 +36,7 @@ class plot_pulse(object):
         # print('parameters:', self.p)
         # print(self.likelihood)
 
-        self.likelihood.check(None, [1e3], 1.0e-4, physical_points=[], force_update=True)
+        self.likelihood.check(None, [-1.8693770262e+07], 1.0e-4, physical_points=[], force_update=True)
         print(self.likelihood([]))
     
     # def __call__(self):
@@ -119,10 +119,10 @@ class plot_pulse(object):
         
     def set_instrument(self):
         self.instrument = TACO.from_response_files(
-                RMF_file = 'TACO_4mod_matrix.txt',
-                ebounds_file = 'TACO_4mod_ebounds.txt',
+                RMF_file = 'instrument_files/TACO_4mod_matrix.txt',
+                ebounds_file = 'instrument_files/TACO_4mod_ebounds.txt',
                 max_detection_channel = 1310,
-                max_input = 2048)
+                max_input = 1317)
 
     def set_interstellar(self):
         interstellar_bounds = None
@@ -149,7 +149,7 @@ class plot_pulse(object):
         self.p = self.pv.p()
 
     def set_prior(self):
-        self.prior = CustomPrior(self.scenario, self.bkg)
+        self.prior = CustomPrior(self.scenario, self.bkg, fix_mass=False)
   
     def set_likelihood(self):
         self.set_star()
@@ -167,4 +167,4 @@ class plot_pulse(object):
         
 if __name__ == '__main__':
     my_pulse = plot_pulse()
-    my_pulse()
+    # my_pulse()

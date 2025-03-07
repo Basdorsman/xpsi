@@ -589,17 +589,17 @@ class analysis(object):
             
         elif self.run_type == 'test':
             print('test starts')
-            # n_repeats = 10
+            # # n_repeats = 10
             t_start = time.time()
-            # for repeat in range(n_repeats):
-                #self.star.update(force_update=True)
-                #self.likelihood.check(None, [self.true_logl], 1.0e-4, physical_points=[self.p], force_update=True)
-            self.likelihood(self.p, reinitialise=True)
-            # inverse sampling test
-            test=self.prior.draw(ndraws=10000)[0][:,0:2]
-            print(test.shape)
-            import corner
-            figure=corner.corner(test)
+            # # for repeat in range(n_repeats):
+            #     #self.star.update(force_update=True)
+            #     #self.likelihood.check(None, [self.true_logl], 1.0e-4, physical_points=[self.p], force_update=True)
+            # self.likelihood(self.p, reinitialise=True)
+            # # inverse sampling test
+            # test=self.prior.draw(ndraws=10000)[0][:,0:2]
+            # print(test.shape)
+            # import corner
+            # figure=corner.corner(test)
             print('Test took {:.3f} seconds'.format((time.time()-t_start)))
             
             

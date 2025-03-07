@@ -172,9 +172,9 @@ class parameter_values(object):
             'mu' if self.bkg == 'diskline' else None,
             'sigma' if self.bkg == 'diskline' else None,
             'N' if self.bkg == 'diskline' else None,
-            'column_density', 'compactness', 
+            'column_density', 'compactness', 'tbb_keV', 'te_keV', 
+            'inclination_deg', 'colatitude_deg', 'radius_deg', 
             'T_in_keV' if self.bkg in ['disk', 'diskline'] else None,
-            'tbb_keV', 'te_keV', 'inclination_deg', 'colatitude_deg', 'radius_deg', 
             'N_norm' if self.bkg == 'diskline' else None
         ]
         
@@ -281,7 +281,7 @@ class parameter_values(object):
             
         if 'line' in self.bkg:
             labels['mu'] = r"\mu\;\mathrm{[keV]}"
-            labels['sigma'] = r"\sigma;\mathrm{[keV]}"
+            labels['sigma'] = r"\sigma\;\mathrm{[keV]}"
             labels['N'] =  r"N\;\mathrm{[photons/cm^2/s]}"
             labels['N_norm'] =  r"N_\mathrm{norm}\;\mathrm{[photons/cm^2/s]}"
 

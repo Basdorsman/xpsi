@@ -216,7 +216,7 @@ class analysis(object):
         self.channel_low = 0
         self.channel_hi = 300
         self.phases_space = np.linspace(0.0, 1.0, 33)
-        self.exposure_time = 1e5
+        self.exposure_time = 1.32366e5 #1e5
         
         settings = dict(counts = np.loadtxt(self.file_pulse_profile, dtype=np.double),
                         channels=np.arange(self.channel_low,self.channel_hi),
@@ -487,8 +487,10 @@ class analysis(object):
         rcParams['text.usetex'] = False
         rcParams['font.size'] = 14.0
         
-        # Likelihood check and plot
+
         from matplotlib import cm
+        
+        # Plot the signal
         fig, ax = plot_2D_pulse((self.photosphere.signal[0][0],),
                       x=self.signal.phases[0],
                       shift=self.signal.shifts,
@@ -497,12 +499,11 @@ class analysis(object):
                       cm=cm.jet)
 
         
-        plt.savefig('{}/pre_sampling_plot.png'.format(folderstring))
-        print('figure saved in {}'.format(folderstring))
+        # plt.savefig('{}/pre_sampling_plot.png'.format(folderstring))
+        # print('figure saved in {}'.format(folderstring))
         
-        
+        # plotting data, signal and diff. 
         fig, axes = plt.subplots(3,1,figsize=(5,8))
-       
         profile = CustomAxes.plot_2D_counts(axes[0], self.data.counts, get_mids_from_edges(self.data.phases), get_mids_from_edges(self.instrument.channel_edges))
         profile = CustomAxes.plot_2D_counts(axes[1], self.signal.expected_counts, get_mids_from_edges(self.data.phases), get_mids_from_edges(self.instrument.channel_edges))
         profile = CustomAxes.plot_2D_counts(axes[2], self.signal.expected_counts-self.data.counts, get_mids_from_edges(self.data.phases), get_mids_from_edges(self.instrument.channel_edges))
@@ -511,6 +512,32 @@ class analysis(object):
         fig.colorbar(profile, ax=axes[2])     
         axes[2].set_title('expected-data')
         fig.tight_layout()
+        
+        # plotting the spectrum
+        star_dist_sq = np.mean(self.photosphere.signal[0][0],axis=1)
+        disk_dist_sq = np.mean(self.photosphere.signal[1][0],axis=1)
+
+        def unit_convert(F, distance):
+            # assuming the distance is in 10 kpc units, which we use to convert flux to photons/s/cm^2/keV,  3.08e19 is to convert kpc to meter
+            F_converted = F/(3.08567758128e19*distance)**2
+            return F_converted
+        
+        star = unit_convert(star_dist_sq, self.spacetime['distance'])
+        disk = unit_convert(disk_dist_sq, self.spacetime['distance'])
+        
+
+        fig,ax = plt.subplots()
+        
+        ax.loglog(self.signal.energies, self.signal.energies**2*star, label='star')
+        ax.loglog(self.signal.energies, self.signal.energies**2*disk, label='disk')
+        ax.set_xlim([1,100])
+        ax.set_ylim([1e-3, 1e1])
+        ax.set_ylabel('Energy flux (keV/s/cm^2)')
+        ax.set_xlabel('Energy (keV)')
+        ax.legend()
+
+        
+        
         
         if self.run_type == 'sample':
             if self.sampler == 'multi':
@@ -570,15 +597,18 @@ class analysis(object):
             
             
 if __name__ == '__main__':
-    Analysis = analysis('snellius', 'test', 'disk', sampler='multi', scenario='small_r', support_factor=None)
+    Analysis = analysis('local', 'test', 'disk', sampler='multi', scenario='small_r', support_factor=None)
     Analysis()
 
     expected = Analysis.signal.expected_counts
     data = np.random.poisson(expected)
+    
+    print('expected counts: ',np.sum(expected))
 
     from matplotlib import cm
     fig, ax = plt.subplots()
     profile = ax.pcolormesh(get_mids_from_edges(Analysis.data.phases), get_mids_from_edges(Analysis.instrument.channel_edges), data, cmap=cm.jet)
+    ax.set_yscale('log')
     #profile = ax.pcolormesh(get_mids_from_edges(Analysis.data.phases), Analysis.instrument.channels, data, cmap=cm.jet)
     
     fig.colorbar(profile, ax=ax, label='counts')

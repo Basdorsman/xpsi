@@ -211,7 +211,7 @@ class analysis(object):
         elif self.machine == 'snellius' or 'helios':
             self.file_atmosphere = self.this_directory + '/../model_data/Bobrikova_compton_slab.npz'
             self.file_interstellar = self.this_directory + "/../model_data/interstellar/tbnew/tbnew0.14.txt"
-        if self.scenario == 'kajava' or self.scenario == 'literature' or self.scenario == '2019' or self.scenario == '2022':
+        if self.scenario == 'kajava' or self.scenario == 'literature' or self.scenario == '2019' or self.scenario == '2022' or self.scenario=='small_r' or self.scenario=='large_r':
             self.file_bkg = self.this_directory + f'/data/disk_2019.txt'
         # self.file_bkg = self.this_directory + '/../model_data/synthetic/diskbb_background.txt'
 
@@ -470,7 +470,7 @@ class analysis(object):
             
         if self.scenario == 'large_r':
             if self.bkg == 'marginalise':
-                true_logl = -8.7237365668e+04 # marginalise
+                true_logl = -9.0515374178e+04 #-8.7237365668e+04 # marginalise
             elif self.bkg == 'fix':
                 true_logl = 1.6792913585e+08 # empty background
             elif self.bkg == 'disk':
@@ -478,7 +478,7 @@ class analysis(object):
         
             
         if self.scenario == 'small_r':
-            true_logl = 7.9265215639e+07
+            true_logl = 7.9265215141e+07
             
 
         self.true_logl = true_logl
@@ -603,15 +603,26 @@ class analysis(object):
             #                                   externally_updated=True)
             #     self.likelihood.check(None, [self.true_logl], 1.0e-4, physical_points=[self.p], force_update=True)
             
-            self.likelihood(self.p, reinitialise=True)
+
+
             # inverse sampling test
-            test=self.prior.draw(ndraws=10000)[0][:,0:2]
-            print(test.shape)
-            import corner
-            figure=corner.corner(test)
-            print('Test took {:.3f} seconds'.format((time.time()-t_start)))
+            # test=self.prior.draw(ndraws=10000)[0][:,0:2]
+            # print(test.shape)
+            # import corner
+            # labels = [ "Mass (M☉)", "Radius (km)"]  # Adjust labels as needed
+            # y_limits = (5, 15)  # Adjust as needed
+            # x_limits = (1.0, 3.0)  # Adjust as needed
+            # figure=corner.corner(test, labels=labels, quantiles=[0.16, 0.5, 0.84], 
+            #            show_titles=True, title_fmt='.2f', range=[x_limits, y_limits])
+            
+            # self.likelihood(self.p, reinitialise=True)
+            # print('Test took {:.3f} seconds'.format((time.time()-t_start)))
             
             
 if __name__ == '__main__':
-    Analysis = analysis('local', 'test', 'diskline', sampler='multi', scenario='2019', support_factor='100', fix_mass=False, eos_informed=True)
+    Analysis = analysis('local', 'test', 'disk', sampler='multi', scenario='small_r', support_factor='100', fix_mass=False, eos_informed=False)
     Analysis()
+
+    expected = Analysis.signal.expected_counts/1.32366 # 100k s exposure time
+    
+    print('expected counts: ',np.sum(expected))

@@ -92,6 +92,8 @@ class CustomSignal(xpsi.Signal):
                                               #slim=-1.0) # default is skipping 10^89s, so some likelihood calculations are skipped
 
         elif 'disk' in self.bkg:
+        # if disk and line are stored separately, there phases are also separate. But this breaks postprocessing.
+
             self._phases += [np.copy(self._phases[0])]
             
             # fine as long as the disk has no phase
@@ -103,6 +105,7 @@ class CustomSignal(xpsi.Signal):
                 # fine as long as the line has no phase
                 self._shifts = np.append(self._shifts, self._shifts[0])
        
+
             self.loglikelihood, self.expected_counts = \
                 poisson_likelihood_given_background(self._data.exposure_time, 
                                                     self._data.phases, 

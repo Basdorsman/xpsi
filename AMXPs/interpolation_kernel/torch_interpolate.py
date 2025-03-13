@@ -205,32 +205,72 @@ tau_random = random_with_bounds(min(tau__t), max(tau__t), n_repeats)
 random_local_vars = np.asarray([te_random, tbb_random, tau_random])
 
 
-def interp_torch(local_vars, grid, mode):
+# def interp_torch(local_vars, grid, mode):
 
-    atmosphere_2D = xpsi.surface_radiation_field.produce_atmosphere_2D(local_vars,
-                                                                    atmosphere=atmosphere,
-                                                                    region_extension='hot',
-                                                                    atmos_extension = 'Num5D',
-                                                                    numTHREADS=1)
+#     atmosphere_2D = xpsi.surface_radiation_field.produce_atmosphere_2D(local_vars,
+#                                                                     atmosphere=atmosphere,
+#                                                                     region_extension='hot',
+#                                                                     atmos_extension = 'Num5D',
+#                                                                     numTHREADS=1)
 
 
-    intensities_vector = atmosphere_2D[2]
+#     intensities_vector = atmosphere_2D[2]
 
-    I_tensor = torch.tensor(intensities_vector, dtype=torch.float64, device=device).view(1,1,len(mu_norm), len(E_norm))
-    output_tensor = F.grid_sample(I_tensor, grid, mode=mode, align_corners=True)
-    intensity_t = np.asarray(output_tensor[0, 0, :, 0].cpu())
+#     I_tensor = torch.tensor(intensities_vector, dtype=torch.float64, device=device).view(1,1,len(mu_norm), len(E_norm))
+#     output_tensor = F.grid_sample(I_tensor, grid, mode=mode, align_corners=True)
+#     intensity_t = np.asarray(output_tensor[0, 0, :, 0].cpu())
+#     return intensity_t
+
+
+# intensity_t = interp_torch(local_vars, grid_equidistant, interpolation_mode)
+
+# start_torch = time()
+# for i in range(n_repeats): 
+#     random_local_var = np.asarray([random_local_vars[:,i]])
+#     intensity_t = interp_torch(random_local_var, grid_equidistant, interpolation_mode)
+# time_torch = time()-start_torch
+
+# print(f'torch timing, repeats n={n_repeats}, t/n={time_torch/n_repeats:.6f}s')
+
+def interp_torch(local_vars, grid, mode, n_repeats):
+    atmosphere_time = 0.0
+    grid_sample_time = 0.0
+
+    for _ in range(n_repeats):
+        random_local_var = np.asarray([random_local_vars[:, _]])
+
+        # Time atmosphere production
+        start_atmosphere = time()
+        atmosphere_2D = xpsi.surface_radiation_field.produce_atmosphere_2D(
+            random_local_var,
+            atmosphere=atmosphere,
+            region_extension='hot',
+            atmos_extension='Num5D',
+            numTHREADS=1
+        )
+        atmosphere_time += time() - start_atmosphere
+
+        intensities_vector = atmosphere_2D[2]
+
+        # Time grid sampling
+        start_grid = time()
+        I_tensor = torch.tensor(intensities_vector, dtype=torch.float64, device=device).view(1, 1, len(mu_norm), len(E_norm))
+        output_tensor = F.grid_sample(I_tensor, grid, mode=mode, align_corners=True)
+        grid_sample_time += time() - start_grid
+
+        intensity_t = np.asarray(output_tensor[0, 0, :, 0].cpu())
+
+    # Print timing results
+    print(f'Atmosphere production timing, repeats n={n_repeats}, t/n={atmosphere_time/n_repeats:.6f}s')
+    print(f'Grid sampling timing, repeats n={n_repeats}, t/n={grid_sample_time/n_repeats:.6f}s')
+    print(f'Total execution timing, repeats n={n_repeats}, t/n={(atmosphere_time + grid_sample_time)/n_repeats:.6f}s')
+
+
     return intensity_t
 
+# Run the function with the desired number of repeats
+intensity_t = interp_torch(local_vars, grid_equidistant, interpolation_mode, n_repeats)
 
-intensity_t = interp_torch(local_vars, grid_equidistant, interpolation_mode)
-
-start_torch = time()
-for i in range(n_repeats): 
-    random_local_var = np.asarray([random_local_vars[:,i]])
-    intensity_t = interp_torch(random_local_var, grid_equidistant, interpolation_mode)
-time_torch = time()-start_torch
-
-print(f'torch timing, repeats n={n_repeats}, t/n={time_torch/n_repeats:.6f}s')
 
 #%% setting up contiguous arrays for split interpolation
 

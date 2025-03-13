@@ -9,12 +9,14 @@ Created on Fri Feb 28 11:02:00 2025
 import torch
 import torch.nn.functional as F
 from time import time
+from timeit import timeit
 import numpy as np
 import xpsi
 
 np.random.seed(42)
 
 equidistant=True
+system='local'
 interpolation_mode='bilinear'
 
 # Move tensors to GPU if available
@@ -55,8 +57,6 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
 #%% parameters
-
-
 
 # ENERGY AND MU VECTOR ARE MADE ANALYTICALLY LIKE THIS
 x_l, x_u = -3.7, .3 # lower and upper bounds of the log_10 energy span
@@ -126,32 +126,19 @@ def preload_atmosphere_A5(path, energy=None, mu=None, fake_I=None):
     atmosphere = (t_e, t_bb, tau, cos_zenith, Energy, intensities)
     return atmosphere
 
+if system=='snellius':
+    root = '/home/dorsman/xpsi-bas-fork/AMXPs/model_data/'
+elif system=='local':
+    root = '/home/bas/Documents/Projects/x-psi/model_datas/bobrikova/'
+
 if equidistant:
-    snellius='/home/dorsman/xpsi-bas-fork/AMXPs/model_data/'
-    local='/home/bas/Documents/Projects/x-psi/model_datas/bobrikova/'
-    atmosphere = preload_atmosphere_A5(snellius+'Bobrikova_compton_slab.npz', energy=E_prime, mu=mu_equidistant_vector, fake_I=fake_I)
+    atmosphere = preload_atmosphere_A5(root+'Bobrikova_compton_slab.npz', energy=E_prime, mu=mu_equidistant_vector, fake_I=fake_I)
 else:
-    atmosphere = preload_atmosphere_A5('/home/bas/Documents/Projects/x-psi/model_datas/bobrikova/Bobrikova_compton_slab.npz', energy=E_prime)
-
-te = 101 #40 - 200 te[150*9*31*11*15]
-tbb = 0.0015 #0.001 - 0.0031 tbb[150*9*31*2 (or 3)]
-tau = 1.01  #0.5 - 3.55 te[150*9*5]
-local_vars = np.asarray([[te, tbb, tau]])
-
-
-start_time = time()
-atmosphere_2D = xpsi.surface_radiation_field.produce_atmosphere_2D(local_vars,
-                                                                    atmosphere=atmosphere,
-                                                                    region_extension='hot',
-                                                                    atmos_extension = 'Num5D',
-                                                                    numTHREADS=1)
-end_time = time()
-atmosphere_time = end_time - start_time
+    atmosphere = preload_atmosphere_A5(root+'Bobrikova_compton_slab.npz', energy=E_prime)
 
 
 
-
-#%% using formatted data
+#%% produce E and mu vectors for Torch
 
 def normalize_coordinates(coords: np.ndarray, min_val: float, max_val: float) -> np.ndarray:
     """
@@ -172,13 +159,7 @@ E_prime_norm = normalize_coordinates(E_prime, min(E_prime), max(E_prime))
 mu_norm = normalize_coordinates(mu_vector, min(mu_vector), max(mu_vector))
 mu_equidistant_norm = normalize_coordinates(mu_equidistant_vector, min(mu_equidistant_vector), max(mu_equidistant_vector))
 
-
-intensities_vector = atmosphere_2D[2]
-
-I_tensor = torch.tensor(intensities_vector, dtype=torch.float64, device=device).view(1,1,len(mu_norm), len(E_norm))
-
-
-#%% produce random points
+#%% produce random E and mu points
 size = 60000  # Number of interpolation points
 
 # grid_x_test = torch.rand(size, device=device) * 2 - 1  # Random values between -1 and 1
@@ -205,26 +186,49 @@ grid = torch.stack((grid_y_prime, grid_x), dim=-1).view(1, size, 1, 2)  # Shape:
 grid_equidistant = torch.stack((grid_y_prime, grid_x_equidistant), dim=-1).view(1, size, 1, 2)  # Shape: (1, N, 1, 2)
 
 
-#%% interpolate with Torch
+#%% Interpolation with Torch
 
-start_time = time()
-if equidistant:
-    output_tensor = F.grid_sample(I_tensor, grid_equidistant, mode=interpolation_mode, align_corners=True)
-else:
-    output_tensor = F.grid_sample(I_tensor, grid, mode=interpolation_mode, align_corners=True)
+te = 101 #40 - 200 te[150*9*31*11*15]
+tbb = 0.0015 #0.001 - 0.0031 tbb[150*9*31*2 (or 3)]
+tau = 1.01  #0.5 - 3.55 te[150*9*5]
+local_vars = np.asarray([[te, tbb, tau]])
 
-end_time = time()
-elapsed_time = end_time - start_time
-
-#print(input_tensor.squeeze().cpu())  # Remove batch and channel dims for readability
-intensity_t = np.asarray(output_tensor[0, 0, :, 0].cpu())
-
-print(f"\n2D atmosphere production time: {atmosphere_time:.6f} seconds")
-print(f"Torch 2D interpolations time: {elapsed_time:.6f} seconds")
-
-print("\nTorch Interpolated Values at first 10 points:", intensity_t[:10])  # Print only first 10 values for readability
+n_repeats=100
+t__e = np.arange(40.0, 202.0, 4.0) #actual range is 40-200 imaginaty units, ~20-100 keV (Te(keV)*1000/511keV is here)
+t__bb = np.arange(0.001, 0.0031, 0.0002) #this one is non-physical, we went for way_to_low Tbbs here, I will most probably delete results from too small Tbbs. This is Tbb(keV)/511keV, so these correspond to 0.07 - 1.5 keV, but our calculations don't work correctly for Tbb<<0.5 keV
+tau__t = np.arange(0.5, 3.55, 0.1) 
+te_random = random_with_bounds(min(t__e), max(t__e), n_repeats)
+tbb_random = random_with_bounds(min(t__bb), max(t__bb), n_repeats)
+tau_random = random_with_bounds(min(tau__t), max(tau__t), n_repeats)
+random_local_vars = np.asarray([te_random, tbb_random, tau_random])
 
 
+def interp_torch(local_vars, grid, mode):
+
+    atmosphere_2D = xpsi.surface_radiation_field.produce_atmosphere_2D(local_vars,
+                                                                    atmosphere=atmosphere,
+                                                                    region_extension='hot',
+                                                                    atmos_extension = 'Num5D',
+                                                                    numTHREADS=1)
+
+
+    intensities_vector = atmosphere_2D[2]
+
+    I_tensor = torch.tensor(intensities_vector, dtype=torch.float64, device=device).view(1,1,len(mu_norm), len(E_norm))
+    output_tensor = F.grid_sample(I_tensor, grid, mode=mode, align_corners=True)
+    intensity_t = np.asarray(output_tensor[0, 0, :, 0].cpu())
+    return intensity_t
+
+
+intensity_t = interp_torch(local_vars, grid_equidistant, interpolation_mode)
+
+start_torch = time()
+for i in range(n_repeats): 
+    random_local_var = np.asarray([random_local_vars[:,i]])
+    intensity_t = interp_torch(random_local_var, grid_equidistant, interpolation_mode)
+time_torch = time()-start_torch
+
+print(f'torch timing, repeats n={n_repeats}, t/n={time_torch/n_repeats:.6f}s')
 
 #%% interpolate with split
 
@@ -247,23 +251,22 @@ mu_equidistant_contiguous = np.ascontiguousarray(mu_equidistant_random, dtype = 
 
 intensity_s = np.empty(size)
 
-time_start = time()
-if equidistant:
-    intensity_s = xpsi.surface_radiation_field.intensity_split_interpolation(E_prime_contiguous, mu_equidistant_contiguous, local_variables,
+
+intensity_s = xpsi.surface_radiation_field.intensity_split_interpolation(E_prime_contiguous, mu_equidistant_contiguous, local_variables,
                                                         atmosphere=atmosphere,
                                                         region_extension='hot',
                                                         atmos_extension ='Num5D',
                                                         numTHREADS=nT)
-else:
-    intensity_s = xpsi.surface_radiation_field.intensity_split_interpolation(E_prime_contiguous, mu_equidistant_contiguous, local_variables,
-                                                     atmosphere=atmosphere,
-                                                     region_extension='hot',
-                                                     atmos_extension ='Num5D',
-                                                     numTHREADS=nT)
-    
-
-print(f'split interpolation (includes making 2D atmosphere) in {time()-time_start:0.6f}')
-print("\nLaGrange Interpolated Values at first 10 points:", intensity_s[:10])  # Print only first 10 values for readability
+start_split = time()
+for i in range(n_repeats):
+    random_local_var = np.asarray([random_local_vars[:,i]])
+    intensity_s = xpsi.surface_radiation_field.intensity_split_interpolation(E_prime_contiguous, mu_equidistant_contiguous, random_local_var,
+                                                            atmosphere=atmosphere,
+                                                            region_extension='hot',
+                                                            atmos_extension ='Num5D',
+                                                            numTHREADS=nT)
+time_split = time()-start_split
+print(f'split timing, repeats n={n_repeats}, t/n={time_split/n_repeats:.6f}s')
 
 
 #%% relative error plot
@@ -332,9 +335,24 @@ E_single_norm = normalize_coordinates(E_single, min(E_vector), max(E_vector))
 E_single_norm_prime = normalize_coordinates(E_single_prime, min(E_prime), max(E_prime))
 
 # TORCH
+
+te = 101 #40 - 200 te[150*9*31*11*15]
+tbb = 0.0015 #0.001 - 0.0031 tbb[150*9*31*2 (or 3)]
+tau = 1.01  #0.5 - 3.55 te[150*9*5]
+local_vars = np.asarray([[te, tbb, tau]])
+atmosphere_2D = xpsi.surface_radiation_field.produce_atmosphere_2D(local_vars,
+                                                                atmosphere=atmosphere,
+                                                                region_extension='hot',
+                                                                atmos_extension = 'Num5D',
+                                                                numTHREADS=1)
+
+
+intensities_vector = atmosphere_2D[2]
+I_tensor = torch.tensor(intensities_vector, dtype=torch.float64, device=device).view(1,1,len(mu_norm), len(E_norm))
 single_point_grid = torch.tensor([[[[E_single_norm_prime[0],mu_single_norm_equidistant[0]]]]])  # Shape (1,1,1,2)
 output_tensor = F.grid_sample(I_tensor, single_point_grid, mode=interpolation_mode, align_corners=True)
-print(output_tensor.squeeze().cpu())
+print('accuracy comparison')
+print(output_tensor.squeeze().cpu().item())
 
 #LAGRANGE
 intensity_single = xpsi.surface_radiation_field.intensity_split_interpolation(E_single_prime, mu_single_equidistant, local_variables,
@@ -343,13 +361,13 @@ intensity_single = xpsi.surface_radiation_field.intensity_split_interpolation(E_
                                                         atmos_extension ='Num5D',
                                                         numTHREADS=nT)
 
-print(intensity_single)
+print(intensity_single[0])
 
 
-#%%%
+#%%% printing the values in the equidistant vector here
 
 # print([mu_vector[i+1]-mu_vector[i] for i in range(len(mu_vector)-1)])
-print([mu_equidistant_vector[i+1]-mu_equidistant_vector[i] for i in range(len(mu_equidistant_vector)-1)])
+# print([mu_equidistant_vector[i+1]-mu_equidistant_vector[i] for i in range(len(mu_equidistant_vector)-1)])
 # print([E_prime[i+1]-E_prime[i] for i in range(len(E_prime)-1)])
 
 

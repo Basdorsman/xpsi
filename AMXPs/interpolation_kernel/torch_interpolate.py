@@ -20,10 +20,12 @@ system='local'
 interpolation_mode='bilinear'
 
 # Move tensors to GPU if available
-print("cuda" if torch.cuda.is_available() else "cpu")
+device_preference = 'cuda'
+device_choice = device_preference if torch.cuda.is_available() else "cpu"
+print(device_choice)
+device = torch.device(device_choice)
 
-# Move tensors to GPU if available
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+#%% interpolations with a test grid
 
 # # Create a small 2D tensor (1x1x3x3 for a single-channel 3x3 image)
 # input_tensor = torch.tensor([[[[1.0, 2.0, 3.0],
@@ -56,7 +58,7 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 # print(f"\nExecution Time: {elapsed_time:.6f} seconds")
 
 
-#%% parameters
+#%% setting up vectors for atmosphere interpolation
 
 # ENERGY AND MU VECTOR ARE MADE ANALYTICALLY LIKE THIS
 x_l, x_u = -3.7, .3 # lower and upper bounds of the log_10 energy span
@@ -96,7 +98,7 @@ for i,mu in enumerate(mu_equidistant_vector):
 
 fake_I = np.tile(fake_I, 13981)
 
-#%% load atmosphere
+#%% load 5D atmosphere
 
 def preload_atmosphere_A5(path, energy=None, mu=None, fake_I=None):
     """ A photosphere extension to preload the numerical atmosphere NSX. """
@@ -230,7 +232,7 @@ time_torch = time()-start_torch
 
 print(f'torch timing, repeats n={n_repeats}, t/n={time_torch/n_repeats:.6f}s')
 
-#%% interpolate with split
+#%% setting up contiguous arrays for split interpolation
 
 nT=1
 
@@ -249,9 +251,10 @@ mu_contiguous = np.ascontiguousarray(mu_random, dtype = np.double)
 mu_equidistant_contiguous = np.ascontiguousarray(mu_equidistant_random, dtype = np.double)
 
 
+
+
+#%% interpolate with split
 intensity_s = np.empty(size)
-
-
 intensity_s = xpsi.surface_radiation_field.intensity_split_interpolation(E_prime_contiguous, mu_equidistant_contiguous, local_variables,
                                                         atmosphere=atmosphere,
                                                         region_extension='hot',

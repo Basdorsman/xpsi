@@ -127,7 +127,9 @@ def preload_atmosphere_A5(path, energy=None, mu=None, fake_I=None):
     return atmosphere
 
 if equidistant:
-    atmosphere = preload_atmosphere_A5('/home/bas/Documents/Projects/x-psi/model_datas/bobrikova/Bobrikova_compton_slab.npz', energy=E_prime, mu=mu_equidistant_vector, fake_I=fake_I)
+    snellius='/home/dorsman/xpsi-bas-fork/AMXPs/model_data/'
+    local='/home/bas/Documents/Projects/x-psi/model_datas/bobrikova/'
+    atmosphere = preload_atmosphere_A5(snellius+'Bobrikova_compton_slab.npz', energy=E_prime, mu=mu_equidistant_vector, fake_I=fake_I)
 else:
     atmosphere = preload_atmosphere_A5('/home/bas/Documents/Projects/x-psi/model_datas/bobrikova/Bobrikova_compton_slab.npz', energy=E_prime)
 
@@ -173,7 +175,7 @@ mu_equidistant_norm = normalize_coordinates(mu_equidistant_vector, min(mu_equidi
 
 intensities_vector = atmosphere_2D[2]
 
-I_tensor = torch.tensor(intensities_vector, dtype=torch.float64).view(1,1,len(mu_norm), len(E_norm))
+I_tensor = torch.tensor(intensities_vector, dtype=torch.float64, device=device).view(1,1,len(mu_norm), len(E_norm))
 
 
 #%% produce random points
@@ -215,7 +217,7 @@ end_time = time()
 elapsed_time = end_time - start_time
 
 #print(input_tensor.squeeze().cpu())  # Remove batch and channel dims for readability
-intensity_t = np.asarray(output_tensor[0, 0, :, 0])
+intensity_t = np.asarray(output_tensor[0, 0, :, 0].cpu())
 
 print(f"\n2D atmosphere production time: {atmosphere_time:.6f} seconds")
 print(f"Torch 2D interpolations time: {elapsed_time:.6f} seconds")

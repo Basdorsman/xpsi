@@ -339,6 +339,8 @@ class SynthesiseData(xpsi.Data):
         self.channels = channels
         # print(channels)
         # print(len(channels))
+        # print(first)
+        # print(last)
         self._phases = phases
 
         try:

@@ -47,7 +47,7 @@ from parameter_values import parameter_values
 ################################## SETTINGS ###################################
 
 
-bkg = 'model' #'model' 'fix'
+bkg = 'disk' #'model' 'fix'
 
 second = False
 te_index = 0
@@ -72,7 +72,7 @@ except:
     machine = "local"
     poisson_noise = True
     poisson_seed = 42
-    scenario = 'large_r' # 'kajava', 'literature
+    scenario = 'small_r' # 'kajava', 'literature
   
 
 pv = parameter_values(scenario, bkg)
@@ -80,7 +80,7 @@ p = pv.p()
 
 
 if scenario == 'kajava' or scenario == 'literature' or scenario == '2019' or scenario == 'large_r' or scenario == 'small_r':
-    exposure_time=1.32366e5 ## is the same as Mason 2019
+    exposure_time=1e5 #1.32366e5 ## is the same as Mason 2019
     
 
 
@@ -266,9 +266,10 @@ if __name__ == '__main__':
     cb = plt.colorbar(profile, ax=axes[0])
     cb.set_label(label='Counts', labelpad=10)
     cb.solids.set_edgecolor('face')
+    axes[0].set_title(f'total counts: {np.sum(my_data)}, exp. time: {exposure_time}')
     axes[1].plot_bolometric_pulse(phases_space, my_data, normalized=True)
-    cb2 = plt.colorbar(profile, ax=axes[1])
-    cb2.remove()
+    #cb2 = plt.colorbar(profile, ax=axes[1])
+    #cb2.remove()
     
 
     try:

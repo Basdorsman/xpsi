@@ -92,18 +92,18 @@ class CustomSignal(xpsi.Signal):
                                               #slim=-1.0) # default is skipping 10^89s, so some likelihood calculations are skipped
 
         elif 'disk' in self.bkg:
-        # if disk and line are stored separately, there phases are also separate. But this breaks postprocessing.
+        # if disk and line are stored separately, there phases are also separate. But this breaks postprocessing, sampling, and data synthesis.
 
-            self._phases += [np.copy(self._phases[0])]
+            # self._phases += [np.copy(self._phases[0])]
             
-            # fine as long as the disk has no phase
-            self._shifts = np.append(self._shifts, self._shifts[0])
+            # # fine as long as the disk has no phase
+            # self._shifts = np.append(self._shifts, self._shifts[0])
             
-            if 'line' in self.bkg:
-                self._phases += [np.copy(self._phases[0])]
+            # if 'line' in self.bkg:
+            #     self._phases += [np.copy(self._phases[0])]
                 
-                # fine as long as the line has no phase
-                self._shifts = np.append(self._shifts, self._shifts[0])
+            #     # fine as long as the line has no phase
+            #     self._shifts = np.append(self._shifts, self._shifts[0])
        
 
             self.loglikelihood, self.expected_counts = \
@@ -254,8 +254,19 @@ class CustomSignal(xpsi.Signal):
             """ Synthesise data set.
     
             """
+
             self.expected_background_counts = 0.
             self.empty_background = np.zeros(np.asarray(self._signals[0]).shape)
+            # print(exposure_time)
+            # print(self._data.phases)
+            # print(self._signals)
+            # print(self._phases)
+            # print(self._shifts)
+            # print(self.expected_background_counts)
+            # print(self.empty_background)
+            # print(seed)
+            
+            
             
             self._expected_counts, synthetic, scale_background = _synthesise(exposure_time,
                                                                        self._data.phases,

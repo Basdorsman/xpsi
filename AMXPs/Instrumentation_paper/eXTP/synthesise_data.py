@@ -73,7 +73,7 @@ try: #try to get parameters from shell input
 except:
     atmosphere_type = "A"
     n_params = "5"
-    machine = "local"
+    machine = "snellius"
     poisson_noise = True
     poisson_seed = 42
     scenario = 'small_r' # 'kajava', 'literature
@@ -96,8 +96,8 @@ channel_low = 0
 channel_hi = 1180
 
 instrument = SFA.from_response_files(
-    RMF_file = '../instrument_files/eXTP_Response_Files_v20241125/eXTP_Response_Files_v20241125/eXTP_SFA_v20241125.rmf',
-    ARF_file = '../instrument_files/eXTP_Response_Files_v20241125/eXTP_Response_Files_v20241125/eXTP_SFA_v20241125.arf',
+    RMF_file = '../instrument_files/eXTP_Response_Files_v20241125/eXTP_SFA_v20241125.rmf',
+    ARF_file = '../instrument_files/eXTP_Response_Files_v20241125/eXTP_SFA_v20241125.arf',
     max_detection_channel = channel_hi,
     max_input = 2460)
 

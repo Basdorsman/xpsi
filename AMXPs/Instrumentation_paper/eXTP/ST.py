@@ -220,8 +220,8 @@ class analysis(object):
     def set_instrument(self):
         incident_channels = 2460
         self.instrument = SFA.from_response_files(
-            RMF_file = '../instrument_files/eXTP_Response_Files_v20241125/eXTP_Response_Files_v20241125/eXTP_SFA_v20241125.rmf',
-            ARF_file = '../instrument_files/eXTP_Response_Files_v20241125/eXTP_Response_Files_v20241125/eXTP_SFA_v20241125.arf',
+            RMF_file = '../instrument_files/eXTP_Response_Files_v20241125/eXTP_SFA_v20241125.rmf',
+            ARF_file = '../instrument_files/eXTP_Response_Files_v20241125/eXTP_SFA_v20241125.arf',
             max_detection_channel = self.channel_hi,
             max_input = incident_channels)
         

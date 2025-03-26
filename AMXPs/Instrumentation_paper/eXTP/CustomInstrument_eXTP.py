@@ -155,8 +155,8 @@ if __name__ == '__main__':
     incident_channels = 2460
     
     instrument = SFA.from_response_files(
-        RMF_file = '../instrument_files/eXTP_Response_Files_v20241125/eXTP_Response_Files_v20241125/eXTP_SFA_v20241125.rmf',
-        ARF_file = '../instrument_files/eXTP_Response_Files_v20241125/eXTP_Response_Files_v20241125/eXTP_SFA_v20241125.arf',
+        RMF_file = '../instrument_files/eXTP_Response_Files_v20241125/eXTP_SFA_v20241125.rmf',
+        ARF_file = '../instrument_files/eXTP_Response_Files_v20241125/eXTP_SFA_v20241125.arf',
         max_detection_channel = 1180,
         max_input = incident_channels)
     

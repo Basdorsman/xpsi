@@ -220,8 +220,8 @@ class analysis(object):
     def set_instrument(self):
         incident_channels = 2460
         self.instrument = SFA.from_response_files(
-            RMF_file = '../instrument_files/eXTP_Response_Files_v20241125/eXTP_SFA_v20241125.rmf',
-            ARF_file = '../instrument_files/eXTP_Response_Files_v20241125/eXTP_SFA_v20241125.arf',
+            RMF_file = this_directory+'/../instrument_files/eXTP_Response_Files_v20241125/eXTP_SFA_v20241125.rmf',
+            ARF_file = this_directory+'/../instrument_files/eXTP_Response_Files_v20241125/eXTP_SFA_v20241125.arf',
             max_detection_channel = self.channel_hi,
             max_input = incident_channels)
         
@@ -399,8 +399,10 @@ class analysis(object):
         
         
 
-        
-        true_logl = 2.6711767606e+08
+        if self.bkg == 'disk':
+            true_logl = 2.6711767606e+08
+        elif self.bkg == 'marginalise':
+            true_logl = -1.8233279771e+05
         self.true_logl = true_logl
     
     def __call__(self):
@@ -563,7 +565,7 @@ class analysis(object):
             
             
 if __name__ == '__main__':
-    Analysis = analysis('local', 'sample', 'disk', sampler='multi', scenario='small_r')
+    Analysis = analysis('local', 'sample', 'marginalise', sampler='multi', scenario='small_r')
     Analysis()
 
     # expected = Analysis.signal.expected_counts

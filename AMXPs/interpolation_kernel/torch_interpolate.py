@@ -16,7 +16,7 @@ import xpsi
 np.random.seed(42)
 
 equidistant=True
-system='local'
+system='snellius'
 interpolation_mode='bilinear'
 
 # Move tensors to GPU if available
@@ -195,7 +195,7 @@ tbb = 0.0015 #0.001 - 0.0031 tbb[150*9*31*2 (or 3)]
 tau = 1.01  #0.5 - 3.55 te[150*9*5]
 local_vars = np.asarray([[te, tbb, tau]])
 
-n_repeats=100
+n_repeats=1000
 t__e = np.arange(40.0, 202.0, 4.0) #actual range is 40-200 imaginaty units, ~20-100 keV (Te(keV)*1000/511keV is here)
 t__bb = np.arange(0.001, 0.0031, 0.0002) #this one is non-physical, we went for way_to_low Tbbs here, I will most probably delete results from too small Tbbs. This is Tbb(keV)/511keV, so these correspond to 0.07 - 1.5 keV, but our calculations don't work correctly for Tbb<<0.5 keV
 tau__t = np.arange(0.5, 3.55, 0.1) 

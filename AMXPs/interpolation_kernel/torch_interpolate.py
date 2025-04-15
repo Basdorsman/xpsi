@@ -16,7 +16,7 @@ import xpsi
 np.random.seed(42)
 
 equidistant=True
-system='snellius'
+system='local'
 interpolation_mode='bilinear'
 
 # Move tensors to GPU if available

@@ -184,7 +184,7 @@ examples/examples_modeling_tutorial/run/*
 examples/examples_modeling_tutorial/outputs/*
 AMXPs/J1808_synthetic/local_runs/*
 AMXPs/J1808_synthetic/snellius_runs/*
-
+AMXPs/J1808_synthetic/postprocessing/Notebooks/*
 
 # any figures
 *.png

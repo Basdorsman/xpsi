@@ -10,6 +10,10 @@ import xpsi
 import math
 from scipy.stats import truncnorm
 from xpsi.global_imports import gravradius, _2pi
+import os
+import sys
+this_directory = os.path.dirname(os.path.abspath(__file__))
+sys.path.append(this_directory+'/../../')
 from helper_functions import get_keV_from_log10_Kelvin
 
 class CustomPrior(xpsi.Prior):

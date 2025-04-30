@@ -35,7 +35,6 @@ from xpsi.tools.synthesise import synthesise_exposure as _synthesise # no scalin
 
 
 from CustomPrior import CustomPrior
-# from CustomInstrument_TACO import TACO
 from CustomInstrument_LAD6 import LAD6 
 
 sys.path.append(this_directory+'/../')
@@ -73,7 +72,7 @@ try: #try to get parameters from shell input
 except:
     atmosphere_type = "A"
     n_params = "5"
-    machine = "local"
+    machine = "snellius"
     poisson_noise = True
     poisson_seed = 42
     scenario = 'small_r' # 'kajava', 'literature

@@ -201,8 +201,8 @@ class analysis(object):
             self.file_atmosphere = '/home/bas/Documents/Projects/x-psi/model_datas/bobrikova/Bobrikova_compton_slab.npz'
             self.file_interstellar = "/home/bas/Documents/Projects/x-psi/xpsi-bas-fork/AMXPs/model_data/n_H/TBnew/tbnew0.14.txt"
         elif self.machine == 'snellius' or 'helios':
-            self.file_atmosphere = self.this_directory + '/../model_data/Bobrikova_compton_slab.npz'
-            self.file_interstellar = self.this_directory + "/../model_data/interstellar/tbnew/tbnew0.14.txt"
+            self.file_atmosphere = self.this_directory + '/../../model_data/Bobrikova_compton_slab.npz'
+            self.file_interstellar = self.this_directory + "/../../model_data/interstellar/tbnew/tbnew0.14.txt"
         if self.scenario == 'kajava' or self.scenario == 'literature' or self.scenario == '2019' or self.scenario =='2022':
             self.file_bkg = self.this_directory + f'/../J1808_NICER/data/disk_2019.txt'
         # self.file_bkg = self.this_directory + '/../model_data/synthetic/diskbb_background.txt'
@@ -364,7 +364,7 @@ class analysis(object):
         else:
             self.disk = None
             
-    def set_line(self):       
+    def set_line(self):
         if 'line' in self.bkg:
             from GaussianLine import GaussianLine
             line_values = {}
@@ -571,7 +571,7 @@ class analysis(object):
             
             
 if __name__ == '__main__':
-    Analysis = analysis('local', 'sample', 'disk', sampler='multi', scenario='small_r', support_factor=None)
+    Analysis = analysis('snellius', 'sample', 'disk', sampler='multi', scenario='small_r', support_factor=None)
     Analysis()
 
     expected = Analysis.signal.expected_counts

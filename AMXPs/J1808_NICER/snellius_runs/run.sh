@@ -8,15 +8,15 @@ export live_points=200
 export max_iter=1
 export run_type=sample
 export bkg=marginalise
-export support_factor=100
+export support_factor=1000
 export scenario=2019
 export poisson_noise=True
 export poisson_seed=42
 export fix_mass=False
 export sampler=multi
 export LABEL=test_analysis
-export eos_informed=True
+export eos_informed=False
 
 cd $HOME/xpsi-bas-fork/AMXPs/J1808_NICER/
-python ST.py
+python ST_U.py
 cd $HOME/xpsi-bas-fork/AMXPs/J1808_NICER/snellius_runs/

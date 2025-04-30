@@ -373,3 +373,39 @@ def shift_phase_data(phase_edges, bolometric_data, start_phase_index):
     shifted_bolometric_data = np.concatenate([bolometric_data[start_phase_index:], bolometric_data[:start_phase_index]])
 
     return shifted_phases_edges, shifted_bolometric_data
+
+
+def extract_parameters(file_path, param_type='MAP'):
+    parameters = []
+    log_evidence = None
+    uncertainty = None
+
+    with open(file_path, 'r') as file:
+        # Read the file line by line
+        for line in file:
+            # Check for the line containing log-evidence and uncertainty
+            if line.startswith("Nested Sampling Global Log-Evidence"):
+                parts = line.split(":")[1].split("+/-")
+                log_evidence = float(parts[0].strip())
+                uncertainty = float(parts[1].strip())
+                continue
+
+            # Determine the section to read based on param_type
+            if param_type.upper() == 'ML' and line.strip() == "Maximum Likelihood Parameters":
+                break
+            elif param_type.upper() == 'MAP' and line.strip() == "MAP Parameters":
+                break
+
+        # Skip the "Dim No.        Parameter" line
+        file.readline()
+
+        # Read the parameters until an empty line
+        for line in file:
+            if not line.strip():
+                break
+            parts = line.split()
+            if len(parts) >= 2:
+                parameter_value = float(parts[1])
+                parameters.append(parameter_value)
+
+    return parameters, log_evidence, uncertainty

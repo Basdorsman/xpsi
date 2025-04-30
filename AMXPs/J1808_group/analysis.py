@@ -444,18 +444,19 @@ class analysis(object):
 
 
         if self.scenario == 'small_r':
-            if self.poisson_seed == 42:
-                true_logl = 7.9264371582e+07 # precise values 
-            if self.poisson_seed == 0:
-                true_logl = 7.9283242548e+07
-            if self.poisson_seed == 1:
-                true_logl = 7.9250709759e+07
-            if self.poisson_seed == 2:
-                true_logl = 7.9240208362e+07
-            if self.poisson_seed == 3:
-                true_logl = 7.9278427079e+07
-            if self.poisson_seed == 4:
-                true_logl = 7.9252664294e+07
+            true_logl = 5.6527339678e+07
+            # if self.poisson_seed == 42:
+            #     true_logl = 7.9264371582e+07 # precise values 
+            # if self.poisson_seed == 0:
+            #     true_logl = 7.9283242548e+07
+            # if self.poisson_seed == 1:
+            #     true_logl = 7.9250709759e+07
+            # if self.poisson_seed == 2:
+            #     true_logl = 7.9240208362e+07
+            # if self.poisson_seed == 3:
+            #     true_logl = 7.9278427079e+07
+            # if self.poisson_seed == 4:
+            #     true_logl = 7.9252664294e+07
 
 
         if self.scenario == 'kajava':

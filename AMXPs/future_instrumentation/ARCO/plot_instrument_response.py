@@ -84,9 +84,12 @@ plt.yscale('log')
 
 ARF = np.sum(responses_cutoff, axis=0)
 fig, ax = plt.subplots()
-ax.plot(incident_channel_edges_cutoff[:-1], ARF)
+ax.plot(incident_channel_edges_cutoff[:-1], ARF, label='4mods',marker='x')
+ax.plot(incident_channel_edges_cutoff[:-1], ARF*6/4, label='6mods',marker='x')
 ax.set_xscale('log')
 
+ax.set_xlim([5,7])
 ax.set_ylabel('presumably Eff. Area (cm2)')
 ax.set_xlabel('E incident (keV)')
+ax.legend()
 

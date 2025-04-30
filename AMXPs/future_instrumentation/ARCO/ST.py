@@ -364,10 +364,9 @@ class analysis(object):
         else:
             self.disk = None
             
-    def set_line(self):
-        from GaussianLine import GaussianLine
-              
+    def set_line(self):       
         if 'line' in self.bkg:
+            from GaussianLine import GaussianLine
             line_values = {}
             
             line_bounds = dict(

@@ -11,11 +11,12 @@ from xpsi.global_imports import gravradius
 import numpy as np
 
 class parameter_values(object):
-    def __init__(self, scenario, bkg, fix_mass=False, ew=False):
+    def __init__(self, scenario, bkg, fix_mass=False, ew=False, polarization=False):
         self.scenario = scenario
         self.bkg = bkg
         self.fix_mass = fix_mass
         self.ew = ew
+        self.polarization = polarization
 
 
         if self.scenario == 'kajava':
@@ -46,6 +47,8 @@ class parameter_values(object):
                 self.diskbb_T_log10_K = get_T_in_log10_Kelvin(self.diskbb_T_keV)
                 self.R_in = 55 # 20 #  1 #  km #  for very small diskBB background
             self.column_density = 1.13 #10^21 cm^-2
+            
+            
 
         if self.scenario =='literature':
             self.mass = 1.4
@@ -129,15 +132,17 @@ class parameter_values(object):
                 self.diskbb_T_log10_K = get_T_in_log10_Kelvin(self.diskbb_T_keV)
                 self.R_in = 0.308122224729265000E+02 # 24#   # 20 #  1 #  km #  for very small diskBB background
             self.column_density = 1.17 #10^21 cm^-2
-        
+            if self.polarization:
+                self.spin_axis_angle = 0.0
         
         
     def p(self):
         self.p = [
         self.mass if not self.fix_mass else None,  # gravitational mass
         self.radius,  # coordinate equatorial radius
-        self.distance,  # earth distance in kpc
+        self.distance,  # earth distance in kpc.
         self.cos_i,  # cosine of earth inclination
+        self.spin_axis_angle if self.polarization else None, #Spin axis position angle measured from the north counterclock- wise to the projection of the rotation axis on the plane of the sky [in radians],
         self.phase_shift,  # phase of hot region
         self.super_colatitude,  # colatitude of center of superseding region
         self.super_radius,  # angular radius of superseding region
@@ -157,7 +162,7 @@ class parameter_values(object):
         self.p = [x for x in self.p if x is not None]
         
         
-        #print('parameter vector:', self.p)
+        # print('parameter vector length:', len(self.p))
         return self.p
         
     def names(self):

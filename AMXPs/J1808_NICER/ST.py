@@ -172,8 +172,11 @@ class analysis(object):
         t_check = time.time()
         #self.likelihood(self.p, reinitialise=True)
         
-        # print('parameters:', self.p)
+        
+        print('parameters:', self.p)
         # print(self.likelihood)
+
+
 
         self.likelihood.check(None, [self.true_logl], 1.0e-4, physical_points=[self.p], force_update=True)
         print('Likelihood check took {:.3f} seconds'.format((time.time()-t_check)))

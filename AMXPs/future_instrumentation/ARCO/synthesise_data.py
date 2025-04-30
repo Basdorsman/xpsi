@@ -35,7 +35,7 @@ from xpsi.tools.synthesise import synthesise_exposure as _synthesise # no scalin
 
 
 from CustomPrior import CustomPrior
-from CustomInstrument_TACO import TACO
+# from CustomInstrument_TACO import TACO
 from CustomInstrument_LAD6 import LAD6 
 
 sys.path.append(this_directory+'/../')

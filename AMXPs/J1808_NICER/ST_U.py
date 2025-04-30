@@ -354,14 +354,14 @@ class analysis(object):
             self.support = None
         else:
             support_factor = float(support_factor)
-            bg_spectrum = np.loadtxt(self.file_bkg)
+            self.bg_spectrum = np.loadtxt(self.file_bkg)
     
             allowed_deviation_factor = 1. + support_factor  # 1.00005 is Roughly 1 count difference given max count rate of 0.8/s and exp. time of 1.3e5
     
-            support = np.zeros((len(bg_spectrum), 2), dtype=np.double)
-            support[:,0] = bg_spectrum/allowed_deviation_factor #lower limit
+            support = np.zeros((len(self.bg_spectrum), 2), dtype=np.double)
+            support[:,0] = self.bg_spectrum/allowed_deviation_factor #lower limit
             support[support[:,0] < 0.0, 0] = 0.0
-            support[:,1] = bg_spectrum*allowed_deviation_factor #upper limit
+            support[:,1] = self.bg_spectrum*allowed_deviation_factor #upper limit
     
             for i in range(support.shape[0]):
                 if support[i,1] == 0.0:

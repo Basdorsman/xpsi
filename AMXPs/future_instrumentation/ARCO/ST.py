@@ -215,7 +215,7 @@ class analysis(object):
         self.channel_low = 0
         self.channel_hi = 300
         self.phases_space = np.linspace(0.0, 1.0, 33)
-        self.exposure_time = 1e5 #1.32366e5 #1e5
+        self.exposure_time = 1.32366e5 #1e5
         
         settings = dict(counts = np.loadtxt(self.file_pulse_profile, dtype=np.double),
                         channels=np.arange(self.channel_low,self.channel_hi),

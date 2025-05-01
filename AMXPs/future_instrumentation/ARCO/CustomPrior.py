@@ -42,7 +42,9 @@ class CustomPrior(xpsi.Prior):
 
     """
 
-    __derived_names__ = ['compactness', 'T_in_keV', 'tbb_keV', 'te_keV', 'inclination_deg', 'colatitude_deg', 'radius_deg']#, 'phase_separation',] , 'T_else_keV'
+#    __derived_names__ = ['compactness', 'T_in_keV', 'tbb_keV', 'te_keV', 'inclination_deg', 'colatitude_deg', 'radius_deg']#, 'phase_separation',] , 'T_else_keV'
+    __derived_names__ = ['compactness', 'tbb_keV', 'te_keV', 'inclination_deg', 'colatitude_deg', 'radius_deg', 'T_in_keV', 'N_norm']# need nnorm for disk line but not for disk 'N_norm']#, 'phase_separation',] , 'T_else_keV' 
+
     __draws_from_support__ = 4 #10^x
     
     def __init__(self, scenario, bkg, fix_mass, *args, **kwargs):
@@ -87,15 +89,15 @@ class CustomPrior(xpsi.Prior):
         if mu < 1.0:
             return -np.inf
         
-        # if 'disk' in self.bkg:
+        if 'disk' in self.bkg:
         
-        #     # inner disk must be smaller than corotation radius, otherwise we enter (weak) propeller regime
-        #     if not self.parameters['R_in'] < 1.49790e3*ref['mass']**(1/3)*ref['frequency']**(-2/3): # 1.49790e3 = (G*M_sol/4pi^2)^(1/3) in km
-        #         return -np.inf
+            # inner disk must be smaller than corotation radius, otherwise we enter (weak) propeller regime
+            if not self.parameters['R_in'] < 1.49790e3*ref['mass']**(1/3)*ref['frequency']**(-2/3): # 1.49790e3 = (G*M_sol/4pi^2)^(1/3) in km
+                return -np.inf
     
-        #     # inner disk must be larger than neutron star equatorial radius
-        #     if not self.parameters['R_in'] > ref['radius']:
-        #         return -np.inf
+            # inner disk must be larger than neutron star equatorial radius
+            if not self.parameters['R_in'] > ref['radius']:
+                return -np.inf
         
         # ref = self.parameters # redefine shortcut
 
@@ -165,14 +167,17 @@ class CustomPrior(xpsi.Prior):
         else:
             raise(NotImplementedError)
 
-        if 'disk' in self.bkg:
-            p += [get_keV_from_log10_Kelvin(ref['T_in'])]
         p += [ref['super_tbb']*511]
         p += [ref['super_te']*511/1000]
         
         p += [np.arccos(ref['cos_inclination'])*180/np.pi]
         p += [ref['super_colatitude']*180/np.pi]
         p += [ref['super_radius']*180/np.pi]
+
+
+        if 'disk' in self.bkg:
+            p += [get_keV_from_log10_Kelvin(ref['T_in'])]
+
 
         return p
 

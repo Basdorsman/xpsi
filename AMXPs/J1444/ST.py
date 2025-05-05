@@ -350,7 +350,7 @@ class analysis(object):
                   'sqrt_num_cells': self.sqrt_num_cells,
                   'min_sqrt_num_cells': 10,
                   'max_sqrt_num_cells': 128,
-                  'num_leaves': 30, #self.num_leaves, # 50 avoids phase shift error
+                  'num_leaves': 50, #self.num_leaves,  #50 avoids interp error.
                   'num_rays': self.num_rays,
                   'atm_ext':'Num5D'}
                   #'prefix': 'p'}

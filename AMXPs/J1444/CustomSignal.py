@@ -75,17 +75,43 @@ class CustomSignal_gaussian(xpsi.Signal):
 
         #This is for 1 spot:
         hot = photosphere.surface
+        # print('photosphere.surface.phases_in_cycles[0]',photosphere.surface.phases_in_cycles[0])
+        # print('photosphere.hot.phases_in_cycles[0]',photosphere.hot.phases_in_cycles[0])
 
         # phase_mod = primary.phases_in_cycles
         # phase_mod = photosphere.hot.phases_in_cycles[0]
         phase_mod = hot.phases_in_cycles[0]
         def shift_phase(phi,shift):
+            # if shift == 0: # because then phi=1 should remain phi=1, not phi=0. otherwise interpolation outside of interval.
+            #     return phi
             return (phi + shift) % 1 
+
+        def extend(x_base, y_base):
+            # stick a duplicate to the left and right to allow interpolation at the range 0 to 1 after a phase shift between -0.25 to 0.75 was applied
+            x_extended = np.concatenate([
+                x_base[:-1] - 1,   # wraparound left
+                x_base,       # original
+                x_base[1:] + 1    # wraparound right
+                ])
+            y_extended = np.concatenate([
+                y_base[:-1],
+                y_base,
+                y_base[1:]
+                ])
+            return x_extended, y_extended
+        
+
+
+        # print('phase_mod:',phase_mod)
 
         shifts = [h['phase_shift'] for h in hot.objects] 
         self.shifts = np.array(shifts)
+  
         phase1 = shift_phase(phase_mod,self._shifts[0]) # underscore actually avoids instrumental phase shift here.
-        # phase1 = shift_phase(phase_mod,signals[0][0]._shifts[0]) # this would always take the first signal, but above code takes self (for IXPE IQU signals it makes no difference).
+        # print('phase 1 new:',phase1)
+        #phase1 = shift_phase(phase_mod,signals[0][0]._shifts[0]) # this would always take the first signal, but above code takes self (for IXPE IQU signals it makes no difference).
+        #print('phase 1 old (NICER):',phase1)
+        
         
         StokesI = photosphere.signal[0][0]
         StokesQ = photosphere.signalQ[0][0]
@@ -101,7 +127,8 @@ class CustomSignal_gaussian(xpsi.Signal):
         le = find_idx(signal_energies,2.0)
         he = find_idx(signal_energies,8.0)                 
 
-        phase_data = get_mids_from_edges(self._data.phases)
+  
+        #phase_data = get_mids_from_edges(self._data.phases) # not sure if this would also work.. I thought it did but now I go with phase_IXPE and phase_IXPE_pulse
 
         if self.isI: # If using just stokesI, you could argue it would be better to include the instrument response here also
             Imod1 = np.zeros((len(phase1)))
@@ -111,7 +138,11 @@ class CustomSignal_gaussian(xpsi.Signal):
             Imod1 = 1/2*Imod1
 
             # interpolate to observed phases
-            I1i = interp1d(phase1, Imod1, kind='linear')
+            I1i = interp1d(*extend(phase1, Imod1), kind='linear')
+            #I1i = interp1d(phase1, Imod1, kind='linear')
+            # print('phase1 =',phase1)
+            phase_data = self._data.phase_IXPE_pulse
+            #print('phase_IXPE_pulse =',self._data.phase_IXPE_pulse)
             sign1 = I1i(phase_data)
         
         elif self.isQ:
@@ -124,7 +155,13 @@ class CustomSignal_gaussian(xpsi.Signal):
             Imod1 = 1/2*Imod1
             Qmod1 = 1/2*Qmod1
 
-            Q1i = interp1d(phase1, Qmod1, kind='linear')
+            #Q1i = interp1d(phase1, Qmod1, kind='linear')
+            Q1i = interp1d(*extend(phase1, Qmod1), kind='linear')
+            
+            # print('phase1 =',phase1)
+            #print('Qmod1 =', Qmod1)
+            phase_data = self._data.phase_IXPE  
+            #print('phase_IXPE_Q=',self._data.phase_IXPE)
             sign1 = Q1i(phase_data)
         elif self.isU:
             
@@ -136,7 +173,12 @@ class CustomSignal_gaussian(xpsi.Signal):
             Imod1 = 1/2*Imod1
             Umod1 = 1/2*Umod1 
                             
-            U1i = interp1d(phase1, Umod1, kind='linear')
+            #U1i = interp1d(phase1, Umod1, kind='linear')
+            U1i = interp1d(*extend(phase1, Umod1), kind='linear')
+            # print('phase1 =',phase1)
+            #print('Umod1 =', Umod1)
+            phase_data = self._data.phase_IXPE  
+            #print('phase_IXPE_U = ',self._data.phase_IXPE)
             sign1 = U1i(phase_data)
 
 

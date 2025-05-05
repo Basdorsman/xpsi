@@ -72,7 +72,7 @@ try: #try to get parameters from shell input
 except:
     atmosphere_type = "A"
     n_params = "5"
-    machine = "snellius"
+    machine = "local"
     poisson_noise = True
     poisson_seed = 42
     scenario = 'small_r' # 'kajava', 'literature
@@ -83,7 +83,7 @@ pv = parameter_values(scenario, bkg)
 p = pv.p()
 
 
-exposure_time=1e5
+exposure_time=1.32366e5 #1e5
     
 
 

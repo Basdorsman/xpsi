@@ -42,5 +42,6 @@ path_accreting = '/home/bas/Documents/Projects/x-psi/model_datas/bobrikova/Bobri
 # print(buf_accreting[1993630])
 
 with np.load(path_accreting) as data:
-    atmosphere = data['arr_0.npy']
+    # print(data.__dict__)
+    atmosphere = data['NSX.npy']
 

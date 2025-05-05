@@ -169,8 +169,8 @@ class analysis(object):
 
         print(f'eos_informed: {self.eos_informed}')
 
-        if os.environ.get('eos_informed') == None or os.environ.get('eos_informed') =='None':
-            print('eos_informed is not in environment variables, using passed argument.')
+        if os.environ.get('polarization') == None or os.environ.get('polarization') =='None':
+            print('polarization is not in environment variables, using passed argument.')
             self.polarization = polarization
         else:
              self.polarization = os.environ.get('polarization')
@@ -178,7 +178,7 @@ class analysis(object):
             self.polarization = True
         else:
             self.polarization = False
-        
+        print(f'polarization: {self.polarization}')
 
         self.pv = parameter_values(self.scenario, self.bkg, self.fix_mass, polarization=self.polarization)
         self.file_locations()
@@ -268,8 +268,11 @@ class analysis(object):
         fname_ixpedata = this_directory+"/ixpe_products/ixpeobssimdata_scenarioB/pcube_10bin/model_amsp_xpsi"
         fname_ixpedata_pulse = this_directory+"/ixpe_products/ixpeobssimdata_scenarioB/pcube_20bin/model_amsp_xpsi"
         
+        
+        
         phase_IXPE, Idat1, qn, un, Iderr1, qnerr, unerr, PD, PDerr, keVdat, MDP99 = readData_pcube_ebin(fname_ixpedata, NPhadat=10)
         phase_IXPE_pulse, Idat2, qn2, un2, Iderr2, qnerr2, unerr2, PD2, PDerr2, keVdat2, MDP99_2 = readData_pcube_ebin(fname_ixpedata_pulse, NPhadat=20)
+        
         
         self.IXPE_I_data = xpsi.Data([Idat2[:,0]/np.max(Idat2[:,0])],
                                channels=np.arange(0, 1),
@@ -289,7 +292,10 @@ class analysis(object):
                                first=0,
                                last=0,
                                exposure_time=1.0)
-                               
+        
+        self.IXPE_Q_data.phase_IXPE = phase_IXPE
+        self.IXPE_U_data.phase_IXPE = phase_IXPE
+        self.IXPE_I_data.phase_IXPE_pulse = phase_IXPE_pulse
         self.IXPE_I_data.errors, self.IXPE_Q_data.errors, self.IXPE_U_data.errors = Iderr2/np.max(Idat2[:,0]), qnerr, unerr
                 
             
@@ -344,7 +350,7 @@ class analysis(object):
                   'sqrt_num_cells': self.sqrt_num_cells,
                   'min_sqrt_num_cells': 10,
                   'max_sqrt_num_cells': 128,
-                  'num_leaves': self.num_leaves,
+                  'num_leaves': 30, #self.num_leaves, # 50 avoids phase shift error
                   'num_rays': self.num_rays,
                   'atm_ext':'Num5D'}
                   #'prefix': 'p'}
@@ -470,6 +476,18 @@ class analysis(object):
             self.set_data_IXPE()
             self.set_instrument_IXPE()
             self.signals = [[self.signal_NICER],] # to apply disk correctly to signal, NICER must be first element.
+            signalI = CustomSignal_gaussian(data = self.IXPE_I_data,
+                                            instrument = self.IXPE,
+                                            interstellar = self.interstellar,
+                                            workspace_intervals = 1000,
+                                            cache = False,
+                                            epsrel = 1.0e-8,
+                                            epsilon = 1.0e-3,
+                                            sigmas = 10.0,
+                                            support = None,
+                                            stokes="I")
+            self.signals[0].append(signalI)
+
             signalQ = CustomSignal_gaussian(data = self.IXPE_Q_data,
                                     instrument = self.IXPE,
                                     interstellar = self.interstellar,
@@ -566,7 +584,8 @@ class analysis(object):
             
         if self.scenario == 'small_r':
             if self.polarization:
-                true_logl = 7.9265139733e+07 # with IXPE
+                true_logl = 7.9265139733e+07 # with IXPE qu
+                true_logl = 7.9265007576e+07 # with IXPE iqu
             elif not self.polarization:
                 true_logl = 7.9265215141e+07 #without IXPE
         self.true_logl = true_logl
@@ -575,7 +594,7 @@ class analysis(object):
         
         # start call with a likelihood check
         t_check = time.time()
-        self.likelihood.check(None, [self.true_logl], 1.0e-4, physical_points=[self.p], force_update=True)
+        self.likelihood.check(None, [self.true_logl], 1.0e-6, physical_points=[self.p], force_update=True)
         print('Likelihood check took {:.3f} seconds'.format((time.time()-t_check)))
         
         

@@ -84,7 +84,7 @@ class CustomSignal_gaussian(xpsi.Signal):
         def shift_phase(phi,shift):
             # if shift == 0: # because then phi=1 should remain phi=1, not phi=0. otherwise interpolation outside of interval.
             #     return phi
-            return (phi + shift) % 1 
+            return (phi + shift) #% 1 
 
         def extend(x_base, y_base):
             # stick a duplicate to the left and right to allow interpolation at the range 0 to 1 after a phase shift between -0.25 to 0.75 was applied
@@ -127,9 +127,6 @@ class CustomSignal_gaussian(xpsi.Signal):
         le = find_idx(signal_energies,2.0)
         he = find_idx(signal_energies,8.0)                 
 
-  
-        #phase_data = get_mids_from_edges(self._data.phases) # not sure if this would also work.. I thought it did but now I go with phase_IXPE and phase_IXPE_pulse
-
         if self.isI: # If using just stokesI, you could argue it would be better to include the instrument response here also
             Imod1 = np.zeros((len(phase1)))
             for e in range(le,he):
@@ -137,12 +134,12 @@ class CustomSignal_gaussian(xpsi.Signal):
                 Imod1[:] = Imod1[:] + (StokesI[e,:]+StokesI[e+1,:])*(signal_energies[e+1]-signal_energies[e])	
             Imod1 = 1/2*Imod1
 
+            extend_p, extend_I = extend(phase1, Imod1)        
+        
+
             # interpolate to observed phases
-            I1i = interp1d(*extend(phase1, Imod1), kind='linear')
-            #I1i = interp1d(phase1, Imod1, kind='linear')
-            # print('phase1 =',phase1)
+            I1i = interp1d(extend_p, extend_I, kind='linear')          
             phase_data = self._data.phase_IXPE_pulse
-            #print('phase_IXPE_pulse =',self._data.phase_IXPE_pulse)
             sign1 = I1i(phase_data)
         
         elif self.isQ:
@@ -155,13 +152,10 @@ class CustomSignal_gaussian(xpsi.Signal):
             Imod1 = 1/2*Imod1
             Qmod1 = 1/2*Qmod1
 
-            #Q1i = interp1d(phase1, Qmod1, kind='linear')
-            Q1i = interp1d(*extend(phase1, Qmod1), kind='linear')
-            
-            # print('phase1 =',phase1)
-            #print('Qmod1 =', Qmod1)
+            extend_p, extend_Q = extend(phase1, Qmod1) 
+            extend_p, extend_I = extend(phase1, Imod1) 
+            Q1i = interp1d(extend_p, extend_Q, kind='linear')
             phase_data = self._data.phase_IXPE  
-            #print('phase_IXPE_Q=',self._data.phase_IXPE)
             sign1 = Q1i(phase_data)
         elif self.isU:
             
@@ -172,18 +166,15 @@ class CustomSignal_gaussian(xpsi.Signal):
                 Umod1[:] = Umod1[:] + (StokesU[e,:]+StokesU[e+1,:])*(signal_energies[e+1]-signal_energies[e])
             Imod1 = 1/2*Imod1
             Umod1 = 1/2*Umod1 
-                            
-            #U1i = interp1d(phase1, Umod1, kind='linear')
-            U1i = interp1d(*extend(phase1, Umod1), kind='linear')
-            # print('phase1 =',phase1)
-            #print('Umod1 =', Umod1)
+            extend_p, extend_U = extend(phase1, Umod1)
+            extend_p, extend_I = extend(phase1, Imod1) 
+            U1i = interp1d(extend_p, extend_U, kind='linear')
             phase_data = self._data.phase_IXPE  
-            #print('phase_IXPE_U = ',self._data.phase_IXPE)
             sign1 = U1i(phase_data)
 
 
         if self.isQ or self.isU:
-            I1i = interp1d(phase1, Imod1, kind='linear')
+            I1i = interp1d(extend_p, extend_I, kind='linear')
             Isign1 = I1i(phase_data) 
 
             signal_dphase = np.where(Isign1==0.0, 0.0, sign1/Isign1)

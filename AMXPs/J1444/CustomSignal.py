@@ -77,23 +77,23 @@ class CustomSignal_gaussian(xpsi.Signal):
         hot = photosphere.surface
         phase_mod = hot.phases_in_cycles[0]
         def shift_phase(phi,shift):
-            # if shift == 0: # because then phi=1 should remain phi=1, not phi=0. otherwise interpolation outside of interval.
-            #     return phi
+            if shift == 0: # because then phi=1 should remain phi=1, not phi=0. otherwise interpolation outside of interval.
+                return phi
             return (phi + shift) % 1 
 
-        # def extend(x_base, y_base):
-        #     # stick a duplicate to the left and right to allow interpolation at the range 0 to 1 after a phase shift between -0.25 to 0.75 was applied
-        #     x_extended = np.concatenate([
-        #         x_base[:-1] - 1,   # wraparound left
-        #         x_base,       # original
-        #         x_base[1:] + 1    # wraparound right
-        #         ])
-        #     y_extended = np.concatenate([
-        #         y_base[:-1],
-        #         y_base,
-        #         y_base[1:]
-        #         ])
-        #     return x_extended, y_extended
+        def extend(x_base, y_base):
+            # stick a duplicate to the left and right to allow interpolation at the range 0 to 1 after a phase shift between -0.25 to 0.75 was applied
+            x_extended = np.concatenate([
+                x_base[:-1] - 1,   # wraparound left
+                x_base,       # original
+                x_base[1:] + 1    # wraparound right
+                ])
+            y_extended = np.concatenate([
+                y_base[:-1],
+                y_base,
+                y_base[1:]
+                ])
+            return x_extended, y_extended
         
         shifts = [h['phase_shift'] for h in hot.objects] 
         self.shifts = np.array(shifts)
@@ -125,15 +125,17 @@ class CustomSignal_gaussian(xpsi.Signal):
                 Imod1[:] = Imod1[:] + (StokesI[e,:]+StokesI[e+1,:])*(signal_energies[e+1]-signal_energies[e])	
             Imod1 = 1/2*Imod1
 
-            # extend_p, extend_I = extend(phase1, Imod1)        
-        
-
+      
             # interpolate to observed phases
-            # I1i = interp1d(extend_p, extend_I, kind='linear')     
-            I1i = interp1d(phase1, Imod1)
+            extend_p, extend_I = extend(phase1, Imod1)   
+            I1i = interp1d(extend_p, extend_I)     
             
-            # phase_data = self._data.phase_IXPE_pulse
-            phase_data = get_mids_from_edges(self._data.phases)
+            # I1i = interp1d(phase1, Imod1)
+            
+            phase_data = self._data.phase_IXPE_pulse
+            #phase_data = get_mids_from_edges(self._data.phases)
+    
+            
             sign1 = I1i(phase_data)
         
         elif self.isQ:
@@ -146,13 +148,12 @@ class CustomSignal_gaussian(xpsi.Signal):
             Imod1 = 1/2*Imod1
             Qmod1 = 1/2*Qmod1
 
-            # extend_p, extend_Q = extend(phase1, Qmod1) 
-            # extend_p, extend_I = extend(phase1, Imod1) 
-            # Q1i = interp1d(extend_p, extend_Q, kind='linear')
-            Q1i = interp1d(phase1, Qmod1)
-            # phase_data = self._data.phase_IXPE  
-            phase_data = get_mids_from_edges(self._data.phases)
+            extend_p, extend_Q = extend(phase1, Qmod1) 
+            extend_p, extend_I = extend(phase1, Imod1) 
+            Q1i = interp1d(extend_p, extend_Q)
+            # Q1i = interp1d(phase1, Qmod1)
             
+            phase_data = self._data.phase_IXPE 
             sign1 = Q1i(phase_data)
         elif self.isU:
             
@@ -163,22 +164,21 @@ class CustomSignal_gaussian(xpsi.Signal):
                 Umod1[:] = Umod1[:] + (StokesU[e,:]+StokesU[e+1,:])*(signal_energies[e+1]-signal_energies[e])
             Imod1 = 1/2*Imod1
             Umod1 = 1/2*Umod1 
-            # extend_p, extend_U = extend(phase1, Umod1)
-            # extend_p, extend_I = extend(phase1, Imod1) 
-            # U1i = interp1d(extend_p, extend_U, kind='linear')
-            U1i = interp1d(phase1, Umod1)
-            #phase_data = self._data.phase_IXPE  
-            phase_data = get_mids_from_edges(self._data.phases)
             
-            
+            extend_p, extend_U = extend(phase1, Umod1)
+            extend_p, extend_I = extend(phase1, Imod1) 
+            U1i = interp1d(extend_p, extend_U)
+            # U1i = interp1d(phase1, Umod1)
+
+            phase_data = self._data.phase_IXPE           
             sign1 = U1i(phase_data)
 
 
         if self.isQ or self.isU:
-            # I1i = interp1d(extend_p, extend_I, kind='linear')
-            I1i = interp1d(phase1, Imod1)
+            I1i = interp1d(extend_p, extend_I)
+            # I1i = interp1d(phase1, Imod1)
+            
             Isign1 = I1i(phase_data) 
-
             signal_dphase = np.where(Isign1==0.0, 0.0, sign1/Isign1)
         elif self.isI:
             signal_dphase = sign1/np.max(Imod1)

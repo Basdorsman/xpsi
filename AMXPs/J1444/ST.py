@@ -82,7 +82,7 @@ class analysis(object):
             self.num_leaves = int(os.environ.get('num_leaves'))
         except:
             print('num_leaves from environment variables failed, proceeding with default.')
-            self.num_leaves = 50 # 50 avoids interpolation error with polarisation # 30 #128
+            self.num_leaves = 30 # 50 avoids interpolation error with polarisation # 30 #128
             pass
         print(f'num_leaves: {self.num_leaves}')
     

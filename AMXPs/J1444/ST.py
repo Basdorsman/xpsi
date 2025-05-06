@@ -174,7 +174,7 @@ class analysis(object):
             self.polarization = polarization
         else:
              self.polarization = os.environ.get('polarization')
-        if self.polarization == "iq" or self.polarization == "iqu":
+        if self.polarization == "qu" or self.polarization == "iqu":
             self.polarization = self.polarization
         else:
             self.polarization = False
@@ -457,11 +457,12 @@ class analysis(object):
                             epsrel = 1.0e-8,
                             epsilon = 1.0e-3,
                             sigmas = 10.0)
-        
-        if 'qu' in self.polarization:
-            self.set_data_IXPE()
-            self.set_instrument_IXPE()
-            self.signals = [[self.signal_NICER],] # to apply disk correctly to signal, NICER must be first element.
+    
+        if self.polarization:
+            if 'qu' in self.polarization:
+                self.set_data_IXPE()
+                self.set_instrument_IXPE()
+                self.signals = [[self.signal_NICER],] # to apply disk correctly to signal, NICER must be first element.
             if 'i' in self.polarization:
                 signalI = CustomSignal_gaussian(data = self.IXPE_I_data,
                                                 instrument = self.IXPE,

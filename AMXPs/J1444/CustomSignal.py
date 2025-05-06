@@ -131,7 +131,9 @@ class CustomSignal_gaussian(xpsi.Signal):
             # interpolate to observed phases
             # I1i = interp1d(extend_p, extend_I, kind='linear')     
             I1i = interp1d(phase1, Imod1)
-            phase_data = self._data.phase_IXPE_pulse
+            
+            # phase_data = self._data.phase_IXPE_pulse
+            phase_data = get_mids_from_edges(self._data.phases)
             sign1 = I1i(phase_data)
         
         elif self.isQ:
@@ -148,7 +150,9 @@ class CustomSignal_gaussian(xpsi.Signal):
             # extend_p, extend_I = extend(phase1, Imod1) 
             # Q1i = interp1d(extend_p, extend_Q, kind='linear')
             Q1i = interp1d(phase1, Qmod1)
-            phase_data = self._data.phase_IXPE  
+            # phase_data = self._data.phase_IXPE  
+            phase_data = get_mids_from_edges(self._data.phases)
+            
             sign1 = Q1i(phase_data)
         elif self.isU:
             
@@ -163,7 +167,10 @@ class CustomSignal_gaussian(xpsi.Signal):
             # extend_p, extend_I = extend(phase1, Imod1) 
             # U1i = interp1d(extend_p, extend_U, kind='linear')
             U1i = interp1d(phase1, Umod1)
-            phase_data = self._data.phase_IXPE  
+            #phase_data = self._data.phase_IXPE  
+            phase_data = get_mids_from_edges(self._data.phases)
+            
+            
             sign1 = U1i(phase_data)
 
 

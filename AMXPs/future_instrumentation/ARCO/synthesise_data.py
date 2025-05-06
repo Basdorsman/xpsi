@@ -83,7 +83,7 @@ pv = parameter_values(scenario, bkg)
 p = pv.p()
 
 
-exposure_time=1e5
+exposure_time=1.32366e5 #1e5
     
 
 

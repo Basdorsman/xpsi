@@ -166,7 +166,7 @@ class analysis(object):
 
 
         
-        self.likelihood.check(None, [3.9076618561e+08], 1.0e-4, physical_points=[self.p], force_update=True)
+        self.likelihood.check(None, [self.true_logl], 1.0e-4, physical_points=[self.p], force_update=True)
         # self.likelihood.check(None, [-1.8647520691e+07], 1.0e+90, physical_points=[self.p], force_update=True)
         print('Likelihood check took {:.3f} seconds'.format((time.time()-t_check)))
         print(self.likelihood(self.p))
@@ -459,7 +459,7 @@ class analysis(object):
         
             
         if self.scenario == 'small_r':
-            true_logl = 7.9265215639e+07
+            true_logl = 5.3579333062e+08 #7.9265215639e+07
             
 
         self.true_logl = true_logl

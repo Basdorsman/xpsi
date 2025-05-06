@@ -571,7 +571,7 @@ class analysis(object):
             
             
 if __name__ == '__main__':
-    Analysis = analysis('snellius', 'sample', 'disk', sampler='multi', scenario='small_r', support_factor=None)
+    Analysis = analysis('local', 'sample', 'disk', sampler='multi', scenario='small_r', support_factor=None)
     Analysis()
 
     expected = Analysis.signal.expected_counts

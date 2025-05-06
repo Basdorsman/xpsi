@@ -169,7 +169,9 @@ class parameter_values(object):
         # Base list with placeholders for optional items
         self.names = [
             'mass' if not self.fix_mass else None, 
-            'radius', 'distance', 'cos_inclination', 'phase_shift', 
+            'radius', 'distance', 'cos_inclination',
+            'spin_axis_position_angle' if self.polarization else None,
+            'phase_shift', 
             'super_colatitude', 'super_radius', 'super_tbb', 'super_te', 
             'super_tau', 
             'T_in' if self.bkg in ['disk', 'diskline'] else None,
@@ -222,6 +224,9 @@ class parameter_values(object):
             bounds['N'] = (1e35,1e38)
             bounds['N_norm'] = (1e-2,1e1)
         
+        if self.polarization:
+            bounds['spin_axis_position_angle']=(None,None)
+        
         return bounds
 
     def truths(self):
@@ -256,6 +261,9 @@ class parameter_values(object):
             truths['N'] = self.N
             truths['N_norm'] = self.N*1e-37
         
+        if self.polarization:
+            truths['spin_axis_position_angle']=self.spin_axis_angle
+        
         return truths
     
     def labels(self):
@@ -289,6 +297,9 @@ class parameter_values(object):
             labels['sigma'] = r"\sigma\;\mathrm{[keV]}"
             labels['N'] =  r"N\;\mathrm{[photons/cm^2/s]}"
             labels['N_norm'] =  r"N_\mathrm{norm}\;\mathrm{[photons/cm^2/s]}"
+
+        if self.polarization:
+            labels['spin_axis_position_angle']=r"Chi\;\mathrm{[rad]}"
 
         
         return labels

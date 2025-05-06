@@ -38,7 +38,7 @@ class analysis(object):
                  poisson_seed=42, 
                  fix_mass=False, 
                  eos_informed=False, 
-                 polarization=True):
+                 polarization=False):
 
         self.scenario = os.environ.get('scenario')
         if os.environ.get('scenario') == None or os.environ.get('scenario') =='None':
@@ -82,7 +82,7 @@ class analysis(object):
             self.num_leaves = int(os.environ.get('num_leaves'))
         except:
             print('num_leaves from environment variables failed, proceeding with default.')
-            self.num_leaves = 30 #128
+            self.num_leaves = 50 # 50 avoids interpolation error with polarisation # 30 #128
             pass
         print(f'num_leaves: {self.num_leaves}')
     
@@ -169,16 +169,16 @@ class analysis(object):
 
         print(f'eos_informed: {self.eos_informed}')
 
-        if os.environ.get('eos_informed') == None or os.environ.get('eos_informed') =='None':
-            print('eos_informed is not in environment variables, using passed argument.')
+        if os.environ.get('polarization') == None or os.environ.get('polarization') =='None':
+            print('polarization is not in environment variables, using passed argument.')
             self.polarization = polarization
         else:
              self.polarization = os.environ.get('polarization')
-        if self.polarization == "True" or self.polarization == True:
-            self.polarization = True
+        if self.polarization == "qu" or self.polarization == "iqu":
+            self.polarization = self.polarization
         else:
             self.polarization = False
-        
+        print(f'polarization: {self.polarization}')
 
         self.pv = parameter_values(self.scenario, self.bkg, self.fix_mass, polarization=self.polarization)
         self.file_locations()
@@ -193,12 +193,7 @@ class analysis(object):
 
     def file_locations(self):
         self.this_directory = this_directory
-        # if self.scenario == 'kajava' or self.scenario == 'literature':
-        #     if self.poisson_noise:
-        #         self.file_pulse_profile = self.this_directory + f'/data/synthetic_{self.scenario}_seed={self.poisson_seed}_realisation.dat' 
-        #     elif not self.poisson_noise:
-        #         self.file_pulse_profile = self.this_directory + f'/data/J1808_synthetic_{self.scenario}_realisation.dat'
-        
+
         if self.scenario == 'large_r' or self.scenario == 'small_r':
                 self.file_pulse_profile = self.this_directory + f'/NICER_products/synthetic_{self.scenario}_seed={self.poisson_seed}_realisation.dat'
         
@@ -223,7 +218,7 @@ class analysis(object):
             self.file_atmosphere = self.this_directory + '/../model_data/Bobrikova_compton_slab.npz'
             self.file_interstellar = self.this_directory + "/../model_data/interstellar/tbnew/tbnew0.14.txt"
         if self.scenario == 'kajava' or self.scenario == 'literature' or self.scenario == '2019' or self.scenario == '2022' or self.scenario=='small_r' or self.scenario=='large_r':
-            self.file_bkg = self.this_directory + f'/data/disk_2019.txt'
+            self.file_bkg = self.this_directory + '/data/disk_2019.txt'
         # self.file_bkg = self.this_directory + '/../model_data/synthetic/diskbb_background.txt'
 
     def set_bounds(self):
@@ -237,19 +232,11 @@ class analysis(object):
         
         self.phases_space = np.linspace(0.0, 1.0, 33)
 
-        energy_range = 'large'
 
-        if energy_range == 'small':
-            self.min_input = 0 # 20 is used with 0.3 keV (channel_low=30). 0 is used with 0.2 keV (channel_low=20). 900 works with channel_low = 120 (1.2 keV). 
-            self.channel_low = 20 # 20 corresponds to 0.2 keV. # 30 corresponds to 0.3 keV
-            self.channel_hi = 300 # 300 corresponds to 3 keV. 600 corresponds to 6 keV (98.7% of total counts retained)
-            self.max_input = 1400 # 1400 works with channel-hi = 300. 2000 works with channel_hi = 600 (6 keV)
-
-        if energy_range == 'large':
-            self.min_input = 20 # 20 is used with 0.3 keV (channel_low=30). 0 is used with 0.2 keV (channel_low=20). 900 works with channel_low = 120 (1.2 keV). 
-            self.channel_low = 30 # 20 corresponds to 0.2 keV. # 30 corresponds to 0.3 keV
-            self.channel_hi = 600 # 300 corresponds to 3 keV. 600 corresponds to 6 keV (98.7% of total counts retained)
-            self.max_input = 2000 # 1400 works with channel-hi = 300. 2000 works with channel_hi = 600 (6 keV)
+        self.min_input = 20 # 20 is used with 0.3 keV (channel_low=30). 0 is used with 0.2 keV (channel_low=20). 900 works with channel_low = 120 (1.2 keV). 
+        self.channel_low = 30 # 20 corresponds to 0.2 keV. # 30 corresponds to 0.3 keV
+        self.channel_hi = 600 # 300 corresponds to 3 keV. 600 corresponds to 6 keV (98.7% of total counts retained)
+        self.max_input = 2000 # 1400 works with channel-hi = 300. 2000 works with channel_hi = 600 (6 keV)
 
 
 
@@ -268,8 +255,11 @@ class analysis(object):
         fname_ixpedata = this_directory+"/ixpe_products/ixpeobssimdata_scenarioB/pcube_10bin/model_amsp_xpsi"
         fname_ixpedata_pulse = this_directory+"/ixpe_products/ixpeobssimdata_scenarioB/pcube_20bin/model_amsp_xpsi"
         
+        
+        
         phase_IXPE, Idat1, qn, un, Iderr1, qnerr, unerr, PD, PDerr, keVdat, MDP99 = readData_pcube_ebin(fname_ixpedata, NPhadat=10)
         phase_IXPE_pulse, Idat2, qn2, un2, Iderr2, qnerr2, unerr2, PD2, PDerr2, keVdat2, MDP99_2 = readData_pcube_ebin(fname_ixpedata_pulse, NPhadat=20)
+        
         
         self.IXPE_I_data = xpsi.Data([Idat2[:,0]/np.max(Idat2[:,0])],
                                channels=np.arange(0, 1),
@@ -289,7 +279,10 @@ class analysis(object):
                                first=0,
                                last=0,
                                exposure_time=1.0)
-                               
+        
+        self.IXPE_Q_data.phase_IXPE = phase_IXPE
+        self.IXPE_U_data.phase_IXPE = phase_IXPE
+        self.IXPE_I_data.phase_IXPE_pulse = phase_IXPE_pulse
         self.IXPE_I_data.errors, self.IXPE_Q_data.errors, self.IXPE_U_data.errors = Iderr2/np.max(Idat2[:,0]), qnerr, unerr
                 
             
@@ -334,7 +327,6 @@ class analysis(object):
         self.spacetime = xpsi.Spacetime(bounds=spacetime_bounds, values=values)
 
     def set_hotregions(self):
-        # self.num_rays = 16
         
         self.hot_kwargs = {'symmetry': True, #call for azimuthal invariance
                   'split': True,
@@ -344,7 +336,7 @@ class analysis(object):
                   'sqrt_num_cells': self.sqrt_num_cells,
                   'min_sqrt_num_cells': 10,
                   'max_sqrt_num_cells': 128,
-                  'num_leaves': self.num_leaves,
+                  'num_leaves': self.num_leaves,  #50 avoids interp error.
                   'num_rays': self.num_rays,
                   'atm_ext':'Num5D'}
                   #'prefix': 'p'}
@@ -465,11 +457,24 @@ class analysis(object):
                             epsrel = 1.0e-8,
                             epsilon = 1.0e-3,
                             sigmas = 10.0)
-        
+    
         if self.polarization:
-            self.set_data_IXPE()
-            self.set_instrument_IXPE()
-            self.signals = [[self.signal_NICER],] # to apply disk correctly to signal, NICER must be first element.
+            if 'qu' in self.polarization:
+                self.set_data_IXPE()
+                self.set_instrument_IXPE()
+                self.signals = [[self.signal_NICER],] # to apply disk correctly to signal, NICER must be first element.
+            if 'i' in self.polarization:
+                signalI = CustomSignal_gaussian(data = self.IXPE_I_data,
+                                                instrument = self.IXPE,
+                                                interstellar = self.interstellar,
+                                                workspace_intervals = 1000,
+                                                cache = False,
+                                                epsrel = 1.0e-8,
+                                                epsilon = 1.0e-3,
+                                                sigmas = 10.0,
+                                                support = None,
+                                                stokes="I")
+                self.signals[0].append(signalI)
             signalQ = CustomSignal_gaussian(data = self.IXPE_Q_data,
                                     instrument = self.IXPE,
                                     interstellar = self.interstellar,
@@ -492,10 +497,7 @@ class analysis(object):
             	                support = None,
             	                stokes="U")
             self.signals[0].append(signalU)
-            # self.signals[0].append(self.signal_NICER)
-        
-        
-        
+
     def set_parameter_vector(self):
         self.p = self.pv.p()
         # print('again parameter vector', len(self.p))
@@ -565,8 +567,10 @@ class analysis(object):
         
             
         if self.scenario == 'small_r':
-            if self.polarization:
-                true_logl = 7.9265139733e+07 # with IXPE
+            if self.polarization == 'qu':
+                true_logl = 7.9265139733e+07 # with IXPE qu
+            elif self.polarization == 'iqu':
+                true_logl = 7.9265007576e+07 # with IXPE iqu
             elif not self.polarization:
                 true_logl = 7.9265215141e+07 #without IXPE
         self.true_logl = true_logl
@@ -575,7 +579,7 @@ class analysis(object):
         
         # start call with a likelihood check
         t_check = time.time()
-        self.likelihood.check(None, [self.true_logl], 1.0e-4, physical_points=[self.p], force_update=True)
+        self.likelihood.check(None, [self.true_logl], 1.0e-6, physical_points=[self.p], force_update=True)
         print('Likelihood check took {:.3f} seconds'.format((time.time()-t_check)))
         
         
@@ -714,5 +718,5 @@ class analysis(object):
             
             
 if __name__ == '__main__':
-    Analysis = analysis('local', 'sample', 'disk', sampler='multi', scenario='small_r', support_factor='100', fix_mass=False, eos_informed=False, polarization=True)
+    Analysis = analysis('local', 'sample', 'disk', sampler='multi', scenario='small_r', support_factor='100', fix_mass=False, eos_informed=False, polarization='iqu')
     Analysis()

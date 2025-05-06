@@ -72,7 +72,7 @@ try: #try to get parameters from shell input
 except:
     atmosphere_type = "A"
     n_params = "5"
-    machine = "snellius"
+    machine = "local"
     poisson_noise = True
     poisson_seed = 42
     scenario = 'small_r' # 'kajava', 'literature

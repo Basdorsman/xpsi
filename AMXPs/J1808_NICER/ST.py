@@ -178,7 +178,7 @@ class analysis(object):
 
 
 
-        self.likelihood.check(None, [self.true_logl], 1.0e-4, physical_points=[self.p], force_update=True)
+        self.likelihood.check(None, [self.true_logl], 1.0e80, physical_points=[self.p], force_update=True)
         print('Likelihood check took {:.3f} seconds'.format((time.time()-t_check)))
         print(self.likelihood(self.p))
 
@@ -618,14 +618,33 @@ class analysis(object):
             # figure=corner.corner(test, labels=labels, quantiles=[0.16, 0.5, 0.84], 
             #            show_titles=True, title_fmt='.2f', range=[x_limits, y_limits])
             
-            # self.likelihood(self.p, reinitialise=True)
-            # print('Test took {:.3f} seconds'.format((time.time()-t_start)))
+            # 
+
             
+            
+            print('time integrator test')
+            
+            
+            n_repeats = 1000
+            timings_summed = np.zeros(4)
+            
+            for i in range(n_repeats):
+                p_test = self.prior.inverse_sample()
+                # l_test = self.likelihood(self.p, reinitialise=True)
+                l_test = self.likelihood(p_test, reinitialise=True)
+                timings_summed += self.hot.objects[0]._integrator_timings
+                # print(l_test)
+            
+            print('full, pre-atmosphere, intensities, phase interpolation')
+            print(f'Timings summed: {timings_summed/n_repeats} seconds, repeats={n_repeats}')
+                
+                
+            print(f'Evaluation takes {(time.time()-t_start)/n_repeats} seconds, repeats={n_repeats}')
             
 if __name__ == '__main__':
     Analysis = analysis('local', 'test', 'disk', sampler='multi', scenario='small_r', support_factor='100', fix_mass=False, eos_informed=False)
     Analysis()
 
-    expected = Analysis.signal.expected_counts/1.32366 # 100k s exposure time
+    expected = Analysis.signal.expected_counts
     
     print('expected counts: ',np.sum(expected))

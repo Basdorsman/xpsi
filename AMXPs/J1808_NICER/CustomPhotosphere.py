@@ -238,48 +238,48 @@ class CustomPhotosphereDiskLine(xpsi.Photosphere):
             # print('signal inside customphotosphere: ', self._signal[0][0])
 
 
-            # add disk spectrum to primary hotregion
-            if self._disk is not None: 
-                self.disk_spectrum = self._disk(energies)
-                for i in range(self._signal[0][0].shape[1]):
-                    self._signal[0][0][:,i] += self.disk_spectrum
-            
-            if self._line is not None:
-                self.line_spectrum = self._line(energies)
-                for i in range(self._signal[0][0].shape[1]):
-                    self._signal[0][0][:,i] += self.line_spectrum 
-
-            # # here disk and line are stored separately, but then the phases also need to be stored separately in customsignal, and this breaks posprocessing.
+            # # add disk spectrum to primary hotregion
             # if self._disk is not None: 
-            #     # Determine the index for the new hot region
-            #     new_hot_region_index = len(self._signal)
-                
-            #     # Create the new hot region array with the same shape as self._signal[0][0]
-            #     new_shape = self._signal[0][0].shape
-            #     new_hot_region = ((np.zeros(new_shape, dtype=np.double, order='C'),),)  # Create a new hot region as a tuple
-                
-            #     # Concatenate the tuple
-            #     self._signal = self._signal + new_hot_region  
- 
-            #     # Add disk spectrum to the newly created hot region
             #     self.disk_spectrum = self._disk(energies)
             #     for i in range(self._signal[0][0].shape[1]):
-            #         self._signal[new_hot_region_index][0][:, i] += self.disk_spectrum
-
-            # # add line spectrum to primary hotregion
-            # if self._line is not None: 
-            #     # Determine the index for the new hot region
-            #     new_hot_region_index = len(self._signal)
-                
-            #     # Create the new hot region array with the same shape as self._signal[0][0]
-            #     new_shape = self._signal[0][0].shape
-            #     new_hot_region = ((np.zeros(new_shape, dtype=np.double, order='C'),),)  # Create a new hot region as a tuple
-                
-            #     # Concatenate the tuple
-            #     self._signal = self._signal + new_hot_region  
- 
-            #     # Add line spectrum to the newly created hot region
+            #         self._signal[0][0][:,i] += self.disk_spectrum
+            
+            # if self._line is not None:
             #     self.line_spectrum = self._line(energies)
             #     for i in range(self._signal[0][0].shape[1]):
-            #         self._signal[new_hot_region_index][0][:, i] += self.line_spectrum   
+            #         self._signal[0][0][:,i] += self.line_spectrum 
+
+            # here disk and line are stored separately, but then the phases also need to be stored separately in customsignal, and this breaks posprocessing.
+            if self._disk is not None: 
+                # Determine the index for the new hot region
+                new_hot_region_index = len(self._signal)
+                
+                # Create the new hot region array with the same shape as self._signal[0][0]
+                new_shape = self._signal[0][0].shape
+                new_hot_region = ((np.zeros(new_shape, dtype=np.double, order='C'),),)  # Create a new hot region as a tuple
+                
+                # Concatenate the tuple
+                self._signal = self._signal + new_hot_region  
+ 
+                # Add disk spectrum to the newly created hot region
+                self.disk_spectrum = self._disk(energies)
+                for i in range(self._signal[0][0].shape[1]):
+                    self._signal[new_hot_region_index][0][:, i] += self.disk_spectrum
+
+            # add line spectrum to primary hotregion
+            if self._line is not None: 
+                # Determine the index for the new hot region
+                new_hot_region_index = len(self._signal)
+                
+                # Create the new hot region array with the same shape as self._signal[0][0]
+                new_shape = self._signal[0][0].shape
+                new_hot_region = ((np.zeros(new_shape, dtype=np.double, order='C'),),)  # Create a new hot region as a tuple
+                
+                # Concatenate the tuple
+                self._signal = self._signal + new_hot_region  
+ 
+                # Add line spectrum to the newly created hot region
+                self.line_spectrum = self._line(energies)
+                for i in range(self._signal[0][0].shape[1]):
+                    self._signal[new_hot_region_index][0][:, i] += self.line_spectrum   
 

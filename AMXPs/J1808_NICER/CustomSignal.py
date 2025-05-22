@@ -94,16 +94,16 @@ class CustomSignal(xpsi.Signal):
         elif 'disk' in self.bkg:
         # if disk and line are stored separately, there phases are also separate. But this breaks postprocessing, sampling, and data synthesis.
 
-            # self._phases += [np.copy(self._phases[0])]
+            self._phases += [np.copy(self._phases[0])]
             
-            # # fine as long as the disk has no phase
-            # self._shifts = np.append(self._shifts, self._shifts[0])
+            # fine as long as the disk has no phase
+            self._shifts = np.append(self._shifts, self._shifts[0])
             
-            # if 'line' in self.bkg:
-            #     self._phases += [np.copy(self._phases[0])]
+            if 'line' in self.bkg:
+                self._phases += [np.copy(self._phases[0])]
                 
-            #     # fine as long as the line has no phase
-            #     self._shifts = np.append(self._shifts, self._shifts[0])
+                # fine as long as the line has no phase
+                self._shifts = np.append(self._shifts, self._shifts[0])
        
 
             self.loglikelihood, self.expected_counts = \

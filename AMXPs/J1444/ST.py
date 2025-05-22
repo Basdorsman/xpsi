@@ -16,7 +16,7 @@ print('Rank reporting: %d' % xpsi._rank)
 from xpsi.global_imports import gravradius
 
 from CustomPrior import CustomPrior
-from CustomInstrument import CustomInstrument, CustomInstrument_stokes
+from CustomInstrument import CustomInstrument_fits, CustomInstrument_stokes
 from CustomPhotosphere import CustomPhotosphereDiskLine
 from CustomInterstellar import CustomInterstellar
 from CustomSignal import CustomSignal, CustomSignal_gaussian
@@ -185,32 +185,17 @@ class analysis(object):
         self.set_bounds()
         self.set_interstellar()
         self.set_likelihood()
-        
-
-        # print('parameter vector just before using it', self.p)
-        # print(self.likelihood)
-
 
     def file_locations(self):
         self.this_directory = this_directory
-
-        if self.scenario == 'large_r' or self.scenario == 'small_r':
-                self.file_pulse_profile = self.this_directory + f'/NICER_products/synthetic_{self.scenario}_seed={self.poisson_seed}_realisation.dat'
         
-        # real data
-        if self.scenario == '2019' or self.scenario == '2022':
-            self.file_pulse_profile = self.this_directory + f'/data/{self.scenario}_preprocessed.txt'
-        
-            self.file_arf = self.this_directory + f'/../model_data/instrument_data/J1808_NICER_{self.scenario}/merged_saxj1808_{self.scenario}_arf_aeff.txt'
-            self.file_rmf = self.this_directory + f'/../model_data/instrument_data/J1808_NICER_{self.scenario}/merged_saxj1808_{self.scenario}_rmf_matrix.txt'
-            self.file_channel_edges = self.this_directory + f'/../model_data/instrument_data/J1808_NICER_{self.scenario}/merged_saxj1808_{self.scenario}_rmf_energymap.txt'
+        if self.scenario in ('large_r', 'small_r', 'J1444_synthetic'):
+            self.file_pulse_profile = self.this_directory + f'/NICER_products/data/{self.scenario}_seed={self.poisson_seed}_realisation.dat'
+      
+       
+        self.RMF_file = self.this_directory+'/NICER_products/srgaj1444.rmf'
+        self.ARF_file = self.this_directory+'/NICER_products/srgaj1444.arf'
 
-        elif self.scenario == 'large_r' or self.scenario == 'small_r':
-            self.file_arf = self.this_directory + f'/../model_data/instrument_data/J1808_NICER_2019/merged_saxj1808_2019_arf_aeff.txt'
-            self.file_rmf = self.this_directory + f'/../model_data/instrument_data/J1808_NICER_2019/merged_saxj1808_2019_rmf_matrix.txt'
-            self.file_channel_edges = self.this_directory + f'/../model_data/instrument_data/J1808_NICER_2019/merged_saxj1808_2019_rmf_energymap.txt'
-            
-            
         if self.machine == 'local':
             self.file_atmosphere = '/home/bas/Documents/Projects/x-psi/model_datas/bobrikova/Bobrikova_compton_slab.npz'
             self.file_interstellar = "/home/bas/Documents/Projects/x-psi/xpsi-bas-fork/AMXPs/model_data/n_H/TBnew/tbnew0.14.txt"
@@ -229,14 +214,16 @@ class analysis(object):
             self.exposure_time = 1.32366e5 #Mason's 2019 data cut
         if self.scenario == '2022':
             self.exposure_time = 7.13422e4 #Mason's 2022 data cut
+        if self.scenario == 'J1444_synthetic':
+            self.exposure_time = 24823.7
         
         self.phases_space = np.linspace(0.0, 1.0, 33)
 
 
-        self.min_input = 20 # 20 is used with 0.3 keV (channel_low=30). 0 is used with 0.2 keV (channel_low=20). 900 works with channel_low = 120 (1.2 keV). 
-        self.channel_low = 30 # 20 corresponds to 0.2 keV. # 30 corresponds to 0.3 keV
-        self.channel_hi = 600 # 300 corresponds to 3 keV. 600 corresponds to 6 keV (98.7% of total counts retained)
-        self.max_input = 2000 # 1400 works with channel-hi = 300. 2000 works with channel_hi = 600 (6 keV)
+        self.min_input = 0 # 20 is used with 0.3 keV (channel_low=30). 0 is used with 0.2 keV (channel_low=20). 900 works with channel_low = 120 (1.2 keV). 
+        self.channel_low = 20 # 20 corresponds to 0.2 keV. # 30 corresponds to 0.3 keV
+        self.channel_hi = 580 # 300 corresponds to 3 keV. 600 corresponds to 6 keV (98.7% of total counts retained)
+        self.max_input = 1880 # 1400 works with channel-hi = 300. 2000 works with channel_hi = 600 (6 keV)
 
 
 
@@ -287,13 +274,13 @@ class analysis(object):
                 
             
     def set_instrument_NICER(self):
-        self.NICER = CustomInstrument.from_response_files(ARF = self.file_arf,
-                RMF = self.file_rmf,
-                channel_edges = self.file_channel_edges,       
-                channel_low = self.channel_low,
-                channel_hi = self.channel_hi,
-                min_input = self.min_input,
-                max_input = self.max_input)
+        self.NICER = CustomInstrument_fits.from_response_files(
+            self.RMF_file, 
+            self.ARF_file,
+            max_detection_channel=self.channel_hi, 
+            min_detection_channel = self.channel_low, 
+            max_input = self.max_input, #around the maximum
+            min_input = self.min_input)
 
     def set_instrument_IXPE(self):
         self.IXPE = CustomInstrument_stokes.from_response_files(MRF = this_directory+'/ixpe_products/ixpe_d1_obssim_v012.mrf',
@@ -524,46 +511,8 @@ class analysis(object):
         
 
         
-        if self.scenario == '2019':
-            if self.bkg == 'marginalise':
-                true_logl = -1.1307400098e+05#-8.8549011385e+04 # marginalise
-                if self.support_factor == 100 or self.support_factor == '100':
-                    true_logl = -9.2194659551e+04
-                if self.support_factor == 10 or self.support_factor == '10':
-                    true_logl = -9.3134985012e+04
-                if self.support_factor == 2 or self.support_factor == '2':
-                    true_logl = -9.4081343510e+04
-            elif self.bkg == 'fix':
-                true_logl = 1.6789503475e+08 # empty background
-            elif self.bkg == 'disk':
-                true_logl = 1.6880517943e+08 # 1.5315194624e+08 #1.6880517943e+08
-            elif self.bkg == 'line':
-                true_logl = 1.6789503475e+08
-            elif self.bkg == 'diskline':
-                true_logl = 1.6880517943e+08
-        
-        if self.scenario == '2022':
-            if self.bkg == 'marginalise':
-                true_logl = -1.1307400098e+05#-8.8549011385e+04 # marginalise
-                if self.support_factor == 100 or self.support_factor == '100':
-                    true_logl = -2.3127321809e+05
-            elif self.bkg == 'fix':
-                true_logl = 1.6789503475e+08 # empty background
-            elif self.bkg == 'disk':
-                true_logl = 1.1730546413e+08
-            elif self.bkg == 'line':
-                true_logl = 1.6789503475e+08
-            elif self.bkg == 'diskline':
-                true_logl = 1.1740674355e+08
-
-            
-        if self.scenario == 'large_r':
-            if self.bkg == 'marginalise':
-                true_logl = -9.0515374178e+04 #-8.7237365668e+04 # marginalise
-            elif self.bkg == 'fix':
-                true_logl = 1.6792913585e+08 # empty background
-            elif self.bkg == 'disk':
-                true_logl = 1.6880517943e+08
+        if self.scenario == 'J1444_synthetic':
+            true_logl = 1.8750473975e+05
         
             
         if self.scenario == 'small_r':
@@ -678,45 +627,10 @@ class analysis(object):
             print('Sampling took {:.3f} seconds'.format((time.time()-t_start)))
             
         elif self.run_type == 'test':
-            print('test starts')
-            # num_rays = [20, 512]
-            #t_start = time.time()
-            # for num_ray in num_rays:
-            #     self.hot_kwargs['num_rays']=num_ray
-            #     print(self.hot_kwargs)
-            #     primary = CustomHotRegion_Accreting(self.hotregion_bounds, self.hot_values, **self.hot_kwargs)
-            #     self.hot = xpsi.HotRegions((primary,))
-            #     self.hot.print_settings()
+            print('there is no test')
 
-            #     self.photosphere = CustomPhotosphereDiskLine(hot = self.hot, elsewhere = None, stokes=False, disk=self.disk, line=self.line,
-            #                                     values=dict(mode_frequency = self.spacetime['frequency']))
-            #     self.photosphere.hot_atmosphere = self.file_atmosphere
-            #     self.star = xpsi.Star(spacetime = self.spacetime, photospheres = self.photosphere)
-            #     #self.star.update(force_update=True)
-                
-            #     self.likelihood = xpsi.Likelihood(star = self.star, signals = self.signal,
-            #                                   num_energies=self.num_energies, #128
-            #                                   threads=1,
-            #                                   prior=self.prior,
-            #                                   externally_updated=True)
-            #     self.likelihood.check(None, [self.true_logl], 1.0e-4, physical_points=[self.p], force_update=True)
-            
-
-
-            # inverse sampling test
-            # test=self.prior.draw(ndraws=10000)[0][:,0:2]
-            # print(test.shape)
-            # import corner
-            # labels = [ "Mass (M☉)", "Radius (km)"]  # Adjust labels as needed
-            # y_limits = (5, 15)  # Adjust as needed
-            # x_limits = (1.0, 3.0)  # Adjust as needed
-            # figure=corner.corner(test, labels=labels, quantiles=[0.16, 0.5, 0.84], 
-            #            show_titles=True, title_fmt='.2f', range=[x_limits, y_limits])
-            
-            # self.likelihood(self.p, reinitialise=True)
-            # print('Test took {:.3f} seconds'.format((time.time()-t_start)))
             
             
 if __name__ == '__main__':
-    Analysis = analysis('local', 'sample', 'disk', sampler='multi', scenario='small_r', support_factor='100', fix_mass=False, eos_informed=False, polarization='iqu')
+    Analysis = analysis('local', 'sample', 'disk', sampler='multi', scenario='J1444_synthetic', support_factor='100', fix_mass=False, eos_informed=False, polarization=False)
     Analysis()

@@ -154,6 +154,8 @@ class CustomPrior(xpsi.Prior):
     
         idx = ref.index('distance')
         temporary = truncnorm.ppf(hypercube[idx], -5.0, 5.0, loc=8, scale=1.)
+        if self.scenario == 'J1444_synthetic':
+            temporary = truncnorm.ppf(hypercube[idx], -5.0, 5.0, loc=2.7, scale=0.3)
         if temporary < 0: temporary = 0
         ref['distance'] = temporary
 

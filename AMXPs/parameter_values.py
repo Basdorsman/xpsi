@@ -217,23 +217,32 @@ class parameter_values(object):
         return self.names
 
     def bounds(self):
+        
+        cos_i_low = 0. if self.scenario == "J1444_synthetic" else 0.15 #J1808 lower limit 30 degrees = upper limit cos_i = 0.87
+        cos_i_high = 1. if self.scenario == "J1444_synthetic" else  0.87 #J1808 lower limit 30 degrees = upper limit cos_i = 0.87
+        dist_low = 1. if self.scenario == "J1444_synthetic" else 1.2
+        dist_high = 10.6 if self.scenario == "J1444_synthetic" else  4.2
+        nh_high = 100. if self.scenario == "J1444_synthetic" else 3. 
+        
         bounds = {'radius':(3.0 * gravradius(1.0), 16.0),
-              'distance': (1., 10.6), # Upper limit for J1444
-              'cos_inclination':(0., 1.), 
-              'phase_shift':(-0.25, 0.75),
-              'super_colatitude':(0.001, math.pi - 0.001),
-              'super_radius':(0.001, math.pi/2.0),
-              'super_tbb':(0.001, 0.003),
-              'tbb_keV': (0.511, 1.533),
-              'super_te': (40., 200.),
-              'te_keV': (40*511/1000, 200*511/1000),
-              'super_tau': (0.5, 3.5),
-              'column_density': (0., 100.),
-              'compactness': (0., 10.),
-              'inclination_deg': (np.arccos(1.0)*180/np.pi, np.arccos(0.)*180/np.pi),
-              'colatitude_deg': (0.001, 180-0.001),
-              'radius_deg': (0.001, 90)              
-              }
+                  'distance': (dist_low, dist_high),
+                  'cos_inclination':(cos_i_low, cos_i_high), 
+                  'phase_shift':(-0.25, 0.75),
+                  'super_colatitude':(0.001, math.pi - 0.001),
+                  'super_radius':(0.001, math.pi/2.0),
+                  'super_tbb':(0.001, 0.003),
+                  'tbb_keV': (0.511, 1.533),
+                  'super_te': (40., 200.),
+                  'te_keV': (40*511/1000, 200*511/1000),
+                  'super_tau': (0.5, 3.5),
+                  'column_density': (0., nh_high),
+                  'compactness': (0., 10.),
+                  'inclination_deg': (np.arccos(cos_i_high)*180/np.pi, 
+                                      np.arccos(cos_i_low)*180/np.pi),
+                  'colatitude_deg': (0.001, 180-0.001),
+                  'radius_deg': (0.001, 90)              
+                  }
+        
         if not self.fix_mass:
             bounds['mass'] = (1.0, 3.0)
             
@@ -252,7 +261,7 @@ class parameter_values(object):
             bounds['N_norm'] = (1e-2,1e1)
         
         if self.polarization:
-            bounds['spin_axis_position_angle']=(None,None)
+            bounds['spin_axis_position_angle']=(-math.pi/2.0, math.pi/2.0)
         
         return bounds
 

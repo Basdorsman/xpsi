@@ -14,7 +14,7 @@ from astropy.io import fits
 import os
 import sys
 this_directory = os.path.dirname(os.path.abspath(__file__))
-sys.path.append(this_directory+'/ixpe_products/')
+sys.path.append(this_directory+'/data/ixpe_products/')
 from ixpe_read_pcube3 import read_response_IXPE
 
 

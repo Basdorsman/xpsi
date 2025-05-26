@@ -173,7 +173,7 @@ class analysis(object):
             print('polarization is not in environment variables, using passed argument.')
             self.polarization = polarization
         else:
-             self.polarization = os.environ.get('polarization')
+            self.polarization = os.environ.get('polarization')
         if self.polarization == "qu" or self.polarization == "iqu":
             self.polarization = self.polarization
         else:
@@ -189,12 +189,12 @@ class analysis(object):
     def file_locations(self):
         self.this_directory = this_directory
         
-        if self.scenario in ('large_r', 'small_r', 'J1444_synthetic'):
-            self.file_pulse_profile = self.this_directory + f'/NICER_products/data/{self.scenario}_seed={self.poisson_seed}_realisation.dat'
+        if self.scenario in ('large_r', 'small_r', 'J1444s'):
+            self.file_pulse_profile = self.this_directory + f'/data/NICER_products/data/{self.scenario}_seed={self.poisson_seed}_realisation.dat'
       
        
-        self.RMF_file = self.this_directory+'/NICER_products/srgaj1444.rmf'
-        self.ARF_file = self.this_directory+'/NICER_products/srgaj1444.arf'
+        self.RMF_file = self.this_directory+'/data/NICER_products/srgaj1444.rmf'
+        self.ARF_file = self.this_directory+'/data/NICER_products/srgaj1444.arf'
 
         if self.machine == 'local':
             self.file_atmosphere = '/home/bas/Documents/Projects/x-psi/model_datas/bobrikova/Bobrikova_compton_slab.npz'
@@ -214,7 +214,7 @@ class analysis(object):
             self.exposure_time = 1.32366e5 #Mason's 2019 data cut
         if self.scenario == '2022':
             self.exposure_time = 7.13422e4 #Mason's 2022 data cut
-        if self.scenario == 'J1444_synthetic':
+        if self.scenario == 'J1444s':
             self.exposure_time = 24823.7
         
         self.phases_space = np.linspace(0.0, 1.0, 33)
@@ -239,8 +239,8 @@ class analysis(object):
     def set_data_IXPE(self):
         from ixpe_read_pcube3 import readData_pcube_ebin
 
-        fname_ixpedata = this_directory+"/ixpe_products/ixpeobssimdata_scenarioB/pcube_10bin/model_amsp_xpsi"
-        fname_ixpedata_pulse = this_directory+"/ixpe_products/ixpeobssimdata_scenarioB/pcube_20bin/model_amsp_xpsi"
+        fname_ixpedata = this_directory+"/data/ixpe_products/ixpeobssimdata_scenarioB/pcube_10bin/model_amsp_xpsi"
+        fname_ixpedata_pulse = this_directory+"/data/ixpe_products/ixpeobssimdata_scenarioB/pcube_20bin/model_amsp_xpsi"
         
         
         
@@ -283,8 +283,8 @@ class analysis(object):
             min_input = self.min_input)
 
     def set_instrument_IXPE(self):
-        self.IXPE = CustomInstrument_stokes.from_response_files(MRF = this_directory+'/ixpe_products/ixpe_d1_obssim_v012.mrf',
-                                             RMF = this_directory+'/ixpe_products/ixpe_d1_obssim_v012.rmf',
+        self.IXPE = CustomInstrument_stokes.from_response_files(MRF = this_directory+'/data/ixpe_products/ixpe_d1_obssim_v012.mrf',
+                                             RMF = this_directory+'/data/ixpe_products/ixpe_d1_obssim_v012.rmf',
                                              max_input = 275,
                                              max_channel = 200,
                                              min_input = 0,
@@ -487,7 +487,7 @@ class analysis(object):
 
     def set_parameter_vector(self):
         self.p = self.pv.p()
-        # print('again parameter vector', len(self.p))
+        print('again parameter vector', len(self.p))
         
    
     def set_prior(self):
@@ -511,7 +511,7 @@ class analysis(object):
         
 
         
-        if self.scenario == 'J1444_synthetic':
+        if self.scenario == 'J1444s':
             true_logl = 1.8750473975e+05
         
             
@@ -632,5 +632,5 @@ class analysis(object):
             
             
 if __name__ == '__main__':
-    Analysis = analysis('local', 'sample', 'disk', sampler='multi', scenario='J1444_synthetic', support_factor='100', fix_mass=False, eos_informed=False, polarization=False)
+    Analysis = analysis('local', 'sample', 'disk', sampler='multi', scenario='J1444s', support_factor='100', fix_mass=False, eos_informed=False, polarization=False)
     Analysis()

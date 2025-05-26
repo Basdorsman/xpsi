@@ -72,7 +72,7 @@ except:
     machine = "local"
     poisson_noise = True
     poisson_seed = 42
-    scenario = 'J1444_synthetic' # 'kajava', 'literature
+    scenario = 'J1444s' # 'kajava', 'literature
   
 
 pv = parameter_values(scenario, bkg)
@@ -81,7 +81,7 @@ p = pv.p()
 
 if scenario == 'kajava' or scenario == 'literature' or scenario == '2019' or scenario == 'large_r' or scenario == 'small_r':
     exposure_time=1.32366e5 ## is the same as Mason 2019
-elif scenario == 'J1444_synthetic':
+elif scenario == 'J1444s':
     exposure_time=24823.7
 
 
@@ -91,7 +91,7 @@ min_detection_channel = 20
 max_input = 1880 #around the maximum
 min_input = 0
 
-root = 'NICER_products/'
+root = 'data/NICER_products/'
 RMF_file = root+'srgaj1444.rmf'
 ARF_file = root+'srgaj1444.arf'
 NICER = CustomInstrument_fits.from_response_files(
@@ -225,7 +225,7 @@ if poisson_noise:
 Instrument_kwargs = dict(exposure_time=exposure_time,
                          seed=seed, 
                          name=f'{scenario}_seed={seed}',
-                         directory='./NICER_products/data/')
+                         directory='./data/NICER_products/data/')
 
 likelihood.synthesise(p, force=True, Instrument=Instrument_kwargs) 
 
@@ -239,7 +239,7 @@ if __name__ == '__main__':
     ########## DATA PLOT ###############
     
     
-    my_data=np.loadtxt(f'./data/{scenario}_seed={poisson_seed}_realisation.dat')
+    my_data=np.loadtxt(f'./data/NICER_products/data/{scenario}_seed={poisson_seed}_realisation.dat')
     
     
     

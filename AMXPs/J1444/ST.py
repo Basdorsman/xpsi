@@ -191,7 +191,8 @@ class analysis(object):
         
         if self.scenario in ('large_r', 'small_r', 'J1444s'):
             self.file_pulse_profile = self.this_directory + f'/data/NICER_products/data/{self.scenario}_seed={self.poisson_seed}_realisation.dat'
-      
+        if self.scenario == 'J1444':
+            self.file_pulse_profile = self.this_directory + f'/data/NICER_products/data/J1444_preprocessed.txt'
        
         self.RMF_file = self.this_directory+'/data/NICER_products/srgaj1444.rmf'
         self.ARF_file = self.this_directory+'/data/NICER_products/srgaj1444.arf'
@@ -214,7 +215,7 @@ class analysis(object):
             self.exposure_time = 1.32366e5 #Mason's 2019 data cut
         if self.scenario == '2022':
             self.exposure_time = 7.13422e4 #Mason's 2022 data cut
-        if self.scenario == 'J1444s':
+        if self.scenario in ('J1444','J1444s'):
             self.exposure_time = 24823.7
         
         self.phases_space = np.linspace(0.0, 1.0, 33)
@@ -297,9 +298,9 @@ class analysis(object):
 
 
         if fix_mass:
-            values = dict(frequency = 401., mass = self.pv.mass)
+            spacetime_values = dict(frequency = self.pv.frequency, mass = self.pv.mass)
         if not fix_mass:
-            values = dict(frequency = 401.)
+            spacetime_values = dict(frequency = self.pv.frequency)
 
         if fix_mass:
             spacetime_bounds = dict(distance = self.bounds["distance"],
@@ -311,7 +312,7 @@ class analysis(object):
                                     radius = self.bounds["radius"],     # equatorial radius
                                     cos_inclination = self.bounds["cos_inclination"])   
 
-        self.spacetime = xpsi.Spacetime(bounds=spacetime_bounds, values=values)
+        self.spacetime = xpsi.Spacetime(bounds=spacetime_bounds, values=spacetime_values)
 
     def set_hotregions(self):
         
@@ -512,7 +513,9 @@ class analysis(object):
 
         
         if self.scenario == 'J1444s':
-            true_logl = 1.8750473975e+05
+            true_logl = 1.8751140823e+05
+        if self.scenario == 'J1444':
+            true_logl = 1.8
         
             
         if self.scenario == 'small_r':
@@ -632,5 +635,5 @@ class analysis(object):
             
             
 if __name__ == '__main__':
-    Analysis = analysis('local', 'sample', 'disk', sampler='multi', scenario='J1444s', support_factor='100', fix_mass=False, eos_informed=False, polarization=False)
+    Analysis = analysis('local', 'test', 'disk', sampler='multi', scenario='J1444s', support_factor='100', fix_mass=False, eos_informed=False, polarization=False)
     Analysis()

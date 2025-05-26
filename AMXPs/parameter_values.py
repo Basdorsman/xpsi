@@ -134,8 +134,10 @@ class parameter_values(object):
             self.column_density = 1.17 #10^21 cm^-2
             if self.polarization:
                 self.spin_axis_angle = 0.0
+            
+            self.frequency = 401.
                 
-        if self.scenario =='J1444s':
+        if self.scenario in ('J1444','J1444s'):
             self.mass = 1.4 
             self.radius = 11.
             self.distance = 8. # Assumed in Papitto+ 2024 and Malacaria+ 2025
@@ -160,6 +162,8 @@ class parameter_values(object):
             self.column_density = 29. #10^21 cm^-2
             if self.polarization:
                 self.spin_axis_angle = 0.0
+                
+            self.frequency=447.8715611
             
         
         
@@ -218,11 +222,11 @@ class parameter_values(object):
 
     def bounds(self):
         
-        cos_i_low = 0. if self.scenario == "J1444s" else 0.15 #J1808 lower limit 30 degrees = upper limit cos_i = 0.87
-        cos_i_high = 1. if self.scenario == "J1444s" else  0.87 #J1808 lower limit 30 degrees = upper limit cos_i = 0.87
-        dist_low = 1. if self.scenario == "J1444s" else 1.2
-        dist_high = 10.6 if self.scenario == "J1444s" else  4.2
-        nh_high = 100. if self.scenario == "J1444s" else 3. 
+        cos_i_low = 0. if self.scenario in ('J1444','J1444s') else 0.15 #J1808 lower limit 30 degrees = upper limit cos_i = 0.87
+        cos_i_high = 1. if self.scenario in ('J1444','J1444s') else  0.87 #J1808 lower limit 30 degrees = upper limit cos_i = 0.87
+        dist_low = 1. if self.scenario in ('J1444','J1444s') else 1.2
+        dist_high = 10.6 if self.scenario in ('J1444','J1444s') else  4.2
+        nh_high = 100. if self.scenario in ('J1444','J1444s') else 3. 
         
         bounds = {'radius':(3.0 * gravradius(1.0), 16.0),
                   'distance': (dist_low, dist_high),

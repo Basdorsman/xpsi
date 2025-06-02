@@ -109,7 +109,7 @@ bounds = dict(distance = (0.1, 10.0),                       # (Earth) distance
                 radius = (3.0 * gravradius(1.0), 16.0),     # equatorial radius
                 cos_inclination = (0.0, 1.0))               # (Earth) inclination to rotation axis
 
-spacetime = xpsi.Spacetime(bounds=bounds, values=dict(frequency=447.8715611))# Fixing the spin
+spacetime = xpsi.Spacetime(bounds=bounds, values=dict(frequency=pv.frequency))# Fixing the spin
 
 ############################### SINGLE HOTREGION ##############################
 

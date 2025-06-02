@@ -128,8 +128,9 @@ class parameter_values(object):
     
             if 'disk' in self.bkg:
             # source background
-                self.diskbb_T_keV = 0.16845756373108872# 0.17#  # # 0.3  #  keV #0.3 keV for Kajava+ 2011
-                self.diskbb_T_log10_K = get_T_in_log10_Kelvin(self.diskbb_T_keV)
+                #self.diskbb_T_keV = 0.16845756373108872# 0.17#  # # 0.3  #  keV #0.3 keV for Kajava+ 2011
+                #self.diskbb_T_log10_K = get_T_in_log10_Kelvin(self.diskbb_T_keV)
+                self.T_in_keV = 0.16845756373108872
                 self.R_in = 0.308122224729265000E+02 # 24#   # 20 #  1 #  km #  for very small diskBB background
             self.column_density = 1.17 #10^21 cm^-2
             if self.polarization:
@@ -156,8 +157,9 @@ class parameter_values(object):
     
             if 'disk' in self.bkg:
             # source background
-                self.diskbb_T_keV = 0.16845756373108872# 0.17#  # # 0.3  #  keV #0.3 keV for Kajava+ 2011
-                self.diskbb_T_log10_K = get_T_in_log10_Kelvin(self.diskbb_T_keV)
+                #self.diskbb_T_keV = 0.16845756373108872# 0.17#  # # 0.3  #  keV #0.3 keV for Kajava+ 2011
+                #self.diskbb_T_log10_K = get_T_in_log10_Kelvin(self.diskbb_T_keV)
+                self.T_in_keV = 0.16845756373108872
                 self.R_in = 24. #   # 20 #  1 #  km #  for very small diskBB background
             self.column_density = 29. #10^21 cm^-2
             if self.polarization:
@@ -181,7 +183,8 @@ class parameter_values(object):
         self.te,
         self.tau,
         self.elsewhere_T_log10_K if self.ew else None,
-        self.diskbb_T_log10_K if 'disk' in self.bkg else None,
+        #self.diskbb_T_log10_K if 'disk' in self.bkg else None,
+        self.T_in_keV if 'disk' in self.bkg else None,
         self.R_in if 'disk' in self.bkg else None,
         self.mu if 'line' in self.bkg else None,
         self.sigma if 'line' in self.bkg else None,
@@ -205,7 +208,7 @@ class parameter_values(object):
             'phase_shift', 
             'super_colatitude', 'super_radius', 'super_tbb', 'super_te', 
             'super_tau', 
-            'T_in' if self.bkg in ['disk', 'diskline'] else None,
+            #'T_in' if self.bkg in ['disk', 'diskline'] else None,
             'R_in' if self.bkg in ['disk', 'diskline'] else None,
             'mu' if self.bkg == 'diskline' else None,
             'sigma' if self.bkg == 'diskline' else None,
@@ -222,8 +225,8 @@ class parameter_values(object):
 
     def bounds(self):
         
-        cos_i_low = np.cos((74.1+5.8)*np.pi/180) if self.scenario in ('J1444','J1444s') else 0.15 # papitto2024 limit here for j1444
-        cos_i_high = np.cos((74.1-6.3)*np.pi/180) if self.scenario in ('J1444','J1444s') else  0.87
+        cos_i_low = 0.  if self.scenario in ('J1444','J1444s') else 0.15 # papitto2024 limit here for j1444 is np.cos((74.1+5.8)*np.pi/180)
+        cos_i_high = 1. if self.scenario in ('J1444','J1444s') else  0.87 # papitto2024 limit here for j1444 is np.cos((74.1-6.3)*np.pi/180)
         dist_low = 1. if self.scenario in ('J1444','J1444s') else 1.2
         dist_high = 10.6 if self.scenario in ('J1444','J1444s') else  4.2
         nh_high = 100. if self.scenario in ('J1444','J1444s') else 3. 
@@ -254,9 +257,11 @@ class parameter_values(object):
             bounds['elsewhere_temperature'] = (None, None)
 
         if 'disk' in self.bkg:
-            bounds['T_in'] = (0.01, 0.6) # (0.225, 0.275 )  # (0.01, 0.6) # keV
+            #bounds['T_in'] = (0.01, 0.6) # (0.225, 0.275 )  # (0.01, 0.6) # keV
             bounds['R_in'] = (5, 60) # from star radius to around corotation radius for the heaviest saxJ1808 possible # (27, 33)  # (20, 200) # km
-            bounds['T_in_keV'] = (None, None)
+            # bounds['T_in_keV'] = (None, None)
+            bounds['T_in_keV'] = (0.01, 0.6)
+            
             
         if 'line' in self.bkg:
             bounds['mu'] = (0.8,1.1)
@@ -291,7 +296,7 @@ class parameter_values(object):
             truths['mass'] = self.mass
 
         if 'disk' in self.bkg:
-            truths['T_in'] = self.diskbb_T_log10_K
+            #truths['T_in'] = self.diskbb_T_log10_K
             truths['T_in_keV'] = self.diskbb_T_keV
             truths['R_in'] = self.R_in
         
@@ -328,7 +333,7 @@ class parameter_values(object):
             labels['mass'] =  r"M\;\mathrm{[M}_{\odot}\mathrm{]}"
         
         if 'disk' in self.bkg:
-            labels['T_in'] = r"T_{in} log10 of Kelvin"
+            #labels['T_in'] = r"T_{in} log10 of Kelvin"
             labels['T_in_keV'] = r"T_\mathrm{in}\;\mathrm{[keV]}"
             labels['R_in'] =  r"R_\mathrm{in}\;\mathrm{[km]}"
             

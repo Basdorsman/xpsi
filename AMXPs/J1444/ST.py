@@ -403,7 +403,8 @@ class analysis(object):
     def set_disk(self):
         from Disk import Disk, k_disk_derive
         if 'disk' in self.bkg:    
-            bounds = dict(T_in = get_T_in_log10_Kelvin(self.bounds["T_in"]),
+            bounds = dict(#T_in = get_T_in_log10_Kelvin(self.bounds["T_in"]),
+                          T_in_keV = self.bounds["T_in_keV"],
                           R_in = self.bounds["R_in"],
                           K_disk = None) #derived means no bounds
                 

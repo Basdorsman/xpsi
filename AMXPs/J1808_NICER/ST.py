@@ -622,27 +622,25 @@ class analysis(object):
 
             
             
-            print('time integrator test')
+            # print('time integrator test')
+            # n_repeats = 1000
+            # timings_summed = np.zeros(4)
             
+            # for i in range(n_repeats):
+            #     p_test = self.prior.inverse_sample()
+            #     # l_test = self.likelihood(self.p, reinitialise=True)
+            #     l_test = self.likelihood(p_test, reinitialise=True)
+            #     timings_summed += self.hot.objects[0]._integrator_timings
+            #     # print(l_test)
             
-            n_repeats = 1000
-            timings_summed = np.zeros(4)
-            
-            for i in range(n_repeats):
-                p_test = self.prior.inverse_sample()
-                # l_test = self.likelihood(self.p, reinitialise=True)
-                l_test = self.likelihood(p_test, reinitialise=True)
-                timings_summed += self.hot.objects[0]._integrator_timings
-                # print(l_test)
-            
-            print('full, pre-atmosphere, intensities, phase interpolation')
-            print(f'Timings summed: {timings_summed/n_repeats} seconds, repeats={n_repeats}')
+            # print('full, pre-atmosphere, intensities, phase interpolation')
+            # print(f'Timings summed: {timings_summed/n_repeats} seconds, repeats={n_repeats}')
                 
                 
-            print(f'Evaluation takes {(time.time()-t_start)/n_repeats} seconds, repeats={n_repeats}')
+            # print(f'Evaluation takes {(time.time()-t_start)/n_repeats} seconds, repeats={n_repeats}')
             
 if __name__ == '__main__':
-    Analysis = analysis('local', 'test', 'disk', sampler='multi', scenario='small_r', support_factor='100', fix_mass=False, eos_informed=False)
+    Analysis = analysis('local', 'sample', 'disk', sampler='multi', scenario='small_r', support_factor='100', fix_mass=False, eos_informed=False)
     Analysis()
 
     expected = Analysis.signal.expected_counts

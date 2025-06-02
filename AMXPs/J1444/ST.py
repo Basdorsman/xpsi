@@ -513,7 +513,10 @@ class analysis(object):
 
         
         if self.scenario == 'J1444s':
-            true_logl = 1.8751140823e+05
+            true_logl = 1.8738168720e+05 #nonoise
+            # true_logl = 1.8733692430e+05 #nonoise, low res data
+            # true_logl = 1.8742408005e+05 #low res data
+            # true_logl = 1.8751140823e+05
         if self.scenario == 'J1444':
             true_logl = 1.8
         

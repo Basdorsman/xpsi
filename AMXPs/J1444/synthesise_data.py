@@ -87,9 +87,9 @@ elif scenario == 'J1444s':
 
 ################################## INSTRUMENT #################################
 max_detection_channel=580 #around the maximum
-min_detection_channel = 20 
+min_detection_channel = 100 #20 
 max_input = 1880 #around the maximum
-min_input = 0
+min_input = 700 #0
 
 root = 'data/NICER_products/'
 RMF_file = root+'srgaj1444.rmf'
@@ -152,7 +152,7 @@ hot = HotRegions((primary,))
 
 ############################### DISK ####################################
 
-bounds = dict(T_in = (None, None), R_in = (None, None), K_disk = None)
+bounds = dict(T_in_keV = (None, None), R_in = (None, None), K_disk = None)
 k_disk = k_disk_derive()
 
 disk = Disk(bounds=bounds, values={'K_disk': k_disk})
@@ -224,7 +224,7 @@ if poisson_noise:
 
 Instrument_kwargs = dict(exposure_time=exposure_time,
                          seed=seed, 
-                         name=f'{scenario}_seed={seed}',
+                         name=f'{scenario}_seed={seed}_ch100',
                          directory='./data/NICER_products/data/')
 
 likelihood.synthesise(p, force=True, Instrument=Instrument_kwargs) 
@@ -239,7 +239,7 @@ if __name__ == '__main__':
     ########## DATA PLOT ###############
     
     
-    my_data=np.loadtxt(f'./data/NICER_products/data/{scenario}_seed={poisson_seed}_realisation.dat')
+    my_data=np.loadtxt(f'./data/NICER_products/data/{scenario}_seed={poisson_seed}_ch100_realisation.dat')
     
     
     

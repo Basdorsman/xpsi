@@ -190,7 +190,7 @@ class analysis(object):
         self.this_directory = this_directory
         
         if self.scenario in ('large_r', 'small_r', 'J1444s'):
-            self.file_pulse_profile = self.this_directory + f'/data/NICER_products/data/{self.scenario}_seed={self.poisson_seed}_realisation.dat'
+            self.file_pulse_profile = self.this_directory + f'/data/NICER_products/data/{self.scenario}_seed={self.poisson_seed}_ch100_realisation.dat'
         if self.scenario == 'J1444':
             self.file_pulse_profile = self.this_directory + f'/data/NICER_products/data/J1444_preprocessed.txt'
        
@@ -221,11 +221,12 @@ class analysis(object):
         self.phases_space = np.linspace(0.0, 1.0, 33)
 
 
-        self.min_input = 0 # 20 is used with 0.3 keV (channel_low=30). 0 is used with 0.2 keV (channel_low=20). 900 works with channel_low = 120 (1.2 keV). 
-        self.channel_low = 20 # 20 corresponds to 0.2 keV. # 30 corresponds to 0.3 keV
-        self.channel_hi = 580 # 300 corresponds to 3 keV. 600 corresponds to 6 keV (98.7% of total counts retained)
+        self.min_input = 700 #  0 is used with 0.2 keV (channel_low=20). 900 works with channel_low = 120 (1.2 keV). 
         self.max_input = 1880 # 1400 works with channel-hi = 300. 2000 works with channel_hi = 600 (6 keV)
 
+        self.channel_low = 100 # 20 corresponds to 0.2 keV. 
+        self.channel_hi = 580 # 300 corresponds to 3 keV. 600 corresponds to 6 keV (98.7% of total counts retained)
+       
 
 
         settings = dict(counts = np.loadtxt(self.file_pulse_profile, dtype=np.double),
@@ -514,10 +515,11 @@ class analysis(object):
 
         
         if self.scenario == 'J1444s':
+            true_logl = 1.8903850924e+05 #data start at ch 100, input 700
             # true_logl = 1.8738168720e+05 #nonoise
             # true_logl = 1.8733692430e+05 #nonoise, low res data
             # true_logl = 1.8742408005e+05 #low res data
-            true_logl = 1.8751140823e+05
+            # true_logl = 1.8751140823e+05
         if self.scenario == 'J1444':
             true_logl = 1.8
         

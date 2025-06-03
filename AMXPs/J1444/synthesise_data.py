@@ -71,7 +71,7 @@ except:
     n_params = "5"
     machine = "local"
     poisson_noise = True
-    poisson_seed = 1
+    poisson_seed = 42
     scenario = 'J1444s' # 'kajava', 'literature
   
 
@@ -86,10 +86,18 @@ elif scenario == 'J1444s':
 
 
 ################################## INSTRUMENT #################################
+channel_min = 20
+
+if channel_min == 100:
+    min_detection_channel = 100 #20 
+    min_input = 700 #0
+elif channel_min == 20:
+    min_detection_channel = 20 
+    min_input = 0
+    
 max_detection_channel=580 #around the maximum
-min_detection_channel = 100 #20 
 max_input = 1880 #around the maximum
-min_input = 700 #0
+
 
 root = 'data/NICER_products/'
 RMF_file = root+'srgaj1444.rmf'
@@ -224,7 +232,7 @@ if poisson_noise:
 
 Instrument_kwargs = dict(exposure_time=exposure_time,
                          seed=seed, 
-                         name=f'{scenario}_seed={seed}_ch100',
+                         name=f'{scenario}_seed={seed}_ch{channel_min}',
                          directory='./data/NICER_products/data/')
 
 likelihood.synthesise(p, force=True, Instrument=Instrument_kwargs) 
@@ -239,7 +247,7 @@ if __name__ == '__main__':
     ########## DATA PLOT ###############
     
     
-    my_data=np.loadtxt(f'./data/NICER_products/data/{scenario}_seed={poisson_seed}_ch100_realisation.dat')
+    my_data=np.loadtxt(f'./data/NICER_products/data/{scenario}_seed={poisson_seed}_ch{channel_min}_realisation.dat')
     
     
     

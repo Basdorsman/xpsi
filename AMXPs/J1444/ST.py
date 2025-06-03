@@ -35,7 +35,7 @@ class analysis(object):
                  support_factor = "None", 
                  scenario = 'None', 
                  poisson_noise=True, 
-                 poisson_seed=1, 
+                 poisson_seed=42, 
                  fix_mass=False, 
                  eos_informed=False, 
                  polarization=False):
@@ -179,6 +179,10 @@ class analysis(object):
         else:
             self.polarization = False
         print(f'polarization: {self.polarization}')
+        
+        
+        self.channel_min = 20
+        print('minimum instrument channel:', self.channel_min)
 
         self.pv = parameter_values(self.scenario, self.bkg, self.fix_mass, polarization=self.polarization)
         self.file_locations()
@@ -190,7 +194,7 @@ class analysis(object):
         self.this_directory = this_directory
         
         if self.scenario in ('large_r', 'small_r', 'J1444s'):
-            self.file_pulse_profile = self.this_directory + f'/data/NICER_products/data/{self.scenario}_seed={self.poisson_seed}_ch100_realisation.dat'
+            self.file_pulse_profile = self.this_directory + f'/data/NICER_products/data/{self.scenario}_seed={self.poisson_seed}_ch{self.channel_min}_realisation.dat'
         if self.scenario == 'J1444':
             self.file_pulse_profile = self.this_directory + f'/data/NICER_products/data/J1444_preprocessed.txt'
        
@@ -220,11 +224,15 @@ class analysis(object):
         
         self.phases_space = np.linspace(0.0, 1.0, 33)
 
+      
 
-        self.min_input = 700 #  0 is used with 0.2 keV (channel_low=20). 900 works with channel_low = 120 (1.2 keV). 
+        if self.channel_min == 100:        
+            self.min_input = 700 #  700 works with channel_low = 100 (1 keV). 
+            self.channel_low = 100 # 100 corresponds to 1 keV. 
+        elif self.channel_min == 20:
+            self.min_input = 0 #  0 is used with 0.2 keV (channel_low=20).
+            self.channel_low = 20 # 20 corresponds to 0.2 keV. 
         self.max_input = 1880 # 1400 works with channel-hi = 300. 2000 works with channel_hi = 600 (6 keV)
-
-        self.channel_low = 100 # 20 corresponds to 0.2 keV. 
         self.channel_hi = 580 # 300 corresponds to 3 keV. 600 corresponds to 6 keV (98.7% of total counts retained)
        
 
@@ -517,11 +525,14 @@ class analysis(object):
         if self.scenario == 'J1444s':
             if self.poisson_seed == 1:
                 true_logl = 1.8694056662e+05
-            if self.poisson_seed == 0:
+            elif self.poisson_seed == 0:
                 true_logl = 1.8788034922e+05
-            if self.poisson_seed == 42:
-                true_logl = 1.8904687376e+05 #data start at ch 100, seed 42, low res
-            # true_logl = 1.8903850924e+05 #data start at ch 100, input 700
+            elif self.poisson_seed == 42:
+                if self.channel_min == 20:
+                    true_logl = 1.8742408005e+05
+                elif self.channel_min == 100:
+                    true_logl = 1.8904687376e+05 #data start at ch 100, seed 42, low res
+            # true_logl = 1.8903850924e+05 #data start at ch 100, input 700, hi res
             # true_logl = 1.8738168720e+05 #nonoise
             # true_logl = 1.8733692430e+05 #nonoise, low res data
             # true_logl = 1.8742408005e+05 #low res data
@@ -647,5 +658,5 @@ class analysis(object):
             
             
 if __name__ == '__main__':
-    Analysis = analysis('local', 'test', 'disk', sampler='multi', scenario='J1444s', support_factor='100', fix_mass=False, eos_informed=False, polarization=False)
+    Analysis = analysis('local', 'test', 'disk', sampler='multi', scenario='J1444s', support_factor='100', poisson_seed=42, fix_mass=False, eos_informed=False, polarization=False)
     Analysis()

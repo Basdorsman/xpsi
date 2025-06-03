@@ -226,11 +226,24 @@ class parameter_values(object):
 
     def bounds(self):
         
-        cos_i_low = 0.  if self.scenario in ('J1444','J1444s') else 0.15 # papitto2024 limit here for j1444 is np.cos((74.1+5.8)*np.pi/180)
-        cos_i_high = 1. if self.scenario in ('J1444','J1444s') else  0.87 # papitto2024 limit here for j1444 is np.cos((74.1-6.3)*np.pi/180)
-        dist_low = 1. if self.scenario in ('J1444','J1444s') else 1.2
-        dist_high = 10.6 if self.scenario in ('J1444','J1444s') else  4.2
-        nh_high = 100. if self.scenario in ('J1444','J1444s') else 3. 
+        cos_i_constr = True
+        
+        if self.scenario in ('J1444','J1444s'):
+            if cos_i_constr:
+                cos_i_low = np.cos((74.1+5.8)*np.pi/180) # papitto2024 limit here for j1444 
+                cos_i_high = np.cos((74.1-6.3)*np.pi/180)
+            elif not cos_i_constr:
+                cos_i_low = 0.
+                cos_i_high = 1.
+            dist_low = 1.
+            dist_high = 10.6 
+            nh_high = 100.
+        else: #J1808 values
+            cos_i_low = 0.15 
+            cos_i_high = 0.87  
+            dist_low = 1.2
+            dist_high = 4.2 
+            nh_high = 3.
         
         bounds = {'radius':(3.0 * gravradius(1.0), 16.0),
                   'distance': (dist_low, dist_high),

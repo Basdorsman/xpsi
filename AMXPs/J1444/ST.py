@@ -35,7 +35,7 @@ class analysis(object):
                  support_factor = "None", 
                  scenario = 'None', 
                  poisson_noise=True, 
-                 poisson_seed=42, 
+                 poisson_seed=1, 
                  fix_mass=False, 
                  eos_informed=False, 
                  polarization=False):
@@ -515,7 +515,13 @@ class analysis(object):
 
         
         if self.scenario == 'J1444s':
-            true_logl = 1.8903850924e+05 #data start at ch 100, input 700
+            if self.poisson_seed == 1:
+                true_logl = 1.8694056662e+05
+            if self.poisson_seed == 0:
+                true_logl = 1.8788034922e+05
+            if self.poisson_seed == 42:
+                true_logl = 1.8904687376e+05 #data start at ch 100, seed 42, low res
+            # true_logl = 1.8903850924e+05 #data start at ch 100, input 700
             # true_logl = 1.8738168720e+05 #nonoise
             # true_logl = 1.8733692430e+05 #nonoise, low res data
             # true_logl = 1.8742408005e+05 #low res data

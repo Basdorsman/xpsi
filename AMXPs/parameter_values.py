@@ -209,13 +209,14 @@ class parameter_values(object):
             'super_colatitude', 'super_radius', 'super_tbb', 'super_te', 
             'super_tau', 
             #'T_in' if self.bkg in ['disk', 'diskline'] else None,
+            'T_in_keV' if self.bkg in ['disk', 'diskline'] else None,
             'R_in' if self.bkg in ['disk', 'diskline'] else None,
             'mu' if self.bkg == 'diskline' else None,
             'sigma' if self.bkg == 'diskline' else None,
             'N' if self.bkg == 'diskline' else None,
             'column_density', 'compactness', 'tbb_keV', 'te_keV', 
             'inclination_deg', 'colatitude_deg', 'radius_deg', 
-            'T_in_keV' if self.bkg in ['disk', 'diskline'] else None,
+            #'T_in_keV' if self.bkg in ['disk', 'diskline'] else None,
             'N_norm' if self.bkg == 'diskline' else None
         ]
         
@@ -297,7 +298,8 @@ class parameter_values(object):
 
         if 'disk' in self.bkg:
             #truths['T_in'] = self.diskbb_T_log10_K
-            truths['T_in_keV'] = self.diskbb_T_keV
+            #truths['T_in_keV'] = self.diskbb_T_keV
+            truths['T_in_keV'] = self.T_in_keV
             truths['R_in'] = self.R_in
         
         if 'line' in self.bkg:

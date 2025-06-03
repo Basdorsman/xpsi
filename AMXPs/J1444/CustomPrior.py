@@ -209,8 +209,8 @@ class CustomPrior(xpsi.Prior):
         p += [ref['super_colatitude']*180/np.pi]
         p += [ref['super_radius']*180/np.pi]
         
-        if 'disk' in self.bkg:
-            p += [get_keV_from_log10_Kelvin(ref['T_in'])]
+        # if 'disk' in self.bkg:
+        #     p += [get_keV_from_log10_Kelvin(ref['T_in'])]
         if 'line' in self.bkg:
             p+=[ref['N']*1e-37]
 

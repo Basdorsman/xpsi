@@ -71,7 +71,7 @@ except:
     n_params = "5"
     machine = "local"
     poisson_noise = True
-    poisson_seed = 42
+    poisson_seed = 1
     scenario = 'J1444s' # 'kajava', 'literature
   
 
@@ -113,9 +113,9 @@ spacetime = xpsi.Spacetime(bounds=bounds, values=dict(frequency=pv.frequency))# 
 
 ############################### SINGLE HOTREGION ##############################
 
-num_leaves = 128  # 30
-sqrt_num_cells = 128  # 50
-num_energies = 128  # 40
+num_leaves = 30 #128  # 30
+sqrt_num_cells = 50 #128  # 50
+num_energies = 40 # 128  # 40
 num_rays = 512
 
 kwargs = {'symmetry': True, #call for azimuthal invariance

@@ -185,7 +185,7 @@ class analysis(object):
             print('channel_min is not in environment variables, using passed argument.')
             self.channel_min = channel_min
         else:
-            self.channel_min = os.environ.get('channel_min')
+            self.channel_min = int(os.environ.get('channel_min'))
         print(f'channel_min: {self.channel_min}') 
 
 

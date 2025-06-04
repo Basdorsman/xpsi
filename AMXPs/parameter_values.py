@@ -235,8 +235,8 @@ class parameter_values(object):
             elif not cos_i_constr:
                 cos_i_low = 0.
                 cos_i_high = 1.
-            dist_low = 1.
-            dist_high = 10.6 
+            dist_low = 5.
+            dist_high = 15. 
             nh_high = 100.
         else: #J1808 values
             cos_i_low = 0.15 

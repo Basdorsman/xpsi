@@ -38,7 +38,8 @@ class analysis(object):
                  poisson_seed=42, 
                  fix_mass=False, 
                  eos_informed=False, 
-                 polarization=False):
+                 polarization=False,
+                 channel_min=None):
 
         self.scenario = os.environ.get('scenario')
         if os.environ.get('scenario') == None or os.environ.get('scenario') =='None':
@@ -180,9 +181,13 @@ class analysis(object):
             self.polarization = False
         print(f'polarization: {self.polarization}')
         
-        
-        self.channel_min = 20
-        print('minimum instrument channel:', self.channel_min)
+        if os.environ.get('channel_min') == None or os.environ.get('channel_min') == 'None':
+            print('channel_min is not in environment variables, using passed argument.')
+            self.channel_min = channel_min
+        else:
+            self.channel_min = os.environ.get('channel_min')
+        print(f'channel_min: {self.channel_min}') 
+
 
         self.pv = parameter_values(self.scenario, self.bkg, self.fix_mass, polarization=self.polarization)
         self.file_locations()
@@ -196,7 +201,7 @@ class analysis(object):
         if self.scenario in ('large_r', 'small_r', 'J1444s'):
             self.file_pulse_profile = self.this_directory + f'/data/NICER_products/data/{self.scenario}_seed={self.poisson_seed}_ch{self.channel_min}_realisation.dat'
         if self.scenario == 'J1444':
-            self.file_pulse_profile = self.this_directory + f'/data/NICER_products/data/J1444_preprocessed.txt'
+            self.file_pulse_profile = self.this_directory + f'/data/NICER_products/data/J1444_preprocessed_ch{self.channel_min}.txt'
        
         self.RMF_file = self.this_directory+'/data/NICER_products/srgaj1444.rmf'
         self.ARF_file = self.this_directory+'/data/NICER_products/srgaj1444.arf'
@@ -538,7 +543,10 @@ class analysis(object):
             # true_logl = 1.8742408005e+05 #low res data
             # true_logl = 1.8751140823e+05
         if self.scenario == 'J1444':
-            true_logl = 1.8
+            if self.channel_min == 20:
+                true_logl = 1.3232728873e+07
+            elif self.channel_min == 100:
+                true_logl = 1.3302417402e+07
         
             
         if self.scenario == 'small_r':
@@ -658,5 +666,15 @@ class analysis(object):
             
             
 if __name__ == '__main__':
-    Analysis = analysis('local', 'test', 'disk', sampler='multi', scenario='J1444s', support_factor='100', poisson_seed=42, fix_mass=False, eos_informed=False, polarization=False)
+    Analysis = analysis('local', 
+                        'sample', 
+                        'disk', 
+                        sampler='multi', 
+                        scenario='J1444', 
+                        support_factor='100', 
+                        poisson_seed=42, 
+                        fix_mass=False, 
+                        eos_informed=False, 
+                        polarization=False, 
+                        channel_min=100)
     Analysis()

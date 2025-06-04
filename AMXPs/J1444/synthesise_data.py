@@ -248,7 +248,7 @@ if __name__ == '__main__':
     
     
     my_data=np.loadtxt(f'./data/NICER_products/data/{scenario}_seed={poisson_seed}_ch{channel_min}_realisation.dat')
-    
+    print(my_data.shape)
     
     
     

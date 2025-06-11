@@ -369,7 +369,8 @@ class analysis(object):
     def set_disk(self):
         from Disk import Disk, k_disk_derive
         if 'disk' in self.bkg:    
-            bounds = dict(T_in = get_T_in_log10_Kelvin(self.bounds["T_in"]),
+            bounds = dict(#T_in = get_T_in_log10_Kelvin(self.bounds["T_in"]),
+                          T_in_keV = self.bounds["T_in_keV"],
                           R_in = self.bounds["R_in"],
                           K_disk = None) #derived means no bounds
                 
@@ -585,7 +586,6 @@ class analysis(object):
         elif self.run_type == 'test':
             print('test starts')
             # num_rays = [20, 512]
-            t_start = time.time()
             # for num_ray in num_rays:
             #     self.hot_kwargs['num_rays']=num_ray
             #     print(self.hot_kwargs)
@@ -622,25 +622,39 @@ class analysis(object):
 
             
             
-            # print('time integrator test')
-            # n_repeats = 1000
-            # timings_summed = np.zeros(4)
+            print('time integrator test')
+            n_repeats = 100
+            i=0
+            t_likelihood = 0
+            timings_summed = np.zeros(4)
             
-            # for i in range(n_repeats):
-            #     p_test = self.prior.inverse_sample()
-            #     # l_test = self.likelihood(self.p, reinitialise=True)
-            #     l_test = self.likelihood(p_test, reinitialise=True)
-            #     timings_summed += self.hot.objects[0]._integrator_timings
-            #     # print(l_test)
+            while i < n_repeats:
+                # same sample
+                # l_test = self.likelihood(self.p, reinitialise=True)
+                
+                # random samples
+                t_start = time.time()
+                p_test = self.prior.inverse_sample()
+                l_test = self.likelihood(p_test, reinitialise=True)
+                if l_test > -1e89:
+                    # print(l_test)
+                    timings_summed += self.hot.objects[0]._integrator_timings
+                    t_likelihood += time.time()-t_start
+                    i+=1
             
-            # print('full, pre-atmosphere, intensities, phase interpolation')
-            # print(f'Timings summed: {timings_summed/n_repeats} seconds, repeats={n_repeats}')
+            print(f'repeats={n_repeats}')
+            print(f'Evaluation takes {(t_likelihood)/n_repeats:0.3f} seconds')
+            
+            print(f'signal eval: {timings_summed[0]/n_repeats:0.3f} seconds, {timings_summed[0]/t_likelihood*100:0.1f}% of likelihood')
+            print(f'pre-atmosphere: {timings_summed[1]/n_repeats:0.3f} seconds, {timings_summed[1]/t_likelihood*100:0.1f}% of likelihood')
+            print(f'intensities: {timings_summed[2]/n_repeats:0.3f} seconds, {timings_summed[2]/t_likelihood*100:0.1f}% of likelihood')
+            print(f'phase interpolation: {timings_summed[3]/n_repeats:0.3f} seconds, {timings_summed[3]/t_likelihood*100:0.1f}% of likelihood')
                 
-                
-            # print(f'Evaluation takes {(time.time()-t_start)/n_repeats} seconds, repeats={n_repeats}')
+            
+    
             
 if __name__ == '__main__':
-    Analysis = analysis('local', 'sample', 'disk', sampler='multi', scenario='small_r', support_factor='100', fix_mass=False, eos_informed=False)
+    Analysis = analysis('local', 'test', 'disk', sampler='multi', scenario='small_r', support_factor='100', fix_mass=False, eos_informed=False)
     Analysis()
 
     expected = Analysis.signal.expected_counts

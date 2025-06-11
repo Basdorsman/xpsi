@@ -194,9 +194,6 @@ class parameter_values(object):
 
         # Remove any None values (e.g., mass if fix_mass is True, or optional elements)
         self.p = [x for x in self.p if x is not None]
-        
-        
-        print('parameter vector length:', len(self.p))
         return self.p
         
     def names(self):

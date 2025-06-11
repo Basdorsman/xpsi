@@ -86,7 +86,7 @@ elif scenario == 'J1444s':
 
 
 ################################## INSTRUMENT #################################
-channel_min = 20
+channel_min = 100
 
 if channel_min == 100:
     min_detection_channel = 100 #20 
@@ -95,8 +95,8 @@ elif channel_min == 20:
     min_detection_channel = 20 
     min_input = 0
     
-max_detection_channel=580 #around the maximum
-max_input = 1880 #around the maximum
+max_detection_channel= 1000 #580 # 1000 #around 10 keV
+max_input = 2800 #1880 # 2800 # 10 keV and a bit extra
 
 
 root = 'data/NICER_products/'
@@ -105,7 +105,7 @@ ARF_file = root+'srgaj1444.arf'
 NICER = CustomInstrument_fits.from_response_files(
     RMF_file, 
     ARF_file,
-    max_detection_channel=max_detection_channel, #around the maximum
+    max_detection_channel = max_detection_channel, #around the maximum
     min_detection_channel = min_detection_channel, 
     max_input = max_input, #around the maximum
     min_input = min_input)

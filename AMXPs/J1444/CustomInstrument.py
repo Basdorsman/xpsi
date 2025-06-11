@@ -167,7 +167,7 @@ class CustomInstrument_fits(xpsi.Instrument):
                 n_grps = data2['N_GRP']    # Number of response groups per energy bin
                 f_chans = data2['F_CHAN']  # First channel number for each group
                 n_chans = data2['N_CHAN']  # Number of channels in each group
-                matrix = data2['MATRIX']
+                data_matrix = data2['MATRIX']
                 
 
         
@@ -199,14 +199,24 @@ class CustomInstrument_fits(xpsi.Instrument):
         
         # Loop through each incident channel, extracting response group information
         for i, n_grp, f_chan, n_chan, response in zip(
-            range(n_incident_chans_file), n_grps, f_chans, n_chans, matrix
+            range(n_incident_chans_file), n_grps, f_chans, n_chans, data_matrix
         ):
-            # Populate the matrix for the first response group
-            parsed_data[f_chan[0]:f_chan[0] + n_chan[0], i] = response[0:n_chan[0]]
+            # # Populate the matrix for the first response group
+            # parsed_data[f_chan[0]:f_chan[0] + n_chan[0], i] = response[0:n_chan[0]]
             
-            # Check if there is a second response group and populate its values
-            if n_grp == 2:
-                parsed_data[f_chan[1]:f_chan[1] + n_chan[1], i] = response[n_chan[0]:n_chan[0] + n_chan[1]]
+            # # Check if there is a second response group and populate its values
+            # if n_grp == 2:
+            #     parsed_data[f_chan[1]:f_chan[1] + n_chan[1], i] = response[n_chan[0]:n_chan[0] + n_chan[1]]
+            
+            offset = 0
+            for j in range(n_grp):
+                start = f_chan[j]         # start index for this group
+                length = n_chan[j]        # how many channels to fill
+            
+                # Fill parsed_data from response, using the current offset
+                parsed_data[start:start+length, i] = response[offset:offset+length]
+                
+                offset += length          # move the offset forward
 
         # Multiply the response matrix by the spectral response (specresp)
         response_matrix = parsed_data * specresp

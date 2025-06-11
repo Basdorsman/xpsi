@@ -237,8 +237,8 @@ class analysis(object):
         elif self.channel_min == 20:
             self.min_input = 0 #  0 is used with 0.2 keV (channel_low=20).
             self.channel_low = 20 # 20 corresponds to 0.2 keV. 
-        self.max_input = 1880 # 1400 works with channel-hi = 300. 2000 works with channel_hi = 600 (6 keV)
-        self.channel_hi = 580 # 300 corresponds to 3 keV. 600 corresponds to 6 keV (98.7% of total counts retained)
+        self.max_input = 2800 # accomodates just beyond 10 keV
+        self.channel_hi = 1000 # 10 keV
        
 
 
@@ -503,7 +503,7 @@ class analysis(object):
 
     def set_parameter_vector(self):
         self.p = self.pv.p()
-        print('again parameter vector', len(self.p))
+        print('parameter vector length: ', len(self.p))
         
    
     def set_prior(self):
@@ -534,9 +534,9 @@ class analysis(object):
                 true_logl = 1.8788034922e+05
             elif self.poisson_seed == 42:
                 if self.channel_min == 20:
-                    true_logl = 1.8742408005e+05
+                    true_logl = 1.8061835150e+05
                 elif self.channel_min == 100:
-                    true_logl = 1.8904687376e+05 #data start at ch 100, seed 42, low res
+                    true_logl = 1.8269371046e+05 #data start at ch 100, seed 42, low res
             # true_logl = 1.8903850924e+05 #data start at ch 100, input 700, hi res
             # true_logl = 1.8738168720e+05 #nonoise
             # true_logl = 1.8733692430e+05 #nonoise, low res data
@@ -544,9 +544,9 @@ class analysis(object):
             # true_logl = 1.8751140823e+05
         if self.scenario == 'J1444':
             if self.channel_min == 20:
-                true_logl = 1.3232728873e+07
+                true_logl = 1.3525318684e+07
             elif self.channel_min == 100:
-                true_logl = 1.3302417402e+07
+                true_logl = 1.3594326983e+07
         
             
         if self.scenario == 'small_r':
@@ -611,10 +611,6 @@ class analysis(object):
         fig.tight_layout()
         
         if self.run_type == 'sample':
-
-            
-
-
             if self.sampler == 'multi':
                 wrapped_params = [0]*len(self.likelihood)
                 wrapped_params[self.likelihood.index('phase_shift')] = 1
@@ -667,7 +663,7 @@ class analysis(object):
             
 if __name__ == '__main__':
     Analysis = analysis('local', 
-                        'sample', 
+                        'test', 
                         'disk', 
                         sampler='multi', 
                         scenario='J1444', 

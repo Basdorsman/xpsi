@@ -454,7 +454,7 @@ class CustomSignal(xpsi.Signal):
             #             self._expected_counts,
             #             fmt = '%f')
             
-            # NO NOISE, WHOLE COUNTS
+            # # NO NOISE, WHOLE COUNTS
             # np.savetxt(os.path.join(directory, name+'_realisation.dat'),
             #             np.round(self._expected_counts),
             #             fmt = '%u')

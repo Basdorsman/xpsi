@@ -14,7 +14,7 @@ from xpsi.tools.energy_integrator import energy_integrator
 import xpsi
 from xpsi.likelihoods.default_background_marginalisation import eval_marginal_likelihood
 from xpsi.likelihoods.default_background_marginalisation import precomputation
-from xpsi.tools.synthesise import synthesise_exposure_no_scaling as _synthesise # no scaling!
+# from xpsi.tools.synthesise import synthesise_exposure_no_scaling as _synthesise # no scaling!
 from xpsi.likelihoods._poisson_likelihood_given_background import poisson_likelihood_given_background
 
 this_directory = os.path.dirname(os.path.abspath(__file__))

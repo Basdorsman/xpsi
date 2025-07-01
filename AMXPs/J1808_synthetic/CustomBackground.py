@@ -7,7 +7,7 @@ Created on Thu Dec  7 15:59:51 2023
 """
 
 import xpsi
-from xpsi.global_imports import  _keV, _k_B, _c_cgs, _h_keV
+from xpsi.global_imports import  _keV, _k_B, _c, _h_keV
 k_B_over_keV = _k_B / _keV
 import numpy as np
 from scipy.integrate import quad
@@ -207,7 +207,7 @@ class CustomBackground_DiskBB(xpsi.Background):
         returns:
             b_E in photons/s/keV/cm^2/sr 
         '''
-
+        _c_cgs = _c*100
         b = 2*E**2/(_h_keV**3*_c_cgs**2)/(np.exp(E/T)-1)
         return b
         
@@ -223,7 +223,7 @@ class CustomBackground_DiskBB(xpsi.Background):
         returns:
             B_E in keV/s/keV/cm^2/sr (you will integrate over keV)
         '''
-        
+        _c_cgs = _c*100
         B = 2*E**3/(_h_keV**3*_c_cgs**2)/(np.exp(E/T)-1)
         return B
 

@@ -23,7 +23,7 @@ class CustomInterstellar(xpsi.Interstellar):
         self._lkp_attenuation = attenuation # for lookup      
 
         N_H = Parameter('column_density',
-                        strict_bounds = (0.0,10.0),
+                        strict_bounds = (0.0,100.0),
                         bounds = bounds,
                         doc = 'Units of 10^21 cm^-2.',
                         symbol = r'$N_{\rm H}$',

@@ -117,7 +117,7 @@ class analysis(object):
         print(f'poisson_noise: {self.poisson_noise}, poisson_seed: {self.poisson_seed} (only relevant if poisson noise is True)')
        
         
-        self.integrator = 'azimuthal_invariance' #'general/azimuthal_invariance'
+        self.integrator = True #'azimuthal_invariance' #'general/azimuthal_invariance'
         self.interpolator = 'split'  #'split/combined'
 
         self.pv = parameter_values(self.scenario, self.bkg)
@@ -137,11 +137,11 @@ class analysis(object):
 
     def file_locations(self):
         self.this_directory = this_directory
-        # if self.scenario == 'kajava' or self.scenario == 'literature':
-        #     if self.poisson_noise:
-        #         self.file_pulse_profile = self.this_directory + f'/data/synthetic_{self.scenario}_seed={self.poisson_seed}_realisation.dat' 
-        #     elif not self.poisson_noise:
-        #         self.file_pulse_profile = self.this_directory + f'/data/J1808_synthetic_{self.scenario}_realisation.dat'
+        if self.scenario == 'kajava' or self.scenario == 'literature':
+            # if self.poisson_noise:
+            #     self.file_pulse_profile = self.this_directory + f'/data/synthetic_{self.scenario}_seed={self.poisson_seed}_realisation.dat' 
+            # elif not self.poisson_noise:
+            self.file_pulse_profile = self.this_directory + f'/data/J1808_synthetic_{self.scenario}_realisation.dat'
         
         if self.scenario == 'large_r' or self.scenario == 'small_r':
                 self.file_pulse_profile = self.this_directory + f'/data/synthetic_{self.scenario}_seed={self.poisson_seed}_realisation.dat' 
@@ -154,7 +154,7 @@ class analysis(object):
             self.file_rmf = self.this_directory + f'/../model_data/instrument_data/J1808_NICER_{self.scenario}/merged_saxj1808_{self.scenario}_rmf_matrix.txt'
             self.file_channel_edges = self.this_directory + f'/../model_data/instrument_data/J1808_NICER_{self.scenario}/merged_saxj1808_{self.scenario}_rmf_energymap.txt'
 
-        elif self.scenario == 'large_r' or self.scenario == 'small_r':
+        elif self.scenario in ('small_r', 'large_r', 'kajava'):
             self.file_arf = self.this_directory + f'/../model_data/instrument_data/J1808_NICER_2019/merged_saxj1808_2019_arf_aeff.txt'
             self.file_rmf = self.this_directory + f'/../model_data/instrument_data/J1808_NICER_2019/merged_saxj1808_2019_rmf_matrix.txt'
             self.file_channel_edges = self.this_directory + f'/../model_data/instrument_data/J1808_NICER_2019/merged_saxj1808_2019_rmf_energymap.txt'
@@ -180,7 +180,7 @@ class analysis(object):
     #     self.values = values
 
     def set_data(self):
-        if self.scenario == '2019' or self.scenario == 'large_r' or self.scenario == 'small_r':
+        if self.scenario in ('2019', 'small_r', 'kajava'):
             self.exposure_time = 1.32366e5 #Mason's 2019 data cut
         if self.scenario == '2022':
             self.exposure_time = 7.13422e4 #Mason's 2022 data cut
@@ -522,5 +522,5 @@ class analysis(object):
             print('Sampling took {:.3f} seconds'.format((time.time()-t_start)))
             
 if __name__ == '__main__':
-    Analysis = analysis('local','test', 'model', support_factor=None, scenario='small_r')
+    Analysis = analysis('local','test', 'model', support_factor=None, scenario='kajava')
     Analysis()

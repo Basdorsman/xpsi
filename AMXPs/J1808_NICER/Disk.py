@@ -21,6 +21,16 @@ class Disk(ParameterSubspace):
                                 doc = doc,
                                 symbol = r'$T_{in}$',
                                 value = values.get('T_in', None))
+        
+        # doc = """
+        # Temperature at inner disk radius in keV
+        # """
+        # inner_temperature = Parameter('T_in_keV',
+        #                         strict_bounds = (1e-5, 1e2),
+        #                         bounds = bounds.get('T_in_keV', None),
+        #                         doc = doc,
+        #                         symbol = r'$T_{in, keV}$',
+        #                         value = values.get('T_in_keV', None))
 
         doc = """
         Disk R_in in kilometers.
@@ -73,10 +83,12 @@ class Disk(ParameterSubspace):
         """
         
 
-        T_in = self['T_in']
+       
+        # T_in_keV = self['T_in_keV']
         K_disk = self['K_disk']
 
         # KbT in keV
+        T_in = self['T_in']
         T_in_keV = k_B_over_keV * pow(10.0, T_in)
         
         T_out_keV = T_in_keV*1e-1
@@ -121,10 +133,12 @@ class Disk(ParameterSubspace):
         """
 
         
-        T_in = self['T_in']
+    
+        # T_in_keV = self['T_in_keV']
         K_disk = self['K_disk']
 
         # KbT in keV
+        T_in = self['T_in']
         T_in_keV = k_B_over_keV * pow(10.0, T_in)
         
         T_out_keV = T_in_keV*1e-1

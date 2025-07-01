@@ -21,8 +21,8 @@ from CustomPhotosphere import CustomPhotosphereDiskLine
 from CustomInterstellar import CustomInterstellar
 from CustomSignal import CustomSignal
 from CustomHotregion import CustomHotRegion_Accreting
-
 from parameter_values import parameter_values
+
 from helper_functions import get_T_in_log10_Kelvin, plot_2D_pulse, CustomAxes, get_mids_from_edges
 
 class analysis(object):
@@ -178,7 +178,7 @@ class analysis(object):
 
 
 
-        self.likelihood.check(None, [self.true_logl], 1.0e-4, physical_points=[self.p], force_update=True)
+        self.likelihood.check(None, [self.true_logl], 1e-6, physical_points=[self.p], force_update=True)
         print('Likelihood check took {:.3f} seconds'.format((time.time()-t_check)))
         print(self.likelihood(self.p))
 
@@ -369,9 +369,11 @@ class analysis(object):
     def set_disk(self):
         from Disk import Disk, k_disk_derive
         if 'disk' in self.bkg:    
-            bounds = dict(T_in = get_T_in_log10_Kelvin(self.bounds["T_in"]),
-                          R_in = self.bounds["R_in"],
-                          K_disk = None) #derived means no bounds
+            bounds = dict(
+                T_in = get_T_in_log10_Kelvin(self.bounds["T_in"]),
+                # T_in_keV = self.bounds["T_in_keV"],
+                R_in = self.bounds["R_in"],
+                K_disk = None) #derived means no bounds
                 
             self.k_disk = k_disk_derive()
             self.disk = Disk(bounds=bounds, values={'K_disk': self.k_disk})
@@ -482,7 +484,11 @@ class analysis(object):
             
         if self.scenario == 'small_r':
             true_logl = 7.9265215141e+07
-            
+            if self.bkg == 'marginalise':
+                if self.support_factor == 100 or self.support_factor == '100':
+                    true_logl = -9.0971103484e+04
+                elif self.support_factor == 'None' or self.support_factor == None:
+                    true_logl = -8.7566701725e+04
 
         self.true_logl = true_logl
     
@@ -502,37 +508,81 @@ class analysis(object):
             if not os.path.isdir(folderstring):
                 raise
         
-        print('plotting...')
         
-        rcParams['text.usetex'] = False
-        rcParams['font.size'] = 14.0
+        if self.run_type == 'plot':
+            print('plotting...')
+            
+            rcParams['text.usetex'] = False
+            rcParams['font.size'] = 14.0
+            from matplotlib import cm
+            
+            # # plot photosphere signal
+    
+            # fig, ax = plot_2D_pulse((self.photosphere.signal[0][0],),
+            #               x=self.signal.phases[0],
+            #               shift=self.signal.shifts,
+            #               y=self.signal.energies,
+            #               ylabel=r'Energy (keV)',
+            #               cm=cm.jet)
+    
+            
+            # plt.savefig('{}/pre_sampling_plot.png'.format(folderstring))
+            # print('figure saved in {}'.format(folderstring))
+            
+            
+            # plot data, signal and residual
+            fig, axes = plt.subplots(3,1,figsize=(5,8))
+           
+            profile = CustomAxes.plot_2D_counts(axes[0], self.data.counts, get_mids_from_edges(self.data.phases), get_mids_from_edges(self.instrument.channel_edges))
+            profile = CustomAxes.plot_2D_counts(axes[1], self.signal.expected_counts, get_mids_from_edges(self.data.phases), get_mids_from_edges(self.instrument.channel_edges))
+            profile = CustomAxes.plot_2D_counts(axes[2], self.signal.expected_counts-self.data.counts, get_mids_from_edges(self.data.phases), get_mids_from_edges(self.instrument.channel_edges))
+            fig.colorbar(profile, ax=axes[0])
+            fig.colorbar(profile, ax=axes[1])
+            fig.colorbar(profile, ax=axes[2])     
+            axes[2].set_title('expected-data')
+            fig.tight_layout()
+            
         
-        # Likelihood check and plot
-        from matplotlib import cm
-        fig, ax = plot_2D_pulse((self.photosphere.signal[0][0],),
-                      x=self.signal.phases[0],
-                      shift=self.signal.shifts,
-                      y=self.signal.energies,
-                      ylabel=r'Energy (keV)',
-                      cm=cm.jet)
-
+            #plot data
+            fig, axes = plt.subplots(2,1, sharex=True)
+            
+            signal = self.data.counts
+            phases = get_mids_from_edges(self.data.phases)
+            channels = get_mids_from_edges(self.instrument.channel_edges)
+            
+            profile = axes[1].pcolormesh(phases,
+                                       channels,
+                                       signal,
+                                       cmap = cm.jet,
+                                       #vmin = vmin,
+                                       #vmax = vmax,
+                                       linewidth = 0,
+                                       rasterized = True)
+            axes[1].set_xlim([0.0, 1.0])
+            axes[1].set_yscale('log')
+            axes[1].set_ylabel(r'Energy (keV)')
+            axes[1].set_xlabel(r'Phase')
+            axes[1].set_yticks([0.5, 1.0, 2.0])
+            axes[1].set_yticklabels([0.5, 1.0, 2.0])
+            fig.colorbar(profile, ax=axes[1], label='Counts')
+            
+            axes[0].step(self.data.phases[:-1], np.sum(signal, axis=0), where='post') 
+            axes[0].set_ylabel('Counts')
+            
+            from matplotlib.cm import ScalarMappable
+            from matplotlib.colors import Normalize
+            norm = Normalize(vmin=np.min(signal), vmax=np.max(signal))
+            dummy_mappable = ScalarMappable(norm=norm, cmap=cm.jet)
+            dummy_mappable.set_array([])  # required for colorbar
+            cbar_dummy = fig.colorbar(dummy_mappable, ax=axes[0])
+            cbar_dummy.remove()  # safely remove dummy colorbar
+            axes[0].set_title(f'{self.scenario} data')
+            fig.tight_layout()
+            
+            fig.savefig(f'{folderstring}/data_plot_{self.scenario}.png')
+          
         
-        plt.savefig('{}/pre_sampling_plot.png'.format(folderstring))
-        print('figure saved in {}'.format(folderstring))
-        
-        
-        fig, axes = plt.subplots(3,1,figsize=(5,8))
-       
-        profile = CustomAxes.plot_2D_counts(axes[0], self.data.counts, get_mids_from_edges(self.data.phases), get_mids_from_edges(self.instrument.channel_edges))
-        profile = CustomAxes.plot_2D_counts(axes[1], self.signal.expected_counts, get_mids_from_edges(self.data.phases), get_mids_from_edges(self.instrument.channel_edges))
-        profile = CustomAxes.plot_2D_counts(axes[2], self.signal.expected_counts-self.data.counts, get_mids_from_edges(self.data.phases), get_mids_from_edges(self.instrument.channel_edges))
-        fig.colorbar(profile, ax=axes[0])
-        fig.colorbar(profile, ax=axes[1])
-        fig.colorbar(profile, ax=axes[2])     
-        axes[2].set_title('expected-data')
-        fig.tight_layout()
-        
-        if self.run_type == 'sample':
+        elif self.run_type == 'sample':
 
             
 
@@ -585,7 +635,6 @@ class analysis(object):
         elif self.run_type == 'test':
             print('test starts')
             # num_rays = [20, 512]
-            t_start = time.time()
             # for num_ray in num_rays:
             #     self.hot_kwargs['num_rays']=num_ray
             #     print(self.hot_kwargs)
@@ -618,14 +667,56 @@ class analysis(object):
             # figure=corner.corner(test, labels=labels, quantiles=[0.16, 0.5, 0.84], 
             #            show_titles=True, title_fmt='.2f', range=[x_limits, y_limits])
             
-            # self.likelihood(self.p, reinitialise=True)
-            # print('Test took {:.3f} seconds'.format((time.time()-t_start)))
+            # 
+
             
+            
+            # print('time integrator test')
+            # n_repeats = 100
+            # i=0
+            # t_likelihood = 0
+            # timings_summed = np.zeros(4)
+            
+            # while i < n_repeats:
+            #     # same sample
+            #     # l_test = self.likelihood(self.p, reinitialise=True)
+                
+            #     # random samples
+            #     t_start = time.time()
+            #     p_test = self.prior.inverse_sample()
+            #     l_test = self.likelihood(p_test, reinitialise=True)
+            #     if l_test > -1e89:
+            #         # print(l_test)
+            #         timings_summed += self.hot.objects[0]._integrator_timings
+            #         t_likelihood += time.time()-t_start
+            #         i+=1
+            
+            # print(f'repeats={n_repeats}')
+            # print(f'Evaluation takes {(t_likelihood)/n_repeats:0.3f} seconds')
+            
+            # print(f'signal eval: {timings_summed[0]/n_repeats:0.3f} seconds, {timings_summed[0]/t_likelihood*100:0.1f}% of likelihood')
+            # print(f'pre-atmosphere: {timings_summed[1]/n_repeats:0.3f} seconds, {timings_summed[1]/t_likelihood*100:0.1f}% of likelihood')
+            # print(f'intensities: {timings_summed[2]/n_repeats:0.3f} seconds, {timings_summed[2]/t_likelihood*100:0.1f}% of likelihood')
+            # print(f'phase interpolation: {timings_summed[3]/n_repeats:0.3f} seconds, {timings_summed[3]/t_likelihood*100:0.1f}% of likelihood')
+                
+ 
+           
+            
+            
+            # profile = CustomAxes.plot_2D_counts(axes[0], self.data.counts, get_mids_from_edges(self.data.phases), get_mids_from_edges(self.instrument.channel_edges))
+            # profile = CustomAxes.plot_2D_counts(axes[1], self.signal.expected_counts, get_mids_from_edges(self.data.phases), get_mids_from_edges(self.instrument.channel_edges))
+            # profile = CustomAxes.plot_2D_counts(axes[2], self.signal.expected_counts-self.data.counts, get_mids_from_edges(self.data.phases), get_mids_from_edges(self.instrument.channel_edges))
+            # fig.colorbar(profile, ax=axes[0])
+            # fig.colorbar(profile, ax=axes[1])
+            # fig.colorbar(profile, ax=axes[2])     
+            # axes[2].set_title('expected-data')
+            # fig.tight_layout()
+    
             
 if __name__ == '__main__':
-    Analysis = analysis('local', 'test', 'disk', sampler='multi', scenario='small_r', support_factor='100', fix_mass=False, eos_informed=False)
+    Analysis = analysis('local', 'plot', 'marginalise', sampler='multi', scenario='small_r', support_factor=100, fix_mass=False, eos_informed=False)
     Analysis()
 
-    expected = Analysis.signal.expected_counts/1.32366 # 100k s exposure time
+    expected = Analysis.signal.expected_counts
     
     print('expected counts: ',np.sum(expected))

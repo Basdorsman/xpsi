@@ -259,7 +259,9 @@ class CustomPhotosphereDiskLine(xpsi.Photosphere):
             if self._disk is not None: 
                 self.disk_spectrum = self._disk(energies)
                 for i in range(self._signal[0][0].shape[1]):
+                    # print('STAR SIGNAL', self._signal[0][0][:,i])
                     self._signal[0][0][:,i] += self.disk_spectrum
+                    # print('STAR +disk SIGNAL', self._signal[0][0][:,i])
             
             if self._line is not None:
                 self.line_spectrum = self._line(energies)

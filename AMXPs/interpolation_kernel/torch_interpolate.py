@@ -361,6 +361,10 @@ axes[3].set_ylabel("Relative error")
 
 fig.tight_layout()
 
+
+print('np.std(err_rel)',np.std(err_rel))
+print('np.std(err_abs)',np.std(err_abs))
+
 #%% accuracy comparison
 
 
@@ -405,6 +409,8 @@ intensity_single = xpsi.surface_radiation_field.intensity_split_interpolation(E_
                                                         numTHREADS=nT)
 
 print(intensity_single[0])
+
+
 
 
 #%%% printing the values in the equidistant vector here

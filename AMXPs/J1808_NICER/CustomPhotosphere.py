@@ -235,7 +235,6 @@ class CustomPhotosphereDiskLine(xpsi.Photosphere):
                     for i in range(self._signal[0][0].shape[1]):
                         self._signal[0][0][:,i] += spectrum    
     
-            # print('signal inside customphotosphere: ', self._signal[0][0])
 
 
             # # add disk spectrum to primary hotregion

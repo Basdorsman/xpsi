@@ -212,14 +212,13 @@ class parameter_values(object):
             'super_colatitude', 'super_radius', 'super_tbb', 'super_te', 
             'super_tau', 
             'T_in' if self.bkg in ['disk', 'diskline'] else None,
-            # 'T_in_keV' if self.bkg in ['disk', 'diskline'] else None,
             'R_in' if self.bkg in ['disk', 'diskline'] else None,
             'mu' if self.bkg == 'diskline' else None,
             'sigma' if self.bkg == 'diskline' else None,
             'N' if self.bkg == 'diskline' else None,
             'column_density', 'compactness', 'tbb_keV', 'te_keV', 
             'inclination_deg', 'colatitude_deg', 'radius_deg', 
-            #'T_in_keV' if self.bkg in ['disk', 'diskline'] else None,
+            'T_in_keV' if self.bkg in ['disk', 'diskline'] else None,
             'N_norm' if self.bkg == 'diskline' else None
         ]
         
@@ -274,7 +273,7 @@ class parameter_values(object):
             bounds['elsewhere_temperature'] = (None, None)
 
         if 'disk' in self.bkg:
-            bounds['T_in'] = (0.01, 0.6) # (0.225, 0.275 )  # (0.01, 0.6) # keV
+            bounds['T_in'] = (0.01, 0.6) # log10
             bounds['R_in'] = (5, 60) # from star radius to around corotation radius for the heaviest saxJ1808 possible # (27, 33)  # (20, 200) # km
             bounds['T_in_keV'] = (None, None)
             # bounds['T_in_keV'] = (0.01, 0.6)
@@ -315,7 +314,7 @@ class parameter_values(object):
         if 'disk' in self.bkg:
             truths['T_in'] = self.diskbb_T_log10_K
             truths['T_in_keV'] = self.diskbb_T_keV
-            # truths['T_in_keV'] = self.T_in_keV
+            #truths['T_in_keV'] = self.T_in_keV
             truths['R_in'] = self.R_in
         
         if 'line' in self.bkg:
@@ -352,7 +351,7 @@ class parameter_values(object):
         
         if 'disk' in self.bkg:
             labels['T_in'] = r"T_{in} log10 of Kelvin"
-            # labels['T_in_keV'] = r"T_\mathrm{in}\;\mathrm{[keV]}"
+            labels['T_in_keV'] = r"T_\mathrm{in}\;\mathrm{[keV]}"
             labels['R_in'] =  r"R_\mathrm{in}\;\mathrm{[km]}"
             
         if 'line' in self.bkg:

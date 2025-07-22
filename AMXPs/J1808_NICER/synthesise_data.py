@@ -36,7 +36,7 @@ from xpsi.tools.synthesise import synthesise_exposure as _synthesise # no scalin
 from Disk import Disk, k_disk_derive
 from CustomPrior import CustomPrior
 from CustomInstrument import CustomInstrument
-from CustomPhotosphereDisk import CustomPhotosphereDisk
+from CustomPhotosphere import CustomPhotosphereDiskLine
 from CustomInterstellar import CustomInterstellar
 from CustomSignal import CustomSignal
 from CustomHotregion import CustomHotRegion_Accreting
@@ -47,7 +47,7 @@ from parameter_values import parameter_values
 ################################## SETTINGS ###################################
 
 
-bkg = 'model' #'model' 'fix'
+bkg = 'disk' #'model' 'fix'
 
 second = False
 te_index = 0
@@ -172,7 +172,7 @@ k_disk.disk = disk
 ################################ ATMOSPHERE ################################### 
       
 
-photosphere = CustomPhotosphereDisk(hot = hot, elsewhere = None, custom=disk,
+photosphere = CustomPhotosphereDiskLine(hot = hot, elsewhere = None, disk=disk,
                                 values=dict(mode_frequency = spacetime['frequency']))
 # LOCAL
 if machine=='local':
@@ -241,9 +241,10 @@ Instrument_kwargs = dict(exposure_time=exposure_time,
 likelihood.synthesise(p, force=True, Instrument=Instrument_kwargs) 
 
 if __name__ == '__main__':
-
-    #np.savetxt(f'data/background_countrate_{scenario}.txt', np.sum(background.registered_background, axis=1))
-    #np.savetxt(f'data/J1808_synthetic_diskbb_{scenario}.txt', background.registered_background)
+    
+    # np.savetxt(f'data/background_countrate_{scenario}.txt', np.sum(background.registered_background, axis=1))
+    # np.savetxt(f'data/J1808_synthetic_diskbb_{scenario}.txt', background.registered_background)
+    
     
     print("Done !")
     
@@ -267,8 +268,8 @@ if __name__ == '__main__':
     cb.set_label(label='Counts', labelpad=10)
     cb.solids.set_edgecolor('face')
     axes[1].plot_bolometric_pulse(phases_space, my_data, normalized=True)
-    cb2 = plt.colorbar(profile, ax=axes[1])
-    cb2.remove()
+    # cb2 = plt.colorbar(profile, ax=axes[1])
+    # cb2.remove()
     
 
     try:

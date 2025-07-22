@@ -246,8 +246,8 @@ class CustomPrior_STU(xpsi.Prior):
 
     """
 
-    #__derived_names__ = ['p__phase_shift_shifted','s__phase_shift_shifted', 'compactness', 'inclination_deg', 'p__tbb_keV','s__tbb_keV', 'p__te_keV','s__te_keV',  'p__colatitude_deg', 's__colatitude_deg', 'p__radius_deg',  's__radius_deg', 'T_in_keV']#, 'phase_separation',] , 'T_else_keV'
-    __derived_names__ = ['p__phase_shift_shifted','s__phase_shift_shifted', 'compactness', 'p__tbb_keV','s__tbb_keV', 'p__te_keV','s__te_keV', 'inclination_deg', 'p__colatitude_deg', 's__colatitude_deg', 'p__radius_deg',  's__radius_deg', 'T_in_keV']#, 'phase_separation',] , 'T_else_keV'
+    __derived_names__ = ['p__phase_shift_shifted','s__phase_shift_shifted', 'compactness', 'inclination_deg', 'p__tbb_keV','s__tbb_keV', 'p__te_keV','s__te_keV',  'p__colatitude_deg', 's__colatitude_deg', 'p__radius_deg',  's__radius_deg', 'T_in_keV']#, 'phase_separation',] , 'T_else_keV'
+    #__derived_names__ = ['p__phase_shift_shifted','s__phase_shift_shifted', 'compactness', 'p__tbb_keV','s__tbb_keV', 'p__te_keV','s__te_keV', 'inclination_deg', 'p__colatitude_deg', 's__colatitude_deg', 'p__radius_deg',  's__radius_deg', 'T_in_keV']#, 'phase_separation',] , 'T_else_keV'
   
     __draws_from_support__ = 4 #10^x
     
@@ -431,13 +431,13 @@ class CustomPrior_STU(xpsi.Prior):
 
         # compactness ratio M/R_eq
         p += [gravradius(ref['mass']) / ref['radius']]
+        p += [np.arccos(ref['cos_inclination'])*180/np.pi]
         # p += [get_keV_from_log10_Kelvin(ref['elsewhere_temperature'])]
 
         p += [ref['p__super_tbb']*511]
         p += [ref['s__super_tbb']*511]
         p += [ref['p__super_te']*511/1000]
         p += [ref['s__super_te']*511/1000]
-        p += [np.arccos(ref['cos_inclination'])*180/np.pi]
         p += [ref['p__super_colatitude']*180/np.pi]
         p += [ref['s__super_colatitude']*180/np.pi]
         p += [ref['p__super_radius']*180/np.pi]

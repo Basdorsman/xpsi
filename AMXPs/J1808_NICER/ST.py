@@ -178,7 +178,7 @@ class analysis(object):
 
 
 
-        self.likelihood.check(None, [self.true_logl], 1e-6, physical_points=[self.p], force_update=True)
+        self.likelihood.check(None, [self.true_logl], 1e6, physical_points=[self.p], force_update=True)
         print('Likelihood check took {:.3f} seconds'.format((time.time()-t_check)))
         print(self.likelihood(self.p))
 
@@ -214,8 +214,10 @@ class analysis(object):
         elif self.machine == 'snellius' or 'helios':
             self.file_atmosphere = self.this_directory + '/../model_data/Bobrikova_compton_slab.npz'
             self.file_interstellar = self.this_directory + "/../model_data/interstellar/tbnew/tbnew0.14.txt"
-        if self.scenario == 'kajava' or self.scenario == 'literature' or self.scenario == '2019' or self.scenario == '2022' or self.scenario=='small_r' or self.scenario=='large_r':
+        if self.scenario == 'kajava' or self.scenario == 'literature' or self.scenario == '2019' or self.scenario == '2022' or self.scenario=='large_r':
             self.file_bkg = self.this_directory + f'/data/disk_2019.txt'
+        elif self.scenario == 'small_r':
+            self.file_bkg = self.this_directory + f'/data/disk_smallr.txt'
         # self.file_bkg = self.this_directory + '/../model_data/synthetic/diskbb_background.txt'
 
     def set_bounds(self):
@@ -348,7 +350,6 @@ class analysis(object):
 
             support_factor = float(support_factor)
             self.bg_spectrum = np.loadtxt(self.file_bkg)
-    
             allowed_deviation_factor = support_factor  # used to be 1. + support_factor
     
             support = np.zeros((len(self.bg_spectrum), 2), dtype=np.double)
@@ -362,6 +363,8 @@ class analysis(object):
                         if support[j,1] > 0.0:
                             support[i,0] = support[j,1]
                             break
+            
+            print('self.support', support)
             
             self.support = support
         
@@ -456,7 +459,7 @@ class analysis(object):
             elif self.bkg == 'line':
                 true_logl = 1.6789503475e+08
             elif self.bkg == 'diskline':
-                true_logl = 1.6880517943e+08
+                true_logl = 1.6880218511e+08 #1.6880517943e+08
         
         if self.scenario == '2022':
             if self.bkg == 'marginalise':
@@ -486,7 +489,7 @@ class analysis(object):
             true_logl = 7.9265215141e+07
             if self.bkg == 'marginalise':
                 if self.support_factor == 100 or self.support_factor == '100':
-                    true_logl = -9.0971103484e+04
+                    true_logl = -9.0260696431e+04
                 elif self.support_factor == 'None' or self.support_factor == None:
                     true_logl = -8.7566701725e+04
 
@@ -672,24 +675,36 @@ class analysis(object):
             
             
             # print('time integrator test')
-            # n_repeats = 100
+            # n_repeats = 1
             # i=0
             # t_likelihood = 0
             # timings_summed = np.zeros(4)
             
             # while i < n_repeats:
-            #     # same sample
-            #     # l_test = self.likelihood(self.p, reinitialise=True)
-                
-            #     # random samples
             #     t_start = time.time()
-            #     p_test = self.prior.inverse_sample()
-            #     l_test = self.likelihood(p_test, reinitialise=True)
-            #     if l_test > -1e89:
-            #         # print(l_test)
-            #         timings_summed += self.hot.objects[0]._integrator_timings
-            #         t_likelihood += time.time()-t_start
-            #         i+=1
+                
+            #     # same sample
+            #     l_test = self.likelihood(self.p, reinitialise=True)
+            #     timings_summed = self.hot.objects[0]._integrator_timings
+            #     # print('phase_array: ', self.hot.objects[0]._interpolation_products[0])
+            #     # print('profile_array: ', self.hot.objects[0]._interpolation_products[1])
+            #     t_likelihood += time.time()-t_start
+            #     i+=1
+                
+            #     radiating = self.hot.objects[0]._super_radiates
+                
+            #     # for i in range(radiating.shape[0]):
+            #     #     print('radiating:', radiating[:,i])
+
+            #     # random samples
+            #     # p_test = self.prior.inverse_sample()
+            #     # l_test = self.likelihood(p_test, reinitialise=True)
+            #     # if l_test > -1e89:
+            #     #     # print(l_test)
+            #     #     timings_summed += self.hot.objects[0]._integrator_timings
+            #     #     t_likelihood += time.time()-t_start
+            #     #     i+=1
+   
             
             # print(f'repeats={n_repeats}')
             # print(f'Evaluation takes {(t_likelihood)/n_repeats:0.3f} seconds')
@@ -698,11 +713,7 @@ class analysis(object):
             # print(f'pre-atmosphere: {timings_summed[1]/n_repeats:0.3f} seconds, {timings_summed[1]/t_likelihood*100:0.1f}% of likelihood')
             # print(f'intensities: {timings_summed[2]/n_repeats:0.3f} seconds, {timings_summed[2]/t_likelihood*100:0.1f}% of likelihood')
             # print(f'phase interpolation: {timings_summed[3]/n_repeats:0.3f} seconds, {timings_summed[3]/t_likelihood*100:0.1f}% of likelihood')
-                
- 
-           
-            
-            
+
             # profile = CustomAxes.plot_2D_counts(axes[0], self.data.counts, get_mids_from_edges(self.data.phases), get_mids_from_edges(self.instrument.channel_edges))
             # profile = CustomAxes.plot_2D_counts(axes[1], self.signal.expected_counts, get_mids_from_edges(self.data.phases), get_mids_from_edges(self.instrument.channel_edges))
             # profile = CustomAxes.plot_2D_counts(axes[2], self.signal.expected_counts-self.data.counts, get_mids_from_edges(self.data.phases), get_mids_from_edges(self.instrument.channel_edges))
@@ -714,9 +725,22 @@ class analysis(object):
     
             
 if __name__ == '__main__':
-    Analysis = analysis('local', 'plot', 'marginalise', sampler='multi', scenario='small_r', support_factor=100, fix_mass=False, eos_informed=False)
+    Analysis = analysis('local', 'plot', 'marginalise', sampler='multi', scenario='small_r', support_factor='None', fix_mass=False, eos_informed=False)
     Analysis()
 
     expected = Analysis.signal.expected_counts
-    
     print('expected counts: ',np.sum(expected))
+    
+    
+    # phase_array = Analysis.hot.objects[0]._interpolation_products[0]
+    # intensity_array = Analysis.hot.objects[0]._interpolation_products[1]
+    # phase_query_array = Analysis.hot.objects[0]._interpolation_products[2]
+    # specific_flux_array = Analysis.hot.objects[0]._interpolation_products[3]
+    # cell_radiates = Analysis.hot.objects[0]._interpolation_products[4]
+    
+    # np.savez_compressed("interpolation_products_reduced.npz", 
+    #                     phase_array=phase_array, 
+    #                     intensity_array=intensity_array, 
+    #                     phase_query_array=phase_query_array[:,0,:,:],
+    #                     specific_flux_array=specific_flux_array,
+    #                     cell_radiates=cell_radiates)

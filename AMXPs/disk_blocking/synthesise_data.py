@@ -24,13 +24,19 @@ from matplotlib import cm
 import xpsi
 from xpsi.global_imports import gravradius
 
+
+
 from Disk import Disk, k_disk_derive
-from CustomPrior import CustomPrior_STU
+from CustomPrior import CustomPrior
 from CustomInstrument import CustomInstrument
-from CustomPhotosphere import CustomPhotosphereDiskLine
+from CustomHotRegions import CustomHotRegions as HotRegions
+from CustomHotRegion import CustomHotRegion
+from CustomPhotosphere import CustomPhotosphere
 from CustomInterstellar import CustomInterstellar
 from CustomSignal import CustomSignal
-from CustomHotregion import CustomHotRegion_Accreting
+
+
+
 
 from parameter_values import parameter_values
 
@@ -59,7 +65,7 @@ class SynthesiseData(xpsi.Data):
 
 
 bkg = 'disk'
-
+disk_blocking=False # use disk occultation or not
 
 try:
     os.environ.get('machine')
@@ -136,6 +142,7 @@ num_rays = 512
 
 p_kwargs = {'symmetry': True,
           'split': True,
+          'disk_blocking': disk_blocking,
           'omit': False,
           'cede': False,
           'concentric': False,
@@ -147,7 +154,7 @@ p_kwargs = {'symmetry': True,
           'prefix': 'p'}
 
 primary_bounds = {}
-primary_bounds['super_radius'] = bounds['p__super_radius']
+primary_bounds['super_radius'] = bounds['p__super_radius'] # I can't have the prefix so I remove it
 primary_bounds['super_colatitude'] = bounds['p__super_colatitude']
 primary_bounds['phase_shift'] = bounds['p__phase_shift']
 primary_bounds['super_tbb'] = bounds['p__super_tbb']
@@ -157,6 +164,7 @@ primary_bounds['super_tau'] = bounds['p__super_tau']
 
 s_kwargs = {'symmetry': True,
           'split': True,
+          'disk_blocking': disk_blocking,
           'omit': False,
           'cede': False,
           'concentric': False,
@@ -180,10 +188,11 @@ secondary_bounds['super_te'] = bounds['s__super_te']
 secondary_bounds['super_tau'] = bounds['s__super_tau']
 
 
-primary = CustomHotRegion_Accreting(primary_bounds, values, **p_kwargs)
-secondary = CustomHotRegion_Accreting(secondary_bounds, values, **s_kwargs)
+primary = CustomHotRegion(primary_bounds, values, **p_kwargs)
+secondary = CustomHotRegion(secondary_bounds, values, **s_kwargs)
 
-hot = xpsi.HotRegions((primary,secondary))
+
+hot = HotRegions((primary,secondary))
 
 
 ################################### ELSEWHERE ################################
@@ -202,10 +211,11 @@ k_disk.disk = disk
 ################################ ATMOSPHERE ################################### 
       
 
-photosphere = CustomPhotosphereDiskLine(hot = hot, 
+photosphere = CustomPhotosphere(hot = hot, 
                                         elsewhere = None, 
                                         disk=disk,
                                         disk_combined=True,
+                                        disk_blocking=disk_blocking,
                                         values=dict(mode_frequency = spacetime['frequency']))
 # LOCAL
 if machine=='local':
@@ -223,7 +233,7 @@ k_disk.star = star
 
 #################################### PRIOR ####################################
 
-prior = CustomPrior_STU(scenario, bkg)
+prior = CustomPrior(scenario, bkg)
 
 ################################## INTERSTELLAR ###################################
 if machine=='local':
@@ -269,7 +279,7 @@ if poisson_noise:
 
 Instrument_kwargs = dict(exposure_time=exposure_time,
                          seed=seed, 
-                         name=f'synthetic_{scenario}_seed={seed}',
+                         name=f'synthetic_{scenario}_seed={seed}_disk_blocking={disk_blocking}',
                          directory='./data/')
 
 
@@ -286,7 +296,7 @@ if __name__ == '__main__':
     ########## DATA PLOT ###############
     
     
-    my_data=np.loadtxt(f'./data/synthetic_{scenario}_seed={poisson_seed}_realisation.dat')
+    my_data=np.loadtxt(f'./data/synthetic_{scenario}_seed={poisson_seed}_disk_blocking={disk_blocking}_realisation.dat')
     
     
     

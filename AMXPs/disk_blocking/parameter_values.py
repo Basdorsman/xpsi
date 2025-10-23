@@ -51,7 +51,7 @@ class parameter_values(object):
                 self.R_in = 24.5 # km
             self.column_density = 29. #10^21 cm^-2 #corresponds to value found by Papitto et al. 2024
             
-            self.frequency=447.9 #hz
+            self.frequency=447.8718 #hz
         
         
     def p(self):
@@ -209,34 +209,64 @@ class parameter_values(object):
         return truths
     
     def labels(self):
-        labels = {'mass': r"M\;\mathrm{[M}_{\odot}\mathrm{]}",
-                  'radius': r"R_{\mathrm{eq}}\;\mathrm{[km]}",
-                  'distance': r"D \;\mathrm{[kpc]}",
-                  'cos_inclination': r"\mathrm{cos}(i)",
-                  'p__phase_shift': r"\phi_\mathrm{p}\;\mathrm{[cycles]}",
-                  'p__super_colatitude': r"\theta_\mathrm{p}\;\mathrm{[rad]}",
-                  'p__super_radius': r"\zeta_\mathrm{p}\;\mathrm{[rad]}",
-                  'p__super_tbb': r"T_\{bb,p}\;\mathrm{[data units]}",
-                  'p__super_te': r"T_\mathrm{e,p}\;\mathrm{[data units]}",
-                  'p__super_tau': r"\tau_\mathrm{p}\;[-]",
-                  's__phase_shift': r"\phi_\mathrm{s}\;\mathrm{[cycles]}",
-                  's__super_colatitude': r"\theta_\mathrm{s}\;\mathrm{[rad]}",
-                  's__super_radius': r"\zeta_\mathrm{s}\;\mathrm{[rad]}",
-                  's__super_tbb': r"T_\{bb,s}\;\mathrm{[data units]}",
-                  's__super_te': r"T_\mathrm{e,s}\;\mathrm{[data units]}",
-                  's__super_tau': r"\tau_\mathrm{s}\;[-]",
-                  'column_density': r"N_\mathrm{H}\;[10^{21} \mathrm{cm}^{-2}]",
-                  'compactness': r"M/R_{\mathrm{eq}}",
-                  'inclination_deg': r'i\;\mathrm{[deg]}',
-                  'p__colatitude_deg': r'\theta_\mathrm{p}\;\mathrm{[deg]}',
-                  'p__radius_deg': r'\zeta_\mathrm{p}\;\mathrm{[deg]}',
-                  'p__tbb_keV': r"T_\mathrm{bb,p}\;\mathrm{[keV]}",
-                  'p__te_keV': r"T_\mathrm{e,p}\;\mathrm{[keV]}",
-                  's__colatitude_deg': r'\theta_\mathrm{s}\;\mathrm{[deg]}',
-                  's__radius_deg': r'\zeta_\mathrm{s}\;\mathrm{[deg]}',
-                  's__tbb_keV': r"T_\mathrm{bb,s}\;\mathrm{[keV]}",
-                  's__te_keV': r"T_\mathrm{e,s}\;\mathrm{[keV]}"
-                  }
+        # labels = {'mass': r"M\;\mathrm{[M}_{\odot}\mathrm{]}",
+        #           'radius': r"R_{\mathrm{eq}}\;\mathrm{[km]}",
+        #           'distance': r"D \;\mathrm{[kpc]}",
+        #           'cos_inclination': r"\mathrm{cos}(i)",
+        #           'p__phase_shift': r"\phi_\mathrm{p}\;\mathrm{[cycles]}",
+        #           'p__super_colatitude': r"\theta_\mathrm{p}\;\mathrm{[rad]}",
+        #           'p__super_radius': r"\zeta_\mathrm{p}\;\mathrm{[rad]}",
+        #           'p__super_tbb': r"T_\{bb,p}\;\mathrm{[data units]}",
+        #           'p__super_te': r"T_\mathrm{e,p}\;\mathrm{[data units]}",
+        #           'p__super_tau': r"\tau_\mathrm{p}\;[-]",
+        #           's__phase_shift': r"\phi_\mathrm{s}\;\mathrm{[cycles]}",
+        #           's__super_colatitude': r"\theta_\mathrm{s}\;\mathrm{[rad]}",
+        #           's__super_radius': r"\zeta_\mathrm{s}\;\mathrm{[rad]}",
+        #           's__super_tbb': r"T_\{bb,s}\;\mathrm{[data units]}",
+        #           's__super_te': r"T_\mathrm{e,s}\;\mathrm{[data units]}",
+        #           's__super_tau': r"\tau_\mathrm{s}\;[-]",
+        #           'column_density': r"N_\mathrm{H}\;[10^{21} \mathrm{cm}^{-2}]",
+        #           'compactness': r"M/R_{\mathrm{eq}}",
+        #           'inclination_deg': r'i\;\mathrm{[deg]}',
+        #           'p__colatitude_deg': r'\theta_\mathrm{p}\;\mathrm{[deg]}',
+        #           'p__radius_deg': r'\zeta_\mathrm{p}\;\mathrm{[deg]}',
+        #           'p__tbb_keV': r"T_\mathrm{bb,p}\;\mathrm{[keV]}",
+        #           'p__te_keV': r"T_\mathrm{e,p}\;\mathrm{[keV]}",
+        #           's__colatitude_deg': r'\theta_\mathrm{s}\;\mathrm{[deg]}',
+        #           's__radius_deg': r'\zeta_\mathrm{s}\;\mathrm{[deg]}',
+        #           's__tbb_keV': r"T_\mathrm{bb,s}\;\mathrm{[keV]}",
+        #           's__te_keV': r"T_\mathrm{e,s}\;\mathrm{[keV]}"
+        #           }
+        
+        labels = {
+            'mass': r"$M\;\mathrm{[M}_\odot\mathrm{]}$",
+            'radius': r"$R_{\mathrm{eq}}\;\mathrm{[km]}$",
+            'distance': r"$D\;\mathrm{[kpc]}$",
+            'cos_inclination': r"$\cos(i)$",
+            'p__phase_shift': r"$\phi_\mathrm{p}\;\mathrm{[cycles]}$",
+            'p__super_colatitude': r"$\theta_\mathrm{p}\;\mathrm{[rad]}$",
+            'p__super_radius': r"$\zeta_\mathrm{p}\;\mathrm{[rad]}$",
+            'p__super_tbb': r"$T_{\mathrm{bb,p}}\;\mathrm{[data\ units]}$",
+            'p__super_te': r"$T_{\mathrm{e,p}}\;\mathrm{[data\ units]}$",
+            'p__super_tau': r"$\tau_\mathrm{p}\;[-]$",
+            's__phase_shift': r"$\phi_\mathrm{s}\;\mathrm{[cycles]}$",
+            's__super_colatitude': r"$\theta_\mathrm{s}\;\mathrm{[rad]}$",
+            's__super_radius': r"$\zeta_\mathrm{s}\;\mathrm{[rad]}$",
+            's__super_tbb': r"$T_{\mathrm{bb,s}}\;\mathrm{[data\ units]}$",
+            's__super_te': r"$T_{\mathrm{e,s}}\;\mathrm{[data\ units]}$",
+            's__super_tau': r"$\tau_\mathrm{s}\;[-]$",
+            'column_density': r"$N_\mathrm{H}\;[10^{21}\ \mathrm{cm}^{-2}]$",
+            'compactness': r"$M/R_{\mathrm{eq}}$",
+            'inclination_deg': r"$i\;\mathrm{[deg]}$",
+            'p__colatitude_deg': r"$\theta_\mathrm{p}\;\mathrm{[deg]}$",
+            'p__radius_deg': r"$\zeta_\mathrm{p}\;\mathrm{[deg]}$",
+            'p__tbb_keV': r"$T_\mathrm{bb,p}\;\mathrm{[keV]}$",
+            'p__te_keV': r"$T_\mathrm{e,p}\;\mathrm{[keV]}$",
+            's__colatitude_deg': r"$\theta_\mathrm{s}\;\mathrm{[deg]}$",
+            's__radius_deg': r"$\zeta_\mathrm{s}\;\mathrm{[deg]}$",
+            's__tbb_keV': r"$T_\mathrm{bb,s}\;\mathrm{[keV]}$",
+            's__te_keV': r"$T_\mathrm{e,s}\;\mathrm{[keV]}$"
+            }
              
         if 'disk' in self.bkg:
             labels['T_in'] = r"T_{in} log10 of Kelvin"

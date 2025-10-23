@@ -16,7 +16,7 @@ from scipy.interpolate import Akima1DInterpolator
 import os
 this_directory = os.path.dirname(os.path.abspath(__file__))
 
-class CustomPrior_STU(xpsi.Prior):
+class CustomPrior(xpsi.Prior):
     """ A custom (joint) prior distribution.
 
     Model variant: ST-U
@@ -66,7 +66,7 @@ class CustomPrior_STU(xpsi.Prior):
         self.scenario = scenario
         self.bkg = bkg
         
-        super(CustomPrior_STU, self).__init__(*args, **kwargs)
+        super(CustomPrior, self).__init__(*args, **kwargs)
 
 
     def __call__(self, p = None):
@@ -78,19 +78,23 @@ class CustomPrior_STU(xpsi.Prior):
         :returns: Logarithm of the distribution evaluated at ``p``.
 
         """
-        temp = super(CustomPrior_STU, self).__call__(p)
+        # print('prior was called')
+        temp = super(CustomPrior, self).__call__(p)
         if not np.isfinite(temp):
+            # print('already infinite')
             return temp
-
+        
         ref = self.parameters.star.spacetime # shortcut
 
         # based on contemporary EOS theory
         if not ref['radius'] <= 16.0:
+            # print('radius too large')
             return -np.inf
       
         # causality limit for compactness
         R_p = 1.0 + ref.epsilon * (-0.788 + 1.030 * ref.zeta)
         if R_p < 1.45 / ref.R_r_s:
+            # print('compactness limit reached')
             return -np.inf
 
         mu = math.sqrt(-1.0 / (3.0 * ref.epsilon * (-0.788 + 1.030 * ref.zeta)))
@@ -99,16 +103,19 @@ class CustomPrior_STU(xpsi.Prior):
         # i.e., an elliptical surface; minor effect on support, if any,
         # for high spin frequenies
         if mu < 1.0:
+            # print('mu is too low')
             return -np.inf
         
         if 'disk' in  self.bkg:
         
             # inner disk must be smaller than corotation radius, otherwise we enter (weak) propeller regime
            if not self.parameters['R_in'] < 1.49790e3*ref['mass']**(1/3)*ref['frequency']**(-2/3): # 1.49790e3 = (G*M_sol/4pi^2)^(1/3) in km
+               # print('inner disk too big')
                return -np.inf
     
             # inner disk must be larger than neutron star equatorial radius
            if not self.parameters['R_in'] > ref['radius']:
+               # print('inner disk too small')
                return -np.inf
         
         ref = self.parameters # redefine shortcut
@@ -140,7 +147,7 @@ class CustomPrior_STU(xpsi.Prior):
             hypercube = np.random.rand(len(self))
 
         # the base method is useful, so to avoid writing that code again:
-        _ = super(CustomPrior_STU, self).inverse_sample(hypercube)
+        _ = super(CustomPrior, self).inverse_sample(hypercube)
 
         ref = self.parameters # shortcut
         

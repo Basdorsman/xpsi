@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Thu Jun  6 16:52:43 2024
+Created on Thu Jun  6 17:22:18 2024
 
 @author: bas
 """
@@ -11,7 +11,8 @@ from xpsi import Everywhere, Elsewhere, HotRegion, Parameter
 import numpy as np
 
 
-class CustomPhotosphere(xpsi.Photosphere):
+
+class CustomPhotosphereDiskLine(xpsi.Photosphere):
     """ A photosphere extension to preload the numerical 5D accretion atmosphere. """
     
     
@@ -20,9 +21,8 @@ class CustomPhotosphere(xpsi.Photosphere):
                  everywhere = None,
                  bounds = None, values = None,
                  stokes=False,
-                 custom = None,
                  disk = None,
-                 disk_blocking = False,
+                 line = None,
                  disk_combined=False,
                  **kwargs):
 
@@ -61,13 +61,9 @@ class CustomPhotosphere(xpsi.Photosphere):
         self._elsewhere = elsewhere
         self._everywhere = everywhere
         self._stokes = stokes
-        self._disk_blocking = disk_blocking # disk occultation
+        self._disk = disk
+        self._line = line
         self._disk_combined = disk_combined
-
-        if disk is not None:
-            self._disk = disk
-        else:
-            self._disk = None
 
         if hot is not None:
             self._surface = self._hot
@@ -89,10 +85,6 @@ class CustomPhotosphere(xpsi.Photosphere):
                                    symbol = r'$f_{\rm mode}$',
                                    value = values.get('mode_frequency', None))
 
-        custom = []
-        if disk is not None:
-            custom.append(disk)
-        
         if stokes:
             doc = """
             Spin axis position angle measured from the north counterclock-
@@ -105,27 +97,34 @@ class CustomPhotosphere(xpsi.Photosphere):
                                        doc = doc,
                                        symbol = r'$\chi_{0}$',
                                        value = values.get('spin_axis_position_angle', None))
-
-            # print('everywhere:', everywhere)
-            # print('hotregion:', hot)
             
-            super(CustomPhotosphere, self).__init__(mode_frequency=mode_frequency, spin_axis_position_angle=spin_axis_position_angle,
+            super(CustomPhotosphereDiskLine, self).__init__(mode_frequency=mode_frequency, spin_axis_position_angle=spin_axis_position_angle,
                                               hot=hot, elsewhere=elsewhere, everywhere=everywhere,
                                               bounds=bounds, values=values,
                                               stokes=stokes,
-                                              custom=custom,
                                               **kwargs)
         else:
-            super(CustomPhotosphere, self).__init__(mode_frequency=mode_frequency,
+            custom = []
+            if disk:
+                custom.append(disk)
+            if line:
+                custom.append(line)
+            super(CustomPhotosphereDiskLine, self).__init__(mode_frequency=mode_frequency,
                                               hot=hot, elsewhere=elsewhere, everywhere=everywhere,
                                               bounds=bounds, values=values,
                                               custom=custom,
                                               **kwargs)
+
 
     @property
     def disk(self):
         """ Get the instance of :class:`~.Disk.Disk`. """
         return self._disk
+
+    @property
+    def line(self):
+        """ Get the instance of :class:`~.GaussianLine.GaussianLine`. """
+        return self._line
 
     @xpsi.Photosphere.hot_atmosphere.setter
     def hot_atmosphere(self, path):
@@ -224,23 +223,12 @@ class CustomPhotosphere(xpsi.Photosphere):
                     self._signalQ = tuple(map(tuple, tempQ))
                     self._signalU = tuple(map(tuple, tempU))
                 else:
-                    R_in = self.disk['R_in'] * 1000
-                    # R_in = 24.5 * 1000 # if want a constant R_in
-                    if self._disk_blocking:
-                        self._signal = self._hot.integrate(self._spacetime,
-                                                    energies,
-                                                    threads,
-                                                    self._hot_atmosphere,
-                                                    self._elsewhere_atmosphere,
-                                                    else_atm_ext,
-                                                    R_in=R_in)
-                    elif not self._disk_blocking:
-                         self._signal = self._hot.integrate(self._spacetime,
-                                                    energies,
-                                                    threads,
-                                                    self._hot_atmosphere,
-                                                    self._elsewhere_atmosphere,
-                                                    else_atm_ext)
+                    self._signal = self._hot.integrate(self._spacetime,
+                                                   energies,
+                                                   threads,
+                                                   self._hot_atmosphere,
+                                                   self._elsewhere_atmosphere,
+                                                   else_atm_ext)
                     if not isinstance(self._signal[0], tuple):
                         self._signal = (self._signal,)
 
@@ -249,6 +237,7 @@ class CustomPhotosphere(xpsi.Photosphere):
                     for i in range(self._signal[0][0].shape[1]):
                         self._signal[0][0][:,i] += spectrum    
     
+
             if self._disk_combined:
                 # add disk spectrum to primary hotregion
                 if self._disk is not None: 
@@ -256,8 +245,12 @@ class CustomPhotosphere(xpsi.Photosphere):
                     for i in range(self._signal[0][0].shape[1]):
                         # print('self._signal[0][0][:,i]',self._signal[0][0][:,i])
                         self._signal[0][0][:,i] += self.disk_spectrum
+                
+                if self._line is not None:
+                    self.line_spectrum = self._line(energies)
+                    for i in range(self._signal[0][0].shape[1]):
+                        self._signal[0][0][:,i] += self.line_spectrum 
 
-             
             elif not self._disk_combined:          
                 # # here disk and line are stored separately, but then the phases also need to be stored separately in customsignal, and this breaks posprocessing.
                 if self._disk is not None: 
@@ -270,8 +263,25 @@ class CustomPhotosphere(xpsi.Photosphere):
                     
                     # Concatenate the tuple
                     self._signal = self._signal + new_hot_region  
-             
+     
                     # Add disk spectrum to the newly created hot region
                     self.disk_spectrum = self._disk(energies)
                     for i in range(self._signal[0][0].shape[1]):
                         self._signal[new_hot_region_index][0][:, i] += self.disk_spectrum
+    
+                if self._line is not None: 
+                    # Determine the index for the new hot region
+                    new_hot_region_index = len(self._signal)
+                    
+                    # Create the new hot region array with the same shape as self._signal[0][0]
+                    new_shape = self._signal[0][0].shape
+                    new_hot_region = ((np.zeros(new_shape, dtype=np.double, order='C'),),)  # Create a new hot region as a tuple
+                    
+                    # Concatenate the tuple
+                    self._signal = self._signal + new_hot_region  
+     
+                    # Add line spectrum to the newly created hot region
+                    self.line_spectrum = self._line(energies)
+                    for i in range(self._signal[0][0].shape[1]):
+                        self._signal[new_hot_region_index][0][:, i] += self.line_spectrum   
+    

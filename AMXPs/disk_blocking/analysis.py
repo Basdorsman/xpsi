@@ -35,7 +35,7 @@ class analysis(object):
                  scenario = 'None', 
                  poisson_noise=True, 
                  poisson_seed=42, 
-                 disk_combined=False,
+                 disk_combined=True,
                  disk_blocking=False):
         self.scenario = os.environ.get('scenario')
         if os.environ.get('scenario') == None or os.environ.get('scenario') =='None':
@@ -111,7 +111,7 @@ class analysis(object):
             self.max_iter = int(os.environ.get('max_iter'))
         except:
             print('max_iter from environment variables failed, proceeding with default.')
-            self.max_iter = -1
+            self.max_iter = 20
             pass
         print(f'max_iter: {self.max_iter}')
 
@@ -479,7 +479,7 @@ class analysis(object):
             # self.likelihood(self.p, reinitialise=True)
             
             # inverse sampling test
-            test=self.prior.draw(ndraws=10000)[0][:,0:-1]
+            test=self.prior.draw(ndraws=100)[0][:,0:-1]
             names_dictionary = self.pv.labels()
             axis_labels = [names_dictionary[key] for key in names_dictionary]
             
@@ -491,5 +491,5 @@ class analysis(object):
             
             
 if __name__ == '__main__':
-    Analysis = analysis('local','test', 'disk', scenario='molkov', disk_blocking=False)
+    Analysis = analysis('local','sample', 'disk', scenario='molkov', disk_blocking=False)
     Analysis()

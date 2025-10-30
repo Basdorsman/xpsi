@@ -37,6 +37,7 @@ class analysis(object):
                  poisson_seed=42, 
                  disk_combined=True,
                  disk_blocking=False,
+                 disk_blocking_data=False,
                  fix_inclination=False):
         self.scenario = os.environ.get('scenario')
         if os.environ.get('scenario') == None or os.environ.get('scenario') =='None':
@@ -152,6 +153,18 @@ class analysis(object):
         else:
             self.disk_blocking = False
         print(f'disk_blocking: {self.disk_blocking}')
+        
+        if os.environ.get('disk_blocking_data') == None or os.environ.get('disk_blocking_data') =='None':
+            print('disk_blocking_data is not in environment variables, using passed argument.')
+            self.disk_blocking_data = disk_blocking_data
+        else:
+            self.disk_blocking_data = os.environ.get('disk_blocking_data')
+
+        if self.disk_blocking_data == "True" or self.disk_blocking_data == True:
+            self.disk_blocking_data = True
+        else:
+            self.disk_blocking_data = False
+        print(f'disk_blocking_data: {self.disk_blocking_data}')
 
         if os.environ.get('fix_inclination') == None or os.environ.get('fix_inclination') =='None':
             print('fix_inclination is not in environment variables, using passed argument.')
@@ -179,7 +192,7 @@ class analysis(object):
         t_check = time.time()
         #self.likelihood(self.p, reinitialise=True)
         print(self.likelihood)
-        self.likelihood.check(None, [self.true_logl], 1.0e0, physical_points=[self.p], force_update=True)
+        self.likelihood.check(None, [self.true_logl], 1.0e-6, physical_points=[self.p], force_update=True)
         print('Likelihood check took {:.3f} seconds'.format((time.time()-t_check)))
         print(self.likelihood(self.p))
 
@@ -188,7 +201,7 @@ class analysis(object):
         self.this_directory = this_directory
 
         if self.scenario == 'molkov':
-           self.file_pulse_profile = self.this_directory + f'/data/synthetic_{self.scenario}_seed={self.poisson_seed}_disk_blocking={self.disk_blocking}_realisation.dat'
+           self.file_pulse_profile = self.this_directory + f'/data/synthetic_{self.scenario}_seed={self.poisson_seed}_disk_blocking={self.disk_blocking_data}_realisation.dat'
            self.file_arf = self.this_directory + '/../model_data/instrument_data/J1808_NICER_2019/merged_saxj1808_2019_arf_aeff.txt'
            self.file_rmf = self.this_directory + '/../model_data/instrument_data/J1808_NICER_2019/merged_saxj1808_2019_rmf_matrix.txt'
            self.file_channel_edges = self.this_directory + '/../model_data/instrument_data/J1808_NICER_2019/merged_saxj1808_2019_rmf_energymap.txt'
@@ -408,9 +421,15 @@ class analysis(object):
                                       externally_updated=True)
 
         if self.disk_blocking:
-            true_logl = 8.3680599615e+06
+            if self.disk_blocking_data:
+                true_logl = 8.3680599615e+06
+            elif not self.disk_blocking_data:
+                true_logl = 8.7794279263e+06
         elif not self.disk_blocking:
-            true_logl = 8.7824891275e+06
+            if self.disk_blocking_data:
+                true_logl = 8.7824891275e+06
+            elif not self.disk_blocking_data:
+                true_logl = 8.3650673477e+06
         self.true_logl = true_logl
     
     def __call__(self):
@@ -497,23 +516,23 @@ class analysis(object):
             print('test starts')
             # # n_repeats = 10
             t_start = time.time()
-            # # for repeat in range(n_repeats):
-            #     #self.star.update(force_update=True)
-            #     #self.likelihood.check(None, [self.true_logl], 1.0e-4, physical_points=[self.p], force_update=True)
-            # self.likelihood(self.p, reinitialise=True)
+            # # # for repeat in range(n_repeats):
+            # #     #self.star.update(force_update=True)
+            # #     #self.likelihood.check(None, [self.true_logl], 1.0e-4, physical_points=[self.p], force_update=True)
+            # # self.likelihood(self.p, reinitialise=True)
             
-            # inverse sampling test
-            test=self.prior.draw(ndraws=1000)[0][:,0:-1]
-            names_dictionary = self.pv.labels()
-            axis_labels = [names_dictionary[key] for key in names_dictionary]
+            # # inverse sampling test
+            # test=self.prior.draw(ndraws=1000)[0][:,0:-1]
+            # names_dictionary = self.pv.labels()
+            # axis_labels = [names_dictionary[key] for key in names_dictionary]
             
-            import corner
-            figure=corner.corner(test, labels=axis_labels[:19], label_kwargs={'fontsize': 12},)
-            figure.tight_layout()
-            figure.savefig(f'{folderstring}/prior.pdf',)
+            # import corner
+            # figure=corner.corner(test, labels=axis_labels[:19], label_kwargs={'fontsize': 12},)
+            # figure.tight_layout()
+            # figure.savefig(f'{folderstring}/prior.pdf',)
             print('Test took {:.3f} seconds'.format((time.time()-t_start)))
             
             
 if __name__ == '__main__':
-    Analysis = analysis('local','test', 'disk', scenario='molkov', disk_blocking=False)
+    Analysis = analysis('local','test', 'disk', scenario='molkov', disk_blocking=False, disk_blocking_data=True)
     Analysis()

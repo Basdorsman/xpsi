@@ -36,7 +36,8 @@ class analysis(object):
                  poisson_noise=True, 
                  poisson_seed=42, 
                  disk_combined=True,
-                 disk_blocking=False):
+                 disk_blocking=False,
+                 fix_inclination=False):
         self.scenario = os.environ.get('scenario')
         if os.environ.get('scenario') == None or os.environ.get('scenario') =='None':
             print('scenario is not in environment variables, using passed argument.')
@@ -152,7 +153,21 @@ class analysis(object):
             self.disk_blocking = False
         print(f'disk_blocking: {self.disk_blocking}')
 
-        self.pv = parameter_values(self.scenario, self.bkg)
+        if os.environ.get('fix_inclination') == None or os.environ.get('fix_inclination') =='None':
+            print('fix_inclination is not in environment variables, using passed argument.')
+            self.fix_inclination = fix_inclination
+        else:
+            self.fix_inclination = os.environ.get('fix_inclination')
+
+        if self.fix_inclination == "True" or self.fix_inclination == True:
+            self.fix_inclination = True
+        else:
+            self.fix_inclination = False
+        print(f'fix_inclination: {self.fix_inclination}')
+        
+
+
+        self.pv = parameter_values(self.scenario, self.bkg, self.fix_inclination)
         self.disk_combined = disk_combined
     
         self.file_locations()
@@ -183,7 +198,7 @@ class analysis(object):
             self.file_interstellar = "/home/bas/Documents/Projects/x-psi/xpsi-bas-fork/AMXPs/model_data/n_H/TBnew/tbnew0.14.txt"
         elif self.machine == 'snellius':
             self.file_atmosphere = self.this_directory + '/../model_data/Bobrikova_compton_slab.npz'
-            self.file_interstellar = "/home/dorsman/xpsi-bas-fork/AMXPs/model_data/interstellar/tbnew/tbnew0.14.txt"
+            self.file_interstellar = self.this_directory + "/../model_data/n_H/TBnew/tbnew0.14.txt"
 
     def set_bounds(self):
         self.bounds = self.pv.bounds()
@@ -218,16 +233,24 @@ class analysis(object):
 
 
     def set_spacetime(self):
-        values = dict(frequency = self.pv.frequency)
+        if self.fix_inclination:
+            spacetime_values = dict(frequency = self.pv.frequency,
+                                    cos_inclination = self.pv.cos_i)
+    
+            spacetime_bounds = dict(distance = self.bounds["distance"],     # (Earth) distance
+                                    mass = self.bounds["mass"],             # mass
+                                    radius = self.bounds["radius"])     # equatorial radius
+                                    # cos_inclination = self.bounds["cos_inclination"]) # (Earth) inclination to rotation axis
+        elif not self.fix_inclination:
+            spacetime_values = dict(frequency = self.pv.frequency)
+    
+            spacetime_bounds = dict(distance = self.bounds["distance"],     # (Earth) distance
+                                    mass = self.bounds["mass"],             # mass
+                                    radius = self.bounds["radius"],     # equatorial radius
+                                    cos_inclination = self.bounds["cos_inclination"]) # (Earth) inclination to rotation axis
+        
 
-        spacetime_bounds = dict(distance = self.bounds["distance"],     # (Earth) distance
-                                mass = self.bounds["mass"],             # mass
-                                radius = self.bounds["radius"],     # equatorial radius
-                                cos_inclination = self.bounds["cos_inclination"]) # (Earth) inclination to rotation axis
-
-
-
-        self.spacetime = xpsi.Spacetime(bounds=spacetime_bounds, values=values) # values=dict(frequency=self.values["frequency"]))
+        self.spacetime = xpsi.Spacetime(bounds=spacetime_bounds, values=spacetime_values) # values=dict(frequency=self.values["frequency"]))
 
     def set_hotregions(self):
         p_kwargs = {'symmetry': True, #call for azimuthal invariance
@@ -286,7 +309,6 @@ class analysis(object):
         self.elsewhere = xpsi.Elsewhere(bounds=dict(elsewhere_temperature = self.bounds['elsewhere_temperature']))
         
     def set_photosphere(self):
-        self.set_spacetime()
         self.set_hotregions()
         self.set_disk()
         self.photosphere = CustomPhotosphere(hot = self.hot, 
@@ -300,7 +322,6 @@ class analysis(object):
         self.photosphere.hot_atmosphere = self.file_atmosphere
 
     def set_star(self):
-        self.set_photosphere()
         self.star = xpsi.Star(spacetime = self.spacetime, photospheres = self.photosphere)
         
     def set_interstellar(self):
@@ -372,9 +393,11 @@ class analysis(object):
         self.prior = CustomPrior(self.scenario, self.bkg)
         
     def set_likelihood(self):
-        self.set_star()
+        self.set_spacetime() # self.spacetime is defined here
+        self.set_photosphere() # self.k_disk is defined here
         if 'disk' in self.bkg:
-            self.k_disk.star = self.star
+            self.k_disk.spacetime = self.spacetime
+        self.set_star() # star is defined afterwards
         self.set_signal()
         self.set_prior()
         
@@ -439,6 +462,7 @@ class analysis(object):
                                   'const_efficiency_mode': False,
                                   'wrapped_params': wrapped_params,
                                   'evidence_tolerance': 0.5,
+                                  'max_iter': self.max_iter,
                                   'seed': 7,
                                   'verbose': True}
             elif self.sampler == 'ultra':
@@ -479,7 +503,7 @@ class analysis(object):
             # self.likelihood(self.p, reinitialise=True)
             
             # inverse sampling test
-            test=self.prior.draw(ndraws=100)[0][:,0:-1]
+            test=self.prior.draw(ndraws=1000)[0][:,0:-1]
             names_dictionary = self.pv.labels()
             axis_labels = [names_dictionary[key] for key in names_dictionary]
             
@@ -491,5 +515,5 @@ class analysis(object):
             
             
 if __name__ == '__main__':
-    Analysis = analysis('local','sample', 'disk', scenario='molkov', disk_blocking=False)
+    Analysis = analysis('local','test', 'disk', scenario='molkov', disk_blocking=False)
     Analysis()

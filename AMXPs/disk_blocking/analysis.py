@@ -36,8 +36,8 @@ class analysis(object):
                  poisson_noise=True, 
                  poisson_seed=42, 
                  disk_combined=True,
-                 disk_blocking=False,
-                 disk_blocking_data=False,
+                 disk_blocking=True,
+                 disk_blocking_data=True,
                  fix_inclination=False):
         self.scenario = os.environ.get('scenario')
         if os.environ.get('scenario') == None or os.environ.get('scenario') =='None':
@@ -422,14 +422,21 @@ class analysis(object):
 
         if self.disk_blocking:
             if self.disk_blocking_data:
-                true_logl = 8.3680599615e+06
+                if self.poisson_seed == 42:
+                    true_logl = 8.3680599615e+06
+                elif self.poisson_seed == 0:
+                    true_logl = 8.3576023198e+06
+                elif self.poisson_seed == 1:
+                    true_logl = 8.3700049781e+06
+                elif self.poisson_seed == 2:
+                    true_logl = 8.3725179573e+06
             elif not self.disk_blocking_data:
                 true_logl = 8.7794279263e+06
         elif not self.disk_blocking:
             if self.disk_blocking_data:
-                true_logl = 8.7824891275e+06
-            elif not self.disk_blocking_data:
                 true_logl = 8.3650673477e+06
+            elif not self.disk_blocking_data:
+                true_logl = 8.7824890157e+06
         self.true_logl = true_logl
     
     def __call__(self):
@@ -461,7 +468,7 @@ class analysis(object):
         CustomAxes.plot_2D_counts(axes[1], self.signal.expected_counts, get_mids_from_edges(self.data.phases),  get_mids_from_edges(self.instrument.channel_edges))
         CustomAxes.plot_2D_counts(axes[2], self.data.counts-self.signal.expected_counts, get_mids_from_edges(self.data.phases), get_mids_from_edges(self.instrument.channel_edges))
         fig.tight_layout()
-        fig.savefig(f'{folderstring}/pre_sampling_plot.png',)
+        fig.savefig(f'{folderstring}/pre_sampling_plot_{self.poisson_seed}.png',)
         print(f'figure saved in {folderstring}')
         
         if self.run_type == 'sample':
@@ -534,5 +541,5 @@ class analysis(object):
             
             
 if __name__ == '__main__':
-    Analysis = analysis('local','test', 'disk', scenario='molkov', disk_blocking=False, disk_blocking_data=True)
+    Analysis = analysis('local','test', 'disk', scenario='molkov', disk_blocking=True, disk_blocking_data=True, fix_inclination=True, poisson_seed=2)
     Analysis()

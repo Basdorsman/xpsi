@@ -65,7 +65,7 @@ class SynthesiseData(xpsi.Data):
 
 
 bkg = 'disk'
-disk_blocking=False # use disk occultation or not
+disk_blocking=True # use disk occultation or not
 
 try:
     os.environ.get('machine')
@@ -80,7 +80,7 @@ try:
 except:
     machine = "local"
     poisson_noise = True
-    poisson_seed = 42
+    poisson_seed = 0
     scenario = 'molkov'
   
 
@@ -206,6 +206,7 @@ hot = HotRegions((primary,secondary))
 k_disk = k_disk_derive()
     
 disk = Disk(bounds=bounds, values={'K_disk': k_disk})
+k_disk.spacetime = spacetime
 k_disk.disk = disk
 
 ################################ ATMOSPHERE ################################### 

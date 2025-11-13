@@ -141,30 +141,34 @@ class analysis(object):
             print('No poisson noise decision in os. Taking default poisson')
         print(f'poisson_noise: {self.poisson_noise}, poisson_seed: {self.poisson_seed} (only relevant if poisson noise is True)')
 
-        
-        if os.environ.get('disk_blocking') == None or os.environ.get('disk_blocking') =='None':
-            print('disk_blocking is not in environment variables, using passed argument.')
-            self.disk_blocking = disk_blocking
-        else:
-            self.disk_blocking = os.environ.get('disk_blocking')
-
-        if self.disk_blocking == "True" or self.disk_blocking == True:
-            self.disk_blocking = True
-        else:
+        if 'disk' in self.bkg:
+            if os.environ.get('disk_blocking') == None or os.environ.get('disk_blocking') =='None':
+                print('disk_blocking is not in environment variables, using passed argument.')
+                self.disk_blocking = disk_blocking
+            else:
+                self.disk_blocking = os.environ.get('disk_blocking')
+    
+            if self.disk_blocking == "True" or self.disk_blocking == True:
+                self.disk_blocking = True
+            else:
+                self.disk_blocking = False
+            print(f'disk_blocking: {self.disk_blocking}')
+            
+            if os.environ.get('disk_blocking_data') == None or os.environ.get('disk_blocking_data') =='None':
+                print('disk_blocking_data is not in environment variables, using passed argument.')
+                self.disk_blocking_data = disk_blocking_data
+            else:
+                self.disk_blocking_data = os.environ.get('disk_blocking_data')
+    
+            if self.disk_blocking_data == "True" or self.disk_blocking_data == True:
+                self.disk_blocking_data = True
+            else:
+                self.disk_blocking_data = False
+            print(f'disk_blocking_data: {self.disk_blocking_data}')
+        elif self.bkg == 'fix': # if no disk in bkg then both of these are false
             self.disk_blocking = False
-        print(f'disk_blocking: {self.disk_blocking}')
-        
-        if os.environ.get('disk_blocking_data') == None or os.environ.get('disk_blocking_data') =='None':
-            print('disk_blocking_data is not in environment variables, using passed argument.')
-            self.disk_blocking_data = disk_blocking_data
-        else:
-            self.disk_blocking_data = os.environ.get('disk_blocking_data')
-
-        if self.disk_blocking_data == "True" or self.disk_blocking_data == True:
-            self.disk_blocking_data = True
-        else:
             self.disk_blocking_data = False
-        print(f'disk_blocking_data: {self.disk_blocking_data}')
+            print('No disk in the model so disk blocking and disk blocking data are False')
 
         if os.environ.get('fix_inclination') == None or os.environ.get('fix_inclination') =='None':
             print('fix_inclination is not in environment variables, using passed argument.')
@@ -201,7 +205,7 @@ class analysis(object):
         self.this_directory = this_directory
 
         if self.scenario == 'molkov':
-           self.file_pulse_profile = self.this_directory + f'/data/synthetic_{self.scenario}_seed={self.poisson_seed}_disk_blocking={self.disk_blocking_data}_realisation.dat'
+           self.file_pulse_profile = self.this_directory + f'/data/synthetic_{self.scenario}_seed={self.poisson_seed}_bkg={self.bkg}_disk_blocking={self.disk_blocking_data}_realisation.dat'
            self.file_arf = self.this_directory + '/../model_data/instrument_data/J1808_NICER_2019/merged_saxj1808_2019_arf_aeff.txt'
            self.file_rmf = self.this_directory + '/../model_data/instrument_data/J1808_NICER_2019/merged_saxj1808_2019_rmf_matrix.txt'
            self.file_channel_edges = self.this_directory + '/../model_data/instrument_data/J1808_NICER_2019/merged_saxj1808_2019_rmf_energymap.txt'
@@ -420,23 +424,27 @@ class analysis(object):
                                       prior=self.prior,
                                       externally_updated=True)
 
-        if self.disk_blocking:
-            if self.disk_blocking_data:
-                if self.poisson_seed == 42:
-                    true_logl = 8.3680599615e+06
-                elif self.poisson_seed == 0:
-                    true_logl = 8.3576023198e+06
-                elif self.poisson_seed == 1:
-                    true_logl = 8.3700049781e+06
-                elif self.poisson_seed == 2:
-                    true_logl = 8.3725179573e+06
-            elif not self.disk_blocking_data:
-                true_logl = 8.7794279263e+06
-        elif not self.disk_blocking:
-            if self.disk_blocking_data:
-                true_logl = 8.3650673477e+06
-            elif not self.disk_blocking_data:
-                true_logl = 8.7824890157e+06
+        if 'disk' in self.bkg:
+            if self.disk_blocking:
+                if self.disk_blocking_data:
+                    if self.poisson_seed == 42:
+                        true_logl = 8.3680599615e+06
+                    elif self.poisson_seed == 0:
+                        true_logl = 8.3576023198e+06
+                    elif self.poisson_seed == 1:
+                        true_logl = 8.3700049781e+06
+                    elif self.poisson_seed == 2:
+                        true_logl = 8.3725179573e+06
+                elif not self.disk_blocking_data:
+                    true_logl = 8.7794279263e+06
+            elif not self.disk_blocking:
+                if self.disk_blocking_data:
+                    true_logl = 8.3650673477e+06
+                elif not self.disk_blocking_data:
+                    true_logl = 8.7824890157e+06
+        elif self.bkg == 'fix':
+            if self.poisson_seed == 42:
+                true_logl = 6.6155332721e+06
         self.true_logl = true_logl
     
     def __call__(self):
@@ -464,12 +472,17 @@ class analysis(object):
 
         fig, axes = plt.subplots(3,1,figsize=(6,10))
        
-        CustomAxes.plot_2D_counts(axes[0], self.data.counts, get_mids_from_edges(self.data.phases),  get_mids_from_edges(self.instrument.channel_edges))
-        CustomAxes.plot_2D_counts(axes[1], self.signal.expected_counts, get_mids_from_edges(self.data.phases),  get_mids_from_edges(self.instrument.channel_edges))
-        CustomAxes.plot_2D_counts(axes[2], self.data.counts-self.signal.expected_counts, get_mids_from_edges(self.data.phases), get_mids_from_edges(self.instrument.channel_edges))
+        im0 = CustomAxes.plot_2D_counts(axes[0], self.data.counts, get_mids_from_edges(self.data.phases),  get_mids_from_edges(self.instrument.channel_edges))
+        fig.colorbar(im0, ax=axes[0])
+        im1 = CustomAxes.plot_2D_counts(axes[1], self.signal.expected_counts, get_mids_from_edges(self.data.phases),  get_mids_from_edges(self.instrument.channel_edges))
+        fig.colorbar(im1, ax=axes[1])
+        im2 = CustomAxes.plot_2D_counts(axes[2], self.data.counts-self.signal.expected_counts, get_mids_from_edges(self.data.phases), get_mids_from_edges(self.instrument.channel_edges))
+        fig.colorbar(im2, ax=axes[2])
+        
         fig.tight_layout()
-        fig.savefig(f'{folderstring}/pre_sampling_plot_{self.poisson_seed}.png',)
+        fig.savefig(f'{folderstring}/pre_sampling_plot_bkg={self.bkg}_{self.poisson_seed}.png',)
         print(f'figure saved in {folderstring}')
+        print('total counts in data:', np.sum(self.data.counts))
         
         if self.run_type == 'sample':
             if self.sampler == 'multi':
@@ -541,5 +554,5 @@ class analysis(object):
             
             
 if __name__ == '__main__':
-    Analysis = analysis('local','test', 'disk', scenario='molkov', disk_blocking=True, disk_blocking_data=True, fix_inclination=True, poisson_seed=2)
+    Analysis = analysis('local','test', 'disk', scenario='molkov', disk_blocking=True, disk_blocking_data=True, fix_inclination=True, poisson_seed=42)
     Analysis()

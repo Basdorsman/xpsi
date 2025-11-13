@@ -224,9 +224,9 @@ class CustomPhotosphere(xpsi.Photosphere):
                     self._signalQ = tuple(map(tuple, tempQ))
                     self._signalU = tuple(map(tuple, tempU))
                 else:
-                    R_in = self.disk['R_in'] * 1000
-                    # R_in = 24.5 * 1000 # if want a constant R_in
                     if self._disk_blocking:
+                        R_in = self.disk['R_in'] * 1000
+                        # R_in = 24.5 * 1000 # if want a constant R_in
                         self._signal = self._hot.integrate(self._spacetime,
                                                     energies,
                                                     threads,
@@ -248,19 +248,19 @@ class CustomPhotosphere(xpsi.Photosphere):
                 if self._elsewhere is not None:
                     for i in range(self._signal[0][0].shape[1]):
                         self._signal[0][0][:,i] += spectrum    
-    
-            if self._disk_combined:
+            if self._disk is not None: 
+                if self._disk_combined:
                 # add disk spectrum to primary hotregion
-                if self._disk is not None: 
+
                     self.disk_spectrum = self._disk(energies)
                     for i in range(self._signal[0][0].shape[1]):
                         # print('self._signal[0][0][:,i]',self._signal[0][0][:,i])
                         self._signal[0][0][:,i] += self.disk_spectrum
 
              
-            elif not self._disk_combined:          
+                elif not self._disk_combined:          
                 # # here disk and line are stored separately, but then the phases also need to be stored separately in customsignal, and this breaks posprocessing.
-                if self._disk is not None: 
+
                     # Determine the index for the new hot region
                     new_hot_region_index = len(self._signal)
                     

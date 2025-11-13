@@ -64,7 +64,7 @@ class SynthesiseData(xpsi.Data):
 ################################## SETTINGS ###################################
 
 
-bkg = 'disk'
+bkg = 'disk' #disk or fix if no disk
 disk_blocking=True # use disk occultation or not
 
 try:
@@ -80,7 +80,7 @@ try:
 except:
     machine = "local"
     poisson_noise = True
-    poisson_seed = 0
+    poisson_seed = 42
     scenario = 'molkov'
   
 
@@ -202,15 +202,18 @@ hot = HotRegions((primary,secondary))
 
 ############################### DISK ####################################
 
-# bounds = dict(T_in = (None, None), R_in = (None, None), K_disk = None)
-k_disk = k_disk_derive()
-    
-disk = Disk(bounds=bounds, values={'K_disk': k_disk})
-k_disk.spacetime = spacetime
-k_disk.disk = disk
+if 'disk' in bkg:
+    k_disk = k_disk_derive()
+    disk = Disk(bounds=bounds, values={'K_disk': k_disk})
+    k_disk.spacetime = spacetime
+    k_disk.disk = disk
+elif bkg=='fix':
+    disk=None
 
 ################################ ATMOSPHERE ################################### 
       
+
+
 
 photosphere = CustomPhotosphere(hot = hot, 
                                         elsewhere = None, 
@@ -229,7 +232,8 @@ elif machine=='snellius':
 ################################### STAR ######################################
 
 star = xpsi.Star(spacetime = spacetime, photospheres = photosphere)
-k_disk.star = star
+if 'disk' in bkg:
+    k_disk.star = star
 
 
 #################################### PRIOR ####################################
@@ -240,7 +244,7 @@ prior = CustomPrior(scenario, bkg)
 if machine=='local':
     interstellar = CustomInterstellar.from_SWG("/home/bas/Documents/Projects/x-psi/xpsi-bas-fork/AMXPs/model_data/n_H/TBnew/tbnew0.14.txt", bounds=bounds['column_density'], value=None)
 elif machine=='snellius':
-    interstellar = CustomInterstellar.from_SWG("/home/dorsman/xpsi-bas-fork/AMXPs/model_data/interstellar/tbnew/tbnew0.14.txt", bounds['column_density'], value=None)
+    interstellar = CustomInterstellar.from_SWG("/home/dorsman/xpsi-bas-fork/AMXPs/model_data/interstellar/tbnew/tbnew0.14.txt", bounds=bounds['column_density'], value=None)
 
 
 
@@ -280,7 +284,7 @@ if poisson_noise:
 
 Instrument_kwargs = dict(exposure_time=exposure_time,
                          seed=seed, 
-                         name=f'synthetic_{scenario}_seed={seed}_disk_blocking={disk_blocking}',
+                         name=f'synthetic_{scenario}_seed={seed}_bkg={bkg}_disk_blocking={disk_blocking}',
                          directory='./data/')
 
 
@@ -297,7 +301,7 @@ if __name__ == '__main__':
     ########## DATA PLOT ###############
     
     
-    my_data=np.loadtxt(f'./data/synthetic_{scenario}_seed={poisson_seed}_disk_blocking={disk_blocking}_realisation.dat')
+    my_data=np.loadtxt(f'./data/synthetic_{scenario}_seed={poisson_seed}_bkg={bkg}_disk_blocking={disk_blocking}_realisation.dat')
     
     
     

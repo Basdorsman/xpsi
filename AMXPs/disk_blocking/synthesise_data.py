@@ -226,7 +226,7 @@ if machine=='local':
     photosphere.hot_atmosphere = '/home/bas/Documents/Projects/x-psi/model_datas/bobrikova/Bobrikova_compton_slab.npz'
 # SNELLIUS
 elif machine=='snellius':
-    photosphere.hot_atmosphere = '/home/dorsman/xpsi-bas-fork/AMXPs/model_data/Bobrikova_compton_slab.npz'
+    photosphere.hot_atmosphere = '/home/bdorsman/xpsi-bas-fork/AMXPs/model_data/Bobrikova_compton_slab.npz'
 
     
 ################################### STAR ######################################
@@ -244,7 +244,7 @@ prior = CustomPrior(scenario, bkg)
 if machine=='local':
     interstellar = CustomInterstellar.from_SWG("/home/bas/Documents/Projects/x-psi/xpsi-bas-fork/AMXPs/model_data/n_H/TBnew/tbnew0.14.txt", bounds=bounds['column_density'], value=None)
 elif machine=='snellius':
-    interstellar = CustomInterstellar.from_SWG("/home/dorsman/xpsi-bas-fork/AMXPs/model_data/interstellar/tbnew/tbnew0.14.txt", bounds=bounds['column_density'], value=None)
+    interstellar = CustomInterstellar.from_SWG("/home/bdorsman/xpsi-bas-fork/AMXPs/model_data/n_H/TBnew/tbnew0.14.txt", bounds=bounds['column_density'], value=None)
 
 
 

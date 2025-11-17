@@ -38,7 +38,8 @@ class analysis(object):
                  disk_combined=True,
                  disk_blocking=True,
                  disk_blocking_data=True,
-                 fix_inclination=False):
+                 fix_inclination=False,
+                 fix_theta_p=True):
         self.scenario = os.environ.get('scenario')
         if os.environ.get('scenario') == None or os.environ.get('scenario') =='None':
             print('scenario is not in environment variables, using passed argument.')
@@ -182,9 +183,21 @@ class analysis(object):
             self.fix_inclination = False
         print(f'fix_inclination: {self.fix_inclination}')
         
+        if os.environ.get('fix_theta_p') == None or os.environ.get('fix_theta_p') =='None':
+            print('fix_theta_p is not in environment variables, using passed argument.')
+            self.fix_theta_p = fix_theta_p
+        else:
+            self.fix_theta_p = os.environ.get('fix_theta_p')
+
+        if self.fix_theta_p == "True" or self.fix_theta_p == True:
+            self.fix_theta_p = True
+        else:
+            self.fix_theta_p = False
+        print(f'fix_theta_p: {self.fix_theta_p}')
+        
 
 
-        self.pv = parameter_values(self.scenario, self.bkg, self.fix_inclination)
+        self.pv = parameter_values(self.scenario, self.bkg, self.fix_inclination, self.fix_theta_p)
         self.disk_combined = disk_combined
     
         self.file_locations()
@@ -284,13 +297,24 @@ class analysis(object):
                   'atm_ext':'Num5D',
                   'prefix': 'p'}
         
-        hotregion_bounds = dict(super_colatitude = self.bounds["p__super_colatitude"],
-                                super_radius = self.bounds["p__super_radius"],
-                                phase_shift = self.bounds["p__phase_shift"], 
-                                super_tbb = self.bounds['p__super_tbb'],
-                                super_tau = self.bounds['p__super_tau'],
-                                super_te = self.bounds['p__super_te'])
-        values = {}
+        
+        if self.fix_theta_p:
+            hotregion_bounds = dict(super_radius = self.bounds["p__super_radius"],
+                                    phase_shift = self.bounds["p__phase_shift"], 
+                                    super_tbb = self.bounds['p__super_tbb'],
+                                    super_tau = self.bounds['p__super_tau'],
+                                    super_te = self.bounds['p__super_te'])
+            values = dict(super_colatitude = self.pv.p_colatitude)
+        elif not self.fix_theta_p:
+        
+        
+            hotregion_bounds = dict(super_colatitude = self.bounds["p__super_colatitude"],
+                                    super_radius = self.bounds["p__super_radius"],
+                                    phase_shift = self.bounds["p__phase_shift"], 
+                                    super_tbb = self.bounds['p__super_tbb'],
+                                    super_tau = self.bounds['p__super_tau'],
+                                    super_te = self.bounds['p__super_te'])
+            values = {}
         
         primary = CustomHotRegion(hotregion_bounds, values, **p_kwargs)
 
@@ -407,7 +431,10 @@ class analysis(object):
         self.p = self.pv.p()
     
     def set_prior(self):
-        self.prior = CustomPrior(self.scenario, self.bkg)
+        self.prior = CustomPrior(self.scenario, 
+                                 self.bkg, 
+                                 fix_inclination=self.fix_inclination, 
+                                 fix_theta_p=self.fix_theta_p)
         
     def set_likelihood(self):
         self.set_spacetime() # self.spacetime is defined here
@@ -554,5 +581,13 @@ class analysis(object):
             
             
 if __name__ == '__main__':
-    Analysis = analysis('local','test', 'disk', scenario='molkov', disk_blocking=True, disk_blocking_data=True, fix_inclination=True, poisson_seed=42)
+    Analysis = analysis('local',
+                        'test', 
+                        'fix', 
+                        scenario='molkov', 
+                        disk_blocking=True, 
+                        disk_blocking_data=True, 
+                        fix_inclination=True, 
+                        fix_theta_p=True, 
+                        poisson_seed=42)
     Analysis()

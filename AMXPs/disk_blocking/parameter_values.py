@@ -16,10 +16,15 @@ from xpsi.global_imports import gravradius
 import numpy as np
 
 class parameter_values(object):
-    def __init__(self, scenario, bkg, fix_inclination=False):
+    def __init__(self, 
+                 scenario, 
+                 bkg, 
+                 fix_inclination=False,
+                 fix_theta_p=False):
         self.scenario = scenario
         self.bkg = bkg
         self.fix_inclination = fix_inclination
+        self.fix_theta_p = fix_theta_p
 
 
         if self.scenario == 'molkov':
@@ -62,7 +67,7 @@ class parameter_values(object):
         self.distance,  
         self.cos_i if not self.fix_inclination else None,  
         self.p_phase_shift,  
-        self.p_colatitude, 
+        self.p_colatitude if not self.fix_theta_p else None, 
         self.p_radius,  
         self.p_tbb,
         self.p_te,
@@ -90,9 +95,9 @@ class parameter_values(object):
             'mass',
             'radius',
       		'distance',
-      		'cos_inclination',
+      		'cos_inclination' if not self.fix_inclination else None,
      		'p__phase_shift',
-    		'p__super_colatitude',
+    		'p__super_colatitude' if not self.fix_theta_p else None,
     		'p__super_radius',
     		'p__super_tbb',
     		'p__super_te',

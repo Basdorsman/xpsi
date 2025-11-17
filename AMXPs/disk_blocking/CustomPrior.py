@@ -12,6 +12,7 @@ from scipy.stats import truncnorm
 from xpsi.global_imports import gravradius, _2pi
 from helper_functions import get_keV_from_log10_Kelvin
 from scipy.interpolate import Akima1DInterpolator
+from parameter_values import parameter_values
 
 import os
 this_directory = os.path.dirname(os.path.abspath(__file__))
@@ -62,9 +63,12 @@ class CustomPrior(xpsi.Prior):
     __draws_from_support__ = 4 #10^x
     
     
-    def __init__(self, scenario, bkg, *args, **kwargs):
+    def __init__(self, scenario, bkg, *args, fix_inclination=False, fix_theta_p=False, **kwargs):
         self.scenario = scenario
         self.bkg = bkg
+        self.fix_theta_p = fix_theta_p
+        self.fix_inclination = fix_inclination
+        self.pv = parameter_values(self.scenario, self.bkg, self.fix_inclination, self.fix_theta_p)
         
         super(CustomPrior, self).__init__(*args, **kwargs)
 
@@ -120,8 +124,14 @@ class CustomPrior(xpsi.Prior):
         
         ref = self.parameters # redefine shortcut
         
+        if self.fix_theta_p:
+            p_col = self.pv.p_colatitude
+        elif not self.fix_theta_p:
+            p_col = ref['p__super_colatitude']
+        
+        
         # enforce order in hot region colatitude
-        if ref['p__super_colatitude'] > ref['s__super_colatitude']:
+        if p_col > ref['s__super_colatitude']:
             # print('no order in hotregions')
             return -np.inf
  
@@ -129,7 +139,7 @@ class CustomPrior(xpsi.Prior):
  
         ang_sep = xpsi.HotRegion.psi(ref['s__super_colatitude'],
                                      phi,
-                                     ref['p__super_colatitude'])
+                                     p_col)
  
         # hot regions cannot overlap
         if ang_sep < ref['p__super_radius'] + ref['s__super_radius']:
@@ -161,12 +171,15 @@ class CustomPrior(xpsi.Prior):
         if temporary < 0: temporary = 0
         ref['distance'] = temporary
 
-        # flat priors in cosine of hot region centre colatitudes (isotropy)
-        # support modified by no-overlap rejection condition
-        idx = ref.index('p__super_colatitude')
-        a, b = ref.get_param('p__super_colatitude').bounds
-        a = math.cos(a); b = math.cos(b)
-        ref['p__super_colatitude'] = math.acos(b + (a - b) * hypercube[idx])
+        
+
+        if not self.pv.fix_theta_p:    
+            # flat priors in cosine of hot region centre colatitudes (isotropy)
+            # support modified by no-overlap rejection condition
+            idx = ref.index('p__super_colatitude')
+            a, b = ref.get_param('p__super_colatitude').bounds
+            a = math.cos(a); b = math.cos(b)
+            ref['p__super_colatitude'] = math.acos(b + (a - b) * hypercube[idx])
         
         idx = ref.index('s__super_colatitude')
         a, b = ref.get_param('s__super_colatitude').bounds

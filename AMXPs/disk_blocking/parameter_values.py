@@ -20,11 +20,13 @@ class parameter_values(object):
                  scenario, 
                  bkg, 
                  fix_inclination=False,
-                 fix_theta_p=False):
+                 fix_theta_p=False,
+                 antipodal=False):
         self.scenario = scenario
         self.bkg = bkg
         self.fix_inclination = fix_inclination
         self.fix_theta_p = fix_theta_p
+        self.antipodal = antipodal
 
 
         if self.scenario == 'molkov':
@@ -72,9 +74,9 @@ class parameter_values(object):
         self.p_tbb,
         self.p_te,
         self.p_tau,
-        self.s_phase_shift,
-        self.s_colatitude, 
-        self.s_radius, 
+        self.s_phase_shift if not self.antipodal else None,
+        self.s_colatitude if not self.antipodal else None,
+        self.s_radius,
         self.s_tbb,
         self.s_te,
         self.s_tau,
@@ -102,8 +104,8 @@ class parameter_values(object):
     		'p__super_tbb',
     		'p__super_te',
     		'p__super_tau',
-    		's__phase_shift',
-    		's__super_colatitude',
+    		's__phase_shift' if not self.antipodal else None,
+    		's__super_colatitude' if not self.antipodal else None,
     		's__super_radius',
     		's__super_tbb',
     		's__super_te',

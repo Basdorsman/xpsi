@@ -22,8 +22,8 @@ class CustomPhotosphere(xpsi.Photosphere):
                  stokes=False,
                  custom = None,
                  disk = None,
-                 disk_blocking = False,
                  disk_combined=False,
+                 disk_blocking=True,
                  **kwargs):
 
         if everywhere is not None:
@@ -61,8 +61,8 @@ class CustomPhotosphere(xpsi.Photosphere):
         self._elsewhere = elsewhere
         self._everywhere = everywhere
         self._stokes = stokes
-        self._disk_blocking = disk_blocking # disk occultation
         self._disk_combined = disk_combined
+        self._disk_blocking = disk_blocking #override to test disk emission without blocking needed here
 
         if disk is not None:
             self._disk = disk
@@ -224,37 +224,32 @@ class CustomPhotosphere(xpsi.Photosphere):
                     self._signalQ = tuple(map(tuple, tempQ))
                     self._signalU = tuple(map(tuple, tempU))
                 else:
-                    if self._disk_blocking:
-                        R_in = self.disk['R_in'] * 1000
-                        # R_in = 24.5 * 1000 # if want a constant R_in
-                        self._signal = self._hot.integrate(self._spacetime,
-                                                    energies,
-                                                    threads,
-                                                    self._hot_atmosphere,
-                                                    self._elsewhere_atmosphere,
-                                                    else_atm_ext,
-                                                    R_in=R_in)
-                    elif not self._disk_blocking:
-                         self._signal = self._hot.integrate(self._spacetime,
-                                                    energies,
-                                                    threads,
-                                                    self._hot_atmosphere,
-                                                    self._elsewhere_atmosphere,
-                                                    else_atm_ext)
+                    if self._disk is not None and self._disk_blocking == True: 
+                        R_in = self.disk['R_in'] * 1000 # in meters now
+                    elif self._disk is None or self._disk_blocking == False:
+                        R_in = 1e6 # default value with no disk
+
+                    self._signal = self._hot.integrate(self._spacetime,
+                                                energies,
+                                                threads,
+                                                self._hot_atmosphere,
+                                                self._elsewhere_atmosphere,
+                                                else_atm_ext,
+                                                R_in)
+                        
                     if not isinstance(self._signal[0], tuple):
-                        self._signal = (self._signal,)
+                        self._signal = (self._signal,)    
 
                 # add time-invariant component to first time-dependent component
                 if self._elsewhere is not None:
                     for i in range(self._signal[0][0].shape[1]):
-                        self._signal[0][0][:,i] += spectrum    
+                        self._signal[0][0][:,i] += spectrum     
             if self._disk is not None: 
                 if self._disk_combined:
                 # add disk spectrum to primary hotregion
 
                     self.disk_spectrum = self._disk(energies)
                     for i in range(self._signal[0][0].shape[1]):
-                        # print('self._signal[0][0][:,i]',self._signal[0][0][:,i])
                         self._signal[0][0][:,i] += self.disk_spectrum
 
              

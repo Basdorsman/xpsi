@@ -63,12 +63,13 @@ class CustomPrior(xpsi.Prior):
     __draws_from_support__ = 4 #10^x
     
     
-    def __init__(self, scenario, bkg, *args, fix_inclination=False, fix_theta_p=False, **kwargs):
+    def __init__(self, scenario, bkg, *args, fix_inclination=False, fix_theta_p=False, antipodal=False, **kwargs):
         self.scenario = scenario
         self.bkg = bkg
         self.fix_theta_p = fix_theta_p
         self.fix_inclination = fix_inclination
-        self.pv = parameter_values(self.scenario, self.bkg, self.fix_inclination, self.fix_theta_p)
+        self.antipodal=antipodal
+        self.pv = parameter_values(self.scenario, self.bkg, self.fix_inclination, self.fix_theta_p, self.antipodal)
         
         super(CustomPrior, self).__init__(*args, **kwargs)
 
@@ -129,22 +130,22 @@ class CustomPrior(xpsi.Prior):
         elif not self.fix_theta_p:
             p_col = ref['p__super_colatitude']
         
-        
-        # enforce order in hot region colatitude
-        if p_col > ref['s__super_colatitude']:
-            # print('no order in hotregions')
-            return -np.inf
- 
-        phi = (ref['p__phase_shift'] - 0.5 - ref['s__phase_shift']) * _2pi
- 
-        ang_sep = xpsi.HotRegion.psi(ref['s__super_colatitude'],
-                                     phi,
-                                     p_col)
- 
-        # hot regions cannot overlap
-        if ang_sep < ref['p__super_radius'] + ref['s__super_radius']:
-            # print('overlapping hotregions')
-            return -np.inf
+        if not self.antipodal:
+            # enforce order in hot region colatitude
+            if p_col > ref['s__super_colatitude']:
+                # print('no order in hotregions')
+                return -np.inf
+     
+            phi = (ref['p__phase_shift'] - 0.5 - ref['s__phase_shift']) * _2pi
+     
+            ang_sep = xpsi.HotRegion.psi(ref['s__super_colatitude'],
+                                         phi,
+                                         p_col)
+     
+            # hot regions cannot overlap
+            if ang_sep < ref['p__super_radius'] + ref['s__super_radius']:
+                # print('overlapping hotregions')
+                return -np.inf
 
         return 0.0
 
@@ -181,10 +182,11 @@ class CustomPrior(xpsi.Prior):
             a = math.cos(a); b = math.cos(b)
             ref['p__super_colatitude'] = math.acos(b + (a - b) * hypercube[idx])
         
-        idx = ref.index('s__super_colatitude')
-        a, b = ref.get_param('s__super_colatitude').bounds
-        a = math.cos(a); b = math.cos(b)
-        ref['s__super_colatitude'] = math.acos(b + (a - b) * hypercube[idx])
+        if not self.antipodal:
+            idx = ref.index('s__super_colatitude')
+            a, b = ref.get_param('s__super_colatitude').bounds
+            a = math.cos(a); b = math.cos(b)
+            ref['s__super_colatitude'] = math.acos(b + (a - b) * hypercube[idx])
 
         # restore proper cache
         for parameter, cache in zip(ref, to_cache):

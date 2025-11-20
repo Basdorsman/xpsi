@@ -20,7 +20,7 @@ from CustomPhotosphere import CustomPhotosphere
 from CustomInterstellar import CustomInterstellar
 from CustomSignal import CustomSignal
 from CustomHotRegion import CustomHotRegion
-from CustomHotRegions import CustomHotRegions
+
 
 from parameter_values import parameter_values
 from helper_functions import get_T_in_log10_Kelvin, plot_2D_pulse, CustomAxes, get_mids_from_edges
@@ -39,7 +39,8 @@ class analysis(object):
                  disk_blocking=True,
                  disk_blocking_data=True,
                  fix_inclination=False,
-                 fix_theta_p=True):
+                 fix_theta_p=False,
+                 antipodal=False):
         self.scenario = os.environ.get('scenario')
         if os.environ.get('scenario') == None or os.environ.get('scenario') =='None':
             print('scenario is not in environment variables, using passed argument.')
@@ -195,9 +196,21 @@ class analysis(object):
             self.fix_theta_p = False
         print(f'fix_theta_p: {self.fix_theta_p}')
         
+        if os.environ.get('antipodal') == None or os.environ.get('antipodal') =='None':
+            print('antipodal is not in environment variables, using passed argument.')
+            self.antipodal = antipodal
+        else:
+            self.antipodal = os.environ.get('antipodal')
+
+        if self.antipodal == "True" or self.antipodal == True:
+            self.antipodal = True
+        else:
+            self.antipodal = False
+        print(f'antipodal: {self.antipodal}')
+        
 
 
-        self.pv = parameter_values(self.scenario, self.bkg, self.fix_inclination, self.fix_theta_p)
+        self.pv = parameter_values(self.scenario, self.bkg, self.fix_inclination, self.fix_theta_p, self.antipodal)
         self.disk_combined = disk_combined
     
         self.file_locations()
@@ -283,9 +296,8 @@ class analysis(object):
         self.spacetime = xpsi.Spacetime(bounds=spacetime_bounds, values=spacetime_values) # values=dict(frequency=self.values["frequency"]))
 
     def set_hotregions(self):
-        p_kwargs = {'symmetry': True, #call for azimuthal invariance
+        p_kwargs = {'symmetry': True,
                   'split': True,
-                  'disk_blocking': self.disk_blocking,
                   'omit': False,
                   'cede': False,
                   'concentric': False,
@@ -299,28 +311,29 @@ class analysis(object):
         
         
         if self.fix_theta_p:
-            hotregion_bounds = dict(super_radius = self.bounds["p__super_radius"],
-                                    phase_shift = self.bounds["p__phase_shift"], 
-                                    super_tbb = self.bounds['p__super_tbb'],
-                                    super_tau = self.bounds['p__super_tau'],
-                                    super_te = self.bounds['p__super_te'])
-            values = dict(super_colatitude = self.pv.p_colatitude)
+            primary_bounds = dict(super_radius = self.bounds["p__super_radius"],
+                                  phase_shift = self.bounds["p__phase_shift"], 
+                                  super_tbb = self.bounds['p__super_tbb'],
+                                  super_tau = self.bounds['p__super_tau'],
+                                  super_te = self.bounds['p__super_te'])
+            primary_values = dict(super_colatitude = self.pv.p_colatitude)
         elif not self.fix_theta_p:
+            primary_bounds = dict(super_radius = self.bounds["p__super_radius"],
+                                  phase_shift = self.bounds["p__phase_shift"], 
+                                  super_tbb = self.bounds['p__super_tbb'],
+                                  super_tau = self.bounds['p__super_tau'],
+                                  super_te = self.bounds['p__super_te'])
+            primary_values = {}
+            
+            if self.antipodal:
+                primary_bounds['super_colatitude'] =  (0.001, np.pi/2.0 - 0.001)
+            elif not self.antipodal:
+                primary_bounds['super_colatitude'] = self.bounds["p__super_colatitude"]
         
+        primary = CustomHotRegion(bounds=primary_bounds, values=primary_values, **p_kwargs)
         
-            hotregion_bounds = dict(super_colatitude = self.bounds["p__super_colatitude"],
-                                    super_radius = self.bounds["p__super_radius"],
-                                    phase_shift = self.bounds["p__phase_shift"], 
-                                    super_tbb = self.bounds['p__super_tbb'],
-                                    super_tau = self.bounds['p__super_tau'],
-                                    super_te = self.bounds['p__super_te'])
-            values = {}
-        
-        primary = CustomHotRegion(hotregion_bounds, values, **p_kwargs)
-
-        s_kwargs = {'symmetry': True, #call for azimuthal invariance
+        s_kwargs = {'symmetry': True,
                   'split': True,
-                  'disk_blocking': self.disk_blocking,
                   'omit': False,
                   'cede': False,
                   'concentric': False,
@@ -333,18 +346,55 @@ class analysis(object):
                   'atm_ext':'Num5D',
                   'prefix': 's'}
         
-        hotregion_bounds = dict(super_colatitude = self.bounds["s__super_colatitude"],
-                                super_radius = self.bounds["s__super_radius"],
-                                phase_shift = self.bounds["s__phase_shift"], 
-                                super_tbb = self.bounds['s__super_tbb'],
-                                super_tau = self.bounds['s__super_tau'],
-                                super_te = self.bounds['s__super_te'])
-        values = {}
         
-        secondary = CustomHotRegion(hotregion_bounds, values, **s_kwargs)
+        if self.antipodal:
+            class derive_colatitude(xpsi.Derive):
+                def __init__(self):
+                    pass
+            
+                def __call__(self, boundto, caller=None):
+                    global primary
+                    return np.pi - self.primary['super_colatitude']
+            
+            class derive_phase(xpsi.Derive):
+                def __init__(self):
+                    pass
+            
+                def __call__(self, boundto, caller=None):
+                    return self.primary['phase_shift']
+        
+        
+            derive_colatitude_instance = derive_colatitude()
+            derive_phase_instance = derive_phase()
+        
+            secondary_values = {'super_colatitude': derive_colatitude_instance,
+                                'phase_shift': derive_phase_instance}
+            
+            derive_colatitude_instance.primary = primary
+            derive_phase_instance.primary = primary
+            
 
 
-        self.hot = CustomHotRegions((primary, secondary))
+            secondary_bounds = dict(super_colatitude = None,
+                                    super_radius = self.bounds["s__super_radius"],
+                                    phase_shift = None, 
+                                    super_tbb = self.bounds['s__super_tbb'],
+                                    super_tau = self.bounds['s__super_tau'],
+                                    super_te = self.bounds['s__super_te'])
+
+        elif not self.antipodal:
+            secondary_bounds = dict(super_colatitude = self.bounds["s__super_colatitude"],
+                                    super_radius = self.bounds["s__super_radius"],
+                                    phase_shift = self.bounds["s__phase_shift"], 
+                                    super_tbb = self.bounds['s__super_tbb'],
+                                    super_tau = self.bounds['s__super_tau'],
+                                    super_te = self.bounds['s__super_te'])
+            secondary_values = {}
+        
+        secondary = CustomHotRegion(bounds=secondary_bounds, values=secondary_values, **s_kwargs)
+
+
+        self.hot = xpsi.HotRegions((primary, secondary))
 
     def set_elsewhere(self):
         self.elsewhere = xpsi.Elsewhere(bounds=dict(elsewhere_temperature = self.bounds['elsewhere_temperature']))
@@ -357,7 +407,7 @@ class analysis(object):
                                                      stokes=False, 
                                                      disk=self.disk, 
                                                      disk_combined=self.disk_combined,
-                                                     disk_blocking=self.disk_blocking,
+                                                     disk_blocking=self.disk_blocking, #override needed here to test specific case of disk emission without blocking.
                                                      values=dict(mode_frequency = self.spacetime['frequency']))
 
         self.photosphere.hot_atmosphere = self.file_atmosphere
@@ -434,7 +484,8 @@ class analysis(object):
         self.prior = CustomPrior(self.scenario, 
                                  self.bkg, 
                                  fix_inclination=self.fix_inclination, 
-                                 fix_theta_p=self.fix_theta_p)
+                                 fix_theta_p=self.fix_theta_p,
+                                 antipodal=self.antipodal)
         
     def set_likelihood(self):
         self.set_spacetime() # self.spacetime is defined here
@@ -515,7 +566,8 @@ class analysis(object):
             if self.sampler == 'multi':
                 wrapped_params = [0]*len(self.likelihood)
                 wrapped_params[self.likelihood.index('p__phase_shift')] = 1
-                wrapped_params[self.likelihood.index('s__phase_shift')] = 1
+                if not self.antipodal:
+                    wrapped_params[self.likelihood.index('s__phase_shift')] = 1
                 outputfiles_basename = f'./{folderstring}/run_ST_U_'
                 runtime_params = {'resume': False,
                                   'importance_nested_sampling': False,
@@ -579,15 +631,17 @@ class analysis(object):
             # figure.savefig(f'{folderstring}/prior.pdf',)
             print('Test took {:.3f} seconds'.format((time.time()-t_start)))
             
-            
+
 if __name__ == '__main__':
     Analysis = analysis('local',
-                        'test', 
-                        'fix', 
+                        'sample',
+                        'disk', 
                         scenario='molkov', 
+                        support_factor='None',
                         disk_blocking=True, 
                         disk_blocking_data=True, 
                         fix_inclination=True, 
-                        fix_theta_p=True, 
+                        fix_theta_p=True,
+                        antipodal=True,
                         poisson_seed=42)
     Analysis()

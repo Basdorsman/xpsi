@@ -65,7 +65,7 @@ class SynthesiseData(xpsi.Data):
 
 
 bkg = 'disk' #disk or fix if no disk
-disk_blocking=True # use disk occultation or not
+disk_blocking=False # use disk occultation or not
 
 try:
     os.environ.get('machine')
@@ -142,7 +142,7 @@ num_rays = 512
 
 p_kwargs = {'symmetry': True,
           'split': True,
-          'disk_blocking': disk_blocking,
+          # 'disk_blocking': disk_blocking,
           'omit': False,
           'cede': False,
           'concentric': False,
@@ -164,7 +164,7 @@ primary_bounds['super_tau'] = bounds['p__super_tau']
 
 s_kwargs = {'symmetry': True,
           'split': True,
-          'disk_blocking': disk_blocking,
+          # 'disk_blocking': disk_blocking,
           'omit': False,
           'cede': False,
           'concentric': False,

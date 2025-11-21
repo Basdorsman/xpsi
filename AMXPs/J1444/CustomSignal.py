@@ -203,17 +203,25 @@ class CustomSignal(xpsi.Signal):
 
     """
 
-    def __init__(self, workspace_intervals = 1000, epsabs = 0, epsrel = 1.0e-8,
-                 epsilon = 1.0e-3, sigmas = 10.0, support = None, bkg = 'marginalised', stokes=False, allow_negative_background = False, *args, **kwargs):
+    def __init__(self, 
+                 workspace_intervals = 1000, 
+                 epsabs = 0, 
+                 epsrel = 1.0e-8,
+                 epsilon = 1.0e-3, 
+                 sigmas = 10.0, 
+                 support = None, 
+                 bkg = 'marginalised', 
+                 stokes=False,
+                 combine_unpulsed=True,
+                 *args, 
+                 **kwargs):
         """ Perform precomputation. """
-        #print("running CustomSignal init...")
         super(CustomSignal, self).__init__(*args, **kwargs)
 
         self.stokes = stokes
         self.bkg = bkg
-        # self.allow_negative_background = allow_negative_background
-        #if self.bkg == 'fix':
-        #    self.background_data = np.loadtxt(this_directory+'/data/J1808_synthetic_diskbb_literature.txt')
+        self._combine_unpulsed=combine_unpulsed
+      
 
         try:
             self._precomp = precomputation(self._data.counts.astype(np.int32))
@@ -266,27 +274,14 @@ class CustomSignal(xpsi.Signal):
                                               # allow_negative_background = self.allow_negative_background)#,
                                               #slim=-1.0) # default is skipping 10^89s, so some likelihood calculations are skipped
 
-        elif 'disk' in self.bkg:
         # if disk and line are stored separately, there phases are also separate. But this breaks postprocessing, sampling, and data synthesis.
+        if not self._combine_unpulsed:        
+            for key in ('disk', 'line'):
+                if key in self.bkg:
+                    self._phases.append(np.copy(self._phases[0]))
+                    self._shifts = np.append(self._shifts, self._shifts[0])
 
-            # self._phases += [np.copy(self._phases[0])]
-            
-            # # fine as long as the disk has no phase
-            # self._shifts = np.append(self._shifts, self._shifts[0])
-            
-            # if 'line' in self.bkg:
-            #     self._phases += [np.copy(self._phases[0])]
-                
-            #     # fine as long as the line has no phase
-            #     self._shifts = np.append(self._shifts, self._shifts[0])
-                
-            # print('self._shifts', self._shifts)
-            # print('len self._shifts', len(self._shifts))
-            # print('self._phases', self._phases)
-            # print('len self._phases', len(self._phases))
-            
-       
-
+        if 'disk' in self.bkg:
             self.loglikelihood, self.expected_counts = \
                 poisson_likelihood_given_background(self._data.exposure_time, 
                                                     self._data.phases, 
@@ -296,7 +291,7 @@ class CustomSignal(xpsi.Signal):
                                                     self._shifts,
                                                     self.empty_background,
                                                     allow_negative = False)
-        
+
         elif self.bkg == 'fix':
             self.loglikelihood, self.expected_counts = \
                 poisson_likelihood_given_background(self._data.exposure_time, 

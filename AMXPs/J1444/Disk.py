@@ -265,4 +265,4 @@ class k_disk_derive(Derive):
 
     def __call__(self, boundto, caller = None):
         # ref is a reference to another hot region object
-        return get_k_disk(self.star['cos_inclination'], self.disk['R_in'], self.star['distance'])
+        return get_k_disk(self.spacetime['cos_inclination'], self.disk['R_in'], self.spacetime['distance'])

@@ -191,6 +191,7 @@ class analysis(object):
 
         self.pv = parameter_values(self.scenario, self.bkg, self.fix_mass, polarization=self.polarization)
         self.file_locations()
+        self.set_parameter_vector()
         self.set_bounds()
         self.set_interstellar()
         self.set_likelihood()
@@ -360,7 +361,6 @@ class analysis(object):
         self.elsewhere = xpsi.Elsewhere(bounds=dict(elsewhere_temperature = self.bounds['elsewhere_temperature']))
         
     def set_photosphere(self):
-        self.set_spacetime()
         self.set_hotregions()
         self.set_disk()
         self.set_line()
@@ -378,7 +378,7 @@ class analysis(object):
         self.photosphere.hot_atmosphere_Q = this_directory+'/../model_data/Bobrikova_compton_slab_Q.npz'
 
     def set_star(self):
-        self.set_photosphere()
+        # self.set_photosphere()
         self.star = xpsi.Star(spacetime = self.spacetime, photospheres = self.photosphere)
         
     def set_interstellar(self):
@@ -510,11 +510,12 @@ class analysis(object):
         self.prior = CustomPrior(self.scenario, self.bkg, fix_mass = self.fix_mass, eos_informed=self.eos_informed)
         
     def set_likelihood(self):
-        self.set_star()
+        self.set_spacetime() # self.spacetime is defined here
+        self.set_photosphere() # self.k_disk is defined here
         if 'disk' in self.bkg:
-            self.k_disk.star = self.star
+            self.k_disk.spacetime = self.spacetime
+        self.set_star() # star is defined afterwards
         self.set_signal()
-        self.set_parameter_vector()
         self.set_prior()
         
         self.likelihood = CustomLikelihood(star = self.star, 
@@ -524,7 +525,7 @@ class analysis(object):
                                            prior=self.prior,
                                            externally_updated=True)
         
-        
+
 
         
         if self.scenario == 'J1444s':
@@ -657,7 +658,22 @@ class analysis(object):
             print('Sampling took {:.3f} seconds'.format((time.time()-t_start)))
             
         elif self.run_type == 'test':
-            print('there is no test')
+            print('test: inverse sampling prior')
+
+            t_start = time.time()
+
+            
+            # inverse sampling test
+            test=self.prior.draw(ndraws=1000)[0][:,0:-1]
+            names_dictionary = self.pv.names()
+            labels_dictionary = self.pv.labels()
+            axis_labels = [labels_dictionary[key] for key in names_dictionary]
+            
+            import corner
+            figure=corner.corner(test, labels=axis_labels[:19], label_kwargs={'fontsize': 12},)
+            figure.tight_layout()
+            figure.savefig(f'{folderstring}/prior.pdf',)
+            print('Test took {:.3f} seconds'.format((time.time()-t_start)))
 
             
             
@@ -666,7 +682,7 @@ if __name__ == '__main__':
                         'test', 
                         'disk', 
                         sampler='multi', 
-                        scenario='J1444', 
+                        scenario='J1444s', 
                         support_factor='100', 
                         poisson_seed=42, 
                         fix_mass=False, 

@@ -251,6 +251,7 @@ class CustomPhotosphereDiskLine(xpsi.Photosphere):
                     
                 if self._disk is not None: 
                     R_in = self.disk['R_in'] * 1000 # in meters now
+                    print('disk value: ', R_in)
                 elif self._disk is None:
                     R_in = 1e6 # default value with no disk
 

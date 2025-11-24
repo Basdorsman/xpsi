@@ -16,133 +16,20 @@ from xpsi.global_imports import gravradius
 import numpy as np
 
 class parameter_values(object):
-    def __init__(self, scenario, bkg, fix_mass=False, ew=False, polarization=False):
+    def __init__(self, 
+                 scenario, 
+                 bkg, 
+                 fix_mass=False, 
+                 ew=False, 
+                 polarization=False,
+                 secondary=False):
         self.scenario = scenario
         self.bkg = bkg
         self.fix_mass = fix_mass
         self.ew = ew
         self.polarization = polarization
+        self.secondary = secondary
 
-
-        if self.scenario == 'kajava':
-            self.mass = 1.4
-            self.radius = 11
-            self.distance = 3.5
-            self.inclination = 58
-            self.cos_i = math.cos(self.inclination*math.pi/180)
-            
-            # Hotspot
-            self.phase_shift = 0.20
-            self.super_colatitude = 11*math.pi/180 # 20*math.pi/180 # 
-            self.super_radius = 10*math.pi/180
-            
-            # Compton slab model parameters
-            self.tbb=0.85/511 # 0.0017 #0.001 -0.003 Tbb(data) = Tbb(keV)/511keV, 1 keV = 0.002 data
-            self.te=50*1000/511. # 50. # 40-200 corresponds to 20-100 keV (Te(data) = Te(keV)*1000/511keV), 50 keV = 100 data
-            self.tau=1 #0.5 - 3.5 tau = ln(Fin/Fout)
-            
-            # elsewhere
-            if self.ew:
-                self.elsewhere_T_keV = 0.5 # 0.5 #  keV 
-                self.elsewhere_T_log10_K = get_T_in_log10_Kelvin(self.elsewhere_T_keV)
-
-            if 'disk' in self.bkg:
-            # source background
-                self.diskbb_T_keV = 0.29 # 0.3  #  keV #0.3 keV for Kajava+ 2011
-                self.diskbb_T_log10_K = get_T_in_log10_Kelvin(self.diskbb_T_keV)
-                self.R_in = 55 # 20 #  1 #  km #  for very small diskBB background
-            self.column_density = 1.13 #10^21 cm^-2
-            
-            
-
-        if self.scenario =='literature':
-            self.mass = 1.4
-            self.radius = 11. #12.
-            self.distance = 2.7 # 3.5
-            self.inclination = 60
-            self.cos_i = math.cos(self.inclination*math.pi/180)
-            
-            # Hotspot
-            self.phase_shift = 0
-            self.super_colatitude = 45*math.pi/180 # 20*math.pi/180 # 
-            self.super_radius = 15.5*math.pi/180
-            
-            # Compton slab model parameters
-            self.tbb=0.0012 # 0.0017 #0.001 -0.003 Tbb(data) = Tbb(keV)/511keV, 1 keV = 0.002 data
-            self.te=100. # 50. # 40-200 corresponds to 20-100 keV (Te(data) = Te(keV)*1000/511keV), 50 keV = 100 data
-            self.tau=1. #0.5 - 3.5 tau = ln(Fin/Fout)
-            
-            # elsewhere
-            if self.ew:
-                self.elsewhere_T_keV = 0.4 # 0.5 #  keV 
-                self.elsewhere_T_log10_K = get_T_in_log10_Kelvin(self.elsewhere_T_keV)
-    
-            if 'disk' in self.bkg:
-            # source background
-                self.diskbb_T_keV = 0.25 # 0.3  #  keV #0.3 keV for Kajava+ 2011
-                self.diskbb_T_log10_K = get_T_in_log10_Kelvin(self.diskbb_T_keV)
-                self.R_in = 30 # 20 #  1 #  km #  for very small diskBB background
-            self.column_density = 1.17 #10^21 cm^-2
-            
-        if self.scenario =='large_r' or self.scenario == '2019' or self.scenario == '2022':
-            self.mass = 1.4
-            self.radius = 11.
-            self.distance = 2.7
-            self.inclination =  39.6549310187694 ##
-            self.cos_i = math.cos(self.inclination*math.pi/180)
-            
-            # Hotspot
-            self.phase_shift = 0.226365126031355196E+00 # #0
-            self.super_colatitude = 0.175993450466385537E+00 #  0.18 # # # 45*math.pi/180 # 20*math.pi/180 # 
-            self.super_radius = 0.156951249537834525E+01 # 1.5184364492350666 # #np.pi/2 - 0.001 # #  # 15.5*math.pi/180
-
-            # Compton slab model parameters
-            self.tbb=0.103616176435110115E-02# 0.52/511#  #0.52/511 # 0.0017 #0.001 -0.003 Tbb(data) = Tbb(keV)/511keV, 1 keV = 0.002 data
-            self.te=0.729440224892133244E+02#37*1000/511#  #37*1000/511 # 50. # 40-200 corresponds to 20-100 keV (Te(data) = Te(keV)*1000/511keV), 50 keV = 100 data
-            self.tau=0.153014380768402769E+01#1.5 # # #0.5 - 3.5 tau = ln(Fin/Fout)
-    
-            if 'disk' in self.bkg:
-            # source background
-                self.diskbb_T_keV = 0.16845756373108872# 0.17#  # # 0.3  #  keV #0.3 keV for Kajava+ 2011
-                self.diskbb_T_log10_K = get_T_in_log10_Kelvin(self.diskbb_T_keV)
-                # self.T_in_keV = 0.16845756373108872
-                self.R_in = 0.308122224729265000E+02# 30#   # 20 #  1 #  km #  for very small diskBB background
-            
-            if 'line' in self.bkg:
-                self.mu = 0.9
-                self.sigma = 0.1
-                self.N = 2e37
-            
-            self.column_density = 1.17 #10^21 cm^-2
-        
-        if self.scenario =='small_r':
-            self.mass = 1.4 #1.2
-            self.radius = 11.
-            self.distance = 2.7
-            self.inclination = 80.
-            self.cos_i = math.cos(self.inclination*math.pi/180) #
-            
-            # Hotspot
-            self.phase_shift = 0.0
-            self.super_colatitude = 0.175993450466385537E+00 #0.21642082724729686 # 45*math.pi/180 # 20*math.pi/180 # 
-            self.super_radius = 30.*math.pi/180
-            
-            # Compton slab model parameters
-            self.tbb=0.0025#0.0025 #0.001 -0.003 Tbb(data) = Tbb(keV)/511keV, 1 keV = 0.002 data
-            self.te=100. #  #37*1000/511 # 50. # 40-200 corresponds to 20-100 keV (Te(data) = Te(keV)*1000/511keV), 50 keV = 100 data
-            self.tau=2.0 #0.5 - 3.5 tau = ln(Fin/Fout)
-    
-            if 'disk' in self.bkg:
-            # source background
-                #self.diskbb_T_keV = 0.16845756373108872# 0.17#  # # 0.3  #  keV #0.3 keV for Kajava+ 2011
-                #self.diskbb_T_log10_K = get_T_in_log10_Kelvin(self.diskbb_T_keV)
-                self.T_in_keV = 0.16845756373108872
-                self.R_in = 0.308122224729265000E+02 # 24#   # 20 #  1 #  km #  for very small diskBB background
-            self.column_density = 1.17 #10^21 cm^-2
-            if self.polarization:
-                self.spin_axis_angle = 0.0
-            
-            self.frequency = 401.
                 
         if self.scenario in ('J1444','J1444s'):
             self.mass = 1.4 
@@ -160,6 +47,17 @@ class parameter_values(object):
             self.tbb=0.0025#0.0025 #0.001 -0.003 Tbb(data) = Tbb(keV)/511keV, 1 keV = 0.002 data
             self.te=100. #  #37*1000/511 # 50. # 40-200 corresponds to 20-100 keV (Te(data) = Te(keV)*1000/511keV), 50 keV = 100 data
             self.tau=2.0 #0.5 - 3.5 tau = ln(Fin/Fout)
+            
+            
+            if self.secondary:
+                # secondary
+                self.phase_shift_s = self.phase_shift + 0.5
+                self.super_colatitude_s = np.pi - self.super_colatitude 
+                self.super_radius_s = self.super_radius
+                self.tbb_s = self.tbb
+                self.te_s = self.te
+                self.tau_s = self.tau
+                
     
             if 'disk' in self.bkg:
             # source background
@@ -188,9 +86,13 @@ class parameter_values(object):
         self.tbb,
         self.te,
         self.tau,
-        self.elsewhere_T_log10_K if self.ew else None,
-        self.diskbb_T_log10_K if 'disk' in self.bkg else None,
-        # self.T_in_keV if 'disk' in self.bkg else None,
+        self.phase_shift_s if self.secondary else None,
+        self.super_colatitude_s if self.secondary else None,
+        self.super_radius_s if self.secondary else None,
+        self.tbb_s if self.secondary else None,
+        self.te_s if self.secondary else None,
+        self.tau_s if self.secondary else None,
+        self.T_in_keV if 'disk' in self.bkg else None,
         self.R_in if 'disk' in self.bkg else None,
         self.mu if 'line' in self.bkg else None,
         self.sigma if 'line' in self.bkg else None,
@@ -203,23 +105,51 @@ class parameter_values(object):
         return self.p
         
     def names(self):
-        # Base list with placeholders for optional items
         self.names = [
             'mass' if not self.fix_mass else None, 
-            'radius', 'distance', 'cos_inclination',
+            'radius', 
+            'distance', 
+            'cos_inclination',
             'spin_axis_position_angle' if self.polarization else None,
-            'phase_shift', 
-            'super_colatitude', 'super_radius', 'super_tbb', 'super_te', 
-            'super_tau', 
-            'T_in' if self.bkg in ['disk', 'diskline'] else None,
-            # 'T_in_keV' if self.bkg in ['disk', 'diskline'] else None,
+            'phase_shift' if not self.secondary else None, 
+            'super_colatitude' if not self.secondary else None, 
+            'super_radius' if not self.secondary else None,
+            'super_tbb' if not self.secondary else None,
+            'super_te' if not self.secondary else None, 
+            'super_tau' if not self.secondary else None, 
+            'p__phase_shift' if self.secondary else None, 
+            'p__super_colatitude' if self.secondary else None, 
+            'p__super_radius' if self.secondary else None, 
+            'p__super_tbb' if self.secondary else None, 
+            'p__super_te' if self.secondary else None, 
+            'p__super_tau' if self.secondary else None, 
+            's__phase_shift' if self.secondary else None, 
+            's__super_colatitude' if self.secondary else None, 
+            's__super_radius' if self.secondary else None, 
+            's__super_tbb' if self.secondary else None, 
+            's__super_te' if self.secondary else None, 
+            's__super_tau' if self.secondary else None, 
+            # 'T_in' if self.bkg in ['disk', 'diskline'] else None,
+            'T_in_keV' if self.bkg in ['disk', 'diskline'] else None,
             'R_in' if self.bkg in ['disk', 'diskline'] else None,
             'mu' if self.bkg == 'diskline' else None,
             'sigma' if self.bkg == 'diskline' else None,
             'N' if self.bkg == 'diskline' else None,
-            'column_density', 'compactness', 'tbb_keV', 'te_keV', 
-            'inclination_deg', 'colatitude_deg', 'radius_deg', 
-            #'T_in_keV' if self.bkg in ['disk', 'diskline'] else None,
+            'column_density', 
+            'compactness',
+            'inclination_deg',
+            'tbb_keV' if not self.secondary else None, 
+            'te_keV' if not self.secondary else None, 
+            'colatitude_deg' if not self.secondary else None, 
+            'radius_deg' if not self.secondary else None,
+            'p__tbb_keV' if self.secondary else None, 
+            'p__te_keV' if self.secondary else None, 
+            'p__colatitude_deg' if self.secondary else None, 
+            'p__radius_deg' if self.secondary else None,
+            's__tbb_keV' if self.secondary else None, 
+            's__te_keV' if self.secondary else None, 
+            's__colatitude_deg' if self.secondary else None, 
+            's__radius_deg' if self.secondary else None,
             'N_norm' if self.bkg == 'diskline' else None
         ]
         
@@ -229,29 +159,22 @@ class parameter_values(object):
 
     def bounds(self):
         
-        cos_i_constr = True
+        cos_i_constr = False
         
-        if self.scenario in ('J1444','J1444s'):
-            if cos_i_constr:
-                cos_i_low = np.cos((74.1+5.8)*np.pi/180) # papitto2024 limit here for j1444 
-                cos_i_high = np.cos((74.1-6.3)*np.pi/180)
-            elif not cos_i_constr:
-                cos_i_low = 0.
-                cos_i_high = 1.
-            dist_low = 5.
-            dist_high = 15. 
-            nh_high = 100.
-        else: #J1808 values
-            cos_i_low = 0.15 
-            cos_i_high = 0.87  
-            dist_low = 1.2
-            dist_high = 4.2 
-            nh_high = 3.
+        if cos_i_constr:
+            cos_i_low = np.cos((74.1+5.8)*np.pi/180) # papitto2024 limit here for j1444 
+            cos_i_high = np.cos((74.1-6.3)*np.pi/180)
+        elif not cos_i_constr:
+            i_low_deg = 50
+            i_high_deg = 90
+            cos_i_low = np.cos(i_high_deg*np.pi/180)
+            cos_i_high = np.cos(i_low_deg*np.pi/180)
+
         
         bounds = {'radius':(3.0 * gravradius(1.0), 16.0),
-                  'distance': (dist_low, dist_high),
+                  'distance': (2.5, 10.6),
                   'cos_inclination':(cos_i_low, cos_i_high), 
-                  'phase_shift':(-0.25, 0.75),
+                  'phase_shift':(-0.5, 0.5),
                   'super_colatitude':(0.001, math.pi - 0.001),
                   'super_radius':(0.001, math.pi/2.0),
                   'super_tbb':(0.001, 0.003),
@@ -259,10 +182,9 @@ class parameter_values(object):
                   'super_te': (40., 200.),
                   'te_keV': (40*511/1000, 200*511/1000),
                   'super_tau': (0.5, 3.5),
-                  'column_density': (0., nh_high),
+                  'column_density': (19., 29.),
                   'compactness': (0., 10.),
-                  'inclination_deg': (np.arccos(cos_i_high)*180/np.pi, 
-                                      np.arccos(cos_i_low)*180/np.pi),
+                  'inclination_deg': (i_low_deg, i_high_deg),
                   'colatitude_deg': (0.001, 180-0.001),
                   'radius_deg': (0.001, 90)              
                   }
@@ -274,9 +196,9 @@ class parameter_values(object):
             bounds['elsewhere_temperature'] = (None, None)
 
         if 'disk' in self.bkg:
-            bounds['T_in'] = (0.01, 0.6) # (0.225, 0.275 )  # (0.01, 0.6) # keV
+            bounds['T_in_keV'] = (0.01, 0.6) # (0.225, 0.275 )  # (0.01, 0.6) # keV
             bounds['R_in'] = (5, 60) # from star radius to around corotation radius for the heaviest saxJ1808 possible # (27, 33)  # (20, 200) # km
-            bounds['T_in_keV'] = (None, None)
+            # bounds['T_in_keV'] = (None, None)
             # bounds['T_in_keV'] = (0.01, 0.6)
             
             
@@ -330,39 +252,99 @@ class parameter_values(object):
         return truths
     
     def labels(self):
-        labels = {'radius': r"R_{\mathrm{eq}}\;\mathrm{[km]}",
-              'compactness': r"M/R_{\mathrm{eq}}",
-              'distance': r"D \;\mathrm{[kpc]}",
-              'cos_inclination': r"\mathrm{cos}(i)",
-              'phase_shift': r"\phi\;\mathrm{[cycles]}",
-              'super_colatitude': r"\Theta_{spot}\;\mathrm{[rad]}",
-              'super_radius': r"\zeta_{spot}\;\mathrm{[rad]}",
-              'super_tbb': r"T_\{seed}\;\mathrm{[data units]}",
-              'tbb_keV': r"T_\mathrm{seed}\;\mathrm{[keV]}",
-              'super_te': r"T_\mathrm{electrons}\;\mathrm{[data units]}",
-              'te_keV': r"T_\mathrm{e}\;\mathrm{[keV]}",
-              'super_tau': r"\tau\;[-]",
-              'column_density': r"N_\mathrm{H}\;[10^{21} \mathrm{cm}^{-2}]",
-              'inclination_deg': r'i\;\mathrm{[deg]}',
-              'colatitude_deg': r'\theta\;\mathrm{[deg]}',
-              'radius_deg': r'\zeta\;\mathrm{[deg]}'}
+        # labels = {'radius': r"R_{\mathrm{eq}}\;\mathrm{[km]}",
+        #       'compactness': r"M/R_{\mathrm{eq}}",
+        #       'distance': r"D \;\mathrm{[kpc]}",
+        #       'cos_inclination': r"\mathrm{cos}(i)",
+        #       'phase_shift': r"\phi\;\mathrm{[cycles]}",
+        #       'super_colatitude': r"\Theta_{spot}\;\mathrm{[rad]}",
+        #       'super_radius': r"\zeta_{spot}\;\mathrm{[rad]}",
+        #       'super_tbb': r"T_\{seed}\;\mathrm{[data units]}",
+        #       'tbb_keV': r"T_\mathrm{seed}\;\mathrm{[keV]}",
+        #       'super_te': r"T_\mathrm{electrons}\;\mathrm{[data units]}",
+        #       'te_keV': r"T_\mathrm{e}\;\mathrm{[keV]}",
+        #       'super_tau': r"\tau\;[-]",
+        #       'column_density': r"N_\mathrm{H}\;[10^{21} \mathrm{cm}^{-2}]",
+        #       'inclination_deg': r'i\;\mathrm{[deg]}',
+        #       'colatitude_deg': r'\theta\;\mathrm{[deg]}',
+        #       'radius_deg': r'\zeta\;\mathrm{[deg]}'}
+        
+        # if not self.fix_mass:
+        #     labels['mass'] =  r"M\;\mathrm{[M}_{\odot}\mathrm{]}"
+        
+        # if 'disk' in self.bkg:
+        #     labels['T_in'] = r"T_{in} log10 of Kelvin"
+        #     # labels['T_in_keV'] = r"T_\mathrm{in}\;\mathrm{[keV]}"
+        #     labels['R_in'] =  r"R_\mathrm{in}\;\mathrm{[km]}"
+            
+        # if 'line' in self.bkg:
+        #     labels['mu'] = r"\mu\;\mathrm{[keV]}"
+        #     labels['sigma'] = r"\sigma\;\mathrm{[keV]}"
+        #     labels['N'] =  r"N\;\mathrm{[photons/cm^2/s]}"
+        #     labels['N_norm'] =  r"N_\mathrm{norm}\;\mathrm{[photons/cm^2/s]}"
+
+        # if self.polarization:
+        #     labels['spin_axis_position_angle']=r"Chi\;\mathrm{[rad]}"
+        
+        labels = {'radius': r"$R_{\mathrm{eq}}\;\mathrm{[km]}$",
+              'compactness': r"$M/R_{\mathrm{eq}}$",
+              'distance': r"$D \;\mathrm{[kpc]}$",
+              'cos_inclination': r"$\mathrm{cos}(i)$",           
+              'column_density': r"$N_\mathrm{H}\;[10^{21} \mathrm{cm}^{-2}]$",
+              'inclination_deg': r"$i\;\mathrm{[deg]}$"}
+        
+        
+        if not self.secondary:
+            labels['phase_shift']       = r"$\phi\;\mathrm{[cycles]}$"
+            labels['super_colatitude']  = r"$\Theta_{spot}\;\mathrm{[rad]}$"
+            labels['colatitude_deg']    = r"$\theta\;\mathrm{[deg]}$",
+            labels['super_radius']      = r"$\zeta_{spot}\;\mathrm{[rad]}$"
+            labels['radius_deg']        = r"$\zeta\;\mathrm{[deg]}$"
+            labels['super_tbb']         = r"$T_\mathrm{seed}\;\mathrm{[data units]}$"
+            labels['tbb_keV']           = r"$T_\mathrm{seed}\;\mathrm{[keV]}$"
+            labels['super_te']          = r"$T_\mathrm{electrons}\;\mathrm{[data units]}$"
+            labels['te_keV']            = r"$T_\mathrm{e}\;\mathrm{[keV]}$"
+            labels['super_tau']         = r"$\tau\;[-]$"    
+        elif self.secondary:
+            labels['p__phase_shift']       = r"$\phi_\mathrm{p}\;\mathrm{[cycles]}$"
+            labels['p__super_colatitude']  = r"$\Theta_\mathrm{p}\;\mathrm{[rad]}$"
+            labels['p__colatitude_deg']    = r"$\theta_\mathrm{p}\;\mathrm{[deg]}$",
+            labels['p__super_radius']      = r"$\zeta_\mathrm{p}\;\mathrm{[rad]}$"
+            labels['p__radius_deg']        = r"$\zeta_\mathrm{p}\;\mathrm{[deg]}$"
+            labels['p__super_tbb']         = r"$T_\mathrm{seed,p}\;\mathrm{[data units]}$"
+            labels['p__tbb_keV']           = r"$T_\mathrm{seed,p}\;\mathrm{[keV]}$"
+            labels['p__super_te']          = r"$T_\mathrm{e,p}\;\mathrm{[data units]}$"
+            labels['p__te_keV']            = r"$T_\mathrm{e,p}\;\mathrm{[keV]}$"
+            labels['p__super_tau']         = r"$\tau_\mathrm{p}\;[-]$"
+            
+            labels['s__phase_shift']       = r"$\phi_\mathrm{s}\;\mathrm{[cycles]}$"
+            labels['s__super_colatitude']  = r"$\Theta_\mathrm{s}\;\mathrm{[rad]}$"
+            labels['s__colatitude_deg']    = r"$\theta_\mathrm{s}\;\mathrm{[deg]}$",
+            labels['s__super_radius']      = r"$\zeta_\mathrm{s}\;\mathrm{[rad]}$"
+            labels['s__radius_deg']        = r"$\zeta_\mathrm{s}\;\mathrm{[deg]}$"
+            labels['s__super_tbb']         = r"$T_\mathrm{seed,s}\;\mathrm{[data units]}$"
+            labels['s__tbb_keV']           = r"$T_\mathrm{seed,s}\;\mathrm{[keV]}$"
+            labels['s__super_te']          = r"$T_\mathrm{e,s}\;\mathrm{[data units]}$"
+            labels['s__te_keV']            = r"$T_\mathrm{e,s}\;\mathrm{[keV]}$"
+            labels['s__super_tau']         = r"$\tau_\mathrm{s}\;[-]$"
+            
         
         if not self.fix_mass:
-            labels['mass'] =  r"M\;\mathrm{[M}_{\odot}\mathrm{]}"
+            labels['mass'] =  r"$M\;\mathrm{[M}_{\odot}\mathrm{]}$"
         
         if 'disk' in self.bkg:
-            labels['T_in'] = r"T_{in} log10 of Kelvin"
-            # labels['T_in_keV'] = r"T_\mathrm{in}\;\mathrm{[keV]}"
-            labels['R_in'] =  r"R_\mathrm{in}\;\mathrm{[km]}"
+            labels['T_in'] = r"$T_{in} log10 of Kelvin$"
+            labels['T_in_keV'] = r"$T_\mathrm{in}\;\mathrm{[keV]}$"
+            labels['R_in'] =  r"$R_\mathrm{in}\;\mathrm{[km]}$"
             
         if 'line' in self.bkg:
-            labels['mu'] = r"\mu\;\mathrm{[keV]}"
-            labels['sigma'] = r"\sigma\;\mathrm{[keV]}"
-            labels['N'] =  r"N\;\mathrm{[photons/cm^2/s]}"
-            labels['N_norm'] =  r"N_\mathrm{norm}\;\mathrm{[photons/cm^2/s]}"
+            labels['mu'] = r"$\mu\;\mathrm{[keV]}$"
+            labels['sigma'] = r"$\sigma\;\mathrm{[keV]}$"
+            labels['N'] =  r"$N\;\mathrm{[photons/cm^2/s]}$"
+            labels['N_norm'] =  r"$N_\mathrm{norm}\;\mathrm{[photons/cm^2/s]}$"
 
         if self.polarization:
-            labels['spin_axis_position_angle']=r"Chi\;\mathrm{[rad]}"
+            labels['spin_axis_position_angle']=r"$Chi\;\mathrm{[rad]}$"
 
         
         return labels

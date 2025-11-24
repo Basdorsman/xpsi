@@ -664,7 +664,7 @@ class analysis(object):
 
             
             # inverse sampling test
-            test=self.prior.draw(ndraws=1000)[0][:,0:-1]
+            test=self.prior.draw(ndraws=5000)[0][:,0:-1]
             names_dictionary = self.pv.names()
             labels_dictionary = self.pv.labels()
             axis_labels = [labels_dictionary[key] for key in names_dictionary]
@@ -685,8 +685,7 @@ if __name__ == '__main__':
                         scenario='J1444s', 
                         support_factor='100', 
                         poisson_seed=42, 
-                        fix_mass=False, 
-                        eos_informed=False, 
+                        eos_informed=True, 
                         polarization=False, 
                         channel_min=100)
     Analysis()

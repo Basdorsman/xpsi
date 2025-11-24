@@ -16,6 +16,12 @@ from scipy.interpolate import Akima1DInterpolator
 import os
 this_directory = os.path.dirname(os.path.abspath(__file__))
 
+import sys
+this_directory = os.path.dirname(os.path.abspath(__file__))
+sys.path.append(this_directory+'/data/EoS_prior/')
+from load_and_sample_eos_nf import NormalizingFlow
+
+
 class CustomPrior(xpsi.Prior):
     """ A custom (joint) prior distribution.
 
@@ -28,7 +34,7 @@ class CustomPrior(xpsi.Prior):
     p[1] = 3G to 16 km (and also there are compactness restrictions)
     p[2] = distance with a uniform prior from 3.4 to 4.6 (Galloway & Cumming 2006)
     p[3] = cos inclination 0 to 1
-    p[3] = phase shift 0 to 2pi
+    p[3] = phase shift -0.5 to 0.5
     p[4] = colatitude 0 to pi (/2? From inverse sampling I see it is not divided by two.)
     p[5] = angular radius 0 to pi/2
     p[6] = hotspot seed temperature 0.5 - 1.5 keV
@@ -42,7 +48,7 @@ class CustomPrior(xpsi.Prior):
 
     """
 
-    __derived_names__ = ['compactness', 'tbb_keV', 'te_keV', 'inclination_deg', 'colatitude_deg', 'radius_deg', 'T_in_keV', 'N_norm']# need nnorm for disk line but not for disk 'N_norm']#, 'phase_separation',] , 'T_else_keV' 
+    __derived_names__ = ['compactness', 'tbb_keV', 'te_keV', 'inclination_deg', 'colatitude_deg', 'radius_deg', 'N_norm']
     __draws_from_support__ = 4 #10^x
     
     def __init__(self, scenario, bkg, *args, **kwargs):
@@ -52,24 +58,8 @@ class CustomPrior(xpsi.Prior):
         self.eos_informed = kwargs.pop('eos_informed', None)
         
         
-        if self.eos_informed:
-            #Loading the equally weighted posterior samples from Rutherford+2024:
-            masses=np.loadtxt(this_directory+"/../model_data/mr_priors/Posterior_N3LO_15pp_new_MR_prpr.txt", usecols=0)
-            radii=np.loadtxt(this_directory+"/../model_data/mr_priors/Posterior_N3LO_15pp_new_MR_prpr.txt", usecols=1)
-            
-            prior_pdf_radius = np.ones((len(radii)))/len(radii)
-            prior_pdf_mass = np.ones((len(masses)))/len(masses)       
-    
-            # Building cdf
-            cdf_mass = np.cumsum(prior_pdf_mass)
-            cdf_mass /=cdf_mass[-1]
-            cdf_radius = np.cumsum(prior_pdf_radius)
-            cdf_radius /=cdf_radius[-1]
-    
-            self.interpolator_mass = Akima1DInterpolator(cdf_mass,np.sort(masses))
-            self.interpolator_mass.extrapolate = True
-            self.interpolator_radius = Akima1DInterpolator(cdf_radius,np.sort(radii))
-            self.interpolator_radius.extrapolate = True
+        if self.eos_informed:        
+            self.nf_eos_mr_prior = NormalizingFlow(this_directory+'/data/EoS_prior/flow_and_scaler_PP.pth')
         
         super(CustomPrior, self).__init__(*args, **kwargs)
 
@@ -97,10 +87,6 @@ class CustomPrior(xpsi.Prior):
         if R_p < 1.45 / ref.R_r_s:
             return -np.inf
 
-        # polar radius at photon sphere for ~static star (static ambient spacetime)
-        #if R_p < 1.5 / ref.R_r_s:
-        #    return -np.inf
-
         mu = math.sqrt(-1.0 / (3.0 * ref.epsilon * (-0.788 + 1.030 * ref.zeta)))
 
         # 2-surface cross-section have a single maximum in |z|
@@ -118,8 +104,6 @@ class CustomPrior(xpsi.Prior):
             # inner disk must be larger than neutron star equatorial radius
             if not self.parameters['R_in'] > ref['radius']:
                 return -np.inf
-        
-        # ref = self.parameters # redefine shortcut
 
         return 0.0
 
@@ -135,28 +119,9 @@ class CustomPrior(xpsi.Prior):
         _ = super(CustomPrior, self).inverse_sample(hypercube)
 
         ref = self.parameters # shortcut
-        # if self.scenario == 'literature' or self.scenario == '2019' or self.scenario == '2022':
-        idx = ref.index('column_density')
-        temporary = truncnorm.ppf(hypercube[idx], -5.0, 5.0, loc=1.17, scale=0.2)
-        if temporary < 0: temporary = 0
-        ref['column_density'] = temporary
-
-        if self.scenario == 'kajava':
-            idx = ref.index('column_density')
-            temporary = truncnorm.ppf(hypercube[idx], -5.0, 5.0, loc=1.13, scale=0.2)
-            if temporary < 0: temporary = 0
-            ref['column_density'] = temporary
-        elif self.scenario in ('J1444','J1444s'):
-                idx = ref.index('column_density')
-                temporary = truncnorm.ppf(hypercube[idx], -5.0, 5.0, loc=29., scale=2)
-                if temporary < 0: temporary = 0
-                ref['column_density'] = temporary
     
         idx = ref.index('distance')
-        temporary = truncnorm.ppf(hypercube[idx], -5.0, 5.0, loc=2.7, scale=0.3)
-        if self.scenario in ('J1444','J1444s'):
-            temporary = truncnorm.ppf(hypercube[idx], -5.0, 5.0, loc=8, scale=1.)
-        if temporary < 0: temporary = 0
+        temporary = truncnorm.ppf(hypercube[idx], -3.0, 3.0, loc=8.5, scale=2.)
         ref['distance'] = temporary
 
         # flat priors in cosine of hot region centre colatitudes (isotropy)
@@ -166,13 +131,8 @@ class CustomPrior(xpsi.Prior):
         a = math.cos(a); b = math.cos(b)
         ref['super_colatitude'] = math.acos(b + (a - b) * hypercube[idx])
 
-        # Inverse sampling for mass+radius by interpolating over their 1D-cdfs
         if self.eos_informed:
-            idx = ref.index('mass')
-            ref['mass'] = float(self.interpolator_mass(hypercube[idx]))
-            idx = ref.index('radius')
-            ref['radius'] = float(self.interpolator_radius(hypercube[idx]))
-
+            ref['mass'], ref['radius'] = self.nf_eos_mr_prior.sample_mr_from_nf()
 
         # restore proper cache
         for parameter, cache in zip(ref, to_cache):
@@ -199,62 +159,48 @@ class CustomPrior(xpsi.Prior):
         else:
             raise(NotImplementedError)
 
-        p += [ref['super_tbb']*511]
-        p += [ref['super_te']*511/1000]
-        # print('ref[mass]', ref['mass'])
-        # print('ref[radius]', ref['radius'])
-        # print('ref[distance]', ref['distance'])
-        # print("ref['cos_inclination']: ", ref['cos_inclination'])
-        p += [np.arccos(ref['cos_inclination'])*180/np.pi]
-        p += [ref['super_colatitude']*180/np.pi]
-        p += [ref['super_radius']*180/np.pi]
-        
-        # if 'disk' in self.bkg:
-        #     p += [get_keV_from_log10_Kelvin(ref['T_in'])]
+        p += [ref['super_tbb']*511] # tbb in keV
+        p += [ref['super_te']*511/1000] # te in keV
+        p += [np.arccos(ref['cos_inclination'])*180/np.pi] # inclination in deg
+        p += [ref['super_colatitude']*180/np.pi] # colatitude in deg
+        p += [ref['super_radius']*180/np.pi] # ang radius in deg
+
         if 'line' in self.bkg:
             p+=[ref['N']*1e-37]
-
-        # print('length of parameter vector after transform: ', len(p))
-        # print('parameter vector after transform:', p)
         return p
 
 
 class CustomPrior_STU(xpsi.Prior):
     """ A custom (joint) prior distribution.
 
-    Source: SAX-J1808.4-3658
+    Source: SRGA J144459.2-604207
     Model variant: ST-U
         Two single temperature hotspots, unshared parameters
 
    
-    p[0] = 1 to 3 solar mass
-    p[1] = 3G to 16 km (and also there are compactness restrictions)
-    p[2] = distance with a uniform prior from 3.4 to 4.6 (Galloway & Cumming 2006)
-    p[3] = cos inclination 0 to 1
-    p[3] = phase shift 0 to 2pi
-    p[4] = colatitude 0 to pi (/2? From inverse sampling I see it is not divided by two.)
+    p[0] = 1 to 3 solar mass (and EoS constraints)
+    p[1] = 3G to 16 km (and EoS constraints, compactness restrictions)
+    p[2] = distance normal distributed prior
+    p[3] = cos inclination 0 to 0.64
+    p[3] = phase shift -0.5 to 0.5
+    p[4] = colatitude 0 to pi
     p[5] = angular radius 0 to pi/2
     p[6] = hotspot seed temperature 0.5 - 1.5 keV
     p[7] = hotspot electron temperature 20 - 100 keV
     p[8] = tau 0.5 - 3.5
-    p[9] = elsewhere temperature 0.01 - 0.6 keV
-    p[10] = cos inclination 0 to 1
-    p[11] = phase shift 0 to 2pi
-    p[12] = colatitude 0 to pi (/2? From inverse sampling I see it is not divided by two.)
-    p[13] = angular radius 0 to pi/2
-    p[14] = hotspot seed temperature 0.5 - 1.5 keV
-    p[15] = hotspot electron temperature 20 - 100 keV
-    p[16] = tau 0.5 - 3.5
-    p[17] = elsewhere temperature 0.01 - 0.6 keV
-    p[18] = disk temperature 0.01 - 0.6 keV
-    p[19] = disk inner radius 20 to 64 km
-    p[20] = nH gaussian 1.17 += 0.2 x 10^21 cm^-2
-    
+    p[9] = phase shift -0.5 to 0.5
+    p[10] = colatitude 0 to pi
+    p[11] = angular radius 0 to pi/2
+    p[12] = hotspot seed temperature 0.5 - 1.5 keV
+    p[13] = hotspot electron temperature 20 - 100 keV
+    p[14] = tau 0.5 - 3.5
+    p[15] = disk temperature 0.01 - 0.6 keV
+    p[16] = disk inner radius 20 to 64 km
+    p[17] = nH gaussian 19 to 29 x 10^21 cm^-2
 
     """
 
-    #__derived_names__ = ['p__phase_shift_shifted','s__phase_shift_shifted', 'compactness', 'inclination_deg', 'p__tbb_keV','s__tbb_keV', 'p__te_keV','s__te_keV',  'p__colatitude_deg', 's__colatitude_deg', 'p__radius_deg',  's__radius_deg', 'T_in_keV']#, 'phase_separation',] , 'T_else_keV'
-    __derived_names__ = ['p__phase_shift_shifted','s__phase_shift_shifted', 'compactness', 'p__tbb_keV','s__tbb_keV', 'p__te_keV','s__te_keV', 'inclination_deg', 'p__colatitude_deg', 's__colatitude_deg', 'p__radius_deg',  's__radius_deg', 'T_in_keV']#, 'phase_separation',] , 'T_else_keV'
+    __derived_names__ = ['compactness', 'inclination_deg', 'p__tbb_keV', 'p__te_keV','p__colatitude_deg', 'p__radius_deg', 's__tbb_keV', 's__te_keV','s__colatitude_deg', 's__radius_deg' ]
   
     __draws_from_support__ = 4 #10^x
     
@@ -266,31 +212,10 @@ class CustomPrior_STU(xpsi.Prior):
         self.eos_informed = kwargs.pop('eos_informed', None)
 
         
-        if self.eos_informed:
-            #Loading the equally weighted posterior samples from Rutherford+2024:
-            masses=np.loadtxt(this_directory+"/../model_data/mr_priors/Posterior_N3LO_15pp_new_MR_prpr.txt", usecols=0)
-            radii=np.loadtxt(this_directory+"/../model_data/mr_priors/Posterior_N3LO_15pp_new_MR_prpr.txt", usecols=1)
-            
-            prior_pdf_radius = np.ones((len(radii)))/len(radii)
-            prior_pdf_mass = np.ones((len(masses)))/len(masses)       
-    
-            # Building cdf
-            cdf_mass = np.cumsum(prior_pdf_mass)
-            cdf_mass /=cdf_mass[-1]
-            cdf_radius = np.cumsum(prior_pdf_radius)
-            cdf_radius /=cdf_radius[-1]
-    
-            self.interpolator_mass = Akima1DInterpolator(cdf_mass,np.sort(masses))
-            self.interpolator_mass.extrapolate = True
-            self.interpolator_radius = Akima1DInterpolator(cdf_radius,np.sort(radii))
-            self.interpolator_radius.extrapolate = True
+        if self.eos_informed:        
+            self.nf_eos_mr_prior = NormalizingFlow(this_directory+'/data/EoS_prior/flow_and_scaler_PP.pth')
         
         super(CustomPrior_STU, self).__init__(*args, **kwargs)
-    
-    # def __init__(self, scenario, bkg, *args, **kwargs):
-    #     self.scenario = scenario
-    #     self.bkg = bkg
-    #     super(CustomPrior_STU, self).__init__(*args, **kwargs)
 
     def __call__(self, p = None):
 
@@ -311,15 +236,10 @@ class CustomPrior_STU(xpsi.Prior):
         if not ref['radius'] <= 16.0:
             return -np.inf
 
-      
         # causality limit for compactness
         R_p = 1.0 + ref.epsilon * (-0.788 + 1.030 * ref.zeta)
         if R_p < 1.45 / ref.R_r_s:
             return -np.inf
-
-        # polar radius at photon sphere for ~static star (static ambient spacetime)
-        #if R_p < 1.5 / ref.R_r_s:
-        #    return -np.inf
 
         mu = math.sqrt(-1.0 / (3.0 * ref.epsilon * (-0.788 + 1.030 * ref.zeta)))
 
@@ -373,23 +293,13 @@ class CustomPrior_STU(xpsi.Prior):
         _ = super(CustomPrior_STU, self).inverse_sample(hypercube)
 
         ref = self.parameters # shortcut
-        
-        # if self.scenario == 'literature' or self.scenario == '2019' or self.scenario == '2022':
-        idx = ref.index('column_density')
-        temporary = truncnorm.ppf(hypercube[idx], -5.0, 5.0, loc=1.17, scale=0.2)
-        if temporary < 0: temporary = 0
-        ref['column_density'] = temporary
-
-        if self.scenario == 'kajava':
-            idx = ref.index('column_density')
-            temporary = truncnorm.ppf(hypercube[idx], -5.0, 5.0, loc=1.13, scale=0.2)
-            if temporary < 0: temporary = 0
-            ref['column_density'] = temporary
     
         idx = ref.index('distance')
-        temporary = truncnorm.ppf(hypercube[idx], -5.0, 5.0, loc=2.7, scale=0.3)
-        if temporary < 0: temporary = 0
+        temporary = truncnorm.ppf(hypercube[idx], -3.0, 3.0, loc=8.5, scale=2.)
         ref['distance'] = temporary
+
+        if self.eos_informed:
+            ref['mass'], ref['radius'] = self.nf_eos_mr_prior.sample_mr_from_nf()
 
         # flat priors in cosine of hot region centre colatitudes (isotropy)
         # support modified by no-overlap rejection condition
@@ -403,19 +313,9 @@ class CustomPrior_STU(xpsi.Prior):
         a = math.cos(a); b = math.cos(b)
         ref['s__super_colatitude'] = math.acos(b + (a - b) * hypercube[idx])
 
-        # Inverse sampling for mass+radius by interpolating over their 1D-cdfs
-        if self.eos_informed:
-            idx = ref.index('mass')
-            ref['mass'] = float(self.interpolator_mass(hypercube[idx]))
-            idx = ref.index('radius')
-            ref['radius'] = float(self.interpolator_radius(hypercube[idx]))
-
         # restore proper cache
         for parameter, cache in zip(ref, to_cache):
             parameter.cached = cache
-
-
-
 
         # it is important that we return the desired vector because it is
         # automatically written to disk by MultiNest and only by MultiNest
@@ -429,26 +329,17 @@ class CustomPrior_STU(xpsi.Prior):
         # used ordered names and values
         ref = dict(zip(self.parameters.names, p))
 
-
-        for phase_shift in ['p__phase_shift', 's__phase_shift']:
-            if ref[phase_shift] > 0.5:
-                p += [ref[phase_shift] - 1.0]
-            else:
-                p += [ref[phase_shift]]
-
-        # compactness ratio M/R_eq
         p += [gravradius(ref['mass']) / ref['radius']]
-        # p += [get_keV_from_log10_Kelvin(ref['elsewhere_temperature'])]
+        p += [np.arccos(ref['cos_inclination'])*180/np.pi]
 
         p += [ref['p__super_tbb']*511]
-        p += [ref['s__super_tbb']*511]
         p += [ref['p__super_te']*511/1000]
-        p += [ref['s__super_te']*511/1000]
-        p += [np.arccos(ref['cos_inclination'])*180/np.pi]
         p += [ref['p__super_colatitude']*180/np.pi]
-        p += [ref['s__super_colatitude']*180/np.pi]
         p += [ref['p__super_radius']*180/np.pi]
+
+        p += [ref['s__super_tbb']*511]
+        p += [ref['s__super_te']*511/1000]
+        p += [ref['s__super_colatitude']*180/np.pi]
         p += [ref['s__super_radius']*180/np.pi]
-        if 'disk' in self.bkg:
-            p += [get_keV_from_log10_Kelvin(ref['T_in'])]
+
         return p

@@ -1,0 +1,647 @@
+import os
+import sys
+this_directory = os.path.dirname(os.path.abspath(__file__))
+sys.path.append(this_directory+'/../')
+
+import numpy as np
+import time
+from matplotlib import rcParams
+import matplotlib.pyplot as plt
+
+import xpsi
+np.random.seed(xpsi._rank+10)
+print('Rank reporting: %d' % xpsi._rank)
+
+from xpsi.global_imports import gravradius
+
+from CustomPrior import CustomPrior
+from CustomInstrument import CustomInstrument
+from CustomPhotosphere import CustomPhotosphere
+from CustomInterstellar import CustomInterstellar
+from CustomSignal import CustomSignal
+from CustomHotRegion import CustomHotRegion
+
+
+from parameter_values import parameter_values
+from helper_functions import get_T_in_log10_Kelvin, plot_2D_pulse, CustomAxes, get_mids_from_edges
+
+class analysis(object):
+    def __init__(self, 
+                 machine, 
+                 run_type, 
+                 bkg, 
+                 sampler='multi', 
+                 support_factor = "None", 
+                 scenario = 'None', 
+                 poisson_noise=True, 
+                 poisson_seed=42, 
+                 disk_combined=True,
+                 disk_blocking=True,
+                 disk_blocking_data=True,
+                 fix_inclination=False,
+                 fix_theta_p=False,
+                 antipodal=False):
+        self.scenario = os.environ.get('scenario')
+        if os.environ.get('scenario') == None or os.environ.get('scenario') =='None':
+            print('scenario is not in environment variables, using passed argument.')
+            self.scenario=scenario
+        print(f'scenario: {self.scenario}')
+        
+        self.machine = os.environ.get('machine')
+        if os.environ.get('machine') == None or os.environ.get('machine') =='None':
+            print('machine variable is not in environment variables, using passed argument.')
+            self.machine = machine
+        print(f'machine: {self.machine}')
+
+        self.run_type = os.environ.get('run_type')
+        if os.environ.get('run_type') == None or os.environ.get('run_type') == "None":
+            print('run_type is not in environment variables, using passed argument.')
+            self.run_type = run_type
+        print(f'run_type: {self.run_type}')
+        
+        self.sampler = os.environ.get('sampler')
+        if os.environ.get('sampler') == None or os.environ.get('sampler') == 'None':
+            print('sampler is not in environment variables, using passed argument.')
+            self.sampler = sampler
+        print(f'sampler: {self.sampler}')
+            
+        self.analysis_name = os.environ.get('LABEL')
+        if not isinstance(self.analysis_name, str):
+                print('cannot import analysis name, using test_analysis')
+                self.analysis_name = 'test_analysis'
+        print(f'analysis_name: {self.analysis_name}')
+
+        
+        try:
+            self.num_energies = int(os.environ.get('num_energies'))
+        except:
+            print('num_energies from environment variables failed, proceeding with default.')
+            self.num_energies = 40 # 128
+            pass
+        print(f'num_energies: {self.num_energies}')
+            
+        try:
+            self.num_leaves = int(os.environ.get('num_leaves'))
+        except:
+            print('num_leaves from environment variables failed, proceeding with default.')
+            self.num_leaves = 30 #128
+            pass
+        print(f'num_leaves: {self.num_leaves}')
+    
+        try:
+            self.sqrt_num_cells = int(os.environ.get('sqrt_num_cells'))
+        except:
+            print('sqrt_num_cells from environment variables failed, proceeding with default.')
+            self.sqrt_num_cells = 50 # 128
+            pass
+        print(f'sqrt_num_cells: {self.sqrt_num_cells}')
+    
+        try:
+            self.num_rays = int(os.environ.get('num_rays'))
+        except:
+            print('num_rays from env. var. failed, proceeding with default.')
+            self.num_rays = 512
+        print(f'num_rays: {self.num_rays}')
+    
+        try:
+            self.live_points = int(os.environ.get('live_points'))
+        except:
+            print('live_points from environment variables failed, proceeding with default.')
+            self.live_points = 64
+            pass
+        print(f'live_points: {self.live_points}')
+        
+        try:
+            self.max_iter = int(os.environ.get('max_iter'))
+        except:
+            print('max_iter from environment variables failed, proceeding with default.')
+            self.max_iter = 20
+            pass
+        print(f'max_iter: {self.max_iter}')
+
+        self.bkg = os.environ.get('bkg')
+        if os.environ.get('bkg') == None or os.environ.get('bkg') == "None":
+            print(f'bkg environment variable is not allowed to be None, using passed argument: {bkg}.')
+            self.bkg = bkg
+        print(f'bkg: {self.bkg}')
+
+        if self.bkg == 'marginalise':
+                self.support_factor = os.environ.get('support_factor')
+                if os.environ.get('support_factor') == None or os.environ.get('support_factor') == 'None':
+                    print('No support_factor in os. Taking from passed or default argument')
+                    self.support_factor = support_factor
+        elif 'disk' in self.bkg or 'line' in self.bkg or self.bkg == 'fix':
+            self.support_factor = 'None'
+        print(f'support_factor: {self.support_factor}')     
+        
+        self.poisson_noise = os.environ.get('poisson_noise')
+        if self.poisson_noise == 'True':
+            self.poisson_seed = int(os.environ.get('poisson_seed'))
+        elif self.poisson_noise == None:
+            self.poisson_noise = poisson_noise
+            self.poisson_seed = poisson_seed
+            print('No poisson noise decision in os. Taking default poisson')
+        print(f'poisson_noise: {self.poisson_noise}, poisson_seed: {self.poisson_seed} (only relevant if poisson noise is True)')
+
+        if 'disk' in self.bkg:
+            if os.environ.get('disk_blocking') == None or os.environ.get('disk_blocking') =='None':
+                print('disk_blocking is not in environment variables, using passed argument.')
+                self.disk_blocking = disk_blocking
+            else:
+                self.disk_blocking = os.environ.get('disk_blocking')
+    
+            if self.disk_blocking == "True" or self.disk_blocking == True:
+                self.disk_blocking = True
+            else:
+                self.disk_blocking = False
+            print(f'disk_blocking: {self.disk_blocking}')
+            
+            if os.environ.get('disk_blocking_data') == None or os.environ.get('disk_blocking_data') =='None':
+                print('disk_blocking_data is not in environment variables, using passed argument.')
+                self.disk_blocking_data = disk_blocking_data
+            else:
+                self.disk_blocking_data = os.environ.get('disk_blocking_data')
+    
+            if self.disk_blocking_data == "True" or self.disk_blocking_data == True:
+                self.disk_blocking_data = True
+            else:
+                self.disk_blocking_data = False
+            print(f'disk_blocking_data: {self.disk_blocking_data}')
+        elif self.bkg == 'fix': # if no disk in bkg then both of these are false
+            self.disk_blocking = False
+            self.disk_blocking_data = False
+            print('No disk in the model so disk blocking and disk blocking data are False')
+
+        if os.environ.get('fix_inclination') == None or os.environ.get('fix_inclination') =='None':
+            print('fix_inclination is not in environment variables, using passed argument.')
+            self.fix_inclination = fix_inclination
+        else:
+            self.fix_inclination = os.environ.get('fix_inclination')
+
+        if self.fix_inclination == "True" or self.fix_inclination == True:
+            self.fix_inclination = True
+        else:
+            self.fix_inclination = False
+        print(f'fix_inclination: {self.fix_inclination}')
+        
+        if os.environ.get('fix_theta_p') == None or os.environ.get('fix_theta_p') =='None':
+            print('fix_theta_p is not in environment variables, using passed argument.')
+            self.fix_theta_p = fix_theta_p
+        else:
+            self.fix_theta_p = os.environ.get('fix_theta_p')
+
+        if self.fix_theta_p == "True" or self.fix_theta_p == True:
+            self.fix_theta_p = True
+        else:
+            self.fix_theta_p = False
+        print(f'fix_theta_p: {self.fix_theta_p}')
+        
+        if os.environ.get('antipodal') == None or os.environ.get('antipodal') =='None':
+            print('antipodal is not in environment variables, using passed argument.')
+            self.antipodal = antipodal
+        else:
+            self.antipodal = os.environ.get('antipodal')
+
+        if self.antipodal == "True" or self.antipodal == True:
+            self.antipodal = True
+        else:
+            self.antipodal = False
+        print(f'antipodal: {self.antipodal}')
+        
+
+
+        self.pv = parameter_values(self.scenario, self.bkg, self.fix_inclination, self.fix_theta_p, self.antipodal)
+        self.disk_combined = disk_combined
+    
+        self.file_locations()
+        self.set_parameter_vector()
+        self.set_bounds()
+        self.set_interstellar()
+        self.set_likelihood()
+        
+        t_check = time.time()
+        #self.likelihood(self.p, reinitialise=True)
+        print(self.likelihood)
+        self.likelihood.check(None, [self.true_logl], 1.0e-6, physical_points=[self.p], force_update=True)
+        print('Likelihood check took {:.3f} seconds'.format((time.time()-t_check)))
+        print(self.likelihood(self.p))
+
+
+    def file_locations(self):
+        self.this_directory = this_directory
+
+        if self.scenario == 'molkov':
+           self.file_pulse_profile = self.this_directory + f'/data/synthetic_{self.scenario}_seed={self.poisson_seed}_bkg={self.bkg}_disk_blocking={self.disk_blocking_data}_realisation.dat'
+           self.file_arf = self.this_directory + '/../model_data/instrument_data/J1808_NICER_2019/merged_saxj1808_2019_arf_aeff.txt'
+           self.file_rmf = self.this_directory + '/../model_data/instrument_data/J1808_NICER_2019/merged_saxj1808_2019_rmf_matrix.txt'
+           self.file_channel_edges = self.this_directory + '/../model_data/instrument_data/J1808_NICER_2019/merged_saxj1808_2019_rmf_energymap.txt'
+            
+        if self.machine == 'local':
+            self.file_atmosphere = '/home/bas/Documents/Projects/x-psi/model_datas/bobrikova/Bobrikova_compton_slab.npz'
+            self.file_interstellar = "/home/bas/Documents/Projects/x-psi/xpsi-bas-fork/AMXPs/model_data/n_H/TBnew/tbnew0.14.txt"
+        elif self.machine == 'snellius':
+            self.file_atmosphere = self.this_directory + '/../model_data/Bobrikova_compton_slab.npz'
+            self.file_interstellar = self.this_directory + "/../model_data/n_H/TBnew/tbnew0.14.txt"
+
+    def set_bounds(self):
+        self.bounds = self.pv.bounds()
+
+    def set_data(self):
+        if self.scenario == 'molkov':
+            self.exposure_time = 1.32366e5 #Mason's 2019 data cut
+        
+        self.phases_space = np.linspace(0.0, 1.0, 33)
+        self.min_input = 20 # 20 is used with 0.3 keV (channel_low=30). 0 is used with 0.2 keV (channel_low=20). 900 works with channel_low = 120 (1.2 keV). 
+        self.channel_low = 30 # 20 corresponds to 0.2 keV. # 30 corresponds to 0.3 keV
+        self.channel_hi = 600 # 300 corresponds to 3 keV. 600 corresponds to 6 keV (98.7% of total counts retained)
+        self.max_input = 2000 # 1400 works with channel-hi = 300. 2000 works with channel_hi = 600 (6 keV)
+
+        settings = dict(counts = np.loadtxt(self.file_pulse_profile, dtype=np.double),
+                        channels=np.arange(self.channel_low,self.channel_hi),
+                        phases=self.phases_space,
+                        first=0, 
+                        last=self.channel_hi-self.channel_low-1,
+                        exposure_time=self.exposure_time)
+
+        self.data = xpsi.Data(**settings)
+        
+    def set_instrument(self):
+        self.instrument = CustomInstrument.from_response_files(ARF = self.file_arf,
+                RMF = self.file_rmf,
+                channel_edges = self.file_channel_edges,       
+                channel_low = self.channel_low,
+                channel_hi = self.channel_hi,
+                min_input = self.min_input,
+                max_input = self.max_input)
+
+
+    def set_spacetime(self):
+        if self.fix_inclination:
+            spacetime_values = dict(frequency = self.pv.frequency,
+                                    cos_inclination = self.pv.cos_i)
+    
+            spacetime_bounds = dict(distance = self.bounds["distance"],     # (Earth) distance
+                                    mass = self.bounds["mass"],             # mass
+                                    radius = self.bounds["radius"])     # equatorial radius
+                                    # cos_inclination = self.bounds["cos_inclination"]) # (Earth) inclination to rotation axis
+        elif not self.fix_inclination:
+            spacetime_values = dict(frequency = self.pv.frequency)
+    
+            spacetime_bounds = dict(distance = self.bounds["distance"],     # (Earth) distance
+                                    mass = self.bounds["mass"],             # mass
+                                    radius = self.bounds["radius"],     # equatorial radius
+                                    cos_inclination = self.bounds["cos_inclination"]) # (Earth) inclination to rotation axis
+        
+
+        self.spacetime = xpsi.Spacetime(bounds=spacetime_bounds, values=spacetime_values) # values=dict(frequency=self.values["frequency"]))
+
+    def set_hotregions(self):
+        p_kwargs = {'symmetry': True,
+                  'split': True,
+                  'omit': False,
+                  'cede': False,
+                  'concentric': False,
+                  'sqrt_num_cells': self.sqrt_num_cells,
+                  'min_sqrt_num_cells': 10,
+                  'max_sqrt_num_cells': 128,
+                  'num_leaves': self.num_leaves,
+                  'num_rays': self.num_rays,
+                  'atm_ext':'Num5D',
+                  'prefix': 'p'}
+        
+        
+        if self.fix_theta_p:
+            primary_bounds = dict(super_radius = self.bounds["p__super_radius"],
+                                  phase_shift = self.bounds["p__phase_shift"], 
+                                  super_tbb = self.bounds['p__super_tbb'],
+                                  super_tau = self.bounds['p__super_tau'],
+                                  super_te = self.bounds['p__super_te'])
+            primary_values = dict(super_colatitude = self.pv.p_colatitude)
+        elif not self.fix_theta_p:
+            primary_bounds = dict(super_radius = self.bounds["p__super_radius"],
+                                  phase_shift = self.bounds["p__phase_shift"], 
+                                  super_tbb = self.bounds['p__super_tbb'],
+                                  super_tau = self.bounds['p__super_tau'],
+                                  super_te = self.bounds['p__super_te'])
+            primary_values = {}
+            
+            if self.antipodal:
+                primary_bounds['super_colatitude'] =  (0.001, np.pi/2.0 - 0.001)
+            elif not self.antipodal:
+                primary_bounds['super_colatitude'] = self.bounds["p__super_colatitude"]
+        
+        primary = CustomHotRegion(bounds=primary_bounds, values=primary_values, **p_kwargs)
+        
+        s_kwargs = {'symmetry': True,
+                  'split': True,
+                  'omit': False,
+                  'cede': False,
+                  'concentric': False,
+                  'sqrt_num_cells': self.sqrt_num_cells,
+                  'min_sqrt_num_cells': 10,
+                  'max_sqrt_num_cells': 128,
+                  'num_leaves': self.num_leaves,
+                  'num_rays': self.num_rays,
+                  'is_antiphased': True,
+                  'atm_ext':'Num5D',
+                  'prefix': 's'}
+        
+        
+        if self.antipodal:
+            class derive_colatitude(xpsi.Derive):
+                def __init__(self):
+                    pass
+            
+                def __call__(self, boundto, caller=None):
+                    global primary
+                    return np.pi - self.primary['super_colatitude']
+            
+            class derive_phase(xpsi.Derive):
+                def __init__(self):
+                    pass
+            
+                def __call__(self, boundto, caller=None):
+                    return self.primary['phase_shift']
+        
+        
+            derive_colatitude_instance = derive_colatitude()
+            derive_phase_instance = derive_phase()
+        
+            secondary_values = {'super_colatitude': derive_colatitude_instance,
+                                'phase_shift': derive_phase_instance}
+            
+            derive_colatitude_instance.primary = primary
+            derive_phase_instance.primary = primary
+            
+
+
+            secondary_bounds = dict(super_colatitude = None,
+                                    super_radius = self.bounds["s__super_radius"],
+                                    phase_shift = None, 
+                                    super_tbb = self.bounds['s__super_tbb'],
+                                    super_tau = self.bounds['s__super_tau'],
+                                    super_te = self.bounds['s__super_te'])
+
+        elif not self.antipodal:
+            secondary_bounds = dict(super_colatitude = self.bounds["s__super_colatitude"],
+                                    super_radius = self.bounds["s__super_radius"],
+                                    phase_shift = self.bounds["s__phase_shift"], 
+                                    super_tbb = self.bounds['s__super_tbb'],
+                                    super_tau = self.bounds['s__super_tau'],
+                                    super_te = self.bounds['s__super_te'])
+            secondary_values = {}
+        
+        secondary = CustomHotRegion(bounds=secondary_bounds, values=secondary_values, **s_kwargs)
+
+
+        self.hot = xpsi.HotRegions((primary, secondary))
+
+    def set_elsewhere(self):
+        self.elsewhere = xpsi.Elsewhere(bounds=dict(elsewhere_temperature = self.bounds['elsewhere_temperature']))
+        
+    def set_photosphere(self):
+        self.set_hotregions()
+        self.set_disk()
+        self.photosphere = CustomPhotosphere(hot = self.hot, 
+                                                     elsewhere = None, 
+                                                     stokes=False, 
+                                                     disk=self.disk, 
+                                                     disk_combined=self.disk_combined,
+                                                     disk_blocking=self.disk_blocking, #override needed here to test specific case of disk emission without blocking.
+                                                     values=dict(mode_frequency = self.spacetime['frequency']))
+
+        self.photosphere.hot_atmosphere = self.file_atmosphere
+
+    def set_star(self):
+        self.star = xpsi.Star(spacetime = self.spacetime, photospheres = self.photosphere)
+        
+    def set_interstellar(self):
+        bounds = self.bounds['column_density']
+        values = None
+        self.interstellar=CustomInterstellar.from_SWG(self.file_interstellar, bounds=bounds, value=values)
+    
+    def set_support(self):
+        support_factor = self.support_factor
+        if support_factor == "None":
+            self.support = None
+        else:
+            support_factor = float(support_factor)
+            self.bg_spectrum = np.loadtxt(self.file_bkg)
+    
+            allowed_deviation_factor = 1. + support_factor  # 1.00005 is Roughly 1 count difference given max count rate of 0.8/s and exp. time of 1.3e5
+    
+            support = np.zeros((len(self.bg_spectrum), 2), dtype=np.double)
+            support[:,0] = self.bg_spectrum/allowed_deviation_factor #lower limit
+            support[support[:,0] < 0.0, 0] = 0.0
+            support[:,1] = self.bg_spectrum*allowed_deviation_factor #upper limit
+    
+            for i in range(support.shape[0]):
+                if support[i,1] == 0.0:
+                    for j in range(i, support.shape[0]):
+                        if support[j,1] > 0.0:
+                            support[i,0] = support[j,1]
+                            break
+            
+            self.support = support
+        
+        
+    def set_disk(self):
+        from Disk import Disk, k_disk_derive
+        if 'disk' in self.bkg:    
+            bounds = dict(T_in = self.bounds["T_in"],
+                          R_in = self.bounds["R_in"],
+                          K_disk = None) #derived means no bounds
+                
+            self.k_disk = k_disk_derive()
+            self.disk = Disk(bounds=bounds, values={'K_disk': self.k_disk})
+            self.k_disk.disk = self.disk
+            
+        else:
+            self.disk = None
+            
+    def set_signal(self):
+        self.set_data()
+        self.set_instrument()
+        self.set_support()
+
+        self.signal = CustomSignal(data = self.data,
+                            instrument = self.instrument,
+                            background = None, #self.background,
+                            interstellar = self.interstellar,
+                            support = self.support,
+                            cache = False, # only true if verifying code implementation (or postprocessing pulses).
+                            bkg = self.bkg,
+                            epsrel = 1.0e-8,
+                            epsilon = 1.0e-3,
+                            sigmas = 10.0,
+                            disk_combined=self.disk_combined)
+        
+        
+    def set_parameter_vector(self):
+        self.p = self.pv.p()
+    
+    def set_prior(self):
+        self.prior = CustomPrior(self.scenario, 
+                                 self.bkg, 
+                                 fix_inclination=self.fix_inclination, 
+                                 fix_theta_p=self.fix_theta_p,
+                                 antipodal=self.antipodal)
+        
+    def set_likelihood(self):
+        self.set_spacetime() # self.spacetime is defined here
+        self.set_photosphere() # self.k_disk is defined here
+        if 'disk' in self.bkg:
+            self.k_disk.spacetime = self.spacetime
+        self.set_star() # star is defined afterwards
+        self.set_signal()
+        self.set_prior()
+        
+        self.likelihood = xpsi.Likelihood(star = self.star, signals = self.signal,
+                  num_energies=self.num_energies, #128
+                                      threads=1,
+                                      prior=self.prior,
+                                      externally_updated=True)
+
+        if 'disk' in self.bkg:
+            if self.disk_blocking:
+                if self.disk_blocking_data:
+                    if self.poisson_seed == 42:
+                        true_logl = 8.3680599615e+06
+                    elif self.poisson_seed == 0:
+                        true_logl = 8.3576023198e+06
+                    elif self.poisson_seed == 1:
+                        true_logl = 8.3700049781e+06
+                    elif self.poisson_seed == 2:
+                        true_logl = 8.3725179573e+06
+                elif not self.disk_blocking_data:
+                    true_logl = 8.7794279263e+06
+            elif not self.disk_blocking:
+                if self.disk_blocking_data:
+                    true_logl = 8.3650673477e+06
+                elif not self.disk_blocking_data:
+                    true_logl = 8.7824890157e+06
+        elif self.bkg == 'fix':
+            if self.poisson_seed == 42:
+                true_logl = 6.6155332721e+06
+        self.true_logl = true_logl
+    
+    def __call__(self):
+        
+        analysis_name = self.analysis_name
+        machine = self.machine
+        
+        if machine == 'local':
+            folderstring = f'local_runs/{analysis_name}'
+        elif machine == 'helios':
+            folderstring = f'helios_runs/{analysis_name}'
+        elif machine == 'snellius':
+            folderstring = f'{analysis_name}'
+
+        try: 
+            os.makedirs(folderstring)
+        except OSError:
+            if not os.path.isdir(folderstring):
+                raise
+        
+        print('plotting...')
+        
+        rcParams['text.usetex'] = False
+        rcParams['font.size'] = 14.0
+
+        fig, axes = plt.subplots(3,1,figsize=(6,10))
+       
+        im0 = CustomAxes.plot_2D_counts(axes[0], self.data.counts, get_mids_from_edges(self.data.phases),  get_mids_from_edges(self.instrument.channel_edges))
+        fig.colorbar(im0, ax=axes[0])
+        im1 = CustomAxes.plot_2D_counts(axes[1], self.signal.expected_counts, get_mids_from_edges(self.data.phases),  get_mids_from_edges(self.instrument.channel_edges))
+        fig.colorbar(im1, ax=axes[1])
+        im2 = CustomAxes.plot_2D_counts(axes[2], self.data.counts-self.signal.expected_counts, get_mids_from_edges(self.data.phases), get_mids_from_edges(self.instrument.channel_edges))
+        fig.colorbar(im2, ax=axes[2])
+        
+        fig.tight_layout()
+        fig.savefig(f'{folderstring}/pre_sampling_plot_bkg={self.bkg}_{self.poisson_seed}.png',)
+        print(f'figure saved in {folderstring}')
+        print('total counts in data:', np.sum(self.data.counts))
+        
+        if self.run_type == 'sample':
+            if self.sampler == 'multi':
+                wrapped_params = [0]*len(self.likelihood)
+                wrapped_params[self.likelihood.index('p__phase_shift')] = 1
+                if not self.antipodal:
+                    wrapped_params[self.likelihood.index('s__phase_shift')] = 1
+                outputfiles_basename = f'./{folderstring}/run_ST_U_'
+                runtime_params = {'resume': False,
+                                  'importance_nested_sampling': False,
+                                  'multimodal': False,
+                                  'n_clustering_params': None,
+                                  'outputfiles_basename': outputfiles_basename,
+                                  'n_iter_before_update': 100,
+                                  'n_live_points': self.live_points,
+                                  'sampling_efficiency': 0.1,
+                                  'const_efficiency_mode': False,
+                                  'wrapped_params': wrapped_params,
+                                  'evidence_tolerance': 0.5,
+                                  'max_iter': self.max_iter,
+                                  'seed': 7,
+                                  'verbose': True}
+            elif self.sampler == 'ultra':
+                wrapped_params = [False]*len(self.likelihood)
+                wrapped_params[self.likelihood.index('phase_shift')] = True
+                sampler_params = {'wrapped_params': wrapped_params, 
+                                  'log_dir': folderstring}
+                if self.max_iter == -1:
+                    self.max_iter = None
+                runtime_params={'max_iters':self.max_iter,
+                                'min_num_live_points': self.live_points}
+
+
+            print('runtime_params: ', runtime_params)
+            
+            print("sampling starts ...")
+            t_start = time.time()
+            
+            
+            if self.sampler == 'multi':
+                xpsi.Sample.nested(self.likelihood, self.prior,**runtime_params)
+            elif self.sampler == 'ultra':
+                # from xpsi.UltranestSampler import UltranestCalibrator
+                # sampler_instance = UltranestCalibrator(self.likelihood, self.prior, sampler_params=sampler_params, use_stepsampler=True, stepsampler_params={})      
+                # for nstep, results in sampler_instance.run(**runtime_params):
+                #     print(f" {nstep:d}", results, sep='\n')
+                xpsi.Sample.ultranested(self.likelihood, self.prior, sampler_params=sampler_params,runtime_params=runtime_params, use_stepsampler=True, stepsampler_params={'nsteps': 200})
+            print("... sampling done")
+            print('Sampling took {:.3f} seconds'.format((time.time()-t_start)))
+            
+        elif self.run_type == 'test':
+            print('test starts')
+            # # n_repeats = 10
+            t_start = time.time()
+            # # # for repeat in range(n_repeats):
+            # #     #self.star.update(force_update=True)
+            # #     #self.likelihood.check(None, [self.true_logl], 1.0e-4, physical_points=[self.p], force_update=True)
+            # # self.likelihood(self.p, reinitialise=True)
+            
+            # # inverse sampling test
+            # test=self.prior.draw(ndraws=1000)[0][:,0:-1]
+            # names_dictionary = self.pv.labels()
+            # axis_labels = [names_dictionary[key] for key in names_dictionary]
+            
+            # import corner
+            # figure=corner.corner(test, labels=axis_labels[:19], label_kwargs={'fontsize': 12},)
+            # figure.tight_layout()
+            # figure.savefig(f'{folderstring}/prior.pdf',)
+            print('Test took {:.3f} seconds'.format((time.time()-t_start)))
+            
+
+if __name__ == '__main__':
+    Analysis = analysis('local',
+                        'sample',
+                        'disk', 
+                        scenario='molkov', 
+                        support_factor='None',
+                        disk_blocking=True, 
+                        disk_blocking_data=True, 
+                        fix_inclination=True, 
+                        fix_theta_p=True,
+                        antipodal=True,
+                        poisson_seed=42)
+    Analysis()

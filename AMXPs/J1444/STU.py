@@ -15,7 +15,7 @@ print('Rank reporting: %d' % xpsi._rank)
 
 from xpsi.global_imports import gravradius
 
-from CustomPrior import CustomPrior
+from CustomPrior import CustomPrior_STU as CustomPrior
 from CustomInstrument import CustomInstrument_fits, CustomInstrument_stokes
 from CustomPhotosphere import CustomPhotosphereDiskLine
 from CustomInterstellar import CustomInterstellar
@@ -188,8 +188,8 @@ class analysis(object):
             self.channel_min = int(os.environ.get('channel_min'))
         print(f'channel_min: {self.channel_min}') 
 
-
-        self.pv = parameter_values(self.scenario, self.bkg, self.fix_mass, polarization=self.polarization)
+        secondary = True
+        self.pv = parameter_values(self.scenario, self.bkg, self.fix_mass, polarization=self.polarization, secondary=secondary)
         self.file_locations()
         self.set_parameter_vector()
         self.set_bounds()
@@ -331,7 +331,7 @@ class analysis(object):
 
     def set_hotregions(self):
         
-        self.hot_kwargs = {'symmetry': True, #call for azimuthal invariance
+        self.p_kwargs = {'symmetry': True, #call for azimuthal invariance
                   'split': True,
                   'omit': False,
                   'cede': False,
@@ -341,21 +341,45 @@ class analysis(object):
                   'max_sqrt_num_cells': 128,
                   'num_leaves': self.num_leaves,  #50 avoids interp error.
                   'num_rays': self.num_rays,
-                  'atm_ext':'Num5D'}
-                  #'prefix': 'p'}
+                  'atm_ext':'Num5D',
+                  'prefix': 'p'}
         
-        self.hotregion_bounds = dict(super_colatitude = self.bounds["super_colatitude"],
+        self.p_bounds = dict(super_colatitude = self.bounds["super_colatitude"],
                                 super_radius = self.bounds["super_radius"],
                                 phase_shift = self.bounds["phase_shift"], 
                                 super_tbb = self.bounds['super_tbb'],
                                 super_tau = self.bounds['super_tau'],
                                 super_te = self.bounds['super_te'])
-        self.hot_values = {}
+        self.p_values = {}
         
-        primary = CustomHotRegion_Accreting(self.hotregion_bounds, self.hot_values, **self.hot_kwargs)
+        primary = CustomHotRegion_Accreting(self.p_bounds, self.p_values, **self.p_kwargs)
 
 
-        self.hot = xpsi.HotRegions((primary,))
+        self.s_kwargs = {'symmetry': True, #call for azimuthal invariance
+                  'split': True,
+                  'omit': False,
+                  'cede': False,
+                  'concentric': False,
+                  'sqrt_num_cells': self.sqrt_num_cells,
+                  'min_sqrt_num_cells': 10,
+                  'max_sqrt_num_cells': 128,
+                  'num_leaves': self.num_leaves,  #50 avoids interp error.
+                  'num_rays': self.num_rays,
+                  'atm_ext':'Num5D',
+                  'is_antiphased': True,
+                  'prefix': 's'}
+        
+        self.s_bounds = dict(super_colatitude = self.bounds["super_colatitude"],
+                                super_radius = self.bounds["super_radius"],
+                                phase_shift = self.bounds["phase_shift"], 
+                                super_tbb = self.bounds['super_tbb'],
+                                super_tau = self.bounds['super_tau'],
+                                super_te = self.bounds['super_te'])
+        self.s_values = {}
+        
+        secondary = CustomHotRegion_Accreting(self.s_bounds, self.s_values, **self.s_kwargs)
+
+        self.hot = xpsi.HotRegions((primary,secondary))
 
     def set_elsewhere(self):
         self.elsewhere = xpsi.Elsewhere(bounds=dict(elsewhere_temperature = self.bounds['elsewhere_temperature']))
@@ -503,9 +527,7 @@ class analysis(object):
 
     def set_parameter_vector(self):
         self.p = self.pv.p()
-        print('parameter vector length: ', len(self.p))
-        
-   
+
     def set_prior(self):
         self.prior = CustomPrior(self.scenario, self.bkg, fix_mass = self.fix_mass, eos_informed=self.eos_informed)
         
@@ -614,7 +636,8 @@ class analysis(object):
         if self.run_type == 'sample':
             if self.sampler == 'multi':
                 wrapped_params = [0]*len(self.likelihood)
-                wrapped_params[self.likelihood.index('phase_shift')] = 1
+                wrapped_params[self.likelihood.index('p__phase_shift')] = 1
+                wrapped_params[self.likelihood.index('s__phase_shift')] = 1
                 outputfiles_basename = f'./{folderstring}/run_ST_'
                 runtime_params = {'resume': False,
                                   'importance_nested_sampling': False,
@@ -664,7 +687,7 @@ class analysis(object):
 
             
             # inverse sampling test
-            test=self.prior.draw(ndraws=5000)[0][:,0:-1]
+            test=self.prior.draw(ndraws=2500)[0]#[:,0:-1]
             names_dictionary = self.pv.names()
             labels_dictionary = self.pv.labels()
             axis_labels = [labels_dictionary[key] for key in names_dictionary]

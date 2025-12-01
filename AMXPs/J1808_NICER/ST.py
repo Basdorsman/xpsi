@@ -26,7 +26,18 @@ from parameter_values import parameter_values
 from helper_functions import get_T_in_log10_Kelvin, plot_2D_pulse, CustomAxes, get_mids_from_edges
 
 class analysis(object):
-    def __init__(self, machine, run_type, bkg, sampler='multi', support_factor = "None", scenario = 'None', poisson_noise=True, poisson_seed=42, fix_mass=False, eos_informed=False):
+    def __init__(self, 
+                 machine, 
+                 run_type, 
+                 bkg, 
+                 sampler='multi', 
+                 support_factor = "None", 
+                 scenario = 'None', 
+                 poisson_noise=True, 
+                 poisson_seed=42, 
+                 fix_mass=False, 
+                 eos_informed=False,
+                 disk_combined=False):
         self.scenario = os.environ.get('scenario')
         if os.environ.get('scenario') == None or os.environ.get('scenario') =='None':
             print('scenario is not in environment variables, using passed argument.')
@@ -79,7 +90,7 @@ class analysis(object):
             self.sqrt_num_cells = int(os.environ.get('sqrt_num_cells'))
         except:
             print('sqrt_num_cells from environment variables failed, proceeding with default.')
-            self.sqrt_num_cells = 50 # 128
+            self.sqrt_num_cells = 50 #128
             pass
         print(f'sqrt_num_cells: {self.sqrt_num_cells}')
     
@@ -160,9 +171,8 @@ class analysis(object):
         
         #self.integrator = 'azimuthal_invariance' #'general/azimuthal_invariance'
         # self.interpolator = 'split' #'split/combined'
-
         self.pv = parameter_values(self.scenario, self.bkg, self.fix_mass)
-    
+        self.disk_combined = disk_combined
         self.file_locations()
         self.set_bounds()
         # self.set_values()
@@ -297,8 +307,10 @@ class analysis(object):
                   'cede': False,
                   'concentric': False,
                   'sqrt_num_cells': self.sqrt_num_cells,
-                  'min_sqrt_num_cells': 10,
-                  'max_sqrt_num_cells': 128,
+                  #'min_sqrt_num_cells': 10,
+                  #'max_sqrt_num_cells': 128,
+                   'min_sqrt_num_cells': self.sqrt_num_cells,
+                   'max_sqrt_num_cells': self.sqrt_num_cells,
                   'num_leaves': self.num_leaves,
                   'num_rays': self.num_rays,
                   'atm_ext':'Num5D'}
@@ -326,8 +338,13 @@ class analysis(object):
         self.set_disk()
         self.set_line()
         
-        self.photosphere = CustomPhotosphereDiskLine(hot = self.hot, elsewhere = None, stokes=False, disk=self.disk, line=self.line,
-                                        values=dict(mode_frequency = self.spacetime['frequency']))
+        self.photosphere = CustomPhotosphereDiskLine(hot = self.hot, 
+                                                     elsewhere = None, 
+                                                     stokes=False, 
+                                                     disk=self.disk, 
+                                                     line=self.line,
+                                                     disk_combined=self.disk_combined,
+                                                     values=dict(mode_frequency = self.spacetime['frequency']))
 
         self.photosphere.hot_atmosphere = self.file_atmosphere
 
@@ -416,7 +433,8 @@ class analysis(object):
                             bkg = self.bkg,
                             epsrel = 1.0e-8,
                             epsilon = 1.0e-3,
-                            sigmas = 10.0)
+                            sigmas = 10.0,
+                            disk_combined=self.disk_combined)
         
         
     def set_parameter_vector(self):
@@ -569,7 +587,9 @@ class analysis(object):
             axes[1].set_yticklabels([0.5, 1.0, 2.0])
             fig.colorbar(profile, ax=axes[1], label='Counts')
             
-            axes[0].step(self.data.phases[:-1], np.sum(signal, axis=0), where='post') 
+            
+            signal_bol=np.sum(signal, axis=0)
+            axes[0].step(self.data.phases, np.append(signal_bol,signal_bol[0]), where='post') 
             axes[0].set_ylabel('Counts')
             
             from matplotlib.cm import ScalarMappable
@@ -674,45 +694,45 @@ class analysis(object):
 
             
             
-            # print('time integrator test')
-            # n_repeats = 1
-            # i=0
-            # t_likelihood = 0
-            # timings_summed = np.zeros(4)
+            print('time integrator test')
+            n_repeats = 1000
+            i=0
+            t_likelihood = 0
+            timings_summed = np.zeros(4)
             
-            # while i < n_repeats:
-            #     t_start = time.time()
+            while i < n_repeats:
+                t_start = time.time()
                 
-            #     # same sample
-            #     l_test = self.likelihood(self.p, reinitialise=True)
-            #     timings_summed = self.hot.objects[0]._integrator_timings
-            #     # print('phase_array: ', self.hot.objects[0]._interpolation_products[0])
-            #     # print('profile_array: ', self.hot.objects[0]._interpolation_products[1])
-            #     t_likelihood += time.time()-t_start
-            #     i+=1
+                # # same sample
+                # l_test = self.likelihood(self.p, reinitialise=True)
+                # timings_summed = self.hot.objects[0]._integrator_timings
+                # # print('phase_array: ', self.hot.objects[0]._interpolation_products[0])
+                # # print('profile_array: ', self.hot.objects[0]._interpolation_products[1])
+                # t_likelihood += time.time()-t_start
+                # i+=1
                 
-            #     radiating = self.hot.objects[0]._super_radiates
+                # radiating = self.hot.objects[0]._super_radiates
                 
-            #     # for i in range(radiating.shape[0]):
-            #     #     print('radiating:', radiating[:,i])
+                # for i in range(radiating.shape[0]):
+                #     print('radiating:', radiating[:,i])
 
-            #     # random samples
-            #     # p_test = self.prior.inverse_sample()
-            #     # l_test = self.likelihood(p_test, reinitialise=True)
-            #     # if l_test > -1e89:
-            #     #     # print(l_test)
-            #     #     timings_summed += self.hot.objects[0]._integrator_timings
-            #     #     t_likelihood += time.time()-t_start
-            #     #     i+=1
+                # random samples
+                p_test = self.prior.inverse_sample()
+                l_test = self.likelihood(p_test, reinitialise=True)
+                if l_test > -1e89:
+                    # print(l_test)
+                    timings_summed += self.hot.objects[0]._integrator_timings
+                    t_likelihood += time.time()-t_start
+                    i+=1
    
             
-            # print(f'repeats={n_repeats}')
-            # print(f'Evaluation takes {(t_likelihood)/n_repeats:0.3f} seconds')
+            print(f'repeats={n_repeats}')
+            print(f'Evaluation takes {(t_likelihood)/n_repeats:0.3f} seconds')
             
-            # print(f'signal eval: {timings_summed[0]/n_repeats:0.3f} seconds, {timings_summed[0]/t_likelihood*100:0.1f}% of likelihood')
-            # print(f'pre-atmosphere: {timings_summed[1]/n_repeats:0.3f} seconds, {timings_summed[1]/t_likelihood*100:0.1f}% of likelihood')
-            # print(f'intensities: {timings_summed[2]/n_repeats:0.3f} seconds, {timings_summed[2]/t_likelihood*100:0.1f}% of likelihood')
-            # print(f'phase interpolation: {timings_summed[3]/n_repeats:0.3f} seconds, {timings_summed[3]/t_likelihood*100:0.1f}% of likelihood')
+            print(f'signal eval: {timings_summed[0]/n_repeats:0.3f} seconds, {timings_summed[0]/t_likelihood*100:0.1f}% of likelihood')
+            print(f'pre-atmosphere: {timings_summed[1]/n_repeats:0.3f} seconds, {timings_summed[1]/t_likelihood*100:0.1f}% of likelihood')
+            print(f'intensities: {timings_summed[2]/n_repeats:0.3f} seconds, {timings_summed[2]/t_likelihood*100:0.1f}% of likelihood')
+            print(f'phase interpolation: {timings_summed[3]/n_repeats:0.3f} seconds, {timings_summed[3]/t_likelihood*100:0.1f}% of likelihood')
 
             # profile = CustomAxes.plot_2D_counts(axes[0], self.data.counts, get_mids_from_edges(self.data.phases), get_mids_from_edges(self.instrument.channel_edges))
             # profile = CustomAxes.plot_2D_counts(axes[1], self.signal.expected_counts, get_mids_from_edges(self.data.phases), get_mids_from_edges(self.instrument.channel_edges))
@@ -725,22 +745,22 @@ class analysis(object):
     
             
 if __name__ == '__main__':
-    Analysis = analysis('local', 'plot', 'marginalise', sampler='multi', scenario='small_r', support_factor='None', fix_mass=False, eos_informed=False)
+    Analysis = analysis('local', 'test', 'disk', sampler='multi', scenario='2022', support_factor='None', fix_mass=False, eos_informed=False)
     Analysis()
 
     expected = Analysis.signal.expected_counts
     print('expected counts: ',np.sum(expected))
     
     
-    # phase_array = Analysis.hot.objects[0]._interpolation_products[0]
-    # intensity_array = Analysis.hot.objects[0]._interpolation_products[1]
-    # phase_query_array = Analysis.hot.objects[0]._interpolation_products[2]
-    # specific_flux_array = Analysis.hot.objects[0]._interpolation_products[3]
-    # cell_radiates = Analysis.hot.objects[0]._interpolation_products[4]
+    phase_data_array = Analysis.hot.objects[0]._interpolation_products[0]
+    intensity_data_array = Analysis.hot.objects[0]._interpolation_products[1]
+    phase_query_array = Analysis.hot.objects[0]._interpolation_products[2]
+    intensity_query_array = Analysis.hot.objects[0]._interpolation_products[3]
+    cell_radiates = Analysis.hot.objects[0]._interpolation_products[4]
     
-    # np.savez_compressed("interpolation_products_reduced.npz", 
-    #                     phase_array=phase_array, 
-    #                     intensity_array=intensity_array, 
-    #                     phase_query_array=phase_query_array[:,0,:,:],
-    #                     specific_flux_array=specific_flux_array,
-    #                     cell_radiates=cell_radiates)
+    np.savez_compressed("interpolation_products_reduced_correct_pulse.npz", 
+                        phase_data_array=phase_data_array, 
+                        intensity_data_array=intensity_data_array, 
+                        phase_query_array=phase_query_array,
+                        intensity_query_array=intensity_query_array,
+                        cell_radiates=cell_radiates)

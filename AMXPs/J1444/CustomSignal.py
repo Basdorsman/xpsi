@@ -11,7 +11,7 @@ import os
 import xpsi
 import numpy as np
 from xpsi.likelihoods._gaussian_likelihood_QnUn import gaussian_likelihood_QnUn
-#from xpsi.likelihoods._gaussian_likelihood_given_background_IQU import gaussian_likelihood_given_background
+from xpsi.likelihoods._gaussian_likelihood_given_background_IQU import gaussian_likelihood_given_background
 
 from scipy.interpolate import interp1d
 
@@ -34,6 +34,7 @@ def find_idx(array, value):
     idx = (np.abs(array - value)).argmin()
     return idx
 
+
 class CustomSignal_gaussian(xpsi.Signal):
     """
 
@@ -41,6 +42,63 @@ class CustomSignal_gaussian(xpsi.Signal):
     We extend the :class:`~xpsi.Signal.Signal` class to make it callable.
     We overwrite the body of the __call__ method. The docstring for the
     abstract method is copied.
+
+    """
+
+    def __init__(self, workspace_intervals = 1000, epsabs = 0, epsrel = 1.0e-8,
+                 epsilon = 1.0e-3, sigmas = 10.0, support = None, **kwargs):
+        super(CustomSignal_gaussian, self).__init__(**kwargs)
+
+    def __call__(self, *args, **kwargs):
+        anegI = (False, False)
+        anegQU = (True, True)
+        background = np.zeros((np.shape(self._data.counts)))
+
+        self.loglikelihood, self.expected_counts = \
+            gaussian_likelihood_given_background(self._data.exposure_time,
+                                      self._data.phases,
+                                      np.ascontiguousarray(self._data.counts),
+                                      np.ascontiguousarray(self._data.errors),
+                                      self._signals,
+                                      self._phases,
+                                      self._shifts,
+                                      background,                                
+                                      allow_negative = True)
+
+class CustomSignal_poisson(xpsi.Signal):
+    """ A custom calculation of the logarithm of the likelihood.
+
+    We extend the :class:`xpsi.Signal.Signal` class to make it callable.
+
+    We also implement data synthesis capability.
+
+    """
+
+    def __init__(self, workspace_intervals = 1000, epsabs = 0, epsrel = 1.0e-8,
+                 epsilon = 1.0e-3, sigmas = 10.0, support = None, **kwargs):
+        super(CustomSignal_poisson, self).__init__(**kwargs)
+        self._precomp = precomputation(np.ascontiguousarray(self._data.counts).astype(np.int32))
+
+    def __call__(self, *args, **kwargs):
+        self.expected_background_counts = 0.
+        self.empty_background = np.zeros(np.asarray(self._signals[0]).shape)  
+
+        self.loglikelihood, self.expected_counts = \
+            poisson_likelihood_given_background(self._data.exposure_time, 
+                                                self._data.phases, 
+                                                np.ascontiguousarray(self._data.counts),
+                                                self._signals,
+                                                self._phases,
+                                                self._shifts,
+                                                self.empty_background,
+                                                self._precomp,
+                                                allow_negative = False)
+
+
+class CustomSignal_gaussian_no_instrument_response(xpsi.Signal):
+    """
+
+    NO INSTRUMENT RESPONSE. this was used for tests of simulated data.
 
     """
 
@@ -192,6 +250,9 @@ class CustomSignal_gaussian(xpsi.Signal):
                                   self._data.counts,
                                   self._data.errors,
                                   self.signal_dphase)
+
+
+
 
 
 class CustomSignal(xpsi.Signal):

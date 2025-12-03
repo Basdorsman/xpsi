@@ -8,6 +8,7 @@ Created on Tue Apr 29 09:25:02 2025
 
 # load IXPE instrument
 import xpsi
+from xpsi.Parameter import Parameter
 import numpy as np
 from astropy.io import fits
 
@@ -15,10 +16,67 @@ import os
 import sys
 this_directory = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(this_directory+'/data/ixpe_products/')
-from ixpe_read_pcube3 import read_response_IXPE
+# from ixpe_read_pcube3 import read_response_IXPE
+from ixpe_read_pha import read_response_IXPE
 
 
 class CustomInstrument_stokes(xpsi.Instrument):
+    """ A model of the NICER telescope response. """
+
+    def construct_matrix(self):
+        """ Implement response matrix parameterisation. """
+        matrix = self['alpha'] * self.matrix
+        matrix[matrix < 0.0] = 0.0
+
+        return matrix
+
+    def __call__(self, signal, *args):
+        """ Overwrite base just to show it is possible.
+
+        We loaded only a submatrix of the total instrument response
+        matrix into memory, so here we can simplify the method in the
+        base class.
+
+        """
+        matrix = self.construct_matrix()
+
+        self._folded_signal = np.dot(matrix, signal)
+
+        return self._folded_signal
+
+    @classmethod
+    def from_response_files(cls, bounds, values, MRF, RMF, max_input, max_channel, min_input=0, min_channel=0,
+                            channel_edges=None, **kwargs):
+        """ Constructor which converts response files into :class:`numpy.ndarray`s.
+        :param str MRF: Path to MRF which is compatible with
+                                :...
+        :param str RMF: Path to RMF which is compatible with
+                                :...
+        :param str channel_edges: Optional path to edges which is compatible with
+                                  :func:`numpy.loadtxt`.
+        """
+        if min_input != 0:
+            min_input = int(min_input)
+        max_input = int(max_input)
+        try:
+            matrix, edges, channels, channel_edgesT = read_response_IXPE(MRF,RMF,min_input,max_input,min_channel,max_channel)
+            if channel_edges:
+                channel_edgesT = np.loadtxt(channel_edges, dtype=np.double, skiprows=3)[:,1:]
+        except:
+            print('A file could not be loaded.')
+            raise
+            
+        alpha = Parameter('alpha',
+                          strict_bounds = (0.1,1.9),
+                          bounds = bounds.get('alpha', None),
+                          doc='IXPE energy-independent scaling factor',
+                          symbol = r'$\alpha_{\rm X}$',
+                          value = values.get('alpha', None))
+            
+        return cls(matrix, edges, channels, channel_edgesT, alpha, **kwargs)
+
+
+class CustomInstrument_stokes_no_alpha(xpsi.Instrument):
     """ A model of the NICER telescope response. """
 
     def __call__(self, signal, *args):

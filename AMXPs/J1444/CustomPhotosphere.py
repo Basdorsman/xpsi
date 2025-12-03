@@ -10,43 +10,6 @@ import numpy as np
 
 from xpsi import Everywhere, Elsewhere, HotRegion, Parameter
 
-# class CustomPhotosphere_NumA5(xpsi.Photosphere):
-#     """ A photosphere extension to preload the numerical 5D accretion atmosphere. """
-
-#     @xpsi.Photosphere.hot_atmosphere.setter
-#     def hot_atmosphere(self, path):
-#         with np.load(path, allow_pickle=True) as data_dictionary:
-#             NSX = data_dictionary['NSX.npy']
-#             size_reorderme = data_dictionary['size.npy']
-
-#         size = [size_reorderme[3], size_reorderme[4], size_reorderme[2], size_reorderme[1], size_reorderme[0]]
-
-#         Energy = np.ascontiguousarray(NSX[0:size[0],0])
-#         cos_zenith = np.ascontiguousarray([NSX[i*size[0],1] for i in range(size[1])])
-#         tau = np.ascontiguousarray([NSX[i*size[0]*size[1],2] for i in range(size[2])])
-#         t_bb = np.ascontiguousarray([NSX[i*size[0]*size[1]*size[2],3] for i in range(size[3])])
-#         t_e = np.ascontiguousarray([NSX[i*size[0]*size[1]*size[2]*size[3],4] for i in range(size[4])])
-#         intensities = np.ascontiguousarray(NSX[:,5])
-
-#         self._hot_atmosphere = (t_e, t_bb, tau, cos_zenith, Energy, intensities)
-
-#     @xpsi.Photosphere.hot_atmosphere_Q.setter
-#     def hot_atmosphere_Q(self, path):
-#         with np.load(path, allow_pickle=True) as data_dictionary:
-#             NSX = data_dictionary['NSX.npy']
-#             size_reorderme = data_dictionary['size.npy']
-
-#         size = [size_reorderme[3], size_reorderme[4], size_reorderme[2], size_reorderme[1], size_reorderme[0]]
-
-#         Energy = np.ascontiguousarray(NSX[0:size[0],0])
-#         cos_zenith = np.ascontiguousarray([NSX[i*size[0],1] for i in range(size[1])])
-#         tau = np.ascontiguousarray([NSX[i*size[0]*size[1],2] for i in range(size[2])])
-#         t_bb = np.ascontiguousarray([NSX[i*size[0]*size[1]*size[2],3] for i in range(size[3])])
-#         t_e = np.ascontiguousarray([NSX[i*size[0]*size[1]*size[2]*size[3],4] for i in range(size[4])])
-#         intensities = np.ascontiguousarray(NSX[:,5])
-
-#         self._hot_atmosphere_Q = (t_e, t_bb, tau, cos_zenith, Energy, intensities)
-
 class CustomPhotosphereDiskLine(xpsi.Photosphere):
     """ A photosphere extension to preload the numerical 5D accretion atmosphere. """
     
@@ -251,7 +214,6 @@ class CustomPhotosphereDiskLine(xpsi.Photosphere):
                     
                 if self._disk is not None: 
                     R_in = self.disk['R_in'] * 1000 # in meters now
-                    print('disk value: ', R_in)
                 elif self._disk is None:
                     R_in = 1e6 # default value with no disk
 

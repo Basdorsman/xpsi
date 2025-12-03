@@ -22,13 +22,15 @@ class parameter_values(object):
                  fix_mass=False, 
                  ew=False, 
                  polarization=False,
-                 secondary=False):
+                 secondary=False,
+                 signal_phase_shift=False):
         self.scenario = scenario
         self.bkg = bkg
         self.fix_mass = fix_mass
         self.ew = ew
         self.polarization = polarization
         self.secondary = secondary
+        self.signal_phase_shift = signal_phase_shift
 
                 
         if self.scenario in ('J1444','J1444s'):
@@ -52,7 +54,7 @@ class parameter_values(object):
             if self.secondary:
                 # secondary
                 self.phase_shift_s = self.phase_shift + 0.5
-                self.super_colatitude_s = np.pi - self.super_colatitude 
+                self.super_colatitude_s = np.pi - self.super_colatitude
                 self.super_radius_s = self.super_radius
                 self.tbb_s = self.tbb
                 self.te_s = self.te
@@ -70,6 +72,12 @@ class parameter_values(object):
                 self.spin_axis_angle = 0.0
                 
             self.frequency=447.8715611
+            
+            self.alpha_1 = 1.
+            self.alpha_2 = 1.
+            self.alpha_3 = 1.
+            
+            self.NICER_phase_shift = 0.
             
         
         
@@ -97,12 +105,77 @@ class parameter_values(object):
         self.mu if 'line' in self.bkg else None,
         self.sigma if 'line' in self.bkg else None,
         self.N if 'line' in self.bkg else None,
-        self.column_density
+        self.column_density, 
+        self.NICER_phase_shift if self.signal_phase_shift else None,
+        self.alpha_1 if self.polarization else None,
+        self.alpha_2 if self.polarization else None,
+        self.alpha_3 if self.polarization else None
         ]
 
         # Remove any None values (e.g., mass if fix_mass is True, or optional elements)
         self.p = [x for x in self.p if x is not None]
         return self.p
+    
+    
+        # import math
+        # mass = 1.4
+        # radius = 10.0 #16.0 #10.0 #12.0 (from Molkov)
+        # distance = 8.0
+        # inclination = 74.0 #58.0 (from Molkov)
+        # cos_i = math.cos(inclination*math.pi/180.0)
+        # chi0 = -31.4127*math.pi/180.0
+        # # Hotspot 1
+        # phase_shift = -0.2636
+        # super_colatitude =  11.8*math.pi/180.0  #14.0*math.pi/180.0 (from Molkov)
+        # super_radius = 80.0*math.pi/180.0 #33.0*math.pi/180.0 (from Molkov)
+        # tbb=0.002
+        # te=40.0
+        # tau=1.6
+        # # Hotspot 2
+        # phase_shift2 = phase_shift + 0.57
+        # super_colatitude2 = 172.6*math.pi/180.0 #166.0*math.pi/180.0 (from Molkov)
+        # super_radius2 = 80.0*math.pi/180.0 #33.0*math.pi/180.0 (from Molkov)
+        # tbb2=0.002
+        # te2=40.0
+        # tau2=1.6
+        # column_density = 22.0 #0.00001 #1.22474672
+    
+        # t_in = 0.44 # (from Malacaria) #1e-5
+        # r_in = 24.6 # (from Molkov)
+    
+        # #Tbb = 1 keV <=> tbb = 0.002 (roughly)
+        # #Te = 50 keV <=>  te = 100 (roughly)
+    
+    
+    
+        # self.p = [mass, #grav mass
+        #       radius, #coordinate equatorial radius
+        #       distance, # earth distance kpc
+        #       cos_i, #cosine of earth inclination
+        #       chi0, #spin axis position angle
+        #       phase_shift, #phase of hotregion
+        #       super_colatitude, #colatitude of centre of superseding region
+        #       super_radius,  #angular radius superceding region
+        #       tbb,
+        #       te,
+        #       tau,
+        #       phase_shift2,
+        #       super_colatitude2,
+        #       super_radius2,
+        #       tbb2,
+        #       te2,
+        #       tau2,
+        #       t_in,
+        #       r_in,
+        #       #1.0, #order of collumn density changes depending on whether NICER data is involved
+        #       column_density,
+        #       1.0,
+        #       1.0,
+        #       1.0
+        #       ]
+    
+        # return self.p
+    
         
     def names(self):
         self.names = [
@@ -136,6 +209,10 @@ class parameter_values(object):
             'sigma' if self.bkg == 'diskline' else None,
             'N' if self.bkg == 'diskline' else None,
             'column_density', 
+            'phase_shift' if self.signal_phase_shift else None,
+            'alpha_1' if self.polarization else None,
+            'alpha_2' if self.polarization else None,
+            'alpha_3' if self.polarization else None,
             'compactness',
             'inclination_deg',
             'tbb_keV' if not self.secondary else None, 
@@ -210,6 +287,10 @@ class parameter_values(object):
         
         if self.polarization:
             bounds['spin_axis_position_angle']=(-math.pi/2.0, math.pi/2.0)
+            # bounds['alpha'] = (0.8, 1.2) # doesn't work?
+            
+        if self.signal_phase_shift:
+            bounds['phase_shift'] = (-0.5, 0.5)
         
         return bounds
 
@@ -248,6 +329,12 @@ class parameter_values(object):
         
         if self.polarization:
             truths['spin_axis_position_angle']=self.spin_axis_angle
+            truths['alpha_1']=self.alpha_1
+            truths['alpha_2']=self.alpha_2
+            truths['alpha_3']=self.alpha_3
+            
+        if self.signal_phase_shift:
+            truths['phase_shift']=self.NICER_phase_shift
         
         return truths
     
@@ -344,7 +431,12 @@ class parameter_values(object):
             labels['N_norm'] =  r"$N_\mathrm{norm}\;\mathrm{[photons/cm^2/s]}$"
 
         if self.polarization:
-            labels['spin_axis_position_angle']=r"$Chi\;\mathrm{[rad]}$"
+            labels['spin_axis_position_angle']=r"$\Chi\;\mathrm{[rad]}$"
+            labels['alpha_1']=r"$\alpha_1\;[-]$"
+            labels['alpha_2']=r"$\alpha_2\;[-]$"
+            labels['alpha_3']=r"$\alpha_3\;[-]$"
 
+        if self.signal_phase_shift:
+            labels['phase_shift']=r"$phi_\mathrm{NICER}\;[cycles]$"
         
         return labels

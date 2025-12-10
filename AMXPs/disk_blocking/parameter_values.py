@@ -21,12 +21,14 @@ class parameter_values(object):
                  bkg, 
                  fix_inclination=False,
                  fix_theta_p=False,
-                 antipodal=False):
+                 antipodal=False,
+                 disk_emission=True):
         self.scenario = scenario
         self.bkg = bkg
         self.fix_inclination = fix_inclination
         self.fix_theta_p = fix_theta_p
         self.antipodal = antipodal
+        self.disk_emission = disk_emission
 
 
         if self.scenario == 'molkov':
@@ -80,7 +82,7 @@ class parameter_values(object):
         self.s_tbb,
         self.s_te,
         self.s_tau,
-        self.diskbb_T_log10_K if 'disk' in self.bkg else None,
+        self.diskbb_T_log10_K if self.disk_emission else None,
         self.R_in if 'disk' in self.bkg else None,
         self.column_density
         ]
@@ -110,7 +112,7 @@ class parameter_values(object):
     		's__super_tbb',
     		's__super_te',
     		's__super_tau',
-      		'T_in' if 'disk' in self.bkg else None,
+      		'T_in' if self.disk_emission else None,
       		'R_in' if 'disk' in self.bkg else None,
             'column_density', 
             'compactness',  # derived parameters below (new units)
@@ -123,7 +125,7 @@ class parameter_values(object):
             's__radius_deg',
             's__tbb_keV', 
             's__te_keV', 
-            'T_in_keV' if 'disk' in self.bkg else None
+            'T_in_keV' if self.disk_emission else None
             ]
 
         # Filter out None values

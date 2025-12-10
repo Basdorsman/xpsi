@@ -24,6 +24,7 @@ class CustomPhotosphere(xpsi.Photosphere):
                  disk = None,
                  disk_combined=False,
                  disk_blocking=True,
+                 disk_emission=True,
                  **kwargs):
 
         if everywhere is not None:
@@ -63,6 +64,8 @@ class CustomPhotosphere(xpsi.Photosphere):
         self._stokes = stokes
         self._disk_combined = disk_combined
         self._disk_blocking = disk_blocking #override to test disk emission without blocking needed here
+        self._disk_emission = disk_emission
+
 
         if disk is not None:
             self._disk = disk
@@ -224,9 +227,9 @@ class CustomPhotosphere(xpsi.Photosphere):
                     self._signalQ = tuple(map(tuple, tempQ))
                     self._signalU = tuple(map(tuple, tempU))
                 else:
-                    if self._disk is not None and self._disk_blocking == True: 
+                    if self._disk is not None and self._disk_blocking: 
                         R_in = self.disk['R_in'] * 1000 # in meters now
-                    elif self._disk is None or self._disk_blocking == False:
+                    elif self._disk is None or not self._disk_blocking:
                         R_in = 1e6 # default value with no disk
 
                     self._signal = self._hot.integrate(self._spacetime,
@@ -244,7 +247,7 @@ class CustomPhotosphere(xpsi.Photosphere):
                 if self._elsewhere is not None:
                     for i in range(self._signal[0][0].shape[1]):
                         self._signal[0][0][:,i] += spectrum     
-            if self._disk is not None: 
+            if self._disk is not None and self._disk_emission:
                 if self._disk_combined:
                 # add disk spectrum to primary hotregion
 

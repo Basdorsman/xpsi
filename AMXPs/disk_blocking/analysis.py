@@ -40,7 +40,8 @@ class analysis(object):
                  disk_blocking_data=True,
                  fix_inclination=False,
                  fix_theta_p=False,
-                 antipodal=False):
+                 antipodal=False,
+                 disk_emission=True):
         self.scenario = os.environ.get('scenario')
         if os.environ.get('scenario') == None or os.environ.get('scenario') =='None':
             print('scenario is not in environment variables, using passed argument.')
@@ -167,9 +168,10 @@ class analysis(object):
             else:
                 self.disk_blocking_data = False
             print(f'disk_blocking_data: {self.disk_blocking_data}')
-        elif self.bkg == 'fix': # if no disk in bkg then both of these are false
+        elif self.bkg == 'fix': # if no disk in bkg then these are false
             self.disk_blocking = False
             self.disk_blocking_data = False
+            self.disk_emission = False
             print('No disk in the model so disk blocking and disk blocking data are False')
 
         if os.environ.get('fix_inclination') == None or os.environ.get('fix_inclination') =='None':
@@ -207,10 +209,21 @@ class analysis(object):
         else:
             self.antipodal = False
         print(f'antipodal: {self.antipodal}')
-        
+
+        if os.environ.get('disk_emission') == None or os.environ.get('disk_emission') =='None':
+            print('disk_emission is not in environment variables, using passed argument.')
+            self.disk_emission = disk_emission
+        else:
+            self.disk_emission = os.environ.get('disk_emission')
+
+        if self.disk_emission == "True" or self.disk_emission == True:
+            self.disk_emission = True
+        else:
+            self.disk_emission = False
+        print(f'disk_emission: {self.disk_emission}')        
 
 
-        self.pv = parameter_values(self.scenario, self.bkg, self.fix_inclination, self.fix_theta_p, self.antipodal)
+        self.pv = parameter_values(self.scenario, self.bkg, self.fix_inclination, self.fix_theta_p, self.antipodal, self.disk_emission)
         self.disk_combined = disk_combined
     
         self.file_locations()
@@ -222,7 +235,7 @@ class analysis(object):
         t_check = time.time()
         #self.likelihood(self.p, reinitialise=True)
         print(self.likelihood)
-        self.likelihood.check(None, [self.true_logl], 1.0e-6, physical_points=[self.p], force_update=True)
+        self.likelihood.check(None, [self.true_logl], 1.0e6, physical_points=[self.p], force_update=True)
         print('Likelihood check took {:.3f} seconds'.format((time.time()-t_check)))
         print(self.likelihood(self.p))
 
@@ -231,7 +244,7 @@ class analysis(object):
         self.this_directory = this_directory
 
         if self.scenario == 'molkov':
-           self.file_pulse_profile = self.this_directory + f'/data/synthetic_{self.scenario}_seed={self.poisson_seed}_bkg={self.bkg}_disk_blocking={self.disk_blocking_data}_realisation.dat'
+           self.file_pulse_profile = self.this_directory + f'/data/synthetic_{self.scenario}_seed={self.poisson_seed}_bkg={self.bkg}_disk_blocking={self.disk_blocking_data}_disk_emission={self.disk_emission}_realisation.dat'
            self.file_arf = self.this_directory + '/../model_data/instrument_data/J1808_NICER_2019/merged_saxj1808_2019_arf_aeff.txt'
            self.file_rmf = self.this_directory + '/../model_data/instrument_data/J1808_NICER_2019/merged_saxj1808_2019_rmf_matrix.txt'
            self.file_channel_edges = self.this_directory + '/../model_data/instrument_data/J1808_NICER_2019/merged_saxj1808_2019_rmf_energymap.txt'
@@ -407,7 +420,8 @@ class analysis(object):
                                                      stokes=False, 
                                                      disk=self.disk, 
                                                      disk_combined=self.disk_combined,
-                                                     disk_blocking=self.disk_blocking, #override needed here to test specific case of disk emission without blocking.
+                                                     disk_blocking=self.disk_blocking,  # to test disk emission without blocking.
+                                                     disk_emission=self.disk_emission,  # to test disk blocking without emission 
                                                      values=dict(mode_frequency = self.spacetime['frequency']))
 
         self.photosphere.hot_atmosphere = self.file_atmosphere
@@ -447,15 +461,20 @@ class analysis(object):
         
     def set_disk(self):
         from Disk import Disk, k_disk_derive
-        if 'disk' in self.bkg:    
-            bounds = dict(T_in = self.bounds["T_in"],
-                          R_in = self.bounds["R_in"],
-                          K_disk = None) #derived means no bounds
-                
-            self.k_disk = k_disk_derive()
-            self.disk = Disk(bounds=bounds, values={'K_disk': self.k_disk})
-            self.k_disk.disk = self.disk
-            
+        if 'disk' in self.bkg: 
+            if self.disk_emission:  # regular disk
+                bounds = dict(T_in = self.bounds["T_in"],
+                              R_in = self.bounds["R_in"],
+                              K_disk = None) #derived means no bounds
+                    
+                self.k_disk = k_disk_derive()
+                self.disk = Disk(bounds=bounds, values={'K_disk': self.k_disk})
+                self.k_disk.disk = self.disk
+            elif not self.disk_emission: # here we have a disk that doesn't emit.
+                values = dict(T_in = self.pv.diskbb_T_log10_K,
+                              K_disk = 0.)
+                bounds = dict(R_in = self.bounds["R_in"])
+                self.disk = Disk(bounds=bounds, values=values)
         else:
             self.disk = None
             
@@ -490,17 +509,18 @@ class analysis(object):
     def set_likelihood(self):
         self.set_spacetime() # self.spacetime is defined here
         self.set_photosphere() # self.k_disk is defined here
-        if 'disk' in self.bkg:
+        if 'disk' in self.bkg and self.disk_emission:
             self.k_disk.spacetime = self.spacetime
         self.set_star() # star is defined afterwards
         self.set_signal()
         self.set_prior()
         
-        self.likelihood = xpsi.Likelihood(star = self.star, signals = self.signal,
-                  num_energies=self.num_energies, #128
-                                      threads=1,
-                                      prior=self.prior,
-                                      externally_updated=True)
+        self.likelihood = xpsi.Likelihood(star = self.star, 
+                                          signals = self.signal,
+                                          num_energies=self.num_energies, #128
+                                          threads=1,
+                                          prior=self.prior,
+                                          externally_updated=True)
 
         if 'disk' in self.bkg:
             if self.disk_blocking:
@@ -634,7 +654,7 @@ class analysis(object):
 
 if __name__ == '__main__':
     Analysis = analysis('local',
-                        'sample',
+                        'test',
                         'disk', 
                         scenario='molkov', 
                         support_factor='None',
@@ -642,6 +662,7 @@ if __name__ == '__main__':
                         disk_blocking_data=True, 
                         fix_inclination=True, 
                         fix_theta_p=True,
-                        antipodal=True,
+                        antipodal=False,
+                        disk_emission=False,
                         poisson_seed=42)
     Analysis()

@@ -536,7 +536,7 @@ class analysis(object):
                             true_logl = 8.3725179573e+06
                     elif not self.disk_blocking_data:
                         true_logl = 8.7794279263e+06
-                elif self.disk_emission:
+                elif not self.disk_emission:
                     true_logl = 6.2949406941e+06
             elif not self.disk_blocking:
                 if self.disk_emission:
@@ -664,11 +664,11 @@ if __name__ == '__main__':
                         'disk', 
                         scenario='molkov', 
                         support_factor='None',
-                        disk_blocking=False, 
+                        disk_blocking=True, 
                         disk_blocking_data=True, 
                         fix_inclination=True, 
                         fix_theta_p=True,
-                        antipodal=False,
-                        disk_emission=True,
+                        antipodal=True,
+                        disk_emission=False,
                         poisson_seed=42)
     Analysis()

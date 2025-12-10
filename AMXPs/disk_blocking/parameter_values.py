@@ -31,37 +31,43 @@ class parameter_values(object):
         self.disk_emission = disk_emission
 
 
+        
+        self.mass = 1.4
+        self.radius = 12
+        self.distance = 8 # lower range of what Molkov found
+        self.inclination = 58
+        self.cos_i = math.cos(self.inclination*math.pi/180)
+        
+        # Primary Hotspot
+        self.p_phase_shift = 0
         if self.scenario == 'molkov':
-            self.mass = 1.4
-            self.radius = 12
-            self.distance = 8 # lower range of what Molkov found
-            self.inclination = 58
-            self.cos_i = math.cos(self.inclination*math.pi/180)
-            
-            # Primary Hotspot
-            self.p_phase_shift = 0
-            self.p_colatitude = 14*math.pi/180 
-            self.p_radius = 33*math.pi/180
-            self.p_tbb=1/511 # Tbb(data) = Tbb(keV)/511keV, 1 keV = 0.002 data
-            self.p_te=50*1000/511. # Te(data) = Te(keV)*1000/511keV, 50 keV = 100 data
-            self.p_tau=1 #0.5 - 3.5 tau = ln(Fin/Fout)
-            
-            # Secondary Hotspot
-            self.s_phase_shift = 0 # assuming antiphased is True in the hotregion
+            self.p_colatitude = 14*math.pi/180
+        elif self.scenario == 'molkov_pcol60':
+            self.p_colatitude = 60*math.pi/180
+        self.p_radius = 33*math.pi/180
+        self.p_tbb=1/511 # Tbb(data) = Tbb(keV)/511keV, 1 keV = 0.002 data
+        self.p_te=50*1000/511. # Te(data) = Te(keV)*1000/511keV, 50 keV = 100 data
+        self.p_tau=1 #0.5 - 3.5 tau = ln(Fin/Fout)
+        
+        # Secondary Hotspot
+        self.s_phase_shift = 0 # assuming antiphased is True in the hotregion
+        if self.scenario == 'molkov':
             self.s_colatitude = (180-14)*math.pi/180 
-            self.s_radius = 33*math.pi/180
-            self.s_tbb=1/511 # Tbb(data) = Tbb(keV)/511keV, 1 keV = 0.002 data
-            self.s_te=50*1000/511. # Te(data) = Te(keV)*1000/511keV, 50 keV = 100 data
-            self.s_tau=1 #0.5 - 3.5 tau = ln(Fin/Fout)
+        elif self.scenario == 'molkov_pcol60':
+            self.s_colatitude = (180-60)*math.pi/180 
+        self.s_radius = 33*math.pi/180
+        self.s_tbb=1/511 # Tbb(data) = Tbb(keV)/511keV, 1 keV = 0.002 data
+        self.s_te=50*1000/511. # Te(data) = Te(keV)*1000/511keV, 50 keV = 100 data
+        self.s_tau=1 #0.5 - 3.5 tau = ln(Fin/Fout)
 
-            if 'disk' in self.bkg:
-            # source background
-                self.diskbb_T_keV = 0.37 # corresponds 1.48e-10 Msol/yr  (in line with range found for SAX J1808 by Casten+ 2023)
-                self.diskbb_T_log10_K = get_T_in_log10_Kelvin(self.diskbb_T_keV)
-                self.R_in = 24.5 # km
-            self.column_density = 29. #10^21 cm^-2 #corresponds to value found by Papitto et al. 2024
-            
-            self.frequency=447.8718 #hz
+        if 'disk' in self.bkg:
+        # source background
+            self.diskbb_T_keV = 0.37 # corresponds 1.48e-10 Msol/yr  (in line with range found for SAX J1808 by Casten+ 2023)
+            self.diskbb_T_log10_K = get_T_in_log10_Kelvin(self.diskbb_T_keV)
+            self.R_in = 24.5 # km
+        self.column_density = 29. #10^21 cm^-2 #corresponds to value found by Papitto et al. 2024
+        
+        self.frequency=447.8718 #hz
         
         
     def p(self):

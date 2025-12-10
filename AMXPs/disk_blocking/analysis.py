@@ -243,7 +243,7 @@ class analysis(object):
     def file_locations(self):
         self.this_directory = this_directory
 
-        if self.scenario == 'molkov':
+        if 'molkov' in self.scenario:
            self.file_pulse_profile = self.this_directory + f'/data/synthetic_{self.scenario}_seed={self.poisson_seed}_bkg={self.bkg}_disk_blocking={self.disk_blocking_data}_disk_emission={self.disk_emission}_realisation.dat'
            self.file_arf = self.this_directory + '/../model_data/instrument_data/J1808_NICER_2019/merged_saxj1808_2019_arf_aeff.txt'
            self.file_rmf = self.this_directory + '/../model_data/instrument_data/J1808_NICER_2019/merged_saxj1808_2019_rmf_matrix.txt'
@@ -260,7 +260,7 @@ class analysis(object):
         self.bounds = self.pv.bounds()
 
     def set_data(self):
-        if self.scenario == 'molkov':
+        if 'molkov' in self.scenario:
             self.exposure_time = 1.32366e5 #Mason's 2019 data cut
         
         self.phases_space = np.linspace(0.0, 1.0, 33)
@@ -522,33 +522,43 @@ class analysis(object):
                                           prior=self.prior,
                                           externally_updated=True)
 
-        if 'disk' in self.bkg:
+        if self.scenario == 'molkov':
+            if 'disk' in self.bkg:
+                if self.disk_blocking:
+                    if self.disk_emission:
+                        if self.disk_blocking_data:
+                            if self.poisson_seed == 42:
+                                true_logl = 8.4477844590e+06
+                            elif self.poisson_seed == 0:
+                                true_logl = 8.3576023198e+06
+                            elif self.poisson_seed == 1:
+                                true_logl = 8.3700049781e+06
+                            elif self.poisson_seed == 2:
+                                true_logl = 8.3725179573e+06
+                        elif not self.disk_blocking_data:
+                            true_logl = 8.7794279263e+06
+                    elif not self.disk_emission:
+                        true_logl = 6.2949406941e+06
+                elif not self.disk_blocking:
+                    if self.disk_emission:
+                        if self.disk_blocking_data:
+                            true_logl = 8.4458511928e+06
+                        elif not self.disk_blocking_data:
+                            true_logl = 8.7824890157e+06
+                    elif not self.disk_emission:
+                        true_logl = 6.2928043316e+06
+            elif self.bkg == 'fix':
+                if self.poisson_seed == 42:
+                    true_logl = 6.6155332721e+06
+        elif self.scenario == 'molkov_pcol60':
             if self.disk_blocking:
-                if self.disk_emission:
-                    if self.disk_blocking_data:
-                        if self.poisson_seed == 42:
-                            true_logl = 8.4477844590e+06
-                        elif self.poisson_seed == 0:
-                            true_logl = 8.3576023198e+06
-                        elif self.poisson_seed == 1:
-                            true_logl = 8.3700049781e+06
-                        elif self.poisson_seed == 2:
-                            true_logl = 8.3725179573e+06
-                    elif not self.disk_blocking_data:
-                        true_logl = 8.7794279263e+06
-                elif not self.disk_emission:
-                    true_logl = 6.2949406941e+06
+                    true_logl = 9.6610133661e+06
             elif not self.disk_blocking:
-                if self.disk_emission:
-                    if self.disk_blocking_data:
-                        true_logl = 8.4458511928e+06
-                    elif not self.disk_blocking_data:
-                        true_logl = 8.7824890157e+06
-                elif not self.disk_emission:
-                    true_logl = 6.2928043316e+06
-        elif self.bkg == 'fix':
-            if self.poisson_seed == 42:
-                true_logl = 6.6155332721e+06
+                if self.disk_blocking_data:
+                    true_logl = 9.6609131866e+06
+                elif not self.disk_blocking_data:
+                    if not self.disk_emission:
+                        true_logl = 7.5433358429e+06
         self.true_logl = true_logl
     
     def __call__(self):
@@ -580,7 +590,7 @@ class analysis(object):
         fig.colorbar(im0, ax=axes[0])
         im1 = CustomAxes.plot_2D_counts(axes[1], self.signal.expected_counts, get_mids_from_edges(self.data.phases),  get_mids_from_edges(self.instrument.channel_edges))
         fig.colorbar(im1, ax=axes[1])
-        im2 = CustomAxes.plot_2D_counts(axes[2], self.data.counts-self.signal.expected_counts, get_mids_from_edges(self.data.phases), get_mids_from_edges(self.instrument.channel_edges))
+        im2 = CustomAxes.plot_2D_counts(axes[2], (self.data.counts-self.signal.expected_counts)/np.sqrt(self.signal.expected_counts), get_mids_from_edges(self.data.phases), get_mids_from_edges(self.instrument.channel_edges))
         fig.colorbar(im2, ax=axes[2])
         
         fig.tight_layout()
@@ -664,7 +674,7 @@ if __name__ == '__main__':
                         'disk', 
                         scenario='molkov', 
                         support_factor='None',
-                        disk_blocking=True, 
+                        disk_blocking=False, 
                         disk_blocking_data=True, 
                         fix_inclination=True, 
                         fix_theta_p=True,

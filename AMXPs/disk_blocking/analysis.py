@@ -235,7 +235,7 @@ class analysis(object):
         t_check = time.time()
         #self.likelihood(self.p, reinitialise=True)
         print(self.likelihood)
-        self.likelihood.check(None, [self.true_logl], 1.0e6, physical_points=[self.p], force_update=True)
+        self.likelihood.check(None, [self.true_logl], 1.0e-6, physical_points=[self.p], force_update=True)
         print('Likelihood check took {:.3f} seconds'.format((time.time()-t_check)))
         print(self.likelihood(self.p))
 
@@ -524,22 +524,28 @@ class analysis(object):
 
         if 'disk' in self.bkg:
             if self.disk_blocking:
-                if self.disk_blocking_data:
-                    if self.poisson_seed == 42:
-                        true_logl = 8.3680599615e+06
-                    elif self.poisson_seed == 0:
-                        true_logl = 8.3576023198e+06
-                    elif self.poisson_seed == 1:
-                        true_logl = 8.3700049781e+06
-                    elif self.poisson_seed == 2:
-                        true_logl = 8.3725179573e+06
-                elif not self.disk_blocking_data:
-                    true_logl = 8.7794279263e+06
+                if self.disk_emission:
+                    if self.disk_blocking_data:
+                        if self.poisson_seed == 42:
+                            true_logl = 8.4477844590e+06
+                        elif self.poisson_seed == 0:
+                            true_logl = 8.3576023198e+06
+                        elif self.poisson_seed == 1:
+                            true_logl = 8.3700049781e+06
+                        elif self.poisson_seed == 2:
+                            true_logl = 8.3725179573e+06
+                    elif not self.disk_blocking_data:
+                        true_logl = 8.7794279263e+06
+                elif self.disk_emission:
+                    true_logl = 6.2949406941e+06
             elif not self.disk_blocking:
-                if self.disk_blocking_data:
-                    true_logl = 8.3650673477e+06
-                elif not self.disk_blocking_data:
-                    true_logl = 8.7824890157e+06
+                if self.disk_emission:
+                    if self.disk_blocking_data:
+                        true_logl = 8.4458511928e+06
+                    elif not self.disk_blocking_data:
+                        true_logl = 8.7824890157e+06
+                elif not self.disk_emission:
+                    true_logl = 6.2928043316e+06
         elif self.bkg == 'fix':
             if self.poisson_seed == 42:
                 true_logl = 6.6155332721e+06
@@ -658,11 +664,11 @@ if __name__ == '__main__':
                         'disk', 
                         scenario='molkov', 
                         support_factor='None',
-                        disk_blocking=True, 
+                        disk_blocking=False, 
                         disk_blocking_data=True, 
                         fix_inclination=True, 
                         fix_theta_p=True,
                         antipodal=False,
-                        disk_emission=False,
+                        disk_emission=True,
                         poisson_seed=42)
     Analysis()

@@ -18,22 +18,28 @@ import numpy as np
 class parameter_values(object):
     def __init__(self, 
                  scenario, 
-                 bkg, 
+                 bkg,
                  fix_mass=False, 
                  ew=False, 
                  polarization=False,
-                 secondary=False,
-                 signal_phase_shift=False):
+                 signal_phase_shift=False,
+                 fix_nonshared=False):
         self.scenario = scenario
         self.bkg = bkg
         self.fix_mass = fix_mass
         self.ew = ew
         self.polarization = polarization
-        self.secondary = secondary
         self.signal_phase_shift = signal_phase_shift
+        self.fix_nonshared=fix_nonshared
+        
+        
+        if self.scenario in ('J1444_STU', 'J1444_STS'):
+            self.secondary = True
+        else:
+            self.secondary = False
 
                 
-        if self.scenario in ('J1444','J1444s'):
+        if 'J1444' in self.scenario:
             self.mass = 1.4 
             self.radius = 11.
             self.distance = 8. # Assumed in Papitto+ 2024 and Malacaria+ 2025
@@ -52,7 +58,6 @@ class parameter_values(object):
             
             
             if self.secondary:
-                # secondary
                 self.phase_shift_s = self.phase_shift + 0.5
                 self.super_colatitude_s = np.pi - self.super_colatitude
                 self.super_radius_s = self.super_radius
@@ -87,6 +92,14 @@ class parameter_values(object):
         self.radius,  # coordinate equatorial radius
         self.distance,  # earth distance in kpc.
         self.cos_i,  # cosine of earth inclination
+        self.phase_shift if self.scenario=='J1444_STS' else None,
+        self.super_colatitude if self.scenario=='J1444_STS' else None,
+        self.super_radius if self.scenario=='J1444_STS' else None,
+        self.tbb if self.scenario=='J1444_STS' else None,
+        self.te if self.scenario=='J1444_STS' else None,
+        self.tau if self.scenario=='J1444_STS' else None,
+        self.T_in_keV if self.scenario=='J1444_STS' else None,
+        self.R_in if self.scenario=='J1444_STS' else None,
         self.spin_axis_angle if self.polarization else None, #Spin axis position angle measured from the north counterclock- wise to the projection of the rotation axis on the plane of the sky [in radians],
         self.phase_shift,  # phase of hot region
         self.super_colatitude,  # colatitude of center of superseding region
@@ -94,12 +107,12 @@ class parameter_values(object):
         self.tbb,
         self.te,
         self.tau,
-        self.phase_shift_s if self.secondary else None,
-        self.super_colatitude_s if self.secondary else None,
-        self.super_radius_s if self.secondary else None,
-        self.tbb_s if self.secondary else None,
-        self.te_s if self.secondary else None,
-        self.tau_s if self.secondary else None,
+        self.phase_shift_s if self.scenario=='J1444_STU' else None,
+        self.super_colatitude_s if self.scenario=='J1444_STU' else None,
+        self.super_radius_s if self.scenario=='J1444_STU' else None,
+        self.tbb_s if self.scenario=='J1444_STU' else None,
+        self.te_s if self.scenario=='J1444_STU' else None,
+        self.tau_s if self.scenario=='J1444_STU' else None,
         self.T_in_keV if 'disk' in self.bkg else None,
         self.R_in if 'disk' in self.bkg else None,
         self.mu if 'line' in self.bkg else None,
@@ -111,70 +124,20 @@ class parameter_values(object):
         self.alpha_2 if self.polarization else None,
         self.alpha_3 if self.polarization else None
         ]
+        if self.fix_nonshared:
+            self.p = [
+            self.mass if not self.fix_mass else None,  # gravitational mass
+            self.radius,  # coordinate equatorial radius
+            self.distance,  # earth distance in kpc.
+            self.cos_i,  # cosine of earth inclination  
+            self.R_in,
+            self.R_in,
+            self.column_density
+            ]
 
         # Remove any None values (e.g., mass if fix_mass is True, or optional elements)
         self.p = [x for x in self.p if x is not None]
         return self.p
-    
-    
-        # import math
-        # mass = 1.4
-        # radius = 10.0 #16.0 #10.0 #12.0 (from Molkov)
-        # distance = 8.0
-        # inclination = 74.0 #58.0 (from Molkov)
-        # cos_i = math.cos(inclination*math.pi/180.0)
-        # chi0 = -31.4127*math.pi/180.0
-        # # Hotspot 1
-        # phase_shift = -0.2636
-        # super_colatitude =  11.8*math.pi/180.0  #14.0*math.pi/180.0 (from Molkov)
-        # super_radius = 80.0*math.pi/180.0 #33.0*math.pi/180.0 (from Molkov)
-        # tbb=0.002
-        # te=40.0
-        # tau=1.6
-        # # Hotspot 2
-        # phase_shift2 = phase_shift + 0.57
-        # super_colatitude2 = 172.6*math.pi/180.0 #166.0*math.pi/180.0 (from Molkov)
-        # super_radius2 = 80.0*math.pi/180.0 #33.0*math.pi/180.0 (from Molkov)
-        # tbb2=0.002
-        # te2=40.0
-        # tau2=1.6
-        # column_density = 22.0 #0.00001 #1.22474672
-    
-        # t_in = 0.44 # (from Malacaria) #1e-5
-        # r_in = 24.6 # (from Molkov)
-    
-        # #Tbb = 1 keV <=> tbb = 0.002 (roughly)
-        # #Te = 50 keV <=>  te = 100 (roughly)
-    
-    
-    
-        # self.p = [mass, #grav mass
-        #       radius, #coordinate equatorial radius
-        #       distance, # earth distance kpc
-        #       cos_i, #cosine of earth inclination
-        #       chi0, #spin axis position angle
-        #       phase_shift, #phase of hotregion
-        #       super_colatitude, #colatitude of centre of superseding region
-        #       super_radius,  #angular radius superceding region
-        #       tbb,
-        #       te,
-        #       tau,
-        #       phase_shift2,
-        #       super_colatitude2,
-        #       super_radius2,
-        #       tbb2,
-        #       te2,
-        #       tau2,
-        #       t_in,
-        #       r_in,
-        #       #1.0, #order of collumn density changes depending on whether NICER data is involved
-        #       column_density,
-        #       1.0,
-        #       1.0,
-        #       1.0
-        #       ]
-    
-        # return self.p
     
         
     def names(self):
@@ -251,20 +214,46 @@ class parameter_values(object):
         bounds = {'radius':(3.0 * gravradius(1.0), 16.0),
                   'distance': (2.5, 10.6),
                   'cos_inclination':(cos_i_low, cos_i_high), 
-                  'phase_shift':(-0.5, 0.5),
-                  'super_colatitude':(0.001, math.pi - 0.001),
-                  'super_radius':(0.001, math.pi/2.0),
-                  'super_tbb':(0.001, 0.003),
-                  'tbb_keV': (0.511, 1.533),
-                  'super_te': (40., 200.),
-                  'te_keV': (40*511/1000, 200*511/1000),
-                  'super_tau': (0.5, 3.5),
                   'column_density': (19., 29.),
                   'compactness': (0., 10.),
-                  'inclination_deg': (i_low_deg, i_high_deg),
-                  'colatitude_deg': (0.001, 180-0.001),
-                  'radius_deg': (0.001, 90)              
+                  'inclination_deg': (i_low_deg, i_high_deg),           
                   }
+        
+        if not self.scenario == 'J1444_STU': 
+            bounds['phase_shift']=(-0.5, 0.5)
+            bounds['super_colatitude']=(0.001, math.pi - 0.001)
+            bounds['super_radius']=(0.001, math.pi/2.0)
+            bounds['super_tbb']=(0.001, 0.003)
+            bounds['tbb_keV']= (0.511, 1.533)
+            bounds['super_te']= (40., 200.)
+            bounds['te_keV']= (40*511/1000, 200*511/1000)
+            bounds['super_tau']= (0.5, 3.5)
+            bounds['colatitude_deg']= (0.001, 180-0.001),
+            bounds['radius_deg']= (0.001, 90)   
+        if self.scenario == 'J1444_STU': 
+            bounds['p__phase_shift']=(-0.5, 0.5)
+            bounds['p__super_colatitude']=(0.001, math.pi - 0.001)
+            bounds['p__super_radius']=(0.001, math.pi/2.0)
+            bounds['p__super_tbb']=(0.001, 0.003)
+            bounds['p__tbb_keV']= (0.511, 1.533)
+            bounds['p__super_te']= (40., 200.)
+            bounds['p__te_keV']= (40*511/1000, 200*511/1000)
+            bounds['p__super_tau']= (0.5, 3.5)
+            bounds['p__colatitude_deg']= (0.001, 180-0.001)
+            bounds['p__radius_deg']= (0.001, 90)   
+            
+            bounds['s__phase_shift']=(-0.5, 0.5)
+            bounds['s__super_colatitude']=(0.001, math.pi - 0.001)
+            bounds['s__super_radius']=(0.001, math.pi/2.0)
+            bounds['s__super_tbb']=(0.001, 0.003)
+            bounds['s__tbb_keV']= (0.511, 1.533)
+            bounds['s__super_te']= (40., 200.)
+            bounds['s__te_keV']= (40*511/1000, 200*511/1000)
+            bounds['s__super_tau']= (0.5, 3.5)
+            bounds['s__colatitude_deg']= (0.001, 180-0.001)
+            bounds['s__radius_deg']= (0.001, 90)   
+            
+        
         
         if not self.fix_mass:
             bounds['mass'] = (1.0, 3.0)
@@ -338,105 +327,141 @@ class parameter_values(object):
         
         return truths
     
-    def labels(self):
-        # labels = {'radius': r"R_{\mathrm{eq}}\;\mathrm{[km]}",
-        #       'compactness': r"M/R_{\mathrm{eq}}",
-        #       'distance': r"D \;\mathrm{[kpc]}",
-        #       'cos_inclination': r"\mathrm{cos}(i)",
-        #       'phase_shift': r"\phi\;\mathrm{[cycles]}",
-        #       'super_colatitude': r"\Theta_{spot}\;\mathrm{[rad]}",
-        #       'super_radius': r"\zeta_{spot}\;\mathrm{[rad]}",
-        #       'super_tbb': r"T_\{seed}\;\mathrm{[data units]}",
-        #       'tbb_keV': r"T_\mathrm{seed}\;\mathrm{[keV]}",
-        #       'super_te': r"T_\mathrm{electrons}\;\mathrm{[data units]}",
-        #       'te_keV': r"T_\mathrm{e}\;\mathrm{[keV]}",
-        #       'super_tau': r"\tau\;[-]",
-        #       'column_density': r"N_\mathrm{H}\;[10^{21} \mathrm{cm}^{-2}]",
-        #       'inclination_deg': r'i\;\mathrm{[deg]}',
-        #       'colatitude_deg': r'\theta\;\mathrm{[deg]}',
-        #       'radius_deg': r'\zeta\;\mathrm{[deg]}'}
+    # def labels(self):    
+    #     labels = {'radius': r"$R_{\mathrm{eq}}\;\mathrm{[km]}$",
+    #           'compactness': r"$M/R_{\mathrm{eq}}$",
+    #           'distance': r"$D \;\mathrm{[kpc]}$",
+    #           'cos_inclination': r"$\mathrm{cos}(i)$",           
+    #           'column_density': r"$N_\mathrm{H}\;[10^{21} \mathrm{cm}^{-2}]$",
+    #           'inclination_deg': r"$i\;\mathrm{[deg]}$"}
         
-        # if not self.fix_mass:
-        #     labels['mass'] =  r"M\;\mathrm{[M}_{\odot}\mathrm{]}"
         
-        # if 'disk' in self.bkg:
-        #     labels['T_in'] = r"T_{in} log10 of Kelvin"
-        #     # labels['T_in_keV'] = r"T_\mathrm{in}\;\mathrm{[keV]}"
-        #     labels['R_in'] =  r"R_\mathrm{in}\;\mathrm{[km]}"
+    #     if not self.secondary:
+    #         labels['phase_shift']       = r"$\phi\;\mathrm{[cycles]}$"
+    #         labels['super_colatitude']  = r"$\Theta_{spot}\;\mathrm{[rad]}$"
+    #         labels['colatitude_deg']    = r"$\theta\;\mathrm{[deg]}$"
+    #         labels['super_radius']      = r"$\zeta_{spot}\;\mathrm{[rad]}$"
+    #         labels['radius_deg']        = r"$\zeta\;\mathrm{[deg]}$"
+    #         labels['super_tbb']         = r"$T_\mathrm{seed}\;\mathrm{[data units]}$"
+    #         labels['tbb_keV']           = r"$T_\mathrm{seed}\;\mathrm{[keV]}$"
+    #         labels['super_te']          = r"$T_\mathrm{electrons}\;\mathrm{[data units]}$"
+    #         labels['te_keV']            = r"$T_\mathrm{e}\;\mathrm{[keV]}$"
+    #         labels['super_tau']         = r"$\tau\;[-]$"    
+    #     elif self.secondary:
+    #         labels['p__phase_shift']       = r"$\phi_\mathrm{p}\;\mathrm{[cycles]}$"
+    #         labels['p__super_colatitude']  = r"$\Theta_\mathrm{p}\;\mathrm{[rad]}$"
+    #         labels['p__colatitude_deg']    = r"$\theta_\mathrm{p}\;\mathrm{[deg]}$"
+    #         labels['p__super_radius']      = r"$\zeta_\mathrm{p}\;\mathrm{[rad]}$"
+    #         labels['p__radius_deg']        = r"$\zeta_\mathrm{p}\;\mathrm{[deg]}$"
+    #         labels['p__super_tbb']         = r"$T_\mathrm{seed,p}\;\mathrm{[data units]}$"
+    #         labels['p__tbb_keV']           = r"$T_\mathrm{seed,p}\;\mathrm{[keV]}$"
+    #         labels['p__super_te']          = r"$T_\mathrm{e,p}\;\mathrm{[data units]}$"
+    #         labels['p__te_keV']            = r"$T_\mathrm{e,p}\;\mathrm{[keV]}$"
+    #         labels['p__super_tau']         = r"$\tau_\mathrm{p}\;[-]$"
             
-        # if 'line' in self.bkg:
-        #     labels['mu'] = r"\mu\;\mathrm{[keV]}"
-        #     labels['sigma'] = r"\sigma\;\mathrm{[keV]}"
-        #     labels['N'] =  r"N\;\mathrm{[photons/cm^2/s]}"
-        #     labels['N_norm'] =  r"N_\mathrm{norm}\;\mathrm{[photons/cm^2/s]}"
+    #         labels['s__phase_shift']       = r"$\phi_\mathrm{s}\;\mathrm{[cycles]}$"
+    #         labels['s__super_colatitude']  = r"$\Theta_\mathrm{s}\;\mathrm{[rad]}$"
+    #         labels['s__colatitude_deg']    = r"$\theta_\mathrm{s}\;\mathrm{[deg]}$"
+    #         labels['s__super_radius']      = r"$\zeta_\mathrm{s}\;\mathrm{[rad]}$"
+    #         labels['s__radius_deg']        = r"$\zeta_\mathrm{s}\;\mathrm{[deg]}$"
+    #         labels['s__super_tbb']         = r"$T_\mathrm{seed,s}\;\mathrm{[data units]}$"
+    #         labels['s__tbb_keV']           = r"$T_\mathrm{seed,s}\;\mathrm{[keV]}$"
+    #         labels['s__super_te']          = r"$T_\mathrm{e,s}\;\mathrm{[data units]}$"
+    #         labels['s__te_keV']            = r"$T_\mathrm{e,s}\;\mathrm{[keV]}$"
+    #         labels['s__super_tau']         = r"$\tau_\mathrm{s}\;[-]$"
+            
+        
+    #     if not self.fix_mass:
+    #         labels['mass'] =  r"$M\;\mathrm{[M}_{\odot}\mathrm{]}$"
+        
+    #     if 'disk' in self.bkg:
+    #         # labels['T_in'] = r"$T_{in} log10 of Kelvin$"
+    #         labels['T_in_keV'] = r"$T_\mathrm{in}\;\mathrm{[keV]}$"
+    #         labels['R_in'] =  r"$R_\mathrm{in}\;\mathrm{[km]}$"
+            
+    #     if 'line' in self.bkg:
+    #         labels['mu'] = r"$\mu\;\mathrm{[keV]}$"
+    #         labels['sigma'] = r"$\sigma\;\mathrm{[keV]}$"
+    #         labels['N'] =  r"$N\;\mathrm{[photons/cm^2/s]}$"
+    #         labels['N_norm'] =  r"$N_\mathrm{norm}\;\mathrm{[photons/cm^2/s]}$"
 
-        # if self.polarization:
-        #     labels['spin_axis_position_angle']=r"Chi\;\mathrm{[rad]}"
+    #     if self.polarization:
+    #         labels['spin_axis_position_angle']=r"$\Chi\;\mathrm{[rad]}$"
+    #         labels['alpha_1']=r"$\alpha_1\;[-]$"
+    #         labels['alpha_2']=r"$\alpha_2\;[-]$"
+    #         labels['alpha_3']=r"$\alpha_3\;[-]$"
+
+    #     if self.signal_phase_shift:
+    #         labels['phase_shift']=r"$phi_\mathrm{NICER}\;[cycles]$"
         
-        labels = {'radius': r"$R_{\mathrm{eq}}\;\mathrm{[km]}$",
-              'compactness': r"$M/R_{\mathrm{eq}}$",
-              'distance': r"$D \;\mathrm{[kpc]}$",
-              'cos_inclination': r"$\mathrm{cos}(i)$",           
-              'column_density': r"$N_\mathrm{H}\;[10^{21} \mathrm{cm}^{-2}]$",
-              'inclination_deg': r"$i\;\mathrm{[deg]}$"}
-        
-        
+    #     return labels
+
+
+    def labels(self):    
+        labels = {'radius': r"R_{\mathrm{eq}}\;\mathrm{[km]}",
+           'compactness': r"M/R_{\mathrm{eq}}",
+           'distance': r"D \;\mathrm{[kpc]}",
+           'cos_inclination': r"\mathrm{cos}(i)",           
+           'column_density': r"N_\mathrm{H}\;[10^{21} \mathrm{cm}^{-2}]",
+           'inclination_deg': r"i\;\mathrm{[deg]}"}
+     
+     
         if not self.secondary:
-            labels['phase_shift']       = r"$\phi\;\mathrm{[cycles]}$"
-            labels['super_colatitude']  = r"$\Theta_{spot}\;\mathrm{[rad]}$"
-            labels['colatitude_deg']    = r"$\theta\;\mathrm{[deg]}$",
-            labels['super_radius']      = r"$\zeta_{spot}\;\mathrm{[rad]}$"
-            labels['radius_deg']        = r"$\zeta\;\mathrm{[deg]}$"
-            labels['super_tbb']         = r"$T_\mathrm{seed}\;\mathrm{[data units]}$"
-            labels['tbb_keV']           = r"$T_\mathrm{seed}\;\mathrm{[keV]}$"
-            labels['super_te']          = r"$T_\mathrm{electrons}\;\mathrm{[data units]}$"
-            labels['te_keV']            = r"$T_\mathrm{e}\;\mathrm{[keV]}$"
-            labels['super_tau']         = r"$\tau\;[-]$"    
+            labels['phase_shift']       = r"\phi\;\mathrm{[cycles]}"
+            labels['super_colatitude']  = r"\Theta_{spot}\;\mathrm{[rad]}"
+            labels['colatitude_deg']    = r"\theta\;\mathrm{[deg]}"
+            labels['super_radius']      = r"\zeta_{spot}\;\mathrm{[rad]}"
+            labels['radius_deg']        = r"\zeta\;\mathrm{[deg]}"
+            labels['super_tbb']         = r"T_\mathrm{seed}\;\mathrm{[data units]}"
+            labels['tbb_keV']           = r"T_\mathrm{seed}\;\mathrm{[keV]}"
+            labels['super_te']          = r"T_\mathrm{electrons}\;\mathrm{[data units]}"
+            labels['te_keV']            = r"T_\mathrm{e}\;\mathrm{[keV]}"
+            labels['super_tau']         = r"\tau\;[-]"    
         elif self.secondary:
-            labels['p__phase_shift']       = r"$\phi_\mathrm{p}\;\mathrm{[cycles]}$"
-            labels['p__super_colatitude']  = r"$\Theta_\mathrm{p}\;\mathrm{[rad]}$"
-            labels['p__colatitude_deg']    = r"$\theta_\mathrm{p}\;\mathrm{[deg]}$",
-            labels['p__super_radius']      = r"$\zeta_\mathrm{p}\;\mathrm{[rad]}$"
-            labels['p__radius_deg']        = r"$\zeta_\mathrm{p}\;\mathrm{[deg]}$"
-            labels['p__super_tbb']         = r"$T_\mathrm{seed,p}\;\mathrm{[data units]}$"
-            labels['p__tbb_keV']           = r"$T_\mathrm{seed,p}\;\mathrm{[keV]}$"
-            labels['p__super_te']          = r"$T_\mathrm{e,p}\;\mathrm{[data units]}$"
-            labels['p__te_keV']            = r"$T_\mathrm{e,p}\;\mathrm{[keV]}$"
-            labels['p__super_tau']         = r"$\tau_\mathrm{p}\;[-]$"
+            labels['p__phase_shift']       = r"\phi_\mathrm{p}\;\mathrm{[cycles]}"
+            labels['p__super_colatitude']  = r"\Theta_\mathrm{p}\;\mathrm{[rad]}"
+            labels['p__colatitude_deg']    = r"\theta_\mathrm{p}\;\mathrm{[deg]}"
+            labels['p__super_radius']      = r"\zeta_\mathrm{p}\;\mathrm{[rad]}"
+            labels['p__radius_deg']        = r"\zeta_\mathrm{p}\;\mathrm{[deg]}"
+            labels['p__super_tbb']         = r"T_\mathrm{seed,p}\;\mathrm{[data units]}"
+            labels['p__tbb_keV']           = r"T_\mathrm{seed,p}\;\mathrm{[keV]}"
+            labels['p__super_te']          = r"T_\mathrm{e,p}\;\mathrm{[data units]}"
+            labels['p__te_keV']            = r"T_\mathrm{e,p}\;\mathrm{[keV]}"
+            labels['p__super_tau']         = r"\tau_\mathrm{p}\;[-]"
             
-            labels['s__phase_shift']       = r"$\phi_\mathrm{s}\;\mathrm{[cycles]}$"
-            labels['s__super_colatitude']  = r"$\Theta_\mathrm{s}\;\mathrm{[rad]}$"
-            labels['s__colatitude_deg']    = r"$\theta_\mathrm{s}\;\mathrm{[deg]}$",
-            labels['s__super_radius']      = r"$\zeta_\mathrm{s}\;\mathrm{[rad]}$"
-            labels['s__radius_deg']        = r"$\zeta_\mathrm{s}\;\mathrm{[deg]}$"
-            labels['s__super_tbb']         = r"$T_\mathrm{seed,s}\;\mathrm{[data units]}$"
-            labels['s__tbb_keV']           = r"$T_\mathrm{seed,s}\;\mathrm{[keV]}$"
-            labels['s__super_te']          = r"$T_\mathrm{e,s}\;\mathrm{[data units]}$"
-            labels['s__te_keV']            = r"$T_\mathrm{e,s}\;\mathrm{[keV]}$"
-            labels['s__super_tau']         = r"$\tau_\mathrm{s}\;[-]$"
+            labels['s__phase_shift']       = r"\phi_\mathrm{s}\;\mathrm{[cycles]}"
+            labels['s__super_colatitude']  = r"\Theta_\mathrm{s}\;\mathrm{[rad]}"
+            labels['s__colatitude_deg']    = r"\theta_\mathrm{s}\;\mathrm{[deg]}"
+            labels['s__super_radius']      = r"\zeta_\mathrm{s}\;\mathrm{[rad]}"
+            labels['s__radius_deg']        = r"\zeta_\mathrm{s}\;\mathrm{[deg]}"
+            labels['s__super_tbb']         = r"T_\mathrm{seed,s}\;\mathrm{[data units]}"
+            labels['s__tbb_keV']           = r"T_\mathrm{seed,s}\;\mathrm{[keV]}"
+            labels['s__super_te']          = r"T_\mathrm{e,s}\;\mathrm{[data units]}"
+            labels['s__te_keV']            = r"T_\mathrm{e,s}\;\mathrm{[keV]}"
+            labels['s__super_tau']         = r"\tau_\mathrm{s}\;[-]"
             
         
         if not self.fix_mass:
-            labels['mass'] =  r"$M\;\mathrm{[M}_{\odot}\mathrm{]}$"
+            labels['mass'] =  r"M\;\mathrm{[M}_{\odot}\mathrm{]}"
         
         if 'disk' in self.bkg:
-            labels['T_in'] = r"$T_{in} log10 of Kelvin$"
-            labels['T_in_keV'] = r"$T_\mathrm{in}\;\mathrm{[keV]}$"
-            labels['R_in'] =  r"$R_\mathrm{in}\;\mathrm{[km]}$"
+            # labels['T_in'] = r"T_{in} log10 of Kelvin"
+            labels['T_in_keV'] = r"T_\mathrm{in}\;\mathrm{[keV]}"
+            labels['R_in'] =  r"R_\mathrm{in}\;\mathrm{[km]}"
             
         if 'line' in self.bkg:
-            labels['mu'] = r"$\mu\;\mathrm{[keV]}$"
-            labels['sigma'] = r"$\sigma\;\mathrm{[keV]}$"
-            labels['N'] =  r"$N\;\mathrm{[photons/cm^2/s]}$"
-            labels['N_norm'] =  r"$N_\mathrm{norm}\;\mathrm{[photons/cm^2/s]}$"
-
+            labels['mu'] = r"\mu\;\mathrm{[keV]}"
+            labels['sigma'] = r"\sigma\;\mathrm{[keV]}"
+            labels['N'] =  r"N\;\mathrm{[photons/cm^2/s]}"
+            labels['N_norm'] =  r"N_\mathrm{norm}\;\mathrm{[photons/cm^2/s]}"
+           
         if self.polarization:
-            labels['spin_axis_position_angle']=r"$\Chi\;\mathrm{[rad]}$"
-            labels['alpha_1']=r"$\alpha_1\;[-]$"
-            labels['alpha_2']=r"$\alpha_2\;[-]$"
-            labels['alpha_3']=r"$\alpha_3\;[-]$"
-
+            labels['spin_axis_position_angle']=r"\Chi\;\mathrm{[rad]}"
+            labels['alpha_1']=r"\alpha_1\;[-]"
+            labels['alpha_2']=r"\alpha_2\;[-]"
+            labels['alpha_3']=r"\alpha_3\;[-]"
+           
         if self.signal_phase_shift:
-            labels['phase_shift']=r"$phi_\mathrm{NICER}\;[cycles]$"
+            labels['phase_shift']=r"phi_\mathrm{NICER}\;[cycles]"
         
         return labels

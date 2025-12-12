@@ -40,7 +40,8 @@ class analysis(object):
                  disk_blocking_data=True,
                  fix_inclination=False,
                  fix_theta_p=False,
-                 antipodal=False):
+                 antipodal=False,
+                 disk_emission=True):
         self.scenario = os.environ.get('scenario')
         if os.environ.get('scenario') == None or os.environ.get('scenario') =='None':
             print('scenario is not in environment variables, using passed argument.')
@@ -167,9 +168,10 @@ class analysis(object):
             else:
                 self.disk_blocking_data = False
             print(f'disk_blocking_data: {self.disk_blocking_data}')
-        elif self.bkg == 'fix': # if no disk in bkg then both of these are false
+        elif self.bkg == 'fix': # if no disk in bkg then these are false
             self.disk_blocking = False
             self.disk_blocking_data = False
+            self.disk_emission = False
             print('No disk in the model so disk blocking and disk blocking data are False')
 
         if os.environ.get('fix_inclination') == None or os.environ.get('fix_inclination') =='None':
@@ -207,10 +209,21 @@ class analysis(object):
         else:
             self.antipodal = False
         print(f'antipodal: {self.antipodal}')
-        
+
+        if os.environ.get('disk_emission') == None or os.environ.get('disk_emission') =='None':
+            print('disk_emission is not in environment variables, using passed argument.')
+            self.disk_emission = disk_emission
+        else:
+            self.disk_emission = os.environ.get('disk_emission')
+
+        if self.disk_emission == "True" or self.disk_emission == True:
+            self.disk_emission = True
+        else:
+            self.disk_emission = False
+        print(f'disk_emission: {self.disk_emission}')        
 
 
-        self.pv = parameter_values(self.scenario, self.bkg, self.fix_inclination, self.fix_theta_p, self.antipodal)
+        self.pv = parameter_values(self.scenario, self.bkg, self.fix_inclination, self.fix_theta_p, self.antipodal, self.disk_emission)
         self.disk_combined = disk_combined
     
         self.file_locations()
@@ -230,8 +243,8 @@ class analysis(object):
     def file_locations(self):
         self.this_directory = this_directory
 
-        if self.scenario == 'molkov':
-           self.file_pulse_profile = self.this_directory + f'/data/synthetic_{self.scenario}_seed={self.poisson_seed}_bkg={self.bkg}_disk_blocking={self.disk_blocking_data}_realisation.dat'
+        if 'molkov' in self.scenario:
+           self.file_pulse_profile = self.this_directory + f'/data/synthetic_{self.scenario}_seed={self.poisson_seed}_bkg={self.bkg}_disk_blocking={self.disk_blocking_data}_disk_emission={self.disk_emission}_realisation.dat'
            self.file_arf = self.this_directory + '/../model_data/instrument_data/J1808_NICER_2019/merged_saxj1808_2019_arf_aeff.txt'
            self.file_rmf = self.this_directory + '/../model_data/instrument_data/J1808_NICER_2019/merged_saxj1808_2019_rmf_matrix.txt'
            self.file_channel_edges = self.this_directory + '/../model_data/instrument_data/J1808_NICER_2019/merged_saxj1808_2019_rmf_energymap.txt'
@@ -247,7 +260,7 @@ class analysis(object):
         self.bounds = self.pv.bounds()
 
     def set_data(self):
-        if self.scenario == 'molkov':
+        if 'molkov' in self.scenario:
             self.exposure_time = 1.32366e5 #Mason's 2019 data cut
         
         self.phases_space = np.linspace(0.0, 1.0, 33)
@@ -407,7 +420,8 @@ class analysis(object):
                                                      stokes=False, 
                                                      disk=self.disk, 
                                                      disk_combined=self.disk_combined,
-                                                     disk_blocking=self.disk_blocking, #override needed here to test specific case of disk emission without blocking.
+                                                     disk_blocking=self.disk_blocking,  # to test disk emission without blocking.
+                                                     disk_emission=self.disk_emission,  # to test disk blocking without emission 
                                                      values=dict(mode_frequency = self.spacetime['frequency']))
 
         self.photosphere.hot_atmosphere = self.file_atmosphere
@@ -447,15 +461,20 @@ class analysis(object):
         
     def set_disk(self):
         from Disk import Disk, k_disk_derive
-        if 'disk' in self.bkg:    
-            bounds = dict(T_in = self.bounds["T_in"],
-                          R_in = self.bounds["R_in"],
-                          K_disk = None) #derived means no bounds
-                
-            self.k_disk = k_disk_derive()
-            self.disk = Disk(bounds=bounds, values={'K_disk': self.k_disk})
-            self.k_disk.disk = self.disk
-            
+        if 'disk' in self.bkg: 
+            if self.disk_emission:  # regular disk
+                bounds = dict(T_in = self.bounds["T_in"],
+                              R_in = self.bounds["R_in"],
+                              K_disk = None) #derived means no bounds
+                    
+                self.k_disk = k_disk_derive()
+                self.disk = Disk(bounds=bounds, values={'K_disk': self.k_disk})
+                self.k_disk.disk = self.disk
+            elif not self.disk_emission: # here we have a disk that doesn't emit.
+                values = dict(T_in = self.pv.diskbb_T_log10_K,
+                              K_disk = 0.)
+                bounds = dict(R_in = self.bounds["R_in"])
+                self.disk = Disk(bounds=bounds, values=values)
         else:
             self.disk = None
             
@@ -490,39 +509,56 @@ class analysis(object):
     def set_likelihood(self):
         self.set_spacetime() # self.spacetime is defined here
         self.set_photosphere() # self.k_disk is defined here
-        if 'disk' in self.bkg:
+        if 'disk' in self.bkg and self.disk_emission:
             self.k_disk.spacetime = self.spacetime
         self.set_star() # star is defined afterwards
         self.set_signal()
         self.set_prior()
         
-        self.likelihood = xpsi.Likelihood(star = self.star, signals = self.signal,
-                  num_energies=self.num_energies, #128
-                                      threads=1,
-                                      prior=self.prior,
-                                      externally_updated=True)
+        self.likelihood = xpsi.Likelihood(star = self.star, 
+                                          signals = self.signal,
+                                          num_energies=self.num_energies, #128
+                                          threads=1,
+                                          prior=self.prior,
+                                          externally_updated=True)
 
-        if 'disk' in self.bkg:
+        if self.scenario == 'molkov':
+            if 'disk' in self.bkg:
+                if self.disk_blocking:
+                    if self.disk_emission:
+                        if self.disk_blocking_data:
+                            if self.poisson_seed == 42:
+                                true_logl = 8.4477844590e+06
+                            elif self.poisson_seed == 0:
+                                true_logl = 8.3576023198e+06
+                            elif self.poisson_seed == 1:
+                                true_logl = 8.3700049781e+06
+                            elif self.poisson_seed == 2:
+                                true_logl = 8.3725179573e+06
+                        elif not self.disk_blocking_data:
+                            true_logl = 8.7794279263e+06
+                    elif not self.disk_emission:
+                        true_logl = 6.2949406941e+06
+                elif not self.disk_blocking:
+                    if self.disk_emission:
+                        if self.disk_blocking_data:
+                            true_logl = 8.4458511928e+06
+                        elif not self.disk_blocking_data:
+                            true_logl = 8.7824890157e+06
+                    elif not self.disk_emission:
+                        true_logl = 6.2928043316e+06
+            elif self.bkg == 'fix':
+                if self.poisson_seed == 42:
+                    true_logl = 6.6155332721e+06
+        elif self.scenario == 'molkov_pcol60':
             if self.disk_blocking:
-                if self.disk_blocking_data:
-                    if self.poisson_seed == 42:
-                        true_logl = 8.3680599615e+06
-                    elif self.poisson_seed == 0:
-                        true_logl = 8.3576023198e+06
-                    elif self.poisson_seed == 1:
-                        true_logl = 8.3700049781e+06
-                    elif self.poisson_seed == 2:
-                        true_logl = 8.3725179573e+06
-                elif not self.disk_blocking_data:
-                    true_logl = 8.7794279263e+06
+                    true_logl = 9.6610133661e+06
             elif not self.disk_blocking:
                 if self.disk_blocking_data:
-                    true_logl = 8.3650673477e+06
+                    true_logl = 9.6609131866e+06
                 elif not self.disk_blocking_data:
-                    true_logl = 8.7824890157e+06
-        elif self.bkg == 'fix':
-            if self.poisson_seed == 42:
-                true_logl = 6.6155332721e+06
+                    if not self.disk_emission:
+                        true_logl = 7.5433358429e+06
         self.true_logl = true_logl
     
     def __call__(self):
@@ -554,7 +590,7 @@ class analysis(object):
         fig.colorbar(im0, ax=axes[0])
         im1 = CustomAxes.plot_2D_counts(axes[1], self.signal.expected_counts, get_mids_from_edges(self.data.phases),  get_mids_from_edges(self.instrument.channel_edges))
         fig.colorbar(im1, ax=axes[1])
-        im2 = CustomAxes.plot_2D_counts(axes[2], self.data.counts-self.signal.expected_counts, get_mids_from_edges(self.data.phases), get_mids_from_edges(self.instrument.channel_edges))
+        im2 = CustomAxes.plot_2D_counts(axes[2], (self.data.counts-self.signal.expected_counts)/np.sqrt(self.signal.expected_counts), get_mids_from_edges(self.data.phases), get_mids_from_edges(self.instrument.channel_edges))
         fig.colorbar(im2, ax=axes[2])
         
         fig.tight_layout()
@@ -634,14 +670,15 @@ class analysis(object):
 
 if __name__ == '__main__':
     Analysis = analysis('local',
-                        'sample',
+                        'test',
                         'disk', 
                         scenario='molkov', 
                         support_factor='None',
-                        disk_blocking=True, 
+                        disk_blocking=False, 
                         disk_blocking_data=True, 
                         fix_inclination=True, 
                         fix_theta_p=True,
                         antipodal=True,
+                        disk_emission=False,
                         poisson_seed=42)
     Analysis()

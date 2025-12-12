@@ -12,7 +12,7 @@ import xpsi
 np.random.seed(xpsi._rank+10)
 print('Rank reporting: %d' % xpsi._rank)
 
-from CustomPrior import CustomPrior_STU as CustomPrior
+from CustomPrior import CustomPrior_twohotspots as CustomPrior
 from CustomInstrument import CustomInstrument_fits, CustomInstrument_stokes
 from CustomPhotosphere import CustomPhotosphereDiskLine
 from CustomInterstellar import CustomInterstellar
@@ -187,10 +187,9 @@ class analysis(object):
             self.channel_min = int(os.environ.get('channel_min'))
         print(f'channel_min: {self.channel_min}') 
 
-        secondary_boolean = True
         self.NICER = NICER
         self.signal_phase_shift = True
-        self.pv = parameter_values(self.scenario, self.bkg, self.fix_mass, polarization=self.polarization, secondary=secondary_boolean, signal_phase_shift=self.signal_phase_shift)
+        self.pv = parameter_values(self.scenario, self.bkg, self.fix_mass, polarization=self.polarization, signal_phase_shift=self.signal_phase_shift)
         self.file_locations()
         self.set_parameter_vector()
         self.set_bounds()
@@ -202,7 +201,7 @@ class analysis(object):
         
         if self.scenario in ('large_r', 'small_r', 'J1444s'):
             self.file_pulse_profile = self.this_directory + f'/data/NICER_products/data/{self.scenario}_seed={self.poisson_seed}_ch{self.channel_min}_realisation.dat'
-        if self.scenario == 'J1444':
+        if self.scenario in ('J1444', 'J1444_STU', 'J1444_STS'):
             self.file_pulse_profile = self.this_directory + f'/data/NICER_products/data/J1444_preprocessed_ch{self.channel_min}.txt'
        
         self.RMF_file = self.this_directory+'/data/NICER_products/srgaj1444.rmf'
@@ -226,7 +225,7 @@ class analysis(object):
             self.exposure_time = 1.32366e5 #Mason's 2019 data cut
         if self.scenario == '2022':
             self.exposure_time = 7.13422e4 #Mason's 2022 data cut
-        if self.scenario in ('J1444','J1444s'):
+        if 'J1444' in self.scenario:
             self.exposure_time = 24823.7
         
         self.phases_space = np.linspace(0.0, 1.0, 33)
@@ -492,15 +491,15 @@ class analysis(object):
                   'atm_ext':'Num5D',
                   'prefix': 'p'}
         
-        self.p_bounds = dict(super_colatitude = self.bounds["super_colatitude"],
-                                super_radius = self.bounds["super_radius"],
-                                phase_shift = self.bounds["phase_shift"], 
-                                super_tbb = self.bounds['super_tbb'],
-                                super_tau = self.bounds['super_tau'],
-                                super_te = self.bounds['super_te'])
+        self.p_bounds = dict(super_colatitude = self.bounds["p__super_colatitude"],
+                                super_radius = self.bounds["p__super_radius"],
+                                phase_shift = self.bounds["p__phase_shift"], 
+                                super_tbb = self.bounds['p__super_tbb'],
+                                super_tau = self.bounds['p__super_tau'],
+                                super_te = self.bounds['p__super_te'])
         self.p_values = {}
         
-        primary = CustomHotRegion_Accreting(self.p_bounds, self.p_values, **self.p_kwargs)
+        self.primary = CustomHotRegion_Accreting(self.p_bounds, self.p_values, **self.p_kwargs)
 
 
         self.s_kwargs = {'symmetry': True, #call for azimuthal invariance
@@ -517,17 +516,89 @@ class analysis(object):
                   'is_antiphased': True,
                   'prefix': 's'}
         
-        self.s_bounds = dict(super_colatitude = self.bounds["super_colatitude"],
-                                super_radius = self.bounds["super_radius"],
-                                phase_shift = self.bounds["phase_shift"], 
-                                super_tbb = self.bounds['super_tbb'],
-                                super_tau = self.bounds['super_tau'],
-                                super_te = self.bounds['super_te'])
-        self.s_values = {}
-        
-        secondary = CustomHotRegion_Accreting(self.s_bounds, self.s_values, **self.s_kwargs)
+        if self.scenario == 'J1444_STU':  
+            self.s_bounds = dict(super_colatitude = self.bounds["super_colatitude"],
+                                    super_radius = self.bounds["super_radius"],
+                                    phase_shift = self.bounds["phase_shift"], 
+                                    super_tbb = self.bounds['super_tbb'],
+                                    super_tau = self.bounds['super_tau'],
+                                    super_te = self.bounds['super_te'])
+            self.s_values = {}
+        elif self.scenario == 'J1444_STS':
+            class derive_s__super_colatitude(Derive):
+                def __init__(self):
+                    pass
 
-        self.hot = xpsi.HotRegions((primary,secondary))
+                def __call__(self, boundto, caller=None):
+                    return np.pi - self.primary['super_colatitude']
+                
+            class derive_s__super_radius(Derive):
+                def __init__(self):
+                    pass
+
+                def __call__(self, boundto, caller=None):
+                    return self.primary['super_radius']    
+                
+            class derive_s__phase_shift(Derive):
+                def __init__(self):
+                    pass
+
+                def __call__(self, boundto, caller=None):
+                    return self.primary['phase_shift']
+                
+            class derive_s__super_tbb(Derive):
+                def __init__(self):
+                    pass
+
+                def __call__(self, boundto, caller=None):
+                    return self.primary['super_tbb']
+            
+            class derive_s__super_tau(Derive):
+                def __init__(self):
+                    pass
+
+                def __call__(self, boundto, caller=None):
+                    return self.primary['super_tau']
+            
+            class derive_s__super_te(Derive):
+                def __init__(self):
+                    pass
+
+                def __call__(self, boundto, caller=None):
+                    return self.primary['super_te']
+                
+            derive_colatitude = derive_s__super_colatitude()
+            derive_radius = derive_s__super_radius()
+            derive_phase = derive_s__phase_shift()
+            derive_tbb = derive_s__super_tbb()
+            derive_tau = derive_s__super_tau()
+            derive_te = derive_s__super_te()
+            
+            self.s_values = {'super_colatitude': derive_colatitude,
+                             'super_radius': derive_radius,
+                             'phase_shift': derive_phase,
+                             'super_tbb': derive_tbb,
+                             'super_tau': derive_tau,
+                             'super_te': derive_te}
+            
+            derive_colatitude.primary = self.primary
+            derive_radius.primary = self.primary
+            derive_phase.primary = self.primary
+            derive_tbb.primary = self.primary
+            derive_tau.primary = self.primary
+            derive_te.primary = self.primary
+            
+            self.s_bounds = dict(super_colatitude = None,
+                                    super_radius = None,
+                                    phase_shift = None, 
+                                    super_tbb = None,
+                                    super_tau = None,
+                                    super_te = None)
+            
+        
+        self.secondary = CustomHotRegion_Accreting(self.s_bounds, self.s_values, **self.s_kwargs)
+
+        self.hot = xpsi.HotRegions((self.primary,self.secondary))
 
     def set_elsewhere(self):
         self.elsewhere = xpsi.Elsewhere(bounds=dict(elsewhere_temperature = self.bounds['elsewhere_temperature']))
@@ -807,24 +878,17 @@ class analysis(object):
             # true_logl = 1.8733692430e+05 #nonoise, low res data
             # true_logl = 1.8742408005e+05 #low res data
             # true_logl = 1.8751140823e+05
-        if self.scenario == 'J1444':
+        if self.scenario in ('J1444', 'J1444_STS'):
             if self.channel_min == 20:
                 true_logl = 1.3525318684e+07
             elif self.channel_min == 100:
                 true_logl = 1.3594326983e+07
                 if self.polarization == 'iqu':
                     true_logl = 1.0198724313e+07
-        
-            
-        if self.scenario == 'small_r':
-            if self.polarization == 'qu':
-                true_logl = 7.9265139733e+07 # with IXPE qu
-            elif self.polarization == 'iqu':
-                true_logl = 7.9265007576e+07 # with IXPE iqu
-            elif not self.polarization:
-                true_logl = 7.9265215141e+07 #without IXPE
+
+
         self.true_logl = true_logl
-    
+        
     def __call__(self):
 
     
@@ -883,7 +947,8 @@ class analysis(object):
             if self.sampler == 'multi':
                 wrapped_params = [0]*len(self.likelihood)
                 wrapped_params[self.likelihood.index('p__phase_shift')] = 1
-                wrapped_params[self.likelihood.index('s__phase_shift')] = 1
+                if self.scenario == 'J1444_STU':
+                    wrapped_params[self.likelihood.index('s__phase_shift')] = 1
                 outputfiles_basename = f'./{folderstring}/run_ST_'
                 runtime_params = {'resume': False,
                                   'importance_nested_sampling': False,
@@ -952,10 +1017,10 @@ class analysis(object):
             
 if __name__ == '__main__':
     Analysis = analysis('local', 
-                        'sample', 
+                        'test', 
                         'disk', 
                         sampler='multi', 
-                        scenario='J1444', 
+                        scenario='J1444_STS', 
                         support_factor='100', 
                         poisson_seed=42, 
                         eos_informed=True, 

@@ -39,7 +39,8 @@ class analysis(object):
                  fix_mass=False, 
                  eos_informed=False, 
                  polarization=False,
-                 channel_min=None):
+                 channel_min=None,
+                 fix_nonshared=True):
 
         self.scenario = os.environ.get('scenario')
         if os.environ.get('scenario') == None or os.environ.get('scenario') =='None':
@@ -188,8 +189,9 @@ class analysis(object):
             self.channel_min = int(os.environ.get('channel_min'))
         print(f'channel_min: {self.channel_min}') 
 
+        self.fix_nonshared=fix_nonshared
         secondary = True
-        self.pv = parameter_values(self.scenario, self.bkg, self.fix_mass, polarization=self.polarization, secondary=secondary)
+        self.pv = parameter_values(self.scenario, self.bkg, self.fix_mass, polarization=self.polarization, secondary=secondary, fix_nonshared=self.fix_nonshared)
         self.file_locations()
         self.set_parameter_vector()
         self.set_bounds()
@@ -251,43 +253,6 @@ class analysis(object):
                         exposure_time=self.exposure_time)
 
         self.NICER_data = xpsi.Data(**settings)
-        
-    def set_data_IXPE(self):
-        from ixpe_read_pcube3 import readData_pcube_ebin
-
-        fname_ixpedata = this_directory+"/data/ixpe_products/ixpeobssimdata_scenarioB/pcube_10bin/model_amsp_xpsi"
-        fname_ixpedata_pulse = this_directory+"/data/ixpe_products/ixpeobssimdata_scenarioB/pcube_20bin/model_amsp_xpsi"
-        
-        
-        
-        phase_IXPE, Idat1, qn, un, Iderr1, qnerr, unerr, PD, PDerr, keVdat, MDP99 = readData_pcube_ebin(fname_ixpedata, NPhadat=10)
-        phase_IXPE_pulse, Idat2, qn2, un2, Iderr2, qnerr2, unerr2, PD2, PDerr2, keVdat2, MDP99_2 = readData_pcube_ebin(fname_ixpedata_pulse, NPhadat=20)
-        
-        
-        self.IXPE_I_data = xpsi.Data([Idat2[:,0]/np.max(Idat2[:,0])],
-                               channels=np.arange(0, 1),
-                               phases=np.linspace(0,1,len(phase_IXPE_pulse)+1),
-                               first=0,
-                               last=0,
-                               exposure_time=1.0)
-        self.IXPE_Q_data = xpsi.Data([qn[:,0]],
-                               channels=np.arange(0, 1),
-                               phases=np.linspace(0,1,len(phase_IXPE)+1),
-                               first=0,
-                               last=0,
-                               exposure_time=1.0)
-        self.IXPE_U_data = xpsi.Data([un[:,0]],
-                               channels=np.arange(0, 1),
-                               phases=np.linspace(0,1,len(phase_IXPE)+1),
-                               first=0,
-                               last=0,
-                               exposure_time=1.0)
-        
-        self.IXPE_Q_data.phase_IXPE = phase_IXPE
-        self.IXPE_U_data.phase_IXPE = phase_IXPE
-        self.IXPE_I_data.phase_IXPE_pulse = phase_IXPE_pulse
-        self.IXPE_I_data.errors, self.IXPE_Q_data.errors, self.IXPE_U_data.errors = Iderr2/np.max(Idat2[:,0]), qnerr, unerr
-                
             
     def set_instrument_NICER(self):
         self.NICER = CustomInstrument_fits.from_response_files(
@@ -297,16 +262,6 @@ class analysis(object):
             min_detection_channel = self.channel_low, 
             max_input = self.max_input, #around the maximum
             min_input = self.min_input)
-
-    def set_instrument_IXPE(self):
-        self.IXPE = CustomInstrument_stokes.from_response_files(MRF = this_directory+'/data/ixpe_products/ixpe_d1_obssim_v012.mrf',
-                                             RMF = this_directory+'/data/ixpe_products/ixpe_d1_obssim_v012.rmf',
-                                             max_input = 275,
-                                             max_channel = 200,
-                                             min_input = 0,
-                                             min_channel = 50,
-                                             channel_edges = None)
-
 
     def set_spacetime(self):
         fix_mass = self.fix_mass
@@ -344,13 +299,13 @@ class analysis(object):
                   'atm_ext':'Num5D',
                   'prefix': 'p'}
         
-        self.p_bounds = dict(super_colatitude = self.bounds["p__super_colatitude"],
-                                super_radius = self.bounds["p__super_radius"],
-                                phase_shift = self.bounds["p__phase_shift"], 
-                                super_tbb = self.bounds['p__super_tbb'],
-                                super_tau = self.bounds['p__super_tau'],
-                                super_te = self.bounds['p__super_te'])
-        self.p_values = {}
+        self.p_bounds = {}
+        self.p_values = dict(super_colatitude = self.pv.super_colatitude,
+                             super_radius = self.pv.super_radius,
+                             phase_shift = self.pv.phase_shift,
+                             super_tbb = self.pv.tbb,
+                             super_tau = self.pv.tau,
+                             super_te = self.pv.te)
         
         primary = CustomHotRegion_Accreting(self.p_bounds, self.p_values, **self.p_kwargs)
 
@@ -369,32 +324,28 @@ class analysis(object):
                   'is_antiphased': True,
                   'prefix': 's'}
         
-        self.s_bounds = dict(super_colatitude = self.bounds["s__super_colatitude"],
-                                super_radius = self.bounds["s__super_radius"],
-                                phase_shift = self.bounds["s__phase_shift"], 
-                                super_tbb = self.bounds['s__super_tbb'],
-                                super_tau = self.bounds['s__super_tau'],
-                                super_te = self.bounds['s__super_te'])
-        self.s_values = {}
+        self.s_bounds = {}
+        self.s_values = dict(super_colatitude = self.pv.super_colatitude_s,
+                             super_radius = self.pv.super_radius_s,
+                             phase_shift = self.pv.phase_shift_s,
+                             super_tbb = self.pv.tbb_s,
+                             super_tau = self.pv.tau_s,
+                             super_te = self.pv.te_s)
         
         secondary = CustomHotRegion_Accreting(self.s_bounds, self.s_values, **self.s_kwargs)
 
         self.hot = xpsi.HotRegions((primary,secondary))
 
-    def set_elsewhere(self):
-        self.elsewhere = xpsi.Elsewhere(bounds=dict(elsewhere_temperature = self.bounds['elsewhere_temperature']))
-        
     def set_photosphere(self):
         self.set_hotregions()
         self.set_disk()
-        self.set_line()
         
         photosphere_bounds = dict(spin_axis_position_angle = (None, None))
         self.photosphere = CustomPhotosphereDiskLine(hot = self.hot, 
                                                      elsewhere = None, 
                                                      stokes=True if self.polarization else False, 
                                                      disk=self.disk, 
-                                                     line=self.line,
+                                                     line=None,
                                                      values=dict(mode_frequency = self.spacetime['frequency']), 
                                                      bounds=photosphere_bounds)
 
@@ -410,132 +361,58 @@ class analysis(object):
         bounds = self.bounds['column_density']
         values = None #self.pv.column_density
         self.interstellar=CustomInterstellar.from_SWG(self.file_interstellar, bounds=bounds, value=values)
-    
-    def set_support(self):
-        support_factor = self.support_factor
-        if support_factor == "None" or support_factor == None:
-            self.support = None
-        else:
-            data_spectrum = np.sum(self.NICER_data.counts, axis=1)/self.NICER_data.exposure_time        
 
-            support_factor = float(support_factor)
-            self.bg_spectrum = np.loadtxt(self.file_bkg)
-    
-            allowed_deviation_factor = support_factor  # used to be 1. + support_factor
-    
-            support = np.zeros((len(self.bg_spectrum), 2), dtype=np.double)
-            support[:,0] = self.bg_spectrum/allowed_deviation_factor #lower limit
-            support[support[:,0] < 0.0, 0] = 0.0
-            support[:,1] = np.minimum(self.bg_spectrum*allowed_deviation_factor, data_spectrum) #upper limit
-    
-            for i in range(support.shape[0]):
-                if support[i,1] == 0.0:
-                    for j in range(i, support.shape[0]):
-                        if support[j,1] > 0.0:
-                            support[i,0] = support[j,1]
-                            break
-            
-            self.support = support
         
         
     def set_disk(self):
         from Disk import Disk, k_disk_derive
         if 'disk' in self.bkg:    
-            bounds = dict(#T_in = get_T_in_log10_Kelvin(self.bounds["T_in"]),
-                          T_in_keV = self.bounds["T_in_keV"],
-                          R_in = self.bounds["R_in"],
-                          K_disk = None) #derived means no bounds
-                
-            self.k_disk = k_disk_derive()
-            self.disk = Disk(bounds=bounds, values={'K_disk': self.k_disk})
-            self.k_disk.disk = self.disk
+            bounds = dict(R_in=self.bounds['R_in'])
+            self.k_disk_NICER = k_disk_derive()
+            self.k_disk_IXPE = k_disk_derive()
+            values_NICER=dict(T_in_keV = self.pv.T_in_keV,
+                        K_disk=self.k_disk_NICER) #derived means no bounds
+            values_IXPE=dict(T_in_keV = self.pv.T_in_keV,
+                        K_disk=self.k_disk_NICER) #derived means no bounds
+            
+            self.disk_NICER = Disk(bounds=bounds, values=values_NICER, prefix='NICER')
+            self.disk_IXPE =  Disk(bounds=bounds, values=values_IXPE, prefix='IXPE')
+            
+            self.k_disk_NICER.disk = self.disk_NICER
+            self.k_disk_IXPE.disk = self.disk_IXPE
+            
+            self.disk = [self.disk_NICER, self.disk_IXPE]
             
         else:
             self.disk = None
-            
-    def set_line(self):
-        from GaussianLine import GaussianLine
-              
-        if 'line' in self.bkg:
-            line_values = {}
-            
-            line_bounds = dict(
-                mu = self.bounds['mu'],
-                sigma = self.bounds['sigma'],
-                N = self.bounds['N'],
-                )
-                
-            self.line = GaussianLine(bounds=line_bounds, values=line_values)
-        else:
-            self.line = None
 
     def set_signal(self):
         self.set_data_NICER()
         self.set_instrument_NICER()
-        self.set_support()
         
         self.signal_NICER = CustomSignal(data = self.NICER_data,
                             instrument = self.NICER,
                             background = None,
                             interstellar = self.interstellar,
-                            support = self.support,
+                            support = None,
                             cache = False, # only true if verifying code implementation otherwise useless slowdown.
                             bkg = self.bkg,
                             epsrel = 1.0e-8,
                             epsilon = 1.0e-3,
                             sigmas = 10.0)
-    
-        if self.polarization:
-            if 'qu' in self.polarization:
-                self.set_data_IXPE()
-                self.set_instrument_IXPE()
-                self.signals = [[self.signal_NICER],] # to apply disk correctly to signal, NICER must be first element.
-            if 'i' in self.polarization:
-                signalI = CustomSignal_gaussian(data = self.IXPE_I_data,
-                                                instrument = self.IXPE,
-                                                interstellar = self.interstellar,
-                                                workspace_intervals = 1000,
-                                                cache = False,
-                                                epsrel = 1.0e-8,
-                                                epsilon = 1.0e-3,
-                                                sigmas = 10.0,
-                                                support = None,
-                                                stokes="I")
-                self.signals[0].append(signalI)
-            signalQ = CustomSignal_gaussian(data = self.IXPE_Q_data,
-                                    instrument = self.IXPE,
-                                    interstellar = self.interstellar,
-                                    workspace_intervals = 1000,
-                                    cache = False,
-                                    epsrel = 1.0e-8,
-                                    epsilon = 1.0e-3,
-                                    sigmas = 10.0,
-                                    support = None,
-                                    stokes="Q")
-            self.signals[0].append(signalQ)
-            signalU = CustomSignal_gaussian(data = self.IXPE_U_data,
-            	                instrument = self.IXPE,
-            	                interstellar = self.interstellar,
-            	                workspace_intervals = 1000,
-            	                cache = False,
-            	                epsrel = 1.0e-8,
-            	                epsilon = 1.0e-3,
-            	                sigmas = 10.0,
-            	                support = None,
-            	                stokes="U")
-            self.signals[0].append(signalU)
 
     def set_parameter_vector(self):
         self.p = self.pv.p()
 
     def set_prior(self):
-        self.prior = CustomPrior(self.scenario, self.bkg, fix_mass = self.fix_mass, eos_informed=self.eos_informed)
+        self.prior = CustomPrior(self.scenario, self.bkg, fix_mass = self.fix_mass, eos_informed=self.eos_informed, fix_nonshared=self.fix_nonshared)
         
     def set_likelihood(self):
         self.set_spacetime() # self.spacetime is defined here
         self.set_photosphere() # self.k_disk is defined here
         if 'disk' in self.bkg:
-            self.k_disk.spacetime = self.spacetime
+            self.k_disk_NICER.spacetime = self.spacetime
+            self.k_disk_IXPE.spacetime = self.spacetime
         self.set_star() # star is defined afterwards
         self.set_signal()
         self.set_prior()
@@ -583,9 +460,9 @@ class analysis(object):
     
     def __call__(self):
         
-        # start call with a likelihood check
+        # alow failure in check (the disk is not correctly calculated)
         t_check = time.time()
-        self.likelihood.check(None, [self.true_logl], 1.0e-6, physical_points=[self.p], force_update=True)
+        self.likelihood.check(None, [self.true_logl], 1.0e6, physical_points=[self.p], force_update=True)
         print('Likelihood check took {:.3f} seconds'.format((time.time()-t_check)))
         
         

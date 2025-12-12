@@ -265,4 +265,6 @@ class k_disk_derive(Derive):
         pass
 
     def __call__(self, boundto, caller = None):
-        return get_k_disk(self.spacetime['cos_inclination'], self.disk['R_in'], self.spacetime['distance'])
+        return get_k_disk(self.spacetime['cos_inclination'], 
+                          self.disk['R_in'], 
+                          self.spacetime['distance'])

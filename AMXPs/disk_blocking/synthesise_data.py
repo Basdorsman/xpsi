@@ -29,7 +29,6 @@ from xpsi.global_imports import gravradius
 from Disk import Disk, k_disk_derive
 from CustomPrior import CustomPrior
 from CustomInstrument import CustomInstrument
-from CustomHotRegions import CustomHotRegions as HotRegions
 from CustomHotRegion import CustomHotRegion
 from CustomPhotosphere import CustomPhotosphere
 from CustomInterstellar import CustomInterstellar
@@ -65,7 +64,8 @@ class SynthesiseData(xpsi.Data):
 
 
 bkg = 'disk' #disk or fix if no disk
-disk_blocking=False # use disk occultation or not
+disk_blocking=True # use disk occultation or not
+disk_emission=False
 
 try:
     os.environ.get('machine')
@@ -84,7 +84,7 @@ except:
     scenario = 'molkov'
   
 
-pv = parameter_values(scenario, bkg)
+pv = parameter_values(scenario, bkg, disk_emission=disk_emission)
 bounds = pv.bounds()
 names = pv.names()
 p = pv.p()
@@ -192,7 +192,7 @@ primary = CustomHotRegion(primary_bounds, values, **p_kwargs)
 secondary = CustomHotRegion(secondary_bounds, values, **s_kwargs)
 
 
-hot = HotRegions((primary,secondary))
+hot = xpsi.HotRegions((primary,secondary))
 
 
 ################################### ELSEWHERE ################################
@@ -203,10 +203,13 @@ hot = HotRegions((primary,secondary))
 ############################### DISK ####################################
 
 if 'disk' in bkg:
-    k_disk = k_disk_derive()
-    disk = Disk(bounds=bounds, values={'K_disk': k_disk})
-    k_disk.spacetime = spacetime
-    k_disk.disk = disk
+    if disk_emission:
+        k_disk = k_disk_derive()
+        disk = Disk(bounds=bounds, values={'K_disk': k_disk})
+        k_disk.spacetime = spacetime
+        k_disk.disk = disk
+    elif not disk_emission:
+        disk = Disk(values = dict(T_in = pv.diskbb_T_log10_K, K_disk = 0.), bounds = dict(R_in = bounds["R_in"]))
 elif bkg=='fix':
     disk=None
 
@@ -220,6 +223,7 @@ photosphere = CustomPhotosphere(hot = hot,
                                         disk=disk,
                                         disk_combined=True,
                                         disk_blocking=disk_blocking,
+                                        disk_emission=disk_emission,
                                         values=dict(mode_frequency = spacetime['frequency']))
 # LOCAL
 if machine=='local':
@@ -232,8 +236,6 @@ elif machine=='snellius':
 ################################### STAR ######################################
 
 star = xpsi.Star(spacetime = spacetime, photospheres = photosphere)
-if 'disk' in bkg:
-    k_disk.star = star
 
 
 #################################### PRIOR ####################################
@@ -284,7 +286,7 @@ if poisson_noise:
 
 Instrument_kwargs = dict(exposure_time=exposure_time,
                          seed=seed, 
-                         name=f'synthetic_{scenario}_seed={seed}_bkg={bkg}_disk_blocking={disk_blocking}',
+                         name=f'synthetic_{scenario}_seed={seed}_bkg={bkg}_disk_blocking={disk_blocking}_disk_emission={disk_emission}',
                          directory='./data/')
 
 
@@ -301,7 +303,7 @@ if __name__ == '__main__':
     ########## DATA PLOT ###############
     
     
-    my_data=np.loadtxt(f'./data/synthetic_{scenario}_seed={poisson_seed}_bkg={bkg}_disk_blocking={disk_blocking}_realisation.dat')
+    my_data=np.loadtxt(f'./data/synthetic_{scenario}_seed={poisson_seed}_bkg={bkg}_disk_blocking={disk_blocking}_disk_emission={disk_emission}_realisation.dat')
     
     
     

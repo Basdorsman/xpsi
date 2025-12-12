@@ -8,19 +8,11 @@ import numpy as np
 from scipy.integrate import quad
 
 
-class Disk(ParameterSubspace):
-    
-    def __init__(self, bounds=None, values=None): # , interstellar = None):
 
-        # doc = """
-        # Temperature at inner disk radius in log10 Kelvin.
-        # """
-        # inner_temperature = Parameter('T_in',
-        #                         strict_bounds = (3., 10.),
-        #                         bounds = bounds.get('T_in', None),
-        #                         doc = doc,
-        #                         symbol = r'$T_{in}$',
-        #                         value = values.get('T_in', None))
+
+
+class Disk(ParameterSubspace):
+    def __init__(self, bounds=None, values=None, **kwargs): # , interstellar = None):
         
         doc = """
         Temperature at inner disk radius in keV
@@ -54,7 +46,7 @@ class Disk(ParameterSubspace):
                                 value = values.get('K_disk', None))
         
 
-        super(Disk, self).__init__(inner_temperature, inner_radius, background_normalisation)
+        super(Disk, self).__init__(inner_temperature, inner_radius, background_normalisation, **kwargs)
 
     def __call__(self, energies):
              

@@ -4,7 +4,6 @@ this_directory = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(this_directory+'/../')
 
 import numpy as np
-import math
 import time
 from matplotlib import rcParams
 import matplotlib.pyplot as plt
@@ -13,18 +12,17 @@ import xpsi
 np.random.seed(xpsi._rank+10)
 print('Rank reporting: %d' % xpsi._rank)
 
-from xpsi.global_imports import gravradius
-
 from CustomPrior import CustomPrior_STU as CustomPrior
 from CustomInstrument import CustomInstrument_fits, CustomInstrument_stokes
 from CustomPhotosphere import CustomPhotosphereDiskLine
 from CustomInterstellar import CustomInterstellar
-from CustomSignal import CustomSignal, CustomSignal_gaussian
+from CustomSignal import CustomSignal, CustomSignal_poisson, CustomSignal_gaussian
 from CustomHotregion import CustomHotRegion_Accreting
-from CustomLikelihood import CustomLikelihood
 
 from parameter_values import parameter_values
-from helper_functions import get_T_in_log10_Kelvin, plot_2D_pulse, CustomAxes, get_mids_from_edges
+from helper_functions import plot_2D_pulse, CustomAxes, get_mids_from_edges
+
+from xpsi.Parameter import Derive
 
 class analysis(object):
     def __init__(self, 
@@ -37,8 +35,9 @@ class analysis(object):
                  poisson_noise=True, 
                  poisson_seed=42, 
                  fix_mass=False, 
-                 eos_informed=False, 
+                 eos_informed=False,
                  polarization=False,
+                 NICER=True,
                  channel_min=None):
 
         self.scenario = os.environ.get('scenario')
@@ -75,7 +74,7 @@ class analysis(object):
             self.num_energies = int(os.environ.get('num_energies'))
         except:
             print('num_energies from environment variables failed, proceeding with default.')
-            self.num_energies = 40 # 128
+            self.num_energies = 64 #40 # 128
             pass
         print(f'num_energies: {self.num_energies}')
             
@@ -83,7 +82,7 @@ class analysis(object):
             self.num_leaves = int(os.environ.get('num_leaves'))
         except:
             print('num_leaves from environment variables failed, proceeding with default.')
-            self.num_leaves = 30 # 50 avoids interpolation error with polarisation # 30 #128
+            self.num_leaves = 32 #30 # 50 avoids interpolation error with polarisation # 30 #128
             pass
         print(f'num_leaves: {self.num_leaves}')
     
@@ -91,7 +90,7 @@ class analysis(object):
             self.sqrt_num_cells = int(os.environ.get('sqrt_num_cells'))
         except:
             print('sqrt_num_cells from environment variables failed, proceeding with default.')
-            self.sqrt_num_cells = 50 # 128
+            self.sqrt_num_cells = 32 #50 # 128
             pass
         print(f'sqrt_num_cells: {self.sqrt_num_cells}')
     
@@ -99,7 +98,7 @@ class analysis(object):
             self.num_rays = int(os.environ.get('num_rays'))
         except:
             print('num_rays from env. var. failed, proceeding with default.')
-            self.num_rays = 512
+            self.num_rays = 100 #512
         print(f'num_rays: {self.num_rays}')
     
         try:
@@ -188,8 +187,10 @@ class analysis(object):
             self.channel_min = int(os.environ.get('channel_min'))
         print(f'channel_min: {self.channel_min}') 
 
-        secondary = True
-        self.pv = parameter_values(self.scenario, self.bkg, self.fix_mass, polarization=self.polarization, secondary=secondary)
+        secondary_boolean = True
+        self.NICER = NICER
+        self.signal_phase_shift = True
+        self.pv = parameter_values(self.scenario, self.bkg, self.fix_mass, polarization=self.polarization, secondary=secondary_boolean, signal_phase_shift=self.signal_phase_shift)
         self.file_locations()
         self.set_parameter_vector()
         self.set_bounds()
@@ -253,41 +254,93 @@ class analysis(object):
         self.NICER_data = xpsi.Data(**settings)
         
     def set_data_IXPE(self):
-        from ixpe_read_pcube3 import readData_pcube_ebin
+        from ixpe_read_pha import readData_pha
 
-        fname_ixpedata = this_directory+"/data/ixpe_products/ixpeobssimdata_scenarioB/pcube_10bin/model_amsp_xpsi"
-        fname_ixpedata_pulse = this_directory+"/data/ixpe_products/ixpeobssimdata_scenarioB/pcube_20bin/model_amsp_xpsi"
-        
-        
-        
-        phase_IXPE, Idat1, qn, un, Iderr1, qnerr, unerr, PD, PDerr, keVdat, MDP99 = readData_pcube_ebin(fname_ixpedata, NPhadat=10)
-        phase_IXPE_pulse, Idat2, qn2, un2, Iderr2, qnerr2, unerr2, PD2, PDerr2, keVdat2, MDP99_2 = readData_pcube_ebin(fname_ixpedata_pulse, NPhadat=20)
-        
-        
-        self.IXPE_I_data = xpsi.Data([Idat2[:,0]/np.max(Idat2[:,0])],
-                               channels=np.arange(0, 1),
-                               phases=np.linspace(0,1,len(phase_IXPE_pulse)+1),
+        data_path = self.this_directory + "/data/ixpe_products/phase_binned_xspec/"
+
+        fname_ixpedata_du1 = data_path + "ixpe03250101_du1_evt2_v01_src_bary_pers_pre60376"
+        fname_ixpedata_du2 = data_path + "ixpe03250101_du2_evt2_v01_src_bary_pers_pre60376"
+        fname_ixpedata_du3 = data_path + "ixpe03250101_du3_evt2_v01_src_bary_pers_pre60376"
+
+        Idat1, Qdat1, Udat1, Iderr1, Qerr1, Uerr1, channels1, phase_edges1, exposure1 = readData_pha(fname_ixpedata_du1)
+        Idat2, Qdat2, Udat2, Iderr2, Qerr2, Uerr2, channels2, phase_edges2, exposure2 = readData_pha(fname_ixpedata_du2)
+        Idat3, Qdat3, Udat3, Iderr3, Qerr3, Uerr3, channels3, phase_edges3, exposure3 = readData_pha(fname_ixpedata_du3)
+
+        minchan = 50
+        maxchan1 = 151
+
+        self.IXPE_I_DU1_data = xpsi.Data(Idat1.T[minchan:maxchan1,:],
+                               channels=channels1[minchan:maxchan1],
+                               phases=phase_edges1,
                                first=0,
-                               last=0,
-                               exposure_time=1.0)
-        self.IXPE_Q_data = xpsi.Data([qn[:,0]],
-                               channels=np.arange(0, 1),
-                               phases=np.linspace(0,1,len(phase_IXPE)+1),
-                               first=0,
-                               last=0,
-                               exposure_time=1.0)
-        self.IXPE_U_data = xpsi.Data([un[:,0]],
-                               channels=np.arange(0, 1),
-                               phases=np.linspace(0,1,len(phase_IXPE)+1),
-                               first=0,
-                               last=0,
-                               exposure_time=1.0)
+                               last=maxchan1-minchan-1,
+                               exposure_time=exposure1)
         
-        self.IXPE_Q_data.phase_IXPE = phase_IXPE
-        self.IXPE_U_data.phase_IXPE = phase_IXPE
-        self.IXPE_I_data.phase_IXPE_pulse = phase_IXPE_pulse
-        self.IXPE_I_data.errors, self.IXPE_Q_data.errors, self.IXPE_U_data.errors = Iderr2/np.max(Idat2[:,0]), qnerr, unerr
-                
+        # print('self.IXPE_I_data.channels', self.IXPE_I_data.channels)
+
+        self.IXPE_I_DU2_data = xpsi.Data(Idat2.T[minchan:maxchan1,:],
+                               channels=channels2[minchan:maxchan1],
+                               phases=phase_edges2,
+                               first=0,
+                               last=maxchan1-minchan-1,
+                               exposure_time=exposure2)
+
+        self.IXPE_I_DU3_data = xpsi.Data(Idat3.T[minchan:maxchan1,:],
+                               channels=channels3[minchan:maxchan1],
+                               phases=phase_edges3,
+                               first=0,
+                               last=maxchan1-minchan-1,
+                               exposure_time=exposure3)
+
+                               
+        self.IXPE_Q_DU1_data = xpsi.Data(Qdat1.T[minchan:maxchan1,:],
+                               channels=channels1[minchan:maxchan1],
+                               phases=phase_edges1,
+                               first=0,
+                               last=maxchan1-minchan-1,
+                               exposure_time=exposure1)
+
+        self.IXPE_Q_DU2_data = xpsi.Data(Qdat2.T[minchan:maxchan1,:],
+                               channels=channels2[minchan:maxchan1],
+                               phases=phase_edges2,
+                               first=0,
+                               last=maxchan1-minchan-1,
+                               exposure_time=exposure2)
+
+        self.IXPE_Q_DU3_data = xpsi.Data(Qdat3.T[minchan:maxchan1,:],
+                               channels=channels3[minchan:maxchan1],
+                               phases=phase_edges3,
+                               first=0,
+                               last=maxchan1-minchan-1,
+                               exposure_time=exposure3)
+
+
+        self.IXPE_U_DU1_data = xpsi.Data(Udat1.T[minchan:maxchan1,:],
+                               channels=channels1[minchan:maxchan1],
+                               phases=phase_edges1,
+                               first=0,
+                               last=maxchan1-minchan-1,
+                               exposure_time=exposure1)
+
+        self.IXPE_U_DU2_data = xpsi.Data(Udat2.T[minchan:maxchan1,:],
+                               channels=channels2[minchan:maxchan1],
+                               phases=phase_edges2,
+                               first=0,
+                               last=maxchan1-minchan-1,
+                               exposure_time=exposure2)
+
+        self.IXPE_U_DU3_data = xpsi.Data(Udat3.T[minchan:maxchan1,:],
+                               channels=channels3[minchan:maxchan1],
+                               phases=phase_edges3,
+                               first=0,
+                               last=maxchan1-minchan-1,
+                               exposure_time=exposure3)
+
+
+
+        self.IXPE_I_DU1_data.errors, self.IXPE_Q_DU1_data.errors, self.IXPE_U_DU1_data.errors = Iderr1.T[minchan:maxchan1,:], Qerr1.T[minchan:maxchan1,:], Uerr1.T[minchan:maxchan1,:]
+        self.IXPE_I_DU2_data.errors, self.IXPE_Q_DU2_data.errors, self.IXPE_U_DU2_data.errors = Iderr2.T[minchan:maxchan1,:], Qerr2.T[minchan:maxchan1,:], Uerr2.T[minchan:maxchan1,:]
+        self.IXPE_I_DU3_data.errors, self.IXPE_Q_DU3_data.errors, self.IXPE_U_DU3_data.errors = Iderr3.T[minchan:maxchan1,:], Qerr3.T[minchan:maxchan1,:], Uerr3.T[minchan:maxchan1,:]
             
     def set_instrument_NICER(self):
         self.NICER = CustomInstrument_fits.from_response_files(
@@ -299,13 +352,108 @@ class analysis(object):
             min_input = self.min_input)
 
     def set_instrument_IXPE(self):
-        self.IXPE = CustomInstrument_stokes.from_response_files(MRF = this_directory+'/data/ixpe_products/ixpe_d1_obssim_v012.mrf',
-                                             RMF = this_directory+'/data/ixpe_products/ixpe_d1_obssim_v012.rmf',
-                                             max_input = 275,
-                                             max_channel = 200,
-                                             min_input = 0,
-                                             min_channel = 50,
-                                             channel_edges = None)
+        class derive_du1(Derive):
+            def __init__(self):
+                pass
+
+            def __call__(self, boundto, caller=None):
+                return self.IXPE_du1_I['alpha']
+                
+        class derive_du2(Derive):
+            def __init__(self):
+                pass
+
+            def __call__(self, boundto, caller=None):
+                return self.IXPE_du2_I['alpha']
+                
+        class derive_du3(Derive):
+            def __init__(self):
+                pass
+
+            def __call__(self, boundto, caller=None):
+                return self.IXPE_du3_I['alpha']   
+        
+        alpha_bounds = dict(alpha = (0.8, 1.2))
+        
+        derive_du1_inst = derive_du1()
+        derive_du2_inst = derive_du2()
+        derive_du3_inst = derive_du3()
+        
+        self.IXPE_du1_I = CustomInstrument_stokes.from_response_files(
+                                                     bounds=alpha_bounds,
+                                                     values={},
+                                                     MRF = self.this_directory + '/data/ixpe_products/phase_binned_xspec/response/ixpe_d1_obssim20240101_v013.arf',
+                                                     RMF = self.this_directory + '/data/ixpe_products/phase_binned_xspec/response/ixpe_d1_obssim20240101_v013.rmf',
+                                                     max_input = 275,
+                                                     max_channel = 150,
+                                                     min_input = 0,
+                                                     min_channel = 50,
+                                                     channel_edges = None,
+                                                     prefix="du1")
+        derive_du1_inst.IXPE_du1_I = self.IXPE_du1_I
+
+        self.IXPE_du1 = CustomInstrument_stokes.from_response_files(
+                                                     bounds = {'alpha': None},
+                                                     values = {'alpha': derive_du1_inst},
+                                                     MRF = self.this_directory + '/data/ixpe_products/phase_binned_xspec/response/ixpe_d1_obssim20240101_v013.mrf',
+                                                     RMF = self.this_directory + '/data/ixpe_products/phase_binned_xspec/response/ixpe_d1_obssim20240101_v013.rmf',
+                                                     max_input = 275,
+                                                     max_channel = 150,
+                                                     min_input = 0,
+                                                     min_channel = 50, #2 keV
+                                                     channel_edges = None,
+                                                     prefix="du1_pol")
+
+        self.IXPE_du2_I = CustomInstrument_stokes.from_response_files(
+                                                      bounds=alpha_bounds,
+                                                      values={},
+                                                      MRF = self.this_directory + '/data/ixpe_products/phase_binned_xspec/response/ixpe_d2_obssim20240101_v013.arf',
+                                                      RMF = self.this_directory + '/data/ixpe_products/phase_binned_xspec/response/ixpe_d2_obssim20240101_v013.rmf',
+                                                      max_input = 275,
+                                                      max_channel = 150,
+                                                      min_input = 0,
+                                                      min_channel = 50,
+                                                      channel_edges = None,
+                                                      prefix="du2")
+        derive_du2_inst.IXPE_du2_I = self.IXPE_du2_I
+        
+        self.IXPE_du2 = CustomInstrument_stokes.from_response_files(
+                                                     bounds = {'alpha': None},
+                                                     values = {'alpha': derive_du2_inst},
+                                                     MRF = self.this_directory + '/data/ixpe_products/phase_binned_xspec/response/ixpe_d2_obssim20240101_v013.mrf',
+                                                     RMF = self.this_directory + '/data/ixpe_products/phase_binned_xspec/response/ixpe_d2_obssim20240101_v013.rmf',
+                                                     max_input = 275,
+                                                     max_channel = 150,
+                                                     min_input = 0,
+                                                     min_channel = 50,
+                                                     channel_edges = None,
+                                                     prefix="du2_pol")
+        
+        self.IXPE_du3_I = CustomInstrument_stokes.from_response_files(
+                                                     bounds=alpha_bounds,
+                                                     values={},
+                                                     MRF = self.this_directory + '/data/ixpe_products/phase_binned_xspec/response/ixpe_d3_obssim20240101_v013.arf',
+                                                     RMF = self.this_directory + '/data/ixpe_products/phase_binned_xspec/response/ixpe_d3_obssim20240101_v013.rmf',
+                                                     max_input = 275,
+                                                     max_channel = 150,
+                                                     min_input = 0,
+                                                     min_channel = 50,
+                                                     channel_edges = None,
+                                                     prefix="du3")
+        derive_du3_inst.IXPE_du3_I = self.IXPE_du3_I                                             
+        
+        self.IXPE_du3 = CustomInstrument_stokes.from_response_files(
+                                                     bounds = {'alpha': None},
+                                                     values = {'alpha': derive_du3_inst},
+                                                     MRF = self.this_directory + '/data/ixpe_products/phase_binned_xspec/response/ixpe_d3_obssim20240101_v013.mrf',
+                                                     RMF = self.this_directory + '/data/ixpe_products/phase_binned_xspec/response/ixpe_d3_obssim20240101_v013.rmf',
+                                                     max_input = 275,
+                                                     max_channel = 150,
+                                                     min_input = 0,
+                                                     min_channel = 50,
+                                                     channel_edges = None,
+                                                     prefix="du3_pol")
+
 
 
     def set_spacetime(self):
@@ -344,12 +492,12 @@ class analysis(object):
                   'atm_ext':'Num5D',
                   'prefix': 'p'}
         
-        self.p_bounds = dict(super_colatitude = self.bounds["p__super_colatitude"],
-                                super_radius = self.bounds["p__super_radius"],
-                                phase_shift = self.bounds["p__phase_shift"], 
-                                super_tbb = self.bounds['p__super_tbb'],
-                                super_tau = self.bounds['p__super_tau'],
-                                super_te = self.bounds['p__super_te'])
+        self.p_bounds = dict(super_colatitude = self.bounds["super_colatitude"],
+                                super_radius = self.bounds["super_radius"],
+                                phase_shift = self.bounds["phase_shift"], 
+                                super_tbb = self.bounds['super_tbb'],
+                                super_tau = self.bounds['super_tau'],
+                                super_te = self.bounds['super_te'])
         self.p_values = {}
         
         primary = CustomHotRegion_Accreting(self.p_bounds, self.p_values, **self.p_kwargs)
@@ -366,15 +514,15 @@ class analysis(object):
                   'num_leaves': self.num_leaves,  #50 avoids interp error.
                   'num_rays': self.num_rays,
                   'atm_ext':'Num5D',
-                  'is_antiphased': True,
+                  'is_antiphased': False,
                   'prefix': 's'}
         
-        self.s_bounds = dict(super_colatitude = self.bounds["s__super_colatitude"],
-                                super_radius = self.bounds["s__super_radius"],
-                                phase_shift = self.bounds["s__phase_shift"], 
-                                super_tbb = self.bounds['s__super_tbb'],
-                                super_tau = self.bounds['s__super_tau'],
-                                super_te = self.bounds['s__super_te'])
+        self.s_bounds = dict(super_colatitude = self.bounds["super_colatitude"],
+                                super_radius = self.bounds["super_radius"],
+                                phase_shift = self.bounds["phase_shift"], 
+                                super_tbb = self.bounds['super_tbb'],
+                                super_tau = self.bounds['super_tau'],
+                                super_te = self.bounds['super_te'])
         self.s_values = {}
         
         secondary = CustomHotRegion_Accreting(self.s_bounds, self.s_values, **self.s_kwargs)
@@ -470,40 +618,79 @@ class analysis(object):
             self.line = None
 
     def set_signal(self):
-        self.set_data_NICER()
-        self.set_instrument_NICER()
         self.set_support()
+        if self.NICER:
+            self.set_data_NICER()
+            self.set_instrument_NICER()    
+            
+            if self.signal_phase_shift:
+                phase_values = {}
+                phase_bounds = dict(phase_shift = (-0.5, 0.5))
+            else:
+                phase_values = None
+                phase_bounds = None
+            
+            self.signal_NICER = CustomSignal(data = self.NICER_data,
+                                instrument = self.NICER,
+                                background = None,
+                                interstellar = self.interstellar,
+                                support = self.support,
+                                cache = False, # only true if verifying code implementation otherwise useless slowdown.
+                                bounds=phase_bounds,
+                                values=phase_values,
+                                bkg = self.bkg,
+                                epsrel = 1.0e-8,
+                                epsilon = 1.0e-3,
+                                sigmas = 10.0)        
+            self.signals = [[self.signal_NICER],]
+        else:
+            self.signals = [[],]
         
-        self.signal_NICER = CustomSignal(data = self.NICER_data,
-                            instrument = self.NICER,
-                            background = None,
-                            interstellar = self.interstellar,
-                            support = self.support,
-                            cache = False, # only true if verifying code implementation otherwise useless slowdown.
-                            bkg = self.bkg,
-                            epsrel = 1.0e-8,
-                            epsilon = 1.0e-3,
-                            sigmas = 10.0)
-    
+
+        
         if self.polarization:
-            if 'qu' in self.polarization:
-                self.set_data_IXPE()
-                self.set_instrument_IXPE()
-                self.signals = [[self.signal_NICER],] # to apply disk correctly to signal, NICER must be first element.
-            if 'i' in self.polarization:
-                signalI = CustomSignal_gaussian(data = self.IXPE_I_data,
-                                                instrument = self.IXPE,
-                                                interstellar = self.interstellar,
-                                                workspace_intervals = 1000,
-                                                cache = False,
-                                                epsrel = 1.0e-8,
-                                                epsilon = 1.0e-3,
-                                                sigmas = 10.0,
-                                                support = None,
-                                                stokes="I")
-                self.signals[0].append(signalI)
-            signalQ = CustomSignal_gaussian(data = self.IXPE_Q_data,
-                                    instrument = self.IXPE,
+            self.set_data_IXPE()
+            self.set_instrument_IXPE()
+            self.signal_IXPE_I_DU1 = CustomSignal_poisson(data = self.IXPE_I_DU1_data,
+                                    instrument = self.IXPE_du1_I,
+                                    interstellar = self.interstellar,
+                                    workspace_intervals = 1000,
+                                    cache = False,
+                                    epsrel = 1.0e-8,
+                                    epsilon = 1.0e-3,
+                                    sigmas = 10.0,
+                                    support = None,
+                                    stokes="I")
+            self.signals[0].append(self.signal_IXPE_I_DU1)
+            
+            self.signal_IXPE_I_DU2 = CustomSignal_poisson(data = self.IXPE_I_DU2_data,
+                                    instrument = self.IXPE_du2_I,
+                                    interstellar = self.interstellar,
+                                    workspace_intervals = 1000,
+                                    cache = False,
+                                    epsrel = 1.0e-8,
+                                    epsilon = 1.0e-3,
+                                    sigmas = 10.0,
+                                    support = None,
+                                    stokes="I")
+            self.signals[0].append(self.signal_IXPE_I_DU2)
+            
+            self.signal_IXPE_I_DU3 = CustomSignal_poisson(data = self.IXPE_I_DU3_data,
+                                    instrument = self.IXPE_du3_I,
+                                    interstellar = self.interstellar,
+                                    workspace_intervals = 1000,
+                                    cache = False,
+                                    epsrel = 1.0e-8,
+                                    epsilon = 1.0e-3,
+                                    sigmas = 10.0,
+                                    support = None,
+                                    stokes="I")
+            self.signals[0].append(self.signal_IXPE_I_DU3)
+            
+            
+            
+            self.signal_IXPE_Q_DU1 = CustomSignal_gaussian(data = self.IXPE_Q_DU1_data,
+                                    instrument = self.IXPE_du1,
                                     interstellar = self.interstellar,
                                     workspace_intervals = 1000,
                                     cache = False,
@@ -512,21 +699,76 @@ class analysis(object):
                                     sigmas = 10.0,
                                     support = None,
                                     stokes="Q")
-            self.signals[0].append(signalQ)
-            signalU = CustomSignal_gaussian(data = self.IXPE_U_data,
-            	                instrument = self.IXPE,
-            	                interstellar = self.interstellar,
-            	                workspace_intervals = 1000,
-            	                cache = False,
-            	                epsrel = 1.0e-8,
-            	                epsilon = 1.0e-3,
-            	                sigmas = 10.0,
-            	                support = None,
-            	                stokes="U")
-            self.signals[0].append(signalU)
+            self.signals[0].append(self.signal_IXPE_Q_DU1)
+            
+            
+            self.signal_IXPE_Q_DU2 = CustomSignal_gaussian(data = self.IXPE_Q_DU2_data,
+                                    instrument = self.IXPE_du2,
+                                    interstellar = self.interstellar,
+                                    workspace_intervals = 1000,
+                                    cache = False,
+                                    epsrel = 1.0e-8,
+                                    epsilon = 1.0e-3,
+                                    sigmas = 10.0,
+                                    support = None,
+                                    stokes="Q")
+            self.signals[0].append(self.signal_IXPE_Q_DU2)
+            
+            
+            self.signal_IXPE_Q_DU3 = CustomSignal_gaussian(data = self.IXPE_Q_DU3_data,
+                                    instrument = self.IXPE_du3,
+                                    interstellar = self.interstellar,
+                                    workspace_intervals = 1000,
+                                    cache = False,
+                                    epsrel = 1.0e-8,
+                                    epsilon = 1.0e-3,
+                                    sigmas = 10.0,
+                                    support = None,
+                                    stokes="Q")
+            self.signals[0].append(self.signal_IXPE_Q_DU3)
+            
+            
+            self.signal_IXPE_U_DU1 = CustomSignal_gaussian(data = self.IXPE_U_DU1_data,
+                                    instrument = self.IXPE_du1,
+                                    interstellar = self.interstellar,
+                                    workspace_intervals = 1000,
+                                    cache = False,
+                                    epsrel = 1.0e-8,
+                                    epsilon = 1.0e-3,
+                                    sigmas = 10.0,
+                                    support = None,
+                                    stokes="U")
+            self.signals[0].append(self.signal_IXPE_U_DU1)
+            
+            
+            self.signal_IXPE_U_DU2 = CustomSignal_gaussian(data = self.IXPE_U_DU2_data,
+                                    instrument = self.IXPE_du2,
+                                    interstellar = self.interstellar,
+                                    workspace_intervals = 1000,
+                                    cache = False,
+                                    epsrel = 1.0e-8,
+                                    epsilon = 1.0e-3,
+                                    sigmas = 10.0,
+                                    support = None,
+                                    stokes="U")
+            self.signals[0].append(self.signal_IXPE_U_DU2)
+            
+            
+            self.signal_IXPE_U_DU3 = CustomSignal_gaussian(data = self.IXPE_U_DU3_data,
+                                    instrument = self.IXPE_du3,
+                                    interstellar = self.interstellar,
+                                    workspace_intervals = 1000,
+                                    cache = False,
+                                    epsrel = 1.0e-8,
+                                    epsilon = 1.0e-3,
+                                    sigmas = 10.0,
+                                    support = None,
+                                    stokes="U")
+            self.signals[0].append(self.signal_IXPE_U_DU3)
 
     def set_parameter_vector(self):
         self.p = self.pv.p()
+        print('self.p:',self.p)
 
     def set_prior(self):
         self.prior = CustomPrior(self.scenario, self.bkg, fix_mass = self.fix_mass, eos_informed=self.eos_informed)
@@ -540,8 +782,8 @@ class analysis(object):
         self.set_signal()
         self.set_prior()
         
-        self.likelihood = CustomLikelihood(star = self.star, 
-                                           signals = self.signals if self.polarization else self.signal_NICER,
+        self.likelihood = xpsi.Likelihood(star = self.star, 
+                                           signals = self.signals,
                                            num_energies=self.num_energies, #128
                                            threads=1,
                                            prior=self.prior,
@@ -570,6 +812,8 @@ class analysis(object):
                 true_logl = 1.3525318684e+07
             elif self.channel_min == 100:
                 true_logl = 1.3594326983e+07
+                if self.polarization == 'iqu':
+                    true_logl = 1.0198724313e+07
         
             
         if self.scenario == 'small_r':
@@ -582,12 +826,14 @@ class analysis(object):
         self.true_logl = true_logl
     
     def __call__(self):
-        
+
+    
         # start call with a likelihood check
         t_check = time.time()
-        self.likelihood.check(None, [self.true_logl], 1.0e-6, physical_points=[self.p], force_update=True)
+        self.likelihood.check(None, [self.true_logl], 1.0e6, physical_points=[self.p], force_update=True)
         print('Likelihood check took {:.3f} seconds'.format((time.time()-t_check)))
         
+        print('param values',self.likelihood.params)
         
         analysis_name = self.analysis_name
         machine = self.machine
@@ -665,11 +911,13 @@ class analysis(object):
 
             print('runtime_params: ', runtime_params)
             
+            
+            
             print("sampling starts ...")
             t_start = time.time()
             
-            
             sys.stdout.flush()
+            
             
             if self.sampler == 'multi':
                 xpsi.Sample.nested(self.likelihood, self.prior,**runtime_params)
@@ -683,7 +931,7 @@ class analysis(object):
             print('Sampling took {:.3f} seconds'.format((time.time()-t_start)))
             
         elif self.run_type == 'test':
-            print('test: inverse sampling prior')
+            # print('test: inverse sampling prior')
 
             t_start = time.time()
 
@@ -704,11 +952,13 @@ class analysis(object):
             
 if __name__ == '__main__':
     Analysis = analysis('local', 
-                        'test', 
+                        'sample', 
                         'disk', 
                         sampler='multi', 
                         scenario='J1444', 
+                        support_factor='100', 
+                        poisson_seed=42, 
                         eos_informed=True, 
-                        polarization=False, 
+                        polarization='iqu', 
                         channel_min=100)
     Analysis()

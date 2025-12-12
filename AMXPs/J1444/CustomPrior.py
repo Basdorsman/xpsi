@@ -170,13 +170,12 @@ class CustomPrior(xpsi.Prior):
         return p
 
 
-class CustomPrior_STU(xpsi.Prior):
+class CustomPrior_twohotspots(xpsi.Prior):
     """ A custom (joint) prior distribution.
 
     Source: SRGA J144459.2-604207
-    Model variant: ST-U
-        Two single temperature hotspots, unshared parameters
-
+    Model variant: ST-U, ST-S
+        Two single temperature hotspots
    
     p[0] = 1 to 3 solar mass (and EoS constraints)
     p[1] = 3G to 16 km (and EoS constraints, compactness restrictions)
@@ -210,12 +209,13 @@ class CustomPrior_STU(xpsi.Prior):
         self.bkg = bkg
         self.fix_mass = kwargs.pop('fix_mass', None)
         self.eos_informed = kwargs.pop('eos_informed', None)
+        self.variable_params = kwargs.pop('variable_params', None)
 
         
         if self.eos_informed:        
             self.nf_eos_mr_prior = NormalizingFlow(this_directory+'/data/EoS_prior/flow_and_scaler_PP.pth')
         
-        super(CustomPrior_STU, self).__init__(*args, **kwargs)
+        super(CustomPrior_twohotspots, self).__init__(*args, **kwargs)
 
     def __call__(self, p = None):
 
@@ -226,7 +226,7 @@ class CustomPrior_STU(xpsi.Prior):
         :returns: Logarithm of the distribution evaluated at ``p``.
 
         """
-        temp = super(CustomPrior_STU, self).__call__(p)
+        temp = super(CustomPrior_twohotspots, self).__call__(p)
         if not np.isfinite(temp):
             return temp
 
@@ -249,36 +249,53 @@ class CustomPrior_STU(xpsi.Prior):
         if mu < 1.0:
             return -np.inf
         
-        if 'disk' in  self.bkg:
+       
+        if self.variable_params:  
+            if 'disk' in  self.bkg:  
+                # inner disk must be smaller than corotation radius, otherwise we enter (weak) propeller regime
+                if not self.parameters['NICER__R_in'] < 1.49790e3*ref['mass']**(1/3)*ref['frequency']**(-2/3): # 1.49790e3 = (G*M_sol/4pi^2)^(1/3) in km
+                    return -np.inf
         
-            # inner disk must be smaller than corotation radius, otherwise we enter (weak) propeller regime
-           if not self.parameters['R_in'] < 1.49790e3*ref['mass']**(1/3)*ref['frequency']**(-2/3): # 1.49790e3 = (G*M_sol/4pi^2)^(1/3) in km
-               return -np.inf
-    
-            # inner disk must be larger than neutron star equatorial radius
-           if not self.parameters['R_in'] > ref['radius']:
-               return -np.inf
+                # inner disk must be larger than neutron star equatorial radius
+                if not self.parameters['NICER__R_in'] > ref['radius']:
+                    return -np.inf
+              
+                # inner disk must be smaller than corotation radius, otherwise we enter (weak) propeller regime
+                if not self.parameters['IXPE__R_in'] < 1.49790e3*ref['mass']**(1/3)*ref['frequency']**(-2/3): # 1.49790e3 = (G*M_sol/4pi^2)^(1/3) in km
+                    return -np.inf
         
-        ref = self.parameters # redefine shortcut
+                # inner disk must be larger than neutron star equatorial radius
+                if not self.parameters['IXPE__R_in'] > ref['radius']:
+                    return -np.inf
+
+        elif not self.variable_params:
+            if 'disk' in  self.bkg:  
+                # inner disk must be smaller than corotation radius, otherwise we enter (weak) propeller regime
+                if not self.parameters['R_in'] < 1.49790e3*ref['mass']**(1/3)*ref['frequency']**(-2/3): # 1.49790e3 = (G*M_sol/4pi^2)^(1/3) in km
+                   return -np.inf
         
-        # enforce order in hot region colatitude
-        if ref['p__super_colatitude'] > ref['s__super_colatitude']:
-            # print('no order in hotregions')
-            return -np.inf
- 
-        phi = (ref['p__phase_shift'] - 0.5 - ref['s__phase_shift']) * _2pi
- 
-        ang_sep = xpsi.HotRegion.psi(ref['s__super_colatitude'],
-                                     phi,
-                                     ref['p__super_colatitude'])
- 
-
-        # hot regions cannot overlap
-        if ang_sep < ref['p__super_radius'] + ref['s__super_radius']:
-            # print('overlapping hotregions')
-            return -np.inf
-
-
+                # inner disk must be larger than neutron star equatorial radius
+                if not self.parameters['R_in'] > ref['radius']:
+                   return -np.inf         
+            ref = self.parameters # redefine shortcut
+            
+            if self.scenario == 'J1444_STU':
+                # enforce order in hot region colatitude
+                if ref['p__super_colatitude'] > ref['s__super_colatitude']:
+                    # print('no order in hotregions')
+                    return -np.inf
+         
+                phi = (ref['p__phase_shift'] - 0.5 - ref['s__phase_shift']) * _2pi
+         
+                ang_sep = xpsi.HotRegion.psi(ref['s__super_colatitude'],
+                                             phi,
+                                             ref['p__super_colatitude'])
+         
+        
+                # hot regions cannot overlap
+                if ang_sep < ref['p__super_radius'] + ref['s__super_radius']:
+                    # print('overlapping hotregions')
+                    return -np.inf
         return 0.0
 
     def inverse_sample(self, hypercube=None):
@@ -290,7 +307,7 @@ class CustomPrior_STU(xpsi.Prior):
             hypercube = np.random.rand(len(self))
 
         # the base method is useful, so to avoid writing that code again:
-        _ = super(CustomPrior_STU, self).inverse_sample(hypercube)
+        _ = super(CustomPrior_twohotspots, self).inverse_sample(hypercube)
 
         ref = self.parameters # shortcut
     
@@ -300,18 +317,38 @@ class CustomPrior_STU(xpsi.Prior):
 
         if self.eos_informed:
             ref['mass'], ref['radius'] = self.nf_eos_mr_prior.sample_mr_from_nf()
+            
+            
 
         # flat priors in cosine of hot region centre colatitudes (isotropy)
         # support modified by no-overlap rejection condition
-        idx = ref.index('p__super_colatitude')
-        a, b = ref.get_param('p__super_colatitude').bounds
-        a = math.cos(a); b = math.cos(b)
-        ref['p__super_colatitude'] = math.acos(b + (a - b) * hypercube[idx])
         
-        idx = ref.index('s__super_colatitude')
-        a, b = ref.get_param('s__super_colatitude').bounds
-        a = math.cos(a); b = math.cos(b)
-        ref['s__super_colatitude'] = math.acos(b + (a - b) * hypercube[idx])
+        if self.scenario == 'J1444_STS':
+            idx = ref.index('NICER__p__super_colatitude')
+            a, b = ref.get_param('NICER__p__super_colatitude').bounds
+            a = math.cos(a); b = math.cos(b)
+            ref['NICER__p__super_colatitude'] = math.acos(b + (a - b) * hypercube[idx])
+            
+            idx = ref.index('IXPE__p__super_colatitude')
+            a, b = ref.get_param('IXPE__p__super_colatitude').bounds
+            a = math.cos(a); b = math.cos(b)
+            ref['IXPE__p__super_colatitude'] = math.acos(b + (a - b) * hypercube[idx])
+        
+        elif self.scenario == 'J1444_STU':
+            idx = ref.index('p__super_colatitude')
+            a, b = ref.get_param('p__super_colatitude').bounds
+            a = math.cos(a); b = math.cos(b)
+            ref['p__super_colatitude'] = math.acos(b + (a - b) * hypercube[idx])
+    
+            idx = ref.index('s__super_colatitude')
+            a, b = ref.get_param('s__super_colatitude').bounds
+            a = math.cos(a); b = math.cos(b)
+            ref['s__super_colatitude'] = math.acos(b + (a - b) * hypercube[idx])
+        else:
+            idx = ref.index('p__super_colatitude')
+            a, b = ref.get_param('p__super_colatitude').bounds
+            a = math.cos(a); b = math.cos(b)
+            ref['p__super_colatitude'] = math.acos(b + (a - b) * hypercube[idx])
 
         # restore proper cache
         for parameter, cache in zip(ref, to_cache):

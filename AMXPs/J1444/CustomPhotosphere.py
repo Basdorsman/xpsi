@@ -93,7 +93,11 @@ class CustomPhotosphereDiskLine(xpsi.Photosphere):
                                    value = values.get('mode_frequency', None))
         custom = []
         if self.disk is not None:
-            custom.append(disk)
+            if isinstance(disk, list): # this does not yet correctly add disk flux
+                for item in disk:
+                    custom.append(item)
+            else:
+                custom.append(disk)
         if self.line is not None:
             custom.append(line)
             
@@ -212,7 +216,9 @@ class CustomPhotosphereDiskLine(xpsi.Photosphere):
                 except:
                     else_atm_ext = None
                     
-                if self._disk is not None: 
+                if isinstance(self._disk, list): # not correct but I dont want to do this now
+                    R_in = 1e6 # default value with no disk
+                elif self._disk is not None: 
                     R_in = self.disk['R_in'] * 1000 # in meters now
                 elif self._disk is None:
                     R_in = 1e6 # default value with no disk
@@ -260,7 +266,7 @@ class CustomPhotosphereDiskLine(xpsi.Photosphere):
 
             # combine disk and line with the first signal component of the hotregions
             if self._combine_unpulsed:
-                if self._disk is not None: 
+                if (self._disk is not None and not isinstance(self._disk, list)): 
                     self.disk_spectrum = self._disk(energies)
                     for i in range(self._signal[0][0].shape[1]):
                         # print('STAR SIGNAL', self._signal[0][0][:,i])
@@ -274,7 +280,7 @@ class CustomPhotosphereDiskLine(xpsi.Photosphere):
 
             # here disk and line are stored separately, but then the phases also need to be stored separately in customsignal, and this breaks posprocessing.
             if not self._combine_unpulsed:
-                if self._disk is not None: 
+                if (self._disk is not None and not isinstance(self._disk, list)): 
                     # Determine the index for the new hot region
                     new_hot_region_index = len(self._signal)
                     

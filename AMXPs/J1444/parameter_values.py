@@ -23,14 +23,14 @@ class parameter_values(object):
                  ew=False, 
                  polarization=False,
                  signal_phase_shift=False,
-                 fix_nonshared=False):
+                 posterior_combiner=False):
         self.scenario = scenario
         self.bkg = bkg
         self.fix_mass = fix_mass
         self.ew = ew
         self.polarization = polarization
         self.signal_phase_shift = signal_phase_shift
-        self.fix_nonshared=fix_nonshared
+        self.posterior_combiner=posterior_combiner
         
         
         if self.scenario in ('J1444_STU', 'J1444_STS'):
@@ -124,7 +124,7 @@ class parameter_values(object):
         self.alpha_2 if self.polarization else None,
         self.alpha_3 if self.polarization else None
         ]
-        if self.fix_nonshared:
+        if self.posterior_combiner:
             self.p = [
             self.mass if not self.fix_mass else None,  # gravitational mass
             self.radius,  # coordinate equatorial radius

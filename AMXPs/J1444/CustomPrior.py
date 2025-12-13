@@ -210,6 +210,7 @@ class CustomPrior_twohotspots(xpsi.Prior):
         self.fix_mass = kwargs.pop('fix_mass', None)
         self.eos_informed = kwargs.pop('eos_informed', None)
         self.variable_params = kwargs.pop('variable_params', None)
+        self.posterior_combiner = kwargs.pop('posterior_combiner', None)
 
         
         if self.eos_informed:        
@@ -268,7 +269,7 @@ class CustomPrior_twohotspots(xpsi.Prior):
                 if not self.parameters['IXPE__R_in'] > ref['radius']:
                     return -np.inf
 
-        elif not self.variable_params:
+        elif not self.variable_params and not self.posterior_combiner:
             if 'disk' in  self.bkg:  
                 # inner disk must be smaller than corotation radius, otherwise we enter (weak) propeller regime
                 if not self.parameters['R_in'] < 1.49790e3*ref['mass']**(1/3)*ref['frequency']**(-2/3): # 1.49790e3 = (G*M_sol/4pi^2)^(1/3) in km
@@ -322,33 +323,33 @@ class CustomPrior_twohotspots(xpsi.Prior):
 
         # flat priors in cosine of hot region centre colatitudes (isotropy)
         # support modified by no-overlap rejection condition
-        
-        if self.scenario == 'J1444_STS':
-            idx = ref.index('NICER__p__super_colatitude')
-            a, b = ref.get_param('NICER__p__super_colatitude').bounds
-            a = math.cos(a); b = math.cos(b)
-            ref['NICER__p__super_colatitude'] = math.acos(b + (a - b) * hypercube[idx])
+        if not self.posterior_combiner:
+            if self.scenario == 'J1444_STS':
+                idx = ref.index('NICER__p__super_colatitude')
+                a, b = ref.get_param('NICER__p__super_colatitude').bounds
+                a = math.cos(a); b = math.cos(b)
+                ref['NICER__p__super_colatitude'] = math.acos(b + (a - b) * hypercube[idx])
+                
+                idx = ref.index('IXPE__p__super_colatitude')
+                a, b = ref.get_param('IXPE__p__super_colatitude').bounds
+                a = math.cos(a); b = math.cos(b)
+                ref['IXPE__p__super_colatitude'] = math.acos(b + (a - b) * hypercube[idx])
             
-            idx = ref.index('IXPE__p__super_colatitude')
-            a, b = ref.get_param('IXPE__p__super_colatitude').bounds
-            a = math.cos(a); b = math.cos(b)
-            ref['IXPE__p__super_colatitude'] = math.acos(b + (a - b) * hypercube[idx])
+            elif self.scenario == 'J1444_STU':
+                idx = ref.index('p__super_colatitude')
+                a, b = ref.get_param('p__super_colatitude').bounds
+                a = math.cos(a); b = math.cos(b)
+                ref['p__super_colatitude'] = math.acos(b + (a - b) * hypercube[idx])
         
-        elif self.scenario == 'J1444_STU':
-            idx = ref.index('p__super_colatitude')
-            a, b = ref.get_param('p__super_colatitude').bounds
-            a = math.cos(a); b = math.cos(b)
-            ref['p__super_colatitude'] = math.acos(b + (a - b) * hypercube[idx])
-    
-            idx = ref.index('s__super_colatitude')
-            a, b = ref.get_param('s__super_colatitude').bounds
-            a = math.cos(a); b = math.cos(b)
-            ref['s__super_colatitude'] = math.acos(b + (a - b) * hypercube[idx])
-        else:
-            idx = ref.index('p__super_colatitude')
-            a, b = ref.get_param('p__super_colatitude').bounds
-            a = math.cos(a); b = math.cos(b)
-            ref['p__super_colatitude'] = math.acos(b + (a - b) * hypercube[idx])
+                idx = ref.index('s__super_colatitude')
+                a, b = ref.get_param('s__super_colatitude').bounds
+                a = math.cos(a); b = math.cos(b)
+                ref['s__super_colatitude'] = math.acos(b + (a - b) * hypercube[idx])
+            else:
+                idx = ref.index('p__super_colatitude')
+                a, b = ref.get_param('p__super_colatitude').bounds
+                a = math.cos(a); b = math.cos(b)
+                ref['p__super_colatitude'] = math.acos(b + (a - b) * hypercube[idx])
 
         # restore proper cache
         for parameter, cache in zip(ref, to_cache):

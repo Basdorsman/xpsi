@@ -15,7 +15,7 @@ print('Rank reporting: %d' % xpsi._rank)
 
 from xpsi.global_imports import gravradius
 
-from CustomPrior import CustomPrior_STU as CustomPrior
+from CustomPrior import CustomPrior_twohotspots as CustomPrior
 from CustomInstrument import CustomInstrument_fits, CustomInstrument_stokes
 from CustomPhotosphere import CustomPhotosphereDiskLine
 from CustomInterstellar import CustomInterstellar
@@ -188,8 +188,7 @@ class analysis(object):
             self.channel_min = int(os.environ.get('channel_min'))
         print(f'channel_min: {self.channel_min}') 
 
-        secondary = True
-        self.pv = parameter_values(self.scenario, self.bkg, self.fix_mass, polarization=self.polarization, secondary=secondary)
+        self.pv = parameter_values(self.scenario, self.bkg, self.fix_mass, polarization=self.polarization)
         self.file_locations()
         self.set_parameter_vector()
         self.set_bounds()
@@ -201,7 +200,7 @@ class analysis(object):
         
         if self.scenario in ('large_r', 'small_r', 'J1444s'):
             self.file_pulse_profile = self.this_directory + f'/data/NICER_products/data/{self.scenario}_seed={self.poisson_seed}_ch{self.channel_min}_realisation.dat'
-        if self.scenario == 'J1444':
+        if self.scenario in ('J1444', 'J1444_STU'):
             self.file_pulse_profile = self.this_directory + f'/data/NICER_products/data/J1444_preprocessed_ch{self.channel_min}.txt'
        
         self.RMF_file = self.this_directory+'/data/NICER_products/srgaj1444.rmf'
@@ -225,7 +224,7 @@ class analysis(object):
             self.exposure_time = 1.32366e5 #Mason's 2019 data cut
         if self.scenario == '2022':
             self.exposure_time = 7.13422e4 #Mason's 2022 data cut
-        if self.scenario in ('J1444','J1444s'):
+        if self.scenario in ('J1444','J1444s','J1444_STU'):
             self.exposure_time = 24823.7
         
         self.phases_space = np.linspace(0.0, 1.0, 33)
@@ -565,7 +564,7 @@ class analysis(object):
             # true_logl = 1.8733692430e+05 #nonoise, low res data
             # true_logl = 1.8742408005e+05 #low res data
             # true_logl = 1.8751140823e+05
-        if self.scenario == 'J1444':
+        if self.scenario == 'J1444_STU':
             if self.channel_min == 20:
                 true_logl = 1.3525318684e+07
             elif self.channel_min == 100:
@@ -707,7 +706,7 @@ if __name__ == '__main__':
                         'test', 
                         'disk', 
                         sampler='multi', 
-                        scenario='J1444', 
+                        scenario='J1444_STU', 
                         eos_informed=True, 
                         polarization=False, 
                         channel_min=100)

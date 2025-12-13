@@ -121,8 +121,23 @@ Analysis = analysis('local',
                     posterior_combiner=True)
 Analysis()
 
+
+analysis_name = os.environ.get('LABEL')
+if not isinstance(analysis_name, str):
+        print('cannot import analysis name, using test_analysis')
+        analysis_name = 'test_analysis'
+print(f'analysis_name: {analysis_name}')
+
+folderstring = f'{analysis_name}'
+
+try: 
+    os.makedirs(folderstring)
+except OSError:
+    if not os.path.isdir(folderstring):
+        raise
+
 prior=Analysis.prior.inverse_sample
-outputfiles_basename = './local_runs/NICER_posterior/run_'
+outputfiles_basename = './{folderstring}/run_'
 runtime_params = {'resume': False,
                   'importance_nested_sampling': False,
                   'multimodal': False,

@@ -251,7 +251,7 @@ class CustomPrior_twohotspots(xpsi.Prior):
             return -np.inf
         
        
-        if self.variable_params:  
+        if self.variable_params or self.posterior_combiner:  
             if 'disk' in  self.bkg:  
                 # inner disk must be smaller than corotation radius, otherwise we enter (weak) propeller regime
                 if not self.parameters['NICER__R_in'] < 1.49790e3*ref['mass']**(1/3)*ref['frequency']**(-2/3): # 1.49790e3 = (G*M_sol/4pi^2)^(1/3) in km

@@ -39,7 +39,7 @@ NICER_samples = np.loadtxt('/home/bas/Documents/Projects/x-psi/xpsi-bas-fork/AMX
 #20  Units of 10^21 cm^-2 = 2.900e+01]
 
 
-comb_samples = np.loadtxt(this_directory+'/local_runs/NICER_posterior/run_.txt')
+comb_samples = np.loadtxt(this_directory+'/../../outputs/combine_posteriors_lp1000/17606740/combine_posteriors_lp1000/run_.txt')
 #0 prob
 #1 -2 loglike    
 #2 mass: Gravitational mass [solar masses].
@@ -56,4 +56,4 @@ comb_samples_padded = np.zeros((comb_samples.shape[0],NICER_samples.shape[1]))
 comb_samples_padded[:,[0,1,2,3,4,5]]=comb_samples[:,[0,1,2,3,4,5]]
 comb_samples_padded[:,[20]]=comb_samples[:,[8]]
 
-np.savetxt(this_directory+'/local_runs/NICER_posterior/run_padded_.txt', comb_samples_padded)
+np.savetxt(this_directory+'/run_IQU_.txt', comb_samples_padded)

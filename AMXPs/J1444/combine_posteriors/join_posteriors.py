@@ -75,18 +75,18 @@ kde_post_NICER=gaussian_kde(post_NICER_eqw_shared)
 
 
 params_IXPE = [0,1,2,3,18,20]
-post_IXPE_eqw=np.loadtxt(this_directory+'/run1_QU_DiskF_EOS_lp10k/run_rdata_QUpost_equal_weights.dat')
+# post_IXPE_eqw=np.loadtxt(this_directory+'/run1_QU_DiskF_EOS_lp10k/run_rdata_QUpost_equal_weights.dat')
+post_IXPE_eqw=np.loadtxt(this_directory+'/run1_IQU/run_rdata_IQUpost_equal_weights.dat')
 post_IXPE_eqw_shared = post_IXPE_eqw[:,params_IXPE].T
 kde_post_IXPE=gaussian_kde(post_IXPE_eqw_shared)
 
 
 # inverse sample from prior with e.g. 10^4 points to get a prior kde. I think there are no prior weights
 ndraws='10000.0'
-prior = np.loadtxt(this_directory+f'/prior_draws={ndraws}.txt')
-prior_shared = prior[:,params_NICER].T
+prior_draws = np.loadtxt(this_directory+f'/prior_draws={ndraws}.txt')
+prior_shared = prior_draws[:,params_NICER].T
 kde_prior=gaussian_kde(prior_shared)
 # kde_prior.logpdf(list(prior_shared[:,0])) #try out log probability 
-
 
 
 def loglike_NICER(params):
@@ -130,6 +130,14 @@ print(f'analysis_name: {analysis_name}')
 
 folderstring = f'{analysis_name}'
 
+try:
+    live_points = int(os.environ.get('live_points'))
+except:
+    print('live_points from environment variables failed, proceeding with default.')
+    live_points = 64
+    pass
+print(f'live_points: {live_points}')
+
 try: 
     os.makedirs(folderstring)
 except OSError:
@@ -137,14 +145,14 @@ except OSError:
         raise
 
 prior=Analysis.prior.inverse_sample
-outputfiles_basename = './{folderstring}/run_'
+outputfiles_basename = f'./{folderstring}/run_'
 runtime_params = {'resume': False,
                   'importance_nested_sampling': False,
                   'multimodal': False,
                   'n_clustering_params': None,
                   'outputfiles_basename': outputfiles_basename,
                   'n_iter_before_update': 100,
-                  'n_live_points': 1000,
+                  'n_live_points': live_points,
                   'sampling_efficiency': 0.1,
                   'const_efficiency_mode': False,
                   # 'wrapped_params': wrapped_params,

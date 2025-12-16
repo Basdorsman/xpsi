@@ -76,7 +76,7 @@ kde_post_NICER=gaussian_kde(post_NICER_eqw_shared)
 
 params_IXPE = [0,1,2,3,18,20]
 # post_IXPE_eqw=np.loadtxt(this_directory+'/run1_QU_DiskF_EOS_lp10k/run_rdata_QUpost_equal_weights.dat')
-post_IXPE_eqw=np.loadtxt(this_directory+'/run1_IQU/run_rdata_IQUpost_equal_weights.dat')
+post_IXPE_eqw=np.loadtxt(this_directory+'/run1_IQU_Disk_EOS_res4/run_rdata_IQUpost_equal_weights.dat')
 post_IXPE_eqw_shared = post_IXPE_eqw[:,params_IXPE].T
 kde_post_IXPE=gaussian_kde(post_IXPE_eqw_shared)
 
@@ -93,7 +93,7 @@ def loglike_NICER(params):
     loglike=kde_post_NICER.logpdf(params)-kde_prior.logpdf(params)
     return loglike
 
-def loglike_combined(params_combined):
+def loglike_combined_without_prior_constraints(params_combined):
     #0 mass: Gravitational mass [solar masses].
     #1 radius: Coordinate equatorial radius [km].
     #2 distance: Earth distance [kpc].
@@ -109,6 +109,44 @@ def loglike_combined(params_combined):
     loglike_NICER = kde_post_NICER.logpdf(params_NICER)-kde_prior.logpdf(params_NICER)   
     loglike_IXPE = kde_post_IXPE.logpdf(params_IXPE)-kde_prior.logpdf(params_IXPE)
     return loglike_NICER+loglike_IXPE
+
+
+def loglike_combined(params):
+    # unpack for clarity
+    mass = params[0]
+    radius = params[1]
+    distance = params[2]
+    cosi = params[3]
+    Rin_NICER = params[4]
+    Rin_IXPE  = params[5]
+    NH = params[6]
+    frequency=447.8715611
+
+    # corotation radius [km]
+    R_co = 1.49790e3 * mass**(1/3) * frequency**(-2/3)
+
+    # ---- hard physical constraints ----
+    if Rin_NICER <= radius:
+        return -10**89
+    if Rin_IXPE <= radius:
+        return -10**89
+    if Rin_NICER >= R_co:
+        return -10**89
+    if Rin_IXPE >= R_co:
+        return -10**89
+    if radius>=16:
+        return -10**89
+    
+    #I cannot add the causality limit here so we need to watch out for small R and high M
+
+    # ---- KDE likelihoods ----
+    params_NICER = np.array([mass, radius, distance, cosi, Rin_NICER, NH])
+    params_IXPE  = np.array([mass, radius, distance, cosi, Rin_IXPE,  NH])
+
+    ll_NICER = kde_post_NICER.logpdf(params_NICER) - kde_prior.logpdf(params_NICER)
+    ll_IXPE  = kde_post_IXPE.logpdf(params_IXPE)  - kde_prior.logpdf(params_IXPE)
+
+    return ll_NICER + ll_IXPE
 
 Analysis = analysis('local', 
                     'test', 

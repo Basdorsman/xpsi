@@ -370,14 +370,27 @@ class CustomPrior_twohotspots(xpsi.Prior):
         p += [gravradius(ref['mass']) / ref['radius']]
         p += [np.arccos(ref['cos_inclination'])*180/np.pi]
 
-        p += [ref['p__super_tbb']*511]
-        p += [ref['p__super_te']*511/1000]
-        p += [ref['p__super_colatitude']*180/np.pi]
-        p += [ref['p__super_radius']*180/np.pi]
 
-        p += [ref['s__super_tbb']*511]
-        p += [ref['s__super_te']*511/1000]
-        p += [ref['s__super_colatitude']*180/np.pi]
-        p += [ref['s__super_radius']*180/np.pi]
+        if self.scenario=='J1444':
+            p += [ref['p__super_tbb']*511]
+            p += [ref['p__super_te']*511/1000]
+            p += [ref['p__super_colatitude']*180/np.pi]
+            p += [ref['p__super_radius']*180/np.pi]
+    
+            p += [ref['s__super_tbb']*511]
+            p += [ref['s__super_te']*511/1000]
+            p += [ref['s__super_colatitude']*180/np.pi]
+            p += [ref['s__super_radius']*180/np.pi]
+        elif self.scenario=='J1444_STS':
+            p += [ref['NICER__p__super_tbb']*511]
+            p += [ref['NICER__p__super_te']*511/1000]
+            p += [ref['NICER__p__super_colatitude']*180/np.pi]
+            p += [ref['NICER__p__super_radius']*180/np.pi]
+            
+            p += [ref['IXPE__p__super_tbb']*511]
+            p += [ref['IXPE__p__super_te']*511/1000]
+            p += [ref['IXPE__p__super_colatitude']*180/np.pi]
+            p += [ref['IXPE__p__super_radius']*180/np.pi]
+            
 
         return p

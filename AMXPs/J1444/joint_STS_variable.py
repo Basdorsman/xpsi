@@ -491,7 +491,7 @@ class analysis(object):
                   'num_rays': self.num_rays,
                   'atm_ext':'Num5D'}
         
-        self.p_bounds = dict(super_colatitude = self.bounds["super_colatitude"],
+        self.p_bounds = dict(super_colatitude = (0.001, np.pi/2 - 0.001),
                                 super_radius = self.bounds["super_radius"],
                                 phase_shift = self.bounds["phase_shift"], 
                                 super_tbb = self.bounds['super_tbb'],

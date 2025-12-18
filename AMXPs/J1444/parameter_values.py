@@ -83,6 +83,7 @@ class parameter_values(object):
             self.alpha_3 = 1.
             
             self.NICER_phase_shift = 0.
+            self.NICER_alpha = 1.
             
         
         
@@ -118,9 +119,10 @@ class parameter_values(object):
         self.mu if 'line' in self.bkg else None,
         self.sigma if 'line' in self.bkg else None,
         self.N if 'line' in self.bkg else None,
+        self.NICER_alpha if self.scenario=='J1444_STS' else None,
         self.column_density, 
         self.NICER_phase_shift if self.signal_phase_shift else None,
-        self.alpha_1 if self.polarization else None,
+        self.alpha_1 if (self.polarization and not self.scenario=='J1444_STS') else None,
         self.alpha_2 if self.polarization else None,
         self.alpha_3 if self.polarization else None
         ]
@@ -199,22 +201,32 @@ class parameter_values(object):
 
     def bounds(self):
         
-        cos_i_constr = False
+        extra_constr = True
         
-        if cos_i_constr:
-            cos_i_low = np.cos((74.1+5.8)*np.pi/180) # papitto2024 limit here for j1444 
-            cos_i_high = np.cos((74.1-6.3)*np.pi/180)
-        elif not cos_i_constr:
+        if extra_constr:
+            i_low_deg = 50
+            i_high_deg = 80
+            cos_i_low = np.cos(i_high_deg*np.pi/180)
+            cos_i_high = np.cos(i_low_deg*np.pi/180)
+            column_density_low = 25.
+            mass_high = 2.2
+            radius_low= 8.
+            radius_high = 14.
+        else:
             i_low_deg = 50
             i_high_deg = 90
             cos_i_low = np.cos(i_high_deg*np.pi/180)
             cos_i_high = np.cos(i_low_deg*np.pi/180)
+            column_density_low = 19.
+            mass_high = 3.
+            radius_low = 3.0 * gravradius(1.0)
+            radius_high = 16.
 
         
-        bounds = {'radius':(3.0 * gravradius(1.0), 16.0),
+        bounds = {'radius':(radius_low, radius_high),
                   'distance': (2.5, 10.6),
                   'cos_inclination':(cos_i_low, cos_i_high), 
-                  'column_density': (19., 29.),
+                  'column_density': (column_density_low, 29.),
                   'compactness': (0., 10.),
                   'inclination_deg': (i_low_deg, i_high_deg),           
                   }
@@ -256,14 +268,14 @@ class parameter_values(object):
         
         
         if not self.fix_mass:
-            bounds['mass'] = (1.0, 3.0)
+            bounds['mass'] = (1.0, mass_high)
             
         if self.ew:
             bounds['elsewhere_temperature'] = (None, None)
 
         if 'disk' in self.bkg:
             bounds['T_in_keV'] = (0.01, 0.6) # (0.225, 0.275 )  # (0.01, 0.6) # keV
-            bounds['R_in'] = (5, 60) # from star radius to around corotation radius for the heaviest saxJ1808 possible # (27, 33)  # (20, 200) # km
+            bounds['R_in'] = (5, 40) # from star radius to around corotation radius for the heaviest saxJ1808 possible # (27, 33)  # (20, 200) # km
             # bounds['T_in_keV'] = (None, None)
             # bounds['T_in_keV'] = (0.01, 0.6)
             

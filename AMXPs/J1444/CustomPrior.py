@@ -49,7 +49,7 @@ class CustomPrior(xpsi.Prior):
     """
 
     __derived_names__ = ['compactness', 'tbb_keV', 'te_keV', 'inclination_deg', 'colatitude_deg', 'radius_deg', 'N_norm']
-    __draws_from_support__ = 3 #10^x
+    __draws_from_support__ = 4 #10^x
     
     def __init__(self, scenario, bkg, *args, **kwargs):
         self.scenario = scenario

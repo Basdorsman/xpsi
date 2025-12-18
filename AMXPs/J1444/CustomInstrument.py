@@ -118,7 +118,8 @@ class CustomInstrument_stokes_no_alpha(xpsi.Instrument):
 
     
 class CustomInstrument_txt(xpsi.Instrument):
-    """ A model of the NICER telescope response. """
+    """ A model of the NICER telescope response. """ 
+
 
     def __call__(self, signal, *args):
         """ Overwrite base just to show it is possible.
@@ -188,6 +189,14 @@ class CustomInstrument_fits(xpsi.Instrument):
     """NICER rmf and arf files"""
     
     
+    def construct_matrix(self):
+        """ Implement response matrix parameterisation. """
+        matrix = self['alpha'] * self.matrix
+        matrix[matrix < 0.0] = 0.0
+
+        return matrix
+    
+    
     def __call__(self, signal, *args):
         """ Overwrite base just to show it is possible.
 
@@ -204,6 +213,8 @@ class CustomInstrument_fits(xpsi.Instrument):
     
     @classmethod
     def from_response_files(cls, 
+                            bounds,
+                            values,
                             RMF_file, 
                             ARF_file, 
                             max_detection_channel, 
@@ -211,6 +222,14 @@ class CustomInstrument_fits(xpsi.Instrument):
                             min_detection_channel=0, 
                             min_input=0,
                             **kwargs):
+        
+        
+        alpha = Parameter('alpha',
+                          strict_bounds = (0.1,1.9),
+                          bounds = bounds.get('alpha', None),
+                          doc='NICER energy-independent scaling factor',
+                          symbol = r'$\alpha_{\rm X}$',
+                          value = values.get('alpha', None))
         
         try:
             with fits.open(RMF_file) as hdul:
@@ -311,5 +330,6 @@ class CustomInstrument_fits(xpsi.Instrument):
             energy_edges,
             channels,
             channel_edges,
+            alpha,
             **kwargs
         )

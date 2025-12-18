@@ -343,13 +343,20 @@ class analysis(object):
         self.IXPE_I_DU3_data.errors, self.IXPE_Q_DU3_data.errors, self.IXPE_U_DU3_data.errors = Iderr3.T[minchan:maxchan1,:], Qerr3.T[minchan:maxchan1,:], Uerr3.T[minchan:maxchan1,:]
             
     def set_instrument_NICER(self):
+        
+        alpha_bounds = dict(alpha = (0.8, 1.2))  
+        values = {}
+        
         self.NICER = CustomInstrument_fits.from_response_files(
-            self.RMF_file, 
-            self.ARF_file,
+            bounds = alpha_bounds,
+            values = values,
+            RMF_file = self.RMF_file, 
+            ARF_file = self.ARF_file,
             max_detection_channel=self.channel_hi, 
             min_detection_channel = self.channel_low, 
             max_input = self.max_input, #around the maximum
-            min_input = self.min_input)
+            min_input = self.min_input,
+            prefix='NICER')
 
     def set_instrument_IXPE(self):
         class derive_du1(Derive):
@@ -373,15 +380,16 @@ class analysis(object):
             def __call__(self, boundto, caller=None):
                 return self.IXPE_du3_I['alpha']   
         
-        alpha_bounds = dict(alpha = (0.8, 1.2))
+        alpha_bounds = dict(alpha = (0.95, 1.05))
+        alpha_value = dict(alpha = 1.)
         
         derive_du1_inst = derive_du1()
         derive_du2_inst = derive_du2()
         derive_du3_inst = derive_du3()
         
         self.IXPE_du1_I = CustomInstrument_stokes.from_response_files(
-                                                     bounds=alpha_bounds,
-                                                     values={},
+                                                     bounds={},
+                                                     values=alpha_value,
                                                      MRF = self.this_directory + '/data/ixpe_products/phase_binned_xspec/response/ixpe_d1_obssim20240101_v013.arf',
                                                      RMF = self.this_directory + '/data/ixpe_products/phase_binned_xspec/response/ixpe_d1_obssim20240101_v013.rmf',
                                                      max_input = 275,
@@ -948,8 +956,6 @@ class analysis(object):
         self.true_logl = true_logl
         
     def __call__(self):
-
-    
         # start call with a likelihood check
         t_check = time.time()
         self.likelihood.check(None, [self.true_logl], 1.0e6, physical_points=[self.p], force_update=True)
@@ -1063,9 +1069,11 @@ class analysis(object):
 
             t_start = time.time()
 
+            n_priors = 100
+            # inverse sampling test
+            test=self.prior.draw(ndraws=n_priors)[0]#[:,0:-1]
             
-            # # inverse sampling test
-            # test=self.prior.draw(ndraws=100)[0]#[:,0:-1]
+            print(f'time to draw {n_priors} priors:',time.time()-t_start)
             # names_dictionary = self.pv.names()
             # labels_dictionary = self.pv.labels()
             # axis_labels = [labels_dictionary[key] for key in names_dictionary]
@@ -1086,7 +1094,7 @@ if __name__ == '__main__':
                         scenario='J1444_STS', 
                         support_factor=None, 
                         poisson_seed=42, 
-                        eos_informed=True, 
+                        eos_informed=False, 
                         polarization='iqu', 
                         channel_min=100)
     Analysis()

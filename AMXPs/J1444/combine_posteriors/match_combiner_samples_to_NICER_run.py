@@ -39,7 +39,7 @@ NICER_samples = np.loadtxt('/home/bas/Documents/Projects/x-psi/xpsi-bas-fork/AMX
 #20  Units of 10^21 cm^-2 = 2.900e+01]
 
 
-comb_samples = np.loadtxt(this_directory+'/../../outputs/combine_posteriors_lp1000/17606740/combine_posteriors_lp1000/run_.txt')
+comb_samples = np.loadtxt(this_directory+'/../../outputs/combine_posteriors_lp1000/17640043/combine_posteriors_lp1000/run_.txt')
 #0 prob
 #1 -2 loglike    
 #2 mass: Gravitational mass [solar masses].

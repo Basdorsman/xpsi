@@ -198,6 +198,6 @@ runtime_params = {'resume': False,
                   'seed': 7,
                   'verbose': True}
 
-if __name__ == '__main__':
-    _ = pymultinest.solve(LogLikelihood=loglike_combined, Prior=prior, n_dims=len(params_NICER)+1,
-                          **runtime_params)
+# if __name__ == '__main__':
+    # _ = pymultinest.solve(LogLikelihood=loglike_combined, Prior=prior, n_dims=len(params_NICER)+1,
+    #                       **runtime_params)

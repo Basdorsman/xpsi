@@ -38,7 +38,6 @@ class analysis(object):
                  poisson_seed=42, 
                  fix_mass=False, 
                  eos_informed=False, 
-                 polarization=False,
                  channel_min=None):
 
         self.scenario = os.environ.get('scenario')
@@ -169,17 +168,6 @@ class analysis(object):
             self.eos_informed = False
 
         print(f'eos_informed: {self.eos_informed}')
-
-        if os.environ.get('polarization') == None or os.environ.get('polarization') =='None':
-            print('polarization is not in environment variables, using passed argument.')
-            self.polarization = polarization
-        else:
-            self.polarization = os.environ.get('polarization')
-        if self.polarization == "qu" or self.polarization == "iqu":
-            self.polarization = self.polarization
-        else:
-            self.polarization = False
-        print(f'polarization: {self.polarization}')
         
         if os.environ.get('channel_min') == None or os.environ.get('channel_min') == 'None':
             print('channel_min is not in environment variables, using passed argument.')
@@ -188,7 +176,7 @@ class analysis(object):
             self.channel_min = int(os.environ.get('channel_min'))
         print(f'channel_min: {self.channel_min}') 
 
-        self.pv = parameter_values(self.scenario, self.bkg, self.fix_mass, polarization=self.polarization)
+        self.pv = parameter_values(self.scenario, self.bkg, self.fix_mass)
         self.file_locations()
         self.set_parameter_vector()
         self.set_bounds()
@@ -250,61 +238,21 @@ class analysis(object):
                         exposure_time=self.exposure_time)
 
         self.NICER_data = xpsi.Data(**settings)
-        
-    def set_data_IXPE(self):
-        from ixpe_read_pcube3 import readData_pcube_ebin
-
-        fname_ixpedata = this_directory+"/data/ixpe_products/ixpeobssimdata_scenarioB/pcube_10bin/model_amsp_xpsi"
-        fname_ixpedata_pulse = this_directory+"/data/ixpe_products/ixpeobssimdata_scenarioB/pcube_20bin/model_amsp_xpsi"
-        
-        
-        
-        phase_IXPE, Idat1, qn, un, Iderr1, qnerr, unerr, PD, PDerr, keVdat, MDP99 = readData_pcube_ebin(fname_ixpedata, NPhadat=10)
-        phase_IXPE_pulse, Idat2, qn2, un2, Iderr2, qnerr2, unerr2, PD2, PDerr2, keVdat2, MDP99_2 = readData_pcube_ebin(fname_ixpedata_pulse, NPhadat=20)
-        
-        
-        self.IXPE_I_data = xpsi.Data([Idat2[:,0]/np.max(Idat2[:,0])],
-                               channels=np.arange(0, 1),
-                               phases=np.linspace(0,1,len(phase_IXPE_pulse)+1),
-                               first=0,
-                               last=0,
-                               exposure_time=1.0)
-        self.IXPE_Q_data = xpsi.Data([qn[:,0]],
-                               channels=np.arange(0, 1),
-                               phases=np.linspace(0,1,len(phase_IXPE)+1),
-                               first=0,
-                               last=0,
-                               exposure_time=1.0)
-        self.IXPE_U_data = xpsi.Data([un[:,0]],
-                               channels=np.arange(0, 1),
-                               phases=np.linspace(0,1,len(phase_IXPE)+1),
-                               first=0,
-                               last=0,
-                               exposure_time=1.0)
-        
-        self.IXPE_Q_data.phase_IXPE = phase_IXPE
-        self.IXPE_U_data.phase_IXPE = phase_IXPE
-        self.IXPE_I_data.phase_IXPE_pulse = phase_IXPE_pulse
-        self.IXPE_I_data.errors, self.IXPE_Q_data.errors, self.IXPE_U_data.errors = Iderr2/np.max(Idat2[:,0]), qnerr, unerr
-                
+    
             
     def set_instrument_NICER(self):
+        
+        alpha_values=dict(alpha=1)
+        alpha_bounds={}
         self.NICER = CustomInstrument_fits.from_response_files(
-            self.RMF_file, 
-            self.ARF_file,
+            bounds=alpha_bounds,
+            values=alpha_values,
+            RMF_file=self.RMF_file, 
+            ARF_file=self.ARF_file,
             max_detection_channel=self.channel_hi, 
             min_detection_channel = self.channel_low, 
             max_input = self.max_input, #around the maximum
             min_input = self.min_input)
-
-    def set_instrument_IXPE(self):
-        self.IXPE = CustomInstrument_stokes.from_response_files(MRF = this_directory+'/data/ixpe_products/ixpe_d1_obssim_v012.mrf',
-                                             RMF = this_directory+'/data/ixpe_products/ixpe_d1_obssim_v012.rmf',
-                                             max_input = 275,
-                                             max_channel = 200,
-                                             min_input = 0,
-                                             min_channel = 50,
-                                             channel_edges = None)
 
 
     def set_spacetime(self):
@@ -388,14 +336,14 @@ class analysis(object):
         self.set_disk()
         self.set_line()
         
-        photosphere_bounds = dict(spin_axis_position_angle = (None, None))
+        # photosphere_bounds = dict(spin_axis_position_angle = (None, None))
         self.photosphere = CustomPhotosphereDiskLine(hot = self.hot, 
                                                      elsewhere = None, 
-                                                     stokes=True if self.polarization else False, 
+                                                     stokes=False, 
                                                      disk=self.disk, 
                                                      line=self.line,
                                                      values=dict(mode_frequency = self.spacetime['frequency']), 
-                                                     bounds=photosphere_bounds)
+                                                     bounds={})
 
         self.photosphere.hot_atmosphere = self.file_atmosphere
         self.photosphere.hot_atmosphere_Q = this_directory+'/../model_data/Bobrikova_compton_slab_Q.npz'
@@ -483,46 +431,6 @@ class analysis(object):
                             epsrel = 1.0e-8,
                             epsilon = 1.0e-3,
                             sigmas = 10.0)
-    
-        if self.polarization:
-            if 'qu' in self.polarization:
-                self.set_data_IXPE()
-                self.set_instrument_IXPE()
-                self.signals = [[self.signal_NICER],] # to apply disk correctly to signal, NICER must be first element.
-            if 'i' in self.polarization:
-                signalI = CustomSignal_gaussian(data = self.IXPE_I_data,
-                                                instrument = self.IXPE,
-                                                interstellar = self.interstellar,
-                                                workspace_intervals = 1000,
-                                                cache = False,
-                                                epsrel = 1.0e-8,
-                                                epsilon = 1.0e-3,
-                                                sigmas = 10.0,
-                                                support = None,
-                                                stokes="I")
-                self.signals[0].append(signalI)
-            signalQ = CustomSignal_gaussian(data = self.IXPE_Q_data,
-                                    instrument = self.IXPE,
-                                    interstellar = self.interstellar,
-                                    workspace_intervals = 1000,
-                                    cache = False,
-                                    epsrel = 1.0e-8,
-                                    epsilon = 1.0e-3,
-                                    sigmas = 10.0,
-                                    support = None,
-                                    stokes="Q")
-            self.signals[0].append(signalQ)
-            signalU = CustomSignal_gaussian(data = self.IXPE_U_data,
-            	                instrument = self.IXPE,
-            	                interstellar = self.interstellar,
-            	                workspace_intervals = 1000,
-            	                cache = False,
-            	                epsrel = 1.0e-8,
-            	                epsilon = 1.0e-3,
-            	                sigmas = 10.0,
-            	                support = None,
-            	                stokes="U")
-            self.signals[0].append(signalU)
 
     def set_parameter_vector(self):
         self.p = self.pv.p()
@@ -540,14 +448,11 @@ class analysis(object):
         self.set_prior()
         
         self.likelihood = CustomLikelihood(star = self.star, 
-                                           signals = self.signals if self.polarization else self.signal_NICER,
+                                           signals = self.signal_NICER,
                                            num_energies=self.num_energies, #128
                                            threads=1,
                                            prior=self.prior,
                                            externally_updated=True)
-        
-
-
         
         if self.scenario == 'J1444s':
             if self.poisson_seed == 1:
@@ -569,15 +474,6 @@ class analysis(object):
                 true_logl = 1.3525318684e+07
             elif self.channel_min == 100:
                 true_logl = 1.3594326983e+07
-        
-            
-        if self.scenario == 'small_r':
-            if self.polarization == 'qu':
-                true_logl = 7.9265139733e+07 # with IXPE qu
-            elif self.polarization == 'iqu':
-                true_logl = 7.9265007576e+07 # with IXPE iqu
-            elif not self.polarization:
-                true_logl = 7.9265215141e+07 #without IXPE
         self.true_logl = true_logl
     
     def __call__(self):
@@ -707,7 +603,6 @@ if __name__ == '__main__':
                         'disk', 
                         sampler='multi', 
                         scenario='J1444_STU', 
-                        eos_informed=True, 
-                        polarization=False, 
+                        eos_informed=False, 
                         channel_min=100)
     Analysis()

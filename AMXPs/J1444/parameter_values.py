@@ -201,7 +201,7 @@ class parameter_values(object):
 
     def bounds(self):
         
-        extra_constr = False # from  single instrument runs we did previously
+        extra_constr = True # from  single instrument runs we did previously
         
         if extra_constr:
             i_low_deg = 50
@@ -215,9 +215,9 @@ class parameter_values(object):
             cos_i_low = np.cos(i_high_deg*np.pi/180)
             cos_i_high = np.cos(i_low_deg*np.pi/180)
             column_density_low = 19.
-            mass_high = 2.2
-            radius_low= 8.
-            radius_high = 14.
+        mass_high = 2.2
+        radius_low= 8.
+        radius_high = 14.
 
         
         bounds = {'radius':(radius_low, radius_high),

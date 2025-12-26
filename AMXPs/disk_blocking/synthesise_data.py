@@ -64,7 +64,7 @@ class SynthesiseData(xpsi.Data):
 
 
 bkg = 'disk' #disk or fix if no disk
-disk_blocking=True # use disk occultation or not
+disk_blocking=False # use disk occultation or not
 disk_emission=False
 
 try:
@@ -81,7 +81,7 @@ except:
     machine = "local"
     poisson_noise = True
     poisson_seed = 42
-    scenario = 'molkov'
+    scenario = 'molkov_pcol60'
   
 
 pv = parameter_values(scenario, bkg, disk_emission=disk_emission)

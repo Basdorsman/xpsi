@@ -38,7 +38,8 @@ class analysis(object):
                  poisson_seed=42, 
                  fix_mass=False, 
                  eos_informed=False, 
-                 channel_min=None):
+                 channel_min=None,
+                 sequential=False):
 
         self.scenario = os.environ.get('scenario')
         if os.environ.get('scenario') == None or os.environ.get('scenario') =='None':
@@ -175,6 +176,20 @@ class analysis(object):
         else:
             self.channel_min = int(os.environ.get('channel_min'))
         print(f'channel_min: {self.channel_min}') 
+
+
+        if os.environ.get('sequential') == None or os.environ.get('sequential') =='None':
+            print('sequential is not in environment variables, using passed argument.')
+            self.sequential = sequential
+        else:
+            self.sequential = os.environ.get('sequential')
+
+        if self.sequential == "True" or self.sequential == True:
+            self.sequential = True
+        else:
+            self.sequential = False
+
+        print(f'sequential: {self.sequential}')
 
         self.pv = parameter_values(self.scenario, self.bkg, self.fix_mass)
         self.file_locations()
@@ -436,7 +451,7 @@ class analysis(object):
         self.p = self.pv.p()
 
     def set_prior(self):
-        self.prior = CustomPrior(self.scenario, self.bkg, fix_mass = self.fix_mass, eos_informed=self.eos_informed)
+        self.prior = CustomPrior(self.scenario, self.bkg, fix_mass = self.fix_mass, eos_informed=self.eos_informed, sequential=self.sequential)
         
     def set_likelihood(self):
         self.set_spacetime() # self.spacetime is defined here
@@ -583,19 +598,19 @@ class analysis(object):
             t_start = time.time()
 
             
-            # # inverse sampling test
-            # test=self.prior.draw(ndraws=100)[0]#[:,0:-1]
-            # names_dictionary = self.pv.names()
+            # inverse sampling test
+            test=self.prior.draw(ndraws=1000)[0]#[:,0:-1]
+            names_dictionary = self.pv.names()
             # labels_dictionary = self.pv.labels()
             # axis_labels = [labels_dictionary[key] for key in names_dictionary]
             
-            # import corner
-            # figure=corner.corner(test, labels=axis_labels[:19], label_kwargs={'fontsize': 12},)
-            # figure.tight_layout()
-            # figure.savefig(f'{folderstring}/prior.pdf',)
+            import corner
+            figure=corner.corner(test, labels=names_dictionary, label_kwargs={'fontsize': 12},)
+            figure.tight_layout()
+            figure.savefig(f'{folderstring}/prior_STU_seq.pdf',)
             print('Test took {:.3f} seconds'.format((time.time()-t_start)))
 
-            
+            plt.close('all')
             
 if __name__ == '__main__':
     Analysis = analysis('local', 
@@ -604,5 +619,6 @@ if __name__ == '__main__':
                         sampler='multi', 
                         scenario='J1444_STU', 
                         eos_informed=False, 
+                        sequential=True,
                         channel_min=100)
     Analysis()

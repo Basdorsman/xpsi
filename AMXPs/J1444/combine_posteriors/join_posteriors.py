@@ -88,6 +88,13 @@ prior_shared = prior_draws[:,params_NICER].T
 kde_prior=gaussian_kde(prior_shared)
 # kde_prior.logpdf(list(prior_shared[:,0])) #try out log probability 
 
+# here I calculate that 97 percent of the samples are preserved with the flat M-R prior.
+# i=0
+# for mass,radius in zip(prior_draws[:,0],prior_draws[:,1]):    
+#     if radius>8 and radius<14 and mass<2.2:
+#         i+=1
+# print(i)
+
 
 def loglike_NICER(params):
     loglike=kde_post_NICER.logpdf(params)-kde_prior.logpdf(params)

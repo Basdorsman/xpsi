@@ -203,13 +203,13 @@ class parameter_values(object):
         
         extra_constr = True # from  single instrument runs we did previously
         
-        if extra_constr:
+        if self.scenario == 'J1444_STS':
             i_low_deg = 50
             i_high_deg = 80
             cos_i_low = np.cos(i_high_deg*np.pi/180)
             cos_i_high = np.cos(i_low_deg*np.pi/180)
             column_density_low = 25.
-        else:
+        elif self.scenario == 'J1444_STU':
             i_low_deg = 50
             i_high_deg = 90
             cos_i_low = np.cos(i_high_deg*np.pi/180)

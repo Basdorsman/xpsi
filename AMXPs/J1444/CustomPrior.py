@@ -57,7 +57,6 @@ class CustomPrior(xpsi.Prior):
         self.fix_mass = kwargs.pop('fix_mass', None)
         self.eos_informed = kwargs.pop('eos_informed', None)
         
-        
         if self.eos_informed:        
             self.nf_eos_mr_prior = NormalizingFlow(this_directory+'/data/EoS_prior/flow_and_scaler_PP.pth')
         
@@ -211,6 +210,27 @@ class CustomPrior_twohotspots(xpsi.Prior):
         self.eos_informed = kwargs.pop('eos_informed', None)
         self.variable_params = kwargs.pop('variable_params', None)
         self.posterior_combiner = kwargs.pop('posterior_combiner', None)
+        self.sequential = kwargs.pop('sequential', None)
+
+        if self.sequential:
+            #Loading the equally weighted posterior samples from IXPE IQU analysis:
+          
+            def make_extrapolator(usecol):
+                values=np.loadtxt(this_directory+'/data/run1_IQU/run_rdata_IQUpost_equal_weights.dat',usecols=usecol) 
+                # print('mean values:',np.mean(values))
+                prior_pdf_values = np.ones((len(values)))/len(values)  
+                # Building cdf
+                cdf_value = np.cumsum(prior_pdf_values)
+                cdf_value /= cdf_value[-1]
+                interpolator_value = Akima1DInterpolator(cdf_value,np.sort(values))
+                interpolator_value.extrapolate = True
+                return interpolator_value
+            
+            self.interpolator_mass = make_extrapolator(0)
+            self.interpolator_radius = make_extrapolator(1)
+            self.interpolator_distance = make_extrapolator(2)
+            self.interpolator_cosi = make_extrapolator(3)
+            self.interpolator_nh = make_extrapolator(18)
 
         
         if self.eos_informed:        
@@ -227,19 +247,24 @@ class CustomPrior_twohotspots(xpsi.Prior):
         :returns: Logarithm of the distribution evaluated at ``p``.
 
         """
+        
+        # print('prior call here')
         temp = super(CustomPrior_twohotspots, self).__call__(p)
         if not np.isfinite(temp):
+            # print('1d boundary issue')
             return temp
 
         ref = self.parameters.star.spacetime # shortcut
 
         # based on contemporary EOS theory
         if not ref['radius'] <= 16.0:
+            # print('too large radius')
             return -np.inf
 
         # causality limit for compactness
         R_p = 1.0 + ref.epsilon * (-0.788 + 1.030 * ref.zeta)
         if R_p < 1.45 / ref.R_r_s:
+            # print('compactness')
             return -np.inf
 
         mu = math.sqrt(-1.0 / (3.0 * ref.epsilon * (-0.788 + 1.030 * ref.zeta)))
@@ -248,6 +273,7 @@ class CustomPrior_twohotspots(xpsi.Prior):
         # i.e., an elliptical surface; minor effect on support, if any,
         # for high spin frequenies
         if mu < 1.0:
+            # print('mu')
             return -np.inf
         
        
@@ -273,11 +299,13 @@ class CustomPrior_twohotspots(xpsi.Prior):
             if 'disk' in  self.bkg:  
                 # inner disk must be smaller than corotation radius, otherwise we enter (weak) propeller regime
                 if not self.parameters['R_in'] < 1.49790e3*ref['mass']**(1/3)*ref['frequency']**(-2/3): # 1.49790e3 = (G*M_sol/4pi^2)^(1/3) in km
-                   return -np.inf
+                    # print('disk larger than corot')   
+                    return -np.inf
         
                 # inner disk must be larger than neutron star equatorial radius
                 if not self.parameters['R_in'] > ref['radius']:
-                   return -np.inf         
+                    # print('disk too small')
+                    return -np.inf         
             ref = self.parameters # redefine shortcut
             
             if self.scenario == 'J1444_STU':
@@ -297,6 +325,7 @@ class CustomPrior_twohotspots(xpsi.Prior):
                 if ang_sep < ref['p__super_radius'] + ref['s__super_radius']:
                     # print('overlapping hotregions')
                     return -np.inf
+        # print('successful prior call')
         return 0.0
 
     def inverse_sample(self, hypercube=None):
@@ -312,9 +341,25 @@ class CustomPrior_twohotspots(xpsi.Prior):
 
         ref = self.parameters # shortcut
     
-        idx = ref.index('distance')
-        temporary = truncnorm.ppf(hypercube[idx], -3.0, 3.0, loc=8.5, scale=2.)
-        ref['distance'] = temporary
+        if not self.sequential:
+            idx = ref.index('distance')
+            temporary = truncnorm.ppf(hypercube[idx], -3.0, 3.0, loc=8.5, scale=2.)
+            ref['distance'] = temporary
+
+
+        # Inverse sampling for mass+radius by interpolating over their 1D-cdfs
+        if self.sequential:
+            idx = ref.index('mass')
+            ref['mass'] = float(self.interpolator_mass(hypercube[idx]))
+            idx = ref.index('radius')
+            ref['radius'] = float(self.interpolator_radius(hypercube[idx]))
+            idx = ref.index('distance')
+            ref['distance'] = float(self.interpolator_distance(hypercube[idx]))
+            idx = ref.index('cos_inclination')
+            ref['cos_inclination'] = float(self.interpolator_cosi(hypercube[idx]))
+            idx = ref.index('column_density')
+            ref['column_density'] = float(self.interpolator_nh(hypercube[idx]))
+
 
         if self.eos_informed:
             ref['mass'], ref['radius'] = self.nf_eos_mr_prior.sample_mr_from_nf()

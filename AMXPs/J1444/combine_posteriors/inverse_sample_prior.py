@@ -16,13 +16,12 @@ from multiprocessing import Pool
 from STU import analysis
 
 
-Analysis = analysis('local', 
-                    'test', 
+Analysis = analysis('test', 
                     'disk', 
                     sampler='multi', 
-                    scenario='J1444', 
-                    eos_informed=True, 
-                    polarization=False, 
+                    scenario='J1444_STU', 
+                    eos_informed=False,
+                    sequential=False,
                     channel_min=100)
 Analysis()
 

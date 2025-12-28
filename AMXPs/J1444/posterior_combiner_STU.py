@@ -33,7 +33,6 @@ from helper_functions import get_T_in_log10_Kelvin, plot_2D_pulse, CustomAxes, g
 
 class analysis(object):
     def __init__(self, 
-                 machine, 
                  run_type, 
                  bkg, 
                  sampler='multi', 
@@ -52,12 +51,7 @@ class analysis(object):
             print('scenario is not in environment variables, using passed argument.')
             self.scenario=scenario
         print(f'scenario: {self.scenario}')
-        
-        self.machine = os.environ.get('machine')
-        if os.environ.get('machine') == None or os.environ.get('machine') =='None':
-            print('machine variable is not in environment variables, using passed argument.')
-            self.machine = machine
-        print(f'machine: {self.machine}')
+
 
         self.run_type = os.environ.get('run_type')
         if os.environ.get('run_type') == None or os.environ.get('run_type') == "None":
@@ -212,16 +206,8 @@ class analysis(object):
        
         self.RMF_file = self.this_directory+'/data/NICER_products/srgaj1444.rmf'
         self.ARF_file = self.this_directory+'/data/NICER_products/srgaj1444.arf'
-
-        if self.machine == 'local':
-            self.file_atmosphere = '/home/bas/Documents/Projects/x-psi/model_datas/bobrikova/Bobrikova_compton_slab.npz'
-            self.file_interstellar = "/home/bas/Documents/Projects/x-psi/xpsi-bas-fork/AMXPs/model_data/n_H/TBnew/tbnew0.14.txt"
-        elif self.machine == 'snellius' or 'helios':
-            self.file_atmosphere = self.this_directory + '/../model_data/Bobrikova_compton_slab.npz'
-            self.file_interstellar = self.this_directory + "/../model_data/interstellar/tbnew/tbnew0.14.txt"
-        if self.scenario == 'kajava' or self.scenario == 'literature' or self.scenario == '2019' or self.scenario == '2022' or self.scenario=='small_r' or self.scenario=='large_r':
-            self.file_bkg = self.this_directory + '/data/disk_2019.txt'
-        # self.file_bkg = self.this_directory + '/../model_data/synthetic/diskbb_background.txt'
+        self.file_atmosphere = self.this_directory + '/data/Bobrikova_compton_slab_I.npz'
+        self.file_interstellar = self.this_directory +'/data/tbnew0.14.txt'
 
     def set_bounds(self):
         self.bounds = self.pv.bounds()
@@ -258,10 +244,14 @@ class analysis(object):
 
         self.NICER_data = xpsi.Data(**settings)
             
-    def set_instrument_NICER(self):
+    def set_instrument_NICER(self):     
+        alpha_values=dict(alpha=1)
+        alpha_bounds={}
         self.NICER = CustomInstrument_fits.from_response_files(
-            self.RMF_file, 
-            self.ARF_file,
+            bounds=alpha_bounds,
+            values=alpha_values,
+            RMF_file=self.RMF_file, 
+            ARF_file=self.ARF_file,
             max_detection_channel=self.channel_hi, 
             min_detection_channel = self.channel_low, 
             max_input = self.max_input, #around the maximum
@@ -471,12 +461,8 @@ class analysis(object):
         
         
         analysis_name = self.analysis_name
-        machine = self.machine
-        
-        if machine == 'local':
-            folderstring = f'local_runs/{analysis_name}'
-        elif machine == 'snellius' or 'helios':
-            folderstring = f'{analysis_name}'
+
+        folderstring = f'{analysis_name}'
 
         try: 
             os.makedirs(folderstring)

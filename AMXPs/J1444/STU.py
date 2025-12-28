@@ -240,8 +240,7 @@ class analysis(object):
         self.NICER_data = xpsi.Data(**settings)
     
             
-    def set_instrument_NICER(self):
-        
+    def set_instrument_NICER(self):     
         alpha_values=dict(alpha=1)
         alpha_bounds={}
         self.NICER = CustomInstrument_fits.from_response_files(

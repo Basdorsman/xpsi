@@ -44,7 +44,7 @@ from posterior_combiner_STU import analysis
 #18  Units of 10^21 cm^-2 = 2.900e+01]
 
 params_NICER = [0,1,2,3,17,18]
-post_NICER_eqw=np.loadtxt(this_directory+'/J1444_STU_lp1000/17178314/J1444_STU_lp1000/run_ST_post_equal_weights.dat')
+post_NICER_eqw=np.loadtxt(this_directory+'/../data/J1444_STU_flatmr_lp1000/run_ST_post_equal_weights.dat')
 post_NICER_eqw_shared = post_NICER_eqw[:,params_NICER].T
 kde_post_NICER=gaussian_kde(post_NICER_eqw_shared)
 
@@ -76,14 +76,14 @@ kde_post_NICER=gaussian_kde(post_NICER_eqw_shared)
 
 params_IXPE = [0,1,2,3,18,20]
 # post_IXPE_eqw=np.loadtxt(this_directory+'/run1_QU_DiskF_EOS_lp10k/run_rdata_QUpost_equal_weights.dat')
-post_IXPE_eqw=np.loadtxt(this_directory+'/run1_IQU_Disk_EOS_res4/run_rdata_IQUpost_equal_weights.dat')
+post_IXPE_eqw=np.loadtxt(this_directory+'/../data/run1_IQU/run_rdata_IQUpost_equal_weights.dat')
 post_IXPE_eqw_shared = post_IXPE_eqw[:,params_IXPE].T
 kde_post_IXPE=gaussian_kde(post_IXPE_eqw_shared)
 
 
 # inverse sample from prior with e.g. 10^4 points to get a prior kde. I think there are no prior weights
 ndraws='10000.0'
-prior_draws = np.loadtxt(this_directory+f'/prior_draws={ndraws}.txt')
+prior_draws = np.loadtxt(this_directory+f'/../data/flat_prior/prior_draws={ndraws}.txt')
 prior_shared = prior_draws[:,params_NICER].T
 kde_prior=gaussian_kde(prior_shared)
 # kde_prior.logpdf(list(prior_shared[:,0])) #try out log probability 
@@ -155,13 +155,11 @@ def loglike_combined(params):
 
     return ll_NICER + ll_IXPE
 
-Analysis = analysis('local', 
-                    'test', 
+Analysis = analysis('test', 
                     'disk', 
                     sampler='multi', 
                     scenario='J1444_STU', 
-                    eos_informed=True, 
-                    polarization=False, 
+                    eos_informed=False, 
                     channel_min=100,
                     posterior_combiner=True)
 Analysis()
@@ -179,7 +177,7 @@ try:
     live_points = int(os.environ.get('live_points'))
 except:
     print('live_points from environment variables failed, proceeding with default.')
-    live_points = 64
+    live_points = 1000
     pass
 print(f'live_points: {live_points}')
 
@@ -205,6 +203,6 @@ runtime_params = {'resume': False,
                   'seed': 7,
                   'verbose': True}
 
-# if __name__ == '__main__':
-    # _ = pymultinest.solve(LogLikelihood=loglike_combined, Prior=prior, n_dims=len(params_NICER)+1,
-    #                       **runtime_params)
+if __name__ == '__main__':
+    _ = pymultinest.solve(LogLikelihood=loglike_combined, Prior=prior, n_dims=len(params_NICER)+1,
+                          **runtime_params)

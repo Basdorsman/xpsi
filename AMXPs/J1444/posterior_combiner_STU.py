@@ -344,8 +344,6 @@ class analysis(object):
                                                      bounds=photosphere_bounds)
 
         self.photosphere.hot_atmosphere = self.file_atmosphere
-        self.photosphere.hot_atmosphere_Q = this_directory+'/../model_data/Bobrikova_compton_slab_Q.npz'
-
     def set_star(self):
         # self.set_photosphere()
         self.star = xpsi.Star(spacetime = self.spacetime, photospheres = self.photosphere)

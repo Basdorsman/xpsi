@@ -8,17 +8,19 @@ export max_iter=1
 export run_type=sample
 export bkg=disk
 export support_factor=None
-export scenario=J1444_STU
+export scenario=J1444_STS
 export poisson_noise=True
 export poisson_seed=42
 export fix_mass=False
 export sampler=multi
 export LABEL=test_analysis
 export eos_informed=False
-#export polarization=iqu
+export polarization=iqu
 export channel_min=100
 
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$HOME/multinest/MultiNest_v3.12_CMake/multinest/lib/
+
 cd $HOME/xpsi-bas-fork/AMXPs/J1444/
-python STU.py
+python joint_STS_variable.py
 cd $HOME/xpsi-bas-fork/AMXPs/J1444/snellius_runs/
 

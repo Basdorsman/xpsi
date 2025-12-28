@@ -1,7 +1,7 @@
 #!/bin/bash
-#SBATCH -N 1
+#SBATCH -N 5
 #SBATCH --tasks-per-node=192
-#SBATCH -t 01:00:00
+#SBATCH -t 5-0:00:00
 #SBATCH -p genoa
 #SBATCH --job-name=J1444_STS_var_flatmr
 #SBATCH --mail-user=b.dorsman@uva.nl
@@ -12,7 +12,7 @@ echo number of nodes is $SLURM_JOB_NUM_NODES
 echo the allocated nodes are:
 echo $SLURM_JOB_NODELIST
 
-unset LD_LIBRARY_PATH
+#unset LD_LIBRARY_PATH
 
 export num_energies=40  # 60
 export num_leaves=30  # 50
@@ -37,31 +37,28 @@ export polarization=iqu
 export XPSI_DIR=$HOME/xpsi-bas-fork
 export LABEL=${SLURM_JOB_NAME}_lp${live_points}
 export STORAGE_DIR=$HOME/outputs/$LABEL/$SLURM_JOB_ID
-
+export DIR_NAME=J1444
 
 echo This job $LABEL will go to $STORAGE_DIR.
 
-cd $HOME/xpsi-group/
-module purge
-module load 2023 #2022
-module load foss/2023a #foss/2022a
-module load SciPy-bundle/2023.07-gfbf-2023a #SciPy-bundle/2022.05-foss-2022a
-module load wrapt/1.15.0-gfbf-2023a  #wrapt/1.15.0-foss-2022a
-module load matplotlib/3.7.2-gfbf-2023a #matplotlib/3.5.2-foss-2022a
-source $HOME/xpsi-group/venv_xpsi_group_2023/bin/activate
 #cd $HOME/xpsi-group/
-#LDSHARED="gcc -shared" CC=gcc python setup.py install
+
+module purge
+module load 2024
+module load foss/2024a
+module load SciPy-bundle/2024.05-gfbf-2024a
+module load wrapt/1.16.0-gfbf-2024a
+module load matplotlib/3.9.2-gfbf-2024a
+module load CMake/3.29.3-GCCcore-13.3.0
+module load Cython/3.0.10-GCCcore-13.3.0
+
+source $HOME/venvs/xpsi_py3/bin/activate
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$HOME/multinest/MultiNest_v3.12_CMake/multinest/lib/
 
-#export OMP_NUM_THREADS=1
-#export OPENBLAS_NUM_THREADS=1
-#export GOTO_NUM_THREADS=1
-
-cp -r $XPSI_DIR/AMXPs/J1444/* $TMPDIR/
-cd $TMPDIR/
+cp -r $XPSI_DIR/AMXPs/* $TMPDIR/
+cd $TMPDIR/$DIR_NAME/
 
 echo 'srun python'
-#python synthesise_J1808_data.py > std.out 2> std.err #create data? you can do this before running job.
 srun python joint_STS_variable.py > std.out 2> std.err
 
 mkdir $HOME/outputs
@@ -74,5 +71,5 @@ cp -r $LABEL/ $STORAGE_DIR
 # copy analysis files for posterity
 mkdir $STORAGE_DIR/analysis_files
 
-cp $TMPDIR/{STU.py,Custom*,Disk*,synthesise_data.py,parameter_values.py,snellius_runs/job*} -r $TMPDIR/data $STORAGE_DIR/analysis_files
+cp $TMPDIR/$DIR_NAME/{joint_STS_variable.py,Custom*,Disk*,synthesise_data.py,parameter_values.py,snellius_runs/job*} -r $TMPDIR/data $STORAGE_DIR/analysis_files
 

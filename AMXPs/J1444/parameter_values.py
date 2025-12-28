@@ -8,7 +8,7 @@ Created on Fri Mar 15 10:32:15 2024
 import os
 import sys
 this_directory = os.path.dirname(os.path.abspath(__file__))
-sys.path.append(this_directory+'/../')
+
 
 import math
 from helper_functions import get_T_in_log10_Kelvin

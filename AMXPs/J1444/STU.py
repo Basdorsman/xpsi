@@ -1,7 +1,7 @@
 import os
 import sys
 this_directory = os.path.dirname(os.path.abspath(__file__))
-sys.path.append(this_directory+'/../')
+
 
 import numpy as np
 import math

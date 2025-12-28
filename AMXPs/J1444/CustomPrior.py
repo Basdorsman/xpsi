@@ -10,7 +10,6 @@ import xpsi
 import math
 from scipy.stats import truncnorm
 from xpsi.global_imports import gravradius, _2pi
-from helper_functions import get_keV_from_log10_Kelvin
 from scipy.interpolate import Akima1DInterpolator
 
 import os
@@ -348,7 +347,7 @@ class CustomPrior_twohotspots(xpsi.Prior):
 
 
         # Inverse sampling for mass+radius by interpolating over their 1D-cdfs
-        if self.sequential:
+        elif self.sequential:
             idx = ref.index('mass')
             ref['mass'] = float(self.interpolator_mass(hypercube[idx]))
             idx = ref.index('radius')

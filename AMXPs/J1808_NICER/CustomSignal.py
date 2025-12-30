@@ -29,13 +29,24 @@ class CustomSignal(xpsi.Signal):
 
     """
 
-    def __init__(self, workspace_intervals = 1000, epsabs = 0, epsrel = 1.0e-8,
-                 epsilon = 1.0e-3, sigmas = 10.0, support = None, bkg = 'marginalised', allow_negative_background = False, *args, **kwargs):
+    def __init__(self, 
+                 workspace_intervals = 1000, 
+                 epsabs = 0, 
+                 epsrel = 1.0e-8,
+                 epsilon = 1.0e-3, 
+                 sigmas = 10.0, 
+                 support = None, 
+                 bkg = 'marginalised', 
+                 allow_negative_background = False,
+                 disk_combined=False,
+                 *args, 
+                 **kwargs):
         """ Perform precomputation. """
         #print("running CustomSignal init...")
         super(CustomSignal, self).__init__(*args, **kwargs)
 
         self.bkg = bkg
+        self._disk_combined = disk_combined
         # self.allow_negative_background = allow_negative_background
         #if self.bkg == 'fix':
         #    self.background_data = np.loadtxt(this_directory+'/data/J1808_synthetic_diskbb_literature.txt')
@@ -92,22 +103,23 @@ class CustomSignal(xpsi.Signal):
                                               #slim=-1.0) # default is skipping 10^89s, so some likelihood calculations are skipped
 
         elif 'disk' in self.bkg:
+            if not self._disk_combined:
         # if disk and line are stored separately, there phases are also separate. But this breaks postprocessing, sampling, and data synthesis.
-
-            self._phases += [np.copy(self._phases[0])]
-            # print('len self._phases',len(self._phases))
-            
-            # fine as long as the disk has no phase
-            
-            self._shifts = np.append(self._shifts, self._shifts[0])
-            # print('len self._shifts',len(self._shifts))
-            
-            if 'line' in self.bkg:
+    
                 self._phases += [np.copy(self._phases[0])]
+                # print('len self._phases',len(self._phases))
                 
-                # fine as long as the line has no phase
+                # fine as long as the disk has no phase
+                
                 self._shifts = np.append(self._shifts, self._shifts[0])
-       
+                # print('len self._shifts',len(self._shifts))
+                
+                if 'line' in self.bkg:
+                    self._phases += [np.copy(self._phases[0])]
+                    
+                    # fine as long as the line has no phase
+                    self._shifts = np.append(self._shifts, self._shifts[0])
+           
 
             self.loglikelihood, self.expected_counts = \
                 poisson_likelihood_given_background(self._data.exposure_time, 

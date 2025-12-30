@@ -568,12 +568,11 @@ class analysis(object):
             
             
 if __name__ == '__main__':
-    Analysis = analysis('local', 
-                        'test', 
+    Analysis = analysis('test', 
                         'disk', 
                         sampler='multi', 
                         scenario='J1444_STU', 
-                        eos_informed=True, 
+                        eos_informed=False, 
                         polarization=False, 
                         channel_min=100)
     Analysis()

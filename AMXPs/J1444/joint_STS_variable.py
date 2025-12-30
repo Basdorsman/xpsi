@@ -26,7 +26,6 @@ from xpsi.Parameter import Derive
 
 class analysis(object):
     def __init__(self, 
-                 machine, 
                  run_type, 
                  bkg, 
                  sampler='multi', 
@@ -45,12 +44,6 @@ class analysis(object):
             print('scenario is not in environment variables, using passed argument.')
             self.scenario=scenario
         print(f'scenario: {self.scenario}')
-        
-        self.machine = os.environ.get('machine')
-        if os.environ.get('machine') == None or os.environ.get('machine') =='None':
-            print('machine variable is not in environment variables, using passed argument.')
-            self.machine = machine
-        print(f'machine: {self.machine}')
 
         self.run_type = os.environ.get('run_type')
         if os.environ.get('run_type') == None or os.environ.get('run_type') == "None":
@@ -190,6 +183,7 @@ class analysis(object):
         self.NICER = NICER
         self.signal_phase_shift = False
         self.variable_params=True
+        self.disk_NICER_only=False
         self.pv = parameter_values(self.scenario, self.bkg, self.fix_mass, polarization=self.polarization, signal_phase_shift=self.signal_phase_shift)
         self.file_locations()
         self.set_parameter_vector()
@@ -207,16 +201,8 @@ class analysis(object):
        
         self.RMF_file = self.this_directory+'/data/NICER_products/srgaj1444.rmf'
         self.ARF_file = self.this_directory+'/data/NICER_products/srgaj1444.arf'
-
-        if self.machine == 'local':
-            self.file_atmosphere = '/home/bas/Documents/Projects/x-psi/model_datas/bobrikova/Bobrikova_compton_slab.npz'
-            self.file_interstellar = "/home/bas/Documents/Projects/x-psi/xpsi-bas-fork/AMXPs/model_data/n_H/TBnew/tbnew0.14.txt"
-        elif self.machine == 'snellius' or 'helios':
-            self.file_atmosphere = self.this_directory + '/../model_data/Bobrikova_compton_slab.npz'
-            self.file_interstellar = self.this_directory + "/../model_data/n_H/TBnew/tbnew0.14.txt"
-        if self.scenario == 'kajava' or self.scenario == 'literature' or self.scenario == '2019' or self.scenario == '2022' or self.scenario=='small_r' or self.scenario=='large_r':
-            self.file_bkg = self.this_directory + '/data/disk_2019.txt'
-        # self.file_bkg = self.this_directory + '/../model_data/synthetic/diskbb_background.txt'
+        self.file_atmosphere = self.this_directory + '/data/Bobrikova_compton_slab_I.npz'
+        self.file_interstellar = self.this_directory +'/data/tbnew0.14.txt'
 
     def set_bounds(self):
         self.bounds = self.pv.bounds()
@@ -719,11 +705,10 @@ class analysis(object):
         
     def set_disk(self):
         from Disk import Disk, k_disk_derive
-        if 'disk' in self.bkg:    
-            bounds = dict(T_in_keV = self.bounds["T_in_keV"],
-                          R_in = self.bounds["R_in"],
-                          K_disk = None)
-                
+        bounds = dict(T_in_keV = self.bounds["T_in_keV"],
+                      R_in = self.bounds["R_in"],
+                      K_disk = None)
+        if self.bkg == 'disk':    
             self.k_disk_NICER = k_disk_derive()
             self.disk_NICER = Disk(bounds=bounds, values={'K_disk': self.k_disk_NICER}, prefix='NICER')
             self.k_disk_NICER.disk = self.disk_NICER
@@ -731,6 +716,13 @@ class analysis(object):
             self.k_disk_IXPE = k_disk_derive()
             self.disk_IXPE = Disk(bounds=bounds, values={'K_disk': self.k_disk_IXPE}, prefix='IXPE')
             self.k_disk_IXPE.disk = self.disk_IXPE
+            
+        elif self.bkg == 'disk_NICER':              
+            self.k_disk_NICER = k_disk_derive()
+            self.disk_NICER = Disk(bounds=bounds, values={'K_disk': self.k_disk_NICER})
+            self.k_disk_NICER.disk = self.disk_NICER
+            
+            self.disk_IXPE = None
             
         else:
             self.disk = None
@@ -912,9 +904,9 @@ class analysis(object):
     def set_likelihood(self):
         self.set_spacetime() # self.spacetime is defined here
         self.set_photosphere() # self.k_disk is defined here
-        if 'disk' in self.bkg:
-            self.k_disk_NICER.spacetime = self.spacetime
-            self.k_disk_IXPE.spacetime = self.spacetime
+        self.k_disk_NICER.spacetime = self.spacetime
+        if self.bkg == 'disk':
+            self.k_disk_IXPE.spacetime = self.spacetime          
         self.set_star() # star is defined afterwards
         self.set_signal()
         self.set_prior()
@@ -964,12 +956,9 @@ class analysis(object):
         print('param values',self.likelihood.params)
         
         analysis_name = self.analysis_name
-        machine = self.machine
         
-        if machine == 'local':
-            folderstring = f'local_runs/{analysis_name}'
-        elif machine == 'snellius' or 'helios':
-            folderstring = f'{analysis_name}'
+
+        folderstring = f'{analysis_name}'
 
         try: 
             os.makedirs(folderstring)
@@ -1087,9 +1076,8 @@ class analysis(object):
             
             
 if __name__ == '__main__':
-    Analysis = analysis('local', 
-                        'sample', 
-                        'disk', 
+    Analysis = analysis('test', 
+                        'disk_NICER', 
                         sampler='multi', 
                         scenario='J1444_STS', 
                         support_factor=None, 

@@ -409,3 +409,45 @@ def extract_parameters(file_path, param_type='MAP'):
                 parameters.append(parameter_value)
 
     return parameters, log_evidence, uncertainty
+
+from scipy.interpolate import interp1d
+
+def shift_and_rebin_pulse_2D(pulse, pulse_phases, phase_shift, new_phases):
+    """
+    Shifts the pulse (1D or 2D) by the given phase_shift and rebins it to match the new phase bins.
+
+    Parameters:
+        pulse (np.ndarray): The original pulse array (1D or 2D) with values (including phase 0 and 1).
+        pulse_phases (np.ndarray): The original phase bins.
+        phase_shift (float): The phase shift to be applied.
+        new_phases (np.ndarray): The new phase bins to rebin the data.
+
+    Returns:
+        np.ndarray: The phase-shifted and rebinned pulse.
+    """
+    # Extend the data without duplicating the endpoint
+    extended_phases = np.concatenate((pulse_phases[:-1], pulse_phases[:-1] + 1))
+    
+    if pulse.ndim == 1:
+        extended_pulse = np.tile(pulse[:-1], 2)
+        interp_func = interp1d(extended_phases, extended_pulse, kind='cubic')
+    elif pulse.ndim == 2:
+        extended_pulse = np.tile(pulse[:, :-1], (1, 2))
+        interp_func = interp1d(extended_phases, extended_pulse, kind='cubic', axis=1)
+    else:
+        raise ValueError("pulse must be a 1D or 2D array")
+
+    # Apply phase shift and wrap within [0,1]
+    shifted_phases = (pulse_phases + phase_shift) % 1
+
+    # Interpolate shifted values
+    pulse_shifted = interp_func(shifted_phases)
+
+    # Rebin to new phase bins
+    rebin_interp_func = interp1d(pulse_phases, pulse_shifted, kind='cubic', axis=-1, fill_value="extrapolate")
+    pulse_rebinned = rebin_interp_func(new_phases)
+
+    # Correct for the bin count ratio to preserve total pulse sum
+    pulse_rebinned *= len(pulse_phases) / len(new_phases)
+
+    return pulse_rebinned

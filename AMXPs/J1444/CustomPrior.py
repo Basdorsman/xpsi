@@ -277,7 +277,7 @@ class CustomPrior_twohotspots(xpsi.Prior):
         
        
         if self.variable_params or self.posterior_combiner:  
-            if 'disk' in  self.bkg:  
+            if self.bkg == 'disk':  
                 # inner disk must be smaller than corotation radius, otherwise we enter (weak) propeller regime
                 if not self.parameters['NICER__R_in'] < 1.49790e3*ref['mass']**(1/3)*ref['frequency']**(-2/3): # 1.49790e3 = (G*M_sol/4pi^2)^(1/3) in km
                     return -np.inf
@@ -294,8 +294,8 @@ class CustomPrior_twohotspots(xpsi.Prior):
                 if not self.parameters['IXPE__R_in'] > ref['radius']:
                     return -np.inf
 
-        elif not self.variable_params and not self.posterior_combiner:
-            if 'disk' in  self.bkg:  
+        elif (not self.variable_params and not self.posterior_combiner) or self.bkg == 'disk_NICER':
+            if 'disk' in self.bkg:  
                 # inner disk must be smaller than corotation radius, otherwise we enter (weak) propeller regime
                 if not self.parameters['R_in'] < 1.49790e3*ref['mass']**(1/3)*ref['frequency']**(-2/3): # 1.49790e3 = (G*M_sol/4pi^2)^(1/3) in km
                     # print('disk larger than corot')   
@@ -415,7 +415,7 @@ class CustomPrior_twohotspots(xpsi.Prior):
         p += [np.arccos(ref['cos_inclination'])*180/np.pi]
 
 
-        if self.scenario=='J1444':
+        if self.scenario=='J1444' or self.scenario=='J1444_STU':
             p += [ref['p__super_tbb']*511]
             p += [ref['p__super_te']*511/1000]
             p += [ref['p__super_colatitude']*180/np.pi]

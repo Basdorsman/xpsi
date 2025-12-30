@@ -48,7 +48,7 @@ post_NICER_eqw=np.loadtxt(this_directory+'/../data/J1444_STU_flatmr_lp1000/run_S
 post_NICER_eqw_shared = post_NICER_eqw[:,params_NICER].T
 kde_post_NICER=gaussian_kde(post_NICER_eqw_shared)
 
-
+### WITH DISK
 #0 [mass, #grav mass
 #1 radius, #coordinate equatorial radius
 #2 distance, # earth distance kpc
@@ -72,6 +72,29 @@ kde_post_NICER=gaussian_kde(post_NICER_eqw_shared)
 #20 p.append(column_density)
 #21 p.append(du2_alpha)
 #22 p.append(du3_alpha)
+
+##### NO DISK 
+#0 ['mass',
+#1  'radius',
+#2  'distance',
+#3  'cos_inclination',
+#4  'spin_axis_position_angle',
+#5  'p__phase_shift',
+#6  'p__super_colatitude',
+#7  'p__super_radius',
+#8  'p__super_tbb',
+#9  'p__super_te',
+#10  'p__super_tau',
+#11  's__phase_shift',
+#12  's__super_colatitude',
+#13  's__super_radius',
+#14  's__super_tbb',
+#15  's__super_te',
+#16  's__super_tau',
+#17  'du1__alpha',
+#18  'column_density',
+#19  'du2__alpha',
+#20  'du3__alpha']
 
 
 params_IXPE = [0,1,2,3,18,20]
@@ -203,6 +226,6 @@ runtime_params = {'resume': False,
                   'seed': 7,
                   'verbose': True}
 
-if __name__ == '__main__':
-    _ = pymultinest.solve(LogLikelihood=loglike_combined, Prior=prior, n_dims=len(params_NICER)+1,
-                          **runtime_params)
+# if __name__ == '__main__':
+#     _ = pymultinest.solve(LogLikelihood=loglike_combined, Prior=prior, n_dims=len(params_NICER)+1,
+#                           **runtime_params)

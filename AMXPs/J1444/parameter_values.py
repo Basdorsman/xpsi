@@ -114,8 +114,8 @@ class parameter_values(object):
         self.tbb_s if self.scenario=='J1444_STU' else None,
         self.te_s if self.scenario=='J1444_STU' else None,
         self.tau_s if self.scenario=='J1444_STU' else None,
-        self.T_in_keV if 'disk' in self.bkg else None,
-        self.R_in if 'disk' in self.bkg else None,
+        self.T_in_keV if self.bkg == 'disk' else None,
+        self.R_in if self.bkg == 'disk' else None,
         self.mu if 'line' in self.bkg else None,
         self.sigma if 'line' in self.bkg else None,
         self.N if 'line' in self.bkg else None,
@@ -201,15 +201,15 @@ class parameter_values(object):
 
     def bounds(self):
         
-        extra_constr = True # from  single instrument runs we did previously
+        extra_constr = False # from  single instrument runs we did previously
         
-        if self.scenario == 'J1444_STS':
+        if extra_constr:
             i_low_deg = 50
             i_high_deg = 80
             cos_i_low = np.cos(i_high_deg*np.pi/180)
             cos_i_high = np.cos(i_low_deg*np.pi/180)
             column_density_low = 25.
-        elif self.scenario == 'J1444_STU':
+        elif self.scenario == 'J1444_STU' or self.scenario =='J1444_STS':
             i_low_deg = 50
             i_high_deg = 90
             cos_i_low = np.cos(i_high_deg*np.pi/180)

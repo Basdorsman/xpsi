@@ -38,7 +38,8 @@ class analysis(object):
                  fix_mass=False, 
                  eos_informed=False, 
                  channel_min=None,
-                 sequential=False):
+                 sequential=False,
+                 combine_unpulsed=True):
 
         self.scenario = os.environ.get('scenario')
         if os.environ.get('scenario') == None or os.environ.get('scenario') =='None':
@@ -183,6 +184,21 @@ class analysis(object):
             self.sequential = False
 
         print(f'sequential: {self.sequential}')
+        
+        if os.environ.get('combine_unpulsed') == None or os.environ.get('combine_unpulsed') =='None':
+            print('combine_unpulsed is not in environment variables, using passed argument.')
+            self.combine_unpulsed = combine_unpulsed
+        else:
+            self.combine_unpulsed = os.environ.get('combine_unpulsed')
+
+        if self.combine_unpulsed == "True" or self.combine_unpulsed == True:
+            self.combine_unpulsed = True
+        else:
+            self.combine_unpulsed = False
+
+        print(f'combine_unpulsed: {self.combine_unpulsed}')
+        
+        
 
         self.pv = parameter_values(self.scenario, self.bkg, self.fix_mass)
         self.file_locations()
@@ -341,6 +357,7 @@ class analysis(object):
                                                      stokes=False, 
                                                      disk=self.disk, 
                                                      line=self.line,
+                                                     combine_unpulsed=self.combine_unpulsed,
                                                      values=dict(mode_frequency = self.spacetime['frequency']), 
                                                      bounds={})
 
@@ -423,6 +440,7 @@ class analysis(object):
                             background = None,
                             interstellar = self.interstellar,
                             support = self.support,
+                            combine_unpulsed=self.combine_unpulsed,
                             cache = False, # only true if verifying code implementation otherwise useless slowdown.
                             bkg = self.bkg,
                             epsrel = 1.0e-8,
@@ -575,22 +593,22 @@ class analysis(object):
             t_start = time.time()
 
             
-            # inverse sampling test
-            test=self.prior.draw(ndraws=1000)[0]#[:,0:-1]
-            names_dictionary = self.pv.names()
-            # labels_dictionary = self.pv.labels()
-            # axis_labels = [labels_dictionary[key] for key in names_dictionary]
+            # # inverse sampling test
+            # test=self.prior.draw(ndraws=100)[0]#[:,0:-1]
+            # names_dictionary = self.pv.names()
+            # # labels_dictionary = self.pv.labels()
+            # # axis_labels = [labels_dictionary[key] for key in names_dictionary]
             
-            import corner
-            figure=corner.corner(test, labels=names_dictionary, label_kwargs={'fontsize': 12},)
-            figure.tight_layout()
-            figure.savefig(f'{folderstring}/prior_STU_seq.pdf',)
+            # import corner
+            # figure=corner.corner(test, labels=names_dictionary, label_kwargs={'fontsize': 12},)
+            # figure.tight_layout()
+            # figure.savefig(f'{folderstring}/prior_STU_seq.pdf',)
             print('Test took {:.3f} seconds'.format((time.time()-t_start)))
 
             plt.close('all')
             
 if __name__ == '__main__':
-    Analysis = analysis('test', 
+    Analysis = analysis('test',
                         'disk', 
                         sampler='multi', 
                         scenario='J1444_STU', 

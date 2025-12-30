@@ -351,6 +351,7 @@ class CustomSignal(xpsi.Signal):
                                                     self._phases,
                                                     self._shifts,
                                                     self.empty_background,
+                                                    self._precomp,
                                                     allow_negative = False)
 
         elif self.bkg == 'fix':
@@ -362,6 +363,7 @@ class CustomSignal(xpsi.Signal):
                                                     self._phases,
                                                     self._shifts,
                                                     self.empty_background, #self.background_data,
+                                                    self._precomp,
                                                     allow_negative = False)
         else:
             print('error in CustomSignal! pass bkg argument in init!')

@@ -26,7 +26,17 @@ from parameter_values import parameter_values
 from helper_functions import get_T_in_log10_Kelvin, plot_2D_pulse, CustomAxes, get_mids_from_edges
 
 class analysis(object):
-    def __init__(self, machine, run_type, bkg, sampler='multi', support_factor = "None", scenario = 'None', poisson_noise=True, poisson_seed=42, eos_informed=False):
+    def __init__(self, 
+                 machine, 
+                 run_type, 
+                 bkg, 
+                 sampler='multi', 
+                 support_factor = "None", 
+                 scenario = 'None', 
+                 poisson_noise=True, 
+                 poisson_seed=42, 
+                 eos_informed=False,
+                 disk_combined=False):
         self.scenario = os.environ.get('scenario')
         if os.environ.get('scenario') == None or os.environ.get('scenario') =='None':
             print('scenario is not in environment variables, using passed argument.')
@@ -148,6 +158,7 @@ class analysis(object):
         # self.interpolator = 'split' #'split/combined'
 
         self.pv = parameter_values(self.scenario, self.bkg)
+        self.disk_combined = disk_combined
     
         self.file_locations()
         self.set_bounds()
@@ -329,8 +340,13 @@ class analysis(object):
         self.set_hotregions()
         self.set_disk()
         self.set_line()
-        self.photosphere = CustomPhotosphereDiskLine(hot = self.hot, elsewhere = None, stokes=False, disk=self.disk, line=self.line,
-                                        values=dict(mode_frequency = self.spacetime['frequency']))
+        self.photosphere = CustomPhotosphereDiskLine(hot = self.hot, 
+                                                     elsewhere = None, 
+                                                     stokes=False, 
+                                                     disk=self.disk, 
+                                                     line=self.line,
+                                                     disk_combined=self.disk_combined,
+                                                     values=dict(mode_frequency = self.spacetime['frequency']))
 
         self.photosphere.hot_atmosphere = self.file_atmosphere
 
@@ -414,11 +430,12 @@ class analysis(object):
                             background = None, #self.background,
                             interstellar = self.interstellar,
                             support = self.support,
-                            cache = False, # only true if verifying code implementation otherwise useless slowdown.
+                            cache = False, # only true if verifying code implementation (or postprocessing pulses).
                             bkg = self.bkg,
                             epsrel = 1.0e-8,
                             epsilon = 1.0e-3,
-                            sigmas = 10.0)
+                            sigmas = 10.0,
+                            disk_combined=self.disk_combined)
         
         
     def set_parameter_vector(self):

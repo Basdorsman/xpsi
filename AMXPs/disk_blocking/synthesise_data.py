@@ -80,7 +80,7 @@ try:
 except:
     machine = "local"
     poisson_noise = True
-    poisson_seed = 42
+    poisson_seed = 2
     scenario = 'molkov_pcol60'
   
 

@@ -208,15 +208,17 @@ class CustomPrior_twohotspots(xpsi.Prior):
         self.fix_mass = kwargs.pop('fix_mass', None)
         self.eos_informed = kwargs.pop('eos_informed', None)
         self.variable_params = kwargs.pop('variable_params', None)
-        self.posterior_combiner = kwargs.pop('posterior_combiner', None)
+        self.combine_kdes = kwargs.pop('combine_kdes', None)
         self.sequential = kwargs.pop('sequential', None)
 
         if self.sequential:
             #Loading the equally weighted posterior samples from IXPE IQU analysis:
           
             def make_extrapolator(usecol):
-                values=np.loadtxt(this_directory+'/data/run1_IQU/run_rdata_IQUpost_equal_weights.dat',usecols=usecol) 
-                # print('mean values:',np.mean(values))
+                #values=np.loadtxt(this_directory+'/data/run1_IQU/run_rdata_IQUpost_equal_weights.dat',usecols=usecol) 
+                values=np.loadtxt(this_directory+'/data/run1_IQUf_lp4k0/run_rdata_IQUpost_equal_weights.dat',usecols=usecol) 
+                
+                
                 prior_pdf_values = np.ones((len(values)))/len(values)  
                 # Building cdf
                 cdf_value = np.cumsum(prior_pdf_values)
@@ -276,7 +278,7 @@ class CustomPrior_twohotspots(xpsi.Prior):
             return -np.inf
         
        
-        if self.variable_params or self.posterior_combiner:  
+        if self.variable_params or self.combine_kdes:  
             if self.bkg == 'disk':  
                 # inner disk must be smaller than corotation radius, otherwise we enter (weak) propeller regime
                 if not self.parameters['NICER__R_in'] < 1.49790e3*ref['mass']**(1/3)*ref['frequency']**(-2/3): # 1.49790e3 = (G*M_sol/4pi^2)^(1/3) in km
@@ -294,8 +296,8 @@ class CustomPrior_twohotspots(xpsi.Prior):
                 if not self.parameters['IXPE__R_in'] > ref['radius']:
                     return -np.inf
 
-        elif (not self.variable_params and not self.posterior_combiner) or self.bkg == 'disk_NICER':
-            if 'disk' in self.bkg:  
+        elif not self.variable_params or self.bkg == 'disk_NICER':
+            if 'disk' in self.bkg:
                 # inner disk must be smaller than corotation radius, otherwise we enter (weak) propeller regime
                 if not self.parameters['R_in'] < 1.49790e3*ref['mass']**(1/3)*ref['frequency']**(-2/3): # 1.49790e3 = (G*M_sol/4pi^2)^(1/3) in km
                     # print('disk larger than corot')   
@@ -367,7 +369,7 @@ class CustomPrior_twohotspots(xpsi.Prior):
 
         # flat priors in cosine of hot region centre colatitudes (isotropy)
         # support modified by no-overlap rejection condition
-        if not self.posterior_combiner:
+        if not self.combine_kdes:
             if self.scenario == 'J1444_STS':
                 idx = ref.index('NICER__p__super_colatitude')
                 a, b = ref.get_param('NICER__p__super_colatitude').bounds

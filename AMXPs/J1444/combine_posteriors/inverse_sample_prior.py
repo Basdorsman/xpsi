@@ -13,15 +13,14 @@ sys.path.append(this_directory+'/../')
 
 import numpy as np
 from multiprocessing import Pool
-from STU import analysis
+from combine_kdes_STU import analysis
 
 
 Analysis = analysis('test', 
-                    'disk', 
+                    'disk_NICER', 
                     sampler='multi', 
                     scenario='J1444_STU', 
                     eos_informed=False,
-                    sequential=False,
                     channel_min=100)
 Analysis()
 
@@ -50,7 +49,7 @@ results = np.concatenate(results_list, axis=0)
  
 
 
-np.savetxt(f'prior_draws={ndraws_total}.txt',results)
+# np.savetxt(f'prior_draws={ndraws_total}.txt',results)
 
 #%%
 

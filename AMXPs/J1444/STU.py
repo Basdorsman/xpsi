@@ -488,7 +488,7 @@ class analysis(object):
             if self.channel_min == 20:
                 true_logl = 1.3525318684e+07
             elif self.channel_min == 100:
-                true_logl = 1.3594326983e+07
+                true_logl = -1.7923439462e+07
         self.true_logl = true_logl
     
     def __call__(self):
@@ -593,11 +593,11 @@ class analysis(object):
             t_start = time.time()
 
             
-            # # inverse sampling test
-            # test=self.prior.draw(ndraws=100)[0]#[:,0:-1]
+            # inverse sampling test
+            # test=self.prior.draw(ndraws=10000)[0]#[:,0:-1]
             # names_dictionary = self.pv.names()
-            # # labels_dictionary = self.pv.labels()
-            # # axis_labels = [labels_dictionary[key] for key in names_dictionary]
+            # labels_dictionary = self.pv.labels()
+            # axis_labels = [labels_dictionary[key] for key in names_dictionary]
             
             # import corner
             # figure=corner.corner(test, labels=names_dictionary, label_kwargs={'fontsize': 12},)

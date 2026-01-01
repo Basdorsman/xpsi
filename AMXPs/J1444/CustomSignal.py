@@ -351,7 +351,7 @@ class CustomSignal(xpsi.Signal):
                                                     self._phases,
                                                     self._shifts,
                                                     self.empty_background,
-                                                    self._precomp,
+                                                    self._precomp, # temporary fix for posterior combiner
                                                     allow_negative = False)
 
         elif self.bkg == 'fix':

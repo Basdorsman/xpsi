@@ -1058,7 +1058,7 @@ class analysis(object):
 
             t_start = time.time()
 
-            n_priors = 100
+            n_priors = 10000
             # inverse sampling test
             test=self.prior.draw(ndraws=n_priors)[0]#[:,0:-1]
             
@@ -1067,10 +1067,10 @@ class analysis(object):
             # labels_dictionary = self.pv.labels()
             # axis_labels = [labels_dictionary[key] for key in names_dictionary]
             
-            # import corner
-            # figure=corner.corner(test, labels=axis_labels[:19], label_kwargs={'fontsize': 12},)
-            # figure.tight_layout()
-            # figure.savefig(f'{folderstring}/prior.pdf',)
+            import corner
+            figure=corner.corner(test)
+            figure.tight_layout()
+            figure.savefig(f'{folderstring}/prior_test.png',dpi=50)
             print('Test took {:.3f} seconds'.format((time.time()-t_start)))
 
             

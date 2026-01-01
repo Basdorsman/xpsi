@@ -23,14 +23,14 @@ class parameter_values(object):
                  ew=False, 
                  polarization=False,
                  signal_phase_shift=False,
-                 posterior_combiner=False):
+                 combine_kdes=False):
         self.scenario = scenario
         self.bkg = bkg
         self.fix_mass = fix_mass
         self.ew = ew
         self.polarization = polarization
         self.signal_phase_shift = signal_phase_shift
-        self.posterior_combiner=posterior_combiner
+        self.combine_kdes=combine_kdes
         
         
         if self.scenario in ('J1444_STU', 'J1444_STS'):
@@ -126,14 +126,14 @@ class parameter_values(object):
         self.alpha_2 if self.polarization else None,
         self.alpha_3 if self.polarization else None
         ]
-        if self.posterior_combiner:
+        if self.combine_kdes:
             self.p = [
             self.mass if not self.fix_mass else None,  # gravitational mass
             self.radius,  # coordinate equatorial radius
             self.distance,  # earth distance in kpc.
             self.cos_i,  # cosine of earth inclination  
             self.R_in,
-            self.R_in,
+            self.R_in if not self.bkg == 'disk_NICER' else None,
             self.column_density
             ]
 

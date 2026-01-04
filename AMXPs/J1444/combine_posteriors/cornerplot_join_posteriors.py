@@ -44,7 +44,10 @@ from sample_kde_posteriors import *
 IXPE_samples = post_IXPE_nd_eqw[:,params_IXPE_nd]
 NICER_samples = post_NICER_eqw[:,params_NICER_nd]
 # data = np.loadtxt(this_directory+'/combine_NICER_IXPE_nd_4k/run_post_equal_weights.dat')
-join_samples = data[:, [0,1,2,3,5]]
+#nh shared
+# join_samples = data[:, [0,1,2,3,5]]
+#nh not shared
+join_samples = data[:, [0,1,2,3]]
 
 labels = [
     r"$M\,[M_\odot]$",
@@ -54,24 +57,34 @@ labels = [
     r"$N_H\,[10^{21}\,\mathrm{cm}^{-2}]$",
 ]
 
-# fig = corner.corner(
-# 	IXPE_samples,
-#     labels=labels,
-# 	color="C0",
-# 	plot_density=False,
-# 	plot_datapoints=True,
-# 	fill_contours=False
-# )
-
 fig = corner.corner(
+ 	IXPE_samples,
+    labels=labels,
+ 	color="C0",
+ 	plot_density=True,
+ 	plot_datapoints=True,
+ 	fill_contours=True
+)
+True
+corner.corner(
  	NICER_samples,
-     labels=labels,
- 	# fig=fig,
+ 	fig=fig,
  	color="C1",
  	plot_density=True,
  	plot_datapoints=True,
  	fill_contours=True
 )
+
+# fig = corner.corner(
+#  	NICER_samples,
+#      labels=labels,
+#  	# fig=fig,
+#  	color="C1",
+#  	plot_density=True,
+#  	plot_datapoints=True,
+#  	fill_contours=True
+# )
+
 
 corner.corner(
  	join_samples,
@@ -84,12 +97,15 @@ corner.corner(
 
 import matplotlib.lines as mlines
 
-# ixpe_line  = mlines.Line2D([], [], color="C0", label="IXPE")
+ixpe_line  = mlines.Line2D([], [], color="C0", label="IXPE")
 nicer_line = mlines.Line2D([], [], color="C1", label="NICER")
 joint_line = mlines.Line2D([], [], color="C2", label="Joint")
 
 fig.axes[0].legend(
-	handles=[nicer_line, joint_line],
+	handles=[
+        ixpe_line, 
+        nicer_line, 
+        joint_line],
 	loc="upper left",
 	bbox_to_anchor=(1.02, 1.0),
 	frameon=False

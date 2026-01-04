@@ -23,7 +23,8 @@ class parameter_values(object):
                  ew=False, 
                  polarization=False,
                  signal_phase_shift=False,
-                 combine_kdes=False):
+                 combine_kdes=False,
+                 nh_shared=True):
         self.scenario = scenario
         self.bkg = bkg
         self.fix_mass = fix_mass
@@ -31,6 +32,7 @@ class parameter_values(object):
         self.polarization = polarization
         self.signal_phase_shift = signal_phase_shift
         self.combine_kdes=combine_kdes
+        self.nh_shared = nh_shared
         
         
         if self.scenario in ('J1444_STU', 'J1444_STS'):
@@ -134,7 +136,7 @@ class parameter_values(object):
             self.cos_i,  # cosine of earth inclination  
             self.R_in,
             self.R_in if not self.bkg == 'disk_NICER' else None,
-            self.column_density
+            self.column_density if self.nh_shared else None
             ]
 
         # Remove any None values (e.g., mass if fix_mass is True, or optional elements)
@@ -215,8 +217,10 @@ class parameter_values(object):
             cos_i_low = np.cos(i_high_deg*np.pi/180)
             cos_i_high = np.cos(i_low_deg*np.pi/180)
             column_density_low = 19.
-        mass_high = 2.2
-        radius_low= 8.
+        
+        # temporarily off for prior testing:
+        mass_high = 2.2 #2.8 #2.2
+        radius_low= 8. #5.5 #8.
         radius_high = 14.
 
         

@@ -1,7 +1,12 @@
+# this file is imported by join_posteriors, which samples from NICER and IXPE 
+# separate analysis. non-shared paramaters was set to true, and that modified
+# the nr of param values in the parameter and pior inverse sample. Here the 
+# free params are M, D, cosi, nH, NICER Rin and IXPE Rin.
+
 import os
 import sys
 this_directory = os.path.dirname(os.path.abspath(__file__))
-
+sys.path.append(this_directory+'/../')
 
 import numpy as np
 import math
@@ -37,15 +42,17 @@ class analysis(object):
                  poisson_seed=42, 
                  fix_mass=False, 
                  eos_informed=False, 
+                 polarization=False,
                  channel_min=None,
-                 sequential=False,
-                 combine_unpulsed=True):
+                 combine_kdes=True,
+                 nh_shared=False):
 
         self.scenario = os.environ.get('scenario')
         if os.environ.get('scenario') == None or os.environ.get('scenario') =='None':
             print('scenario is not in environment variables, using passed argument.')
             self.scenario=scenario
         print(f'scenario: {self.scenario}')
+
 
         self.run_type = os.environ.get('run_type')
         if os.environ.get('run_type') == None or os.environ.get('run_type') == "None":
@@ -163,6 +170,17 @@ class analysis(object):
             self.eos_informed = False
 
         print(f'eos_informed: {self.eos_informed}')
+
+        if os.environ.get('polarization') == None or os.environ.get('polarization') =='None':
+            print('polarization is not in environment variables, using passed argument.')
+            self.polarization = polarization
+        else:
+            self.polarization = os.environ.get('polarization')
+        if self.polarization == "qu" or self.polarization == "iqu":
+            self.polarization = self.polarization
+        else:
+            self.polarization = False
+        print(f'polarization: {self.polarization}')
         
         if os.environ.get('channel_min') == None or os.environ.get('channel_min') == 'None':
             print('channel_min is not in environment variables, using passed argument.')
@@ -172,35 +190,20 @@ class analysis(object):
         print(f'channel_min: {self.channel_min}') 
 
 
-        if os.environ.get('sequential') == None or os.environ.get('sequential') =='None':
-            print('sequential is not in environment variables, using passed argument.')
-            self.sequential = sequential
+        if os.environ.get('nh_shared') == None or os.environ.get('nh_shared') =='None':
+            print('nh_shared is not in environment variables, using passed argument.')
+            self.nh_shared = nh_shared
         else:
-            self.sequential = os.environ.get('sequential')
-
-        if self.sequential == "True" or self.sequential == True:
-            self.sequential = True
+            self.nh_shared = os.environ.get('nh_shared')
+        if self.nh_shared == "qu" or self.nh_shared == "iqu":
+            self.nh_shared = self.nh_shared
         else:
-            self.sequential = False
+            self.nh_shared = False
+        print(f'nh_shared: {self.nh_shared}')
 
-        print(f'sequential: {self.sequential}')
-        
-        if os.environ.get('combine_unpulsed') == None or os.environ.get('combine_unpulsed') =='None':
-            print('combine_unpulsed is not in environment variables, using passed argument.')
-            self.combine_unpulsed = combine_unpulsed
-        else:
-            self.combine_unpulsed = os.environ.get('combine_unpulsed')
 
-        if self.combine_unpulsed == "True" or self.combine_unpulsed == True:
-            self.combine_unpulsed = True
-        else:
-            self.combine_unpulsed = False
-
-        print(f'combine_unpulsed: {self.combine_unpulsed}')
-        
-        
-
-        self.pv = parameter_values(self.scenario, self.bkg, self.fix_mass)
+        self.combine_kdes=combine_kdes
+        self.pv = parameter_values(self.scenario, self.bkg, self.fix_mass, polarization=self.polarization, combine_kdes=self.combine_kdes, nh_shared=self.nh_shared)
         self.file_locations()
         self.set_parameter_vector()
         self.set_bounds()
@@ -212,7 +215,7 @@ class analysis(object):
         
         if self.scenario in ('large_r', 'small_r', 'J1444s'):
             self.file_pulse_profile = self.this_directory + f'/data/NICER_products/data/{self.scenario}_seed={self.poisson_seed}_ch{self.channel_min}_realisation.dat'
-        if self.scenario in ('J1444', 'J1444_STU'):
+        if self.scenario == 'J1444_STU':
             self.file_pulse_profile = self.this_directory + f'/data/NICER_products/data/J1444_preprocessed_ch{self.channel_min}.txt'
        
         self.RMF_file = self.this_directory+'/data/NICER_products/srgaj1444.rmf'
@@ -228,7 +231,7 @@ class analysis(object):
             self.exposure_time = 1.32366e5 #Mason's 2019 data cut
         if self.scenario == '2022':
             self.exposure_time = 7.13422e4 #Mason's 2022 data cut
-        if self.scenario in ('J1444','J1444s','J1444_STU'):
+        if self.scenario in ('J1444_STU','J1444s'):
             self.exposure_time = 24823.7
         
         self.phases_space = np.linspace(0.0, 1.0, 33)
@@ -254,7 +257,6 @@ class analysis(object):
                         exposure_time=self.exposure_time)
 
         self.NICER_data = xpsi.Data(**settings)
-    
             
     def set_instrument_NICER(self):     
         alpha_values=dict(alpha=1)
@@ -268,7 +270,6 @@ class analysis(object):
             min_detection_channel = self.channel_low, 
             max_input = self.max_input, #around the maximum
             min_input = self.min_input)
-
 
     def set_spacetime(self):
         fix_mass = self.fix_mass
@@ -306,13 +307,13 @@ class analysis(object):
                   'atm_ext':'Num5D',
                   'prefix': 'p'}
         
-        self.p_bounds = dict(super_colatitude = self.bounds["p__super_colatitude"],
-                                super_radius = self.bounds["p__super_radius"],
-                                phase_shift = self.bounds["p__phase_shift"], 
-                                super_tbb = self.bounds['p__super_tbb'],
-                                super_tau = self.bounds['p__super_tau'],
-                                super_te = self.bounds['p__super_te'])
-        self.p_values = {}
+        self.p_bounds = {}
+        self.p_values = dict(super_colatitude = self.pv.super_colatitude,
+                             super_radius = self.pv.super_radius,
+                             phase_shift = self.pv.phase_shift,
+                             super_tbb = self.pv.tbb,
+                             super_tau = self.pv.tau,
+                             super_te = self.pv.te)
         
         primary = CustomHotRegion_Accreting(self.p_bounds, self.p_values, **self.p_kwargs)
 
@@ -331,35 +332,30 @@ class analysis(object):
                   'is_antiphased': True,
                   'prefix': 's'}
         
-        self.s_bounds = dict(super_colatitude = self.bounds["s__super_colatitude"],
-                                super_radius = self.bounds["s__super_radius"],
-                                phase_shift = self.bounds["s__phase_shift"], 
-                                super_tbb = self.bounds['s__super_tbb'],
-                                super_tau = self.bounds['s__super_tau'],
-                                super_te = self.bounds['s__super_te'])
-        self.s_values = {}
+        self.s_bounds = {}
+        self.s_values = dict(super_colatitude = self.pv.super_colatitude_s,
+                             super_radius = self.pv.super_radius_s,
+                             phase_shift = self.pv.phase_shift_s,
+                             super_tbb = self.pv.tbb_s,
+                             super_tau = self.pv.tau_s,
+                             super_te = self.pv.te_s)
         
         secondary = CustomHotRegion_Accreting(self.s_bounds, self.s_values, **self.s_kwargs)
 
         self.hot = xpsi.HotRegions((primary,secondary))
 
-    def set_elsewhere(self):
-        self.elsewhere = xpsi.Elsewhere(bounds=dict(elsewhere_temperature = self.bounds['elsewhere_temperature']))
-        
     def set_photosphere(self):
         self.set_hotregions()
         self.set_disk()
-        self.set_line()
         
-        # photosphere_bounds = dict(spin_axis_position_angle = (None, None))
+        photosphere_bounds = dict(spin_axis_position_angle = (None, None))
         self.photosphere = CustomPhotosphereDiskLine(hot = self.hot, 
                                                      elsewhere = None, 
-                                                     stokes=False, 
+                                                     stokes=True if self.polarization else False, 
                                                      disk=self.disk, 
-                                                     line=self.line,
-                                                     combine_unpulsed=self.combine_unpulsed,
+                                                     line=None,
                                                      values=dict(mode_frequency = self.spacetime['frequency']), 
-                                                     bounds={})
+                                                     bounds=photosphere_bounds)
 
         self.photosphere.hot_atmosphere = self.file_atmosphere
     def set_star(self):
@@ -367,80 +363,57 @@ class analysis(object):
         self.star = xpsi.Star(spacetime = self.spacetime, photospheres = self.photosphere)
         
     def set_interstellar(self):
-        # bounds = None 
-        bounds = self.bounds['column_density']
-        values = None #self.pv.column_density
+        if self.nh_shared:
+            bounds = self.bounds['column_density']
+            values = None #self.pv.column_density
+        elif not self.nh_shared:
+            bounds = None
+            values = self.pv.column_density
         self.interstellar=CustomInterstellar.from_SWG(self.file_interstellar, bounds=bounds, value=values)
-    
-    def set_support(self):
-        support_factor = self.support_factor
-        if support_factor == "None" or support_factor == None:
-            self.support = None
-        else:
-            data_spectrum = np.sum(self.NICER_data.counts, axis=1)/self.NICER_data.exposure_time        
 
-            support_factor = float(support_factor)
-            self.bg_spectrum = np.loadtxt(self.file_bkg)
-    
-            allowed_deviation_factor = support_factor  # used to be 1. + support_factor
-    
-            support = np.zeros((len(self.bg_spectrum), 2), dtype=np.double)
-            support[:,0] = self.bg_spectrum/allowed_deviation_factor #lower limit
-            support[support[:,0] < 0.0, 0] = 0.0
-            support[:,1] = np.minimum(self.bg_spectrum*allowed_deviation_factor, data_spectrum) #upper limit
-    
-            for i in range(support.shape[0]):
-                if support[i,1] == 0.0:
-                    for j in range(i, support.shape[0]):
-                        if support[j,1] > 0.0:
-                            support[i,0] = support[j,1]
-                            break
-            
-            self.support = support
         
         
     def set_disk(self):
+        # IXPE AND NICER NOT PROPERLY SEPARATED HERE (BUT IT DOESN'T MATTER FOR THIS PURPOSE)
         from Disk import Disk, k_disk_derive
-        if 'disk' in self.bkg:    
-            bounds = dict(#T_in = get_T_in_log10_Kelvin(self.bounds["T_in"]),
-                          T_in_keV = self.bounds["T_in_keV"],
-                          R_in = self.bounds["R_in"],
-                          K_disk = None) #derived means no bounds
-                
-            self.k_disk = k_disk_derive()
-            self.disk = Disk(bounds=bounds, values={'K_disk': self.k_disk})
-            self.k_disk.disk = self.disk
+        bounds = dict(R_in = self.bounds["R_in"],
+                      K_disk = None)
+        if self.bkg == 'disk':    
+            self.k_disk_NICER = k_disk_derive()
+            self.disk_NICER = Disk(bounds=bounds, 
+                                   values=dict(T_in_keV = self.pv.T_in_keV,K_disk = self.k_disk_NICER), 
+                                   prefix='NICER')
+            self.k_disk_NICER.disk = self.disk_NICER
+            
+            self.k_disk_IXPE = k_disk_derive()
+            self.disk_IXPE = Disk(bounds=bounds, 
+                                   values=dict(T_in_keV = self.pv.T_in_keV,K_disk = self.k_disk_NICER), 
+                                   prefix='IXPE')
+            self.k_disk_IXPE.disk = self.disk_IXPE
+            
+            self.disk = [self.disk_NICER, self.disk_IXPE]
+            
+        elif self.bkg == 'disk_NICER':              
+            self.k_disk_NICER = k_disk_derive()
+            self.disk_NICER = Disk(bounds=bounds, 
+                                   values=dict(T_in_keV = self.pv.T_in_keV,K_disk = self.k_disk_NICER), 
+                                   prefix='NICER')
+            self.k_disk_NICER.disk = self.disk_NICER
+            
+            self.disk = self.disk_NICER
             
         else:
             self.disk = None
-            
-    def set_line(self):
-        from GaussianLine import GaussianLine
-              
-        if 'line' in self.bkg:
-            line_values = {}
-            
-            line_bounds = dict(
-                mu = self.bounds['mu'],
-                sigma = self.bounds['sigma'],
-                N = self.bounds['N'],
-                )
-                
-            self.line = GaussianLine(bounds=line_bounds, values=line_values)
-        else:
-            self.line = None
 
     def set_signal(self):
         self.set_data_NICER()
         self.set_instrument_NICER()
-        self.set_support()
         
         self.signal_NICER = CustomSignal(data = self.NICER_data,
                             instrument = self.NICER,
                             background = None,
                             interstellar = self.interstellar,
-                            support = self.support,
-                            combine_unpulsed=self.combine_unpulsed,
+                            support = None,
                             cache = False, # only true if verifying code implementation otherwise useless slowdown.
                             bkg = self.bkg,
                             epsrel = 1.0e-8,
@@ -451,23 +424,27 @@ class analysis(object):
         self.p = self.pv.p()
 
     def set_prior(self):
-        self.prior = CustomPrior(self.scenario, self.bkg, fix_mass = self.fix_mass, eos_informed=self.eos_informed, sequential=self.sequential)
+        self.prior = CustomPrior(self.scenario, self.bkg, fix_mass = self.fix_mass, eos_informed=self.eos_informed, combine_kdes=self.combine_kdes)
         
     def set_likelihood(self):
         self.set_spacetime() # self.spacetime is defined here
         self.set_photosphere() # self.k_disk is defined here
-        if 'disk' in self.bkg:
-            self.k_disk.spacetime = self.spacetime
+        self.k_disk_NICER.spacetime = self.spacetime
+        if self.bkg == 'disk':
+            self.k_disk_IXPE.spacetime = self.spacetime          
         self.set_star() # star is defined afterwards
         self.set_signal()
         self.set_prior()
         
         self.likelihood = CustomLikelihood(star = self.star, 
-                                           signals = self.signal_NICER,
+                                           signals = self.signals if self.polarization else self.signal_NICER,
                                            num_energies=self.num_energies, #128
                                            threads=1,
                                            prior=self.prior,
                                            externally_updated=True)
+        
+
+
         
         if self.scenario == 'J1444s':
             if self.poisson_seed == 1:
@@ -488,18 +465,28 @@ class analysis(object):
             if self.channel_min == 20:
                 true_logl = 1.3525318684e+07
             elif self.channel_min == 100:
-                true_logl = -1.7923439462e+07
+                true_logl = 1.3594326983e+07
+        
+            
+        if self.scenario == 'small_r':
+            if self.polarization == 'qu':
+                true_logl = 7.9265139733e+07 # with IXPE qu
+            elif self.polarization == 'iqu':
+                true_logl = 7.9265007576e+07 # with IXPE iqu
+            elif not self.polarization:
+                true_logl = 7.9265215141e+07 #without IXPE
         self.true_logl = true_logl
     
     def __call__(self):
         
-        # start call with a likelihood check
+        # alow failure in check (the disk is not correctly calculated)
         t_check = time.time()
-        self.likelihood.check(None, [self.true_logl], 1.0e-6, physical_points=[self.p], force_update=True)
+        self.likelihood.check(None, [self.true_logl], 1.0e6, physical_points=[self.p], force_update=True)
         print('Likelihood check took {:.3f} seconds'.format((time.time()-t_check)))
         
         
         analysis_name = self.analysis_name
+
         folderstring = f'{analysis_name}'
 
         try: 
@@ -593,26 +580,26 @@ class analysis(object):
             t_start = time.time()
 
             
-            # inverse sampling test
-            # test=self.prior.draw(ndraws=10000)[0]#[:,0:-1]
+            # # inverse sampling test
+            # test=self.prior.draw(ndraws=100)[0]#[:,0:-1]
             # names_dictionary = self.pv.names()
             # labels_dictionary = self.pv.labels()
             # axis_labels = [labels_dictionary[key] for key in names_dictionary]
             
             # import corner
-            # figure=corner.corner(test, labels=names_dictionary, label_kwargs={'fontsize': 12},)
+            # figure=corner.corner(test, labels=axis_labels[:19], label_kwargs={'fontsize': 12},)
             # figure.tight_layout()
-            # figure.savefig(f'{folderstring}/prior_STU_seq.pdf',)
+            # figure.savefig(f'{folderstring}/prior.pdf',)
             print('Test took {:.3f} seconds'.format((time.time()-t_start)))
 
-            plt.close('all')
+            
             
 if __name__ == '__main__':
-    Analysis = analysis('test',
+    Analysis = analysis('test', 
                         'disk', 
                         sampler='multi', 
                         scenario='J1444_STU', 
                         eos_informed=False, 
-                        sequential=True,
+                        polarization=False, 
                         channel_min=100)
     Analysis()

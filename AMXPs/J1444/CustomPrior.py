@@ -216,7 +216,8 @@ class CustomPrior_twohotspots(xpsi.Prior):
           
             def make_extrapolator(usecol):
                 #values=np.loadtxt(this_directory+'/data/run1_IQU/run_rdata_IQUpost_equal_weights.dat',usecols=usecol) 
-                values=np.loadtxt(this_directory+'/data/run1_IQUf_lp4k0/run_rdata_IQUpost_equal_weights.dat',usecols=usecol) 
+                # values=np.loadtxt(this_directory+'/data/IXPE_runs/run1_IQUf_lp4k0/run_rdata_IQUpost_equal_weights.dat',usecols=usecol) 
+                values=np.loadtxt(this_directory+'/data/IXPE_runs/run1_IQUf_lp4k_res2/run_rdata_IQUpost_equal_weights.dat',usecols=usecol) 
                 
                 
                 prior_pdf_values = np.ones((len(values)))/len(values)  
@@ -265,7 +266,6 @@ class CustomPrior_twohotspots(xpsi.Prior):
         # causality limit for compactness
         R_p = 1.0 + ref.epsilon * (-0.788 + 1.030 * ref.zeta)
         if R_p < 1.45 / ref.R_r_s:
-            # print('compactness')
             return -np.inf
 
         mu = math.sqrt(-1.0 / (3.0 * ref.epsilon * (-0.788 + 1.030 * ref.zeta)))
@@ -326,7 +326,6 @@ class CustomPrior_twohotspots(xpsi.Prior):
                 if ang_sep < ref['p__super_radius'] + ref['s__super_radius']:
                     # print('overlapping hotregions')
                     return -np.inf
-        # print('successful prior call')
         return 0.0
 
     def inverse_sample(self, hypercube=None):

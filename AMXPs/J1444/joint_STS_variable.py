@@ -1073,7 +1073,7 @@ class analysis(object):
             figure.savefig(f'{folderstring}/prior_test.png',dpi=50)
             print('Test took {:.3f} seconds'.format((time.time()-t_start)))
 
-            
+            plt.close('all')
             
 if __name__ == '__main__':
     Analysis = analysis('test', 

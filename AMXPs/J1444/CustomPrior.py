@@ -21,151 +21,151 @@ sys.path.append(this_directory+'/data/EoS_prior/')
 from load_and_sample_eos_nf import NormalizingFlow
 
 
-class CustomPrior(xpsi.Prior):
-    """ A custom (joint) prior distribution.
+# class CustomPrior(xpsi.Prior):
+#     """ A custom (joint) prior distribution.
 
-    Source: SAX-J1808.4-3658
-    Model variant: ST
-        One single-temperature
+#     Source: SAX-J1808.4-3658
+#     Model variant: ST
+#         One single-temperature
 
    
-    p[0] = 1 to 3 solar mass
-    p[1] = 3G to 16 km (and also there are compactness restrictions)
-    p[2] = distance with a uniform prior from 3.4 to 4.6 (Galloway & Cumming 2006)
-    p[3] = cos inclination 0 to 1
-    p[3] = phase shift -0.5 to 0.5
-    p[4] = colatitude 0 to pi (/2? From inverse sampling I see it is not divided by two.)
-    p[5] = angular radius 0 to pi/2
-    p[6] = hotspot seed temperature 0.5 - 1.5 keV
-    p[7] = hotspot electron temperature 20 - 100 keV
-    p[8] = tau 0.5 - 3.5
-    p[9] = elsewhere temperature 0.01 - 0.6 keV
-    p[10] = disk temperature 0.01 - 0.6 keV
-    p[11] = disk inner radius 20 to 64 km
-    p[12] = nH gaussian 1.17 += 0.2 x 10^21 cm^-2
+#     p[0] = 1 to 3 solar mass
+#     p[1] = 3G to 16 km (and also there are compactness restrictions)
+#     p[2] = distance with a uniform prior from 3.4 to 4.6 (Galloway & Cumming 2006)
+#     p[3] = cos inclination 0 to 1
+#     p[3] = phase shift -0.5 to 0.5
+#     p[4] = colatitude 0 to pi (/2? From inverse sampling I see it is not divided by two.)
+#     p[5] = angular radius 0 to pi/2
+#     p[6] = hotspot seed temperature 0.5 - 1.5 keV
+#     p[7] = hotspot electron temperature 20 - 100 keV
+#     p[8] = tau 0.5 - 3.5
+#     p[9] = elsewhere temperature 0.01 - 0.6 keV
+#     p[10] = disk temperature 0.01 - 0.6 keV
+#     p[11] = disk inner radius 20 to 64 km
+#     p[12] = nH gaussian 1.17 += 0.2 x 10^21 cm^-2
     
 
-    """
+#     """
 
-    __derived_names__ = ['compactness', 'tbb_keV', 'te_keV', 'inclination_deg', 'colatitude_deg', 'radius_deg', 'N_norm']
-    __draws_from_support__ = 4 #10^x
+#     __derived_names__ = ['compactness', 'tbb_keV', 'te_keV', 'inclination_deg', 'colatitude_deg', 'radius_deg', 'N_norm']
+#     __draws_from_support__ = 4 #10^x
     
-    def __init__(self, scenario, bkg, *args, **kwargs):
-        self.scenario = scenario
-        self.bkg = bkg
-        self.fix_mass = kwargs.pop('fix_mass', None)
-        self.eos_informed = kwargs.pop('eos_informed', None)
+#     def __init__(self, scenario, bkg, *args, **kwargs):
+#         self.scenario = scenario
+#         self.bkg = bkg
+#         self.fix_mass = kwargs.pop('fix_mass', None)
+#         self.eos_informed = kwargs.pop('eos_informed', None)
         
-        if self.eos_informed:        
-            self.nf_eos_mr_prior = NormalizingFlow(this_directory+'/data/EoS_prior/flow_and_scaler_PP.pth')
+#         if self.eos_informed:        
+#             self.nf_eos_mr_prior = NormalizingFlow(this_directory+'/data/EoS_prior/flow_and_scaler_PP.pth')
         
-        super(CustomPrior, self).__init__(*args, **kwargs)
+#         super(CustomPrior, self).__init__(*args, **kwargs)
 
-    def __call__(self, p = None):
-        """ Evaluate distribution at ``p``.
+#     def __call__(self, p = None):
+#         """ Evaluate distribution at ``p``.
 
-        :param list p: Model parameter values.
+#         :param list p: Model parameter values.
 
-        :returns: Logarithm of the distribution evaluated at ``p``.
+#         :returns: Logarithm of the distribution evaluated at ``p``.
 
-        """
-        temp = super(CustomPrior, self).__call__(p)
-        if not np.isfinite(temp):
-            return temp
+#         """
+#         temp = super(CustomPrior, self).__call__(p)
+#         if not np.isfinite(temp):
+#             return temp
 
-        ref = self.parameters.star.spacetime # shortcut
+#         ref = self.parameters.star.spacetime # shortcut
 
-        # based on contemporary EOS theory
-        if not ref['radius'] <= 16.0:
-            return -np.inf
+#         # based on contemporary EOS theory
+#         if not ref['radius'] <= 16.0:
+#             return -np.inf
 
       
-        # causality limit for compactness
-        R_p = 1.0 + ref.epsilon * (-0.788 + 1.030 * ref.zeta)
-        if R_p < 1.45 / ref.R_r_s:
-            return -np.inf
+#         # causality limit for compactness
+#         R_p = 1.0 + ref.epsilon * (-0.788 + 1.030 * ref.zeta)
+#         if R_p < 1.45 / ref.R_r_s:
+#             return -np.inf
 
-        mu = math.sqrt(-1.0 / (3.0 * ref.epsilon * (-0.788 + 1.030 * ref.zeta)))
+#         mu = math.sqrt(-1.0 / (3.0 * ref.epsilon * (-0.788 + 1.030 * ref.zeta)))
 
-        # 2-surface cross-section have a single maximum in |z|
-        # i.e., an elliptical surface; minor effect on support, if any,
-        # for high spin frequenies
-        if mu < 1.0:
-            return -np.inf
+#         # 2-surface cross-section have a single maximum in |z|
+#         # i.e., an elliptical surface; minor effect on support, if any,
+#         # for high spin frequenies
+#         if mu < 1.0:
+#             return -np.inf
         
-        if 'disk' in self.bkg:
+#         if 'disk' in self.bkg:
         
-            # inner disk must be smaller than corotation radius, otherwise we enter (weak) propeller regime
-            if not self.parameters['R_in'] < 1.49790e3*ref['mass']**(1/3)*ref['frequency']**(-2/3): # 1.49790e3 = (G*M_sol/4pi^2)^(1/3) in km
-                return -np.inf
+#             # inner disk must be smaller than corotation radius, otherwise we enter (weak) propeller regime
+#             if not self.parameters['R_in'] < 1.49790e3*ref['mass']**(1/3)*ref['frequency']**(-2/3): # 1.49790e3 = (G*M_sol/4pi^2)^(1/3) in km
+#                 return -np.inf
     
-            # inner disk must be larger than neutron star equatorial radius
-            if not self.parameters['R_in'] > ref['radius']:
-                return -np.inf
+#             # inner disk must be larger than neutron star equatorial radius
+#             if not self.parameters['R_in'] > ref['radius']:
+#                 return -np.inf
 
-        return 0.0
+#         return 0.0
 
-    def inverse_sample(self, hypercube=None):
-        """ Draw sample uniformly from the distribution via inverse sampling. """
+#     def inverse_sample(self, hypercube=None):
+#         """ Draw sample uniformly from the distribution via inverse sampling. """
 
-        to_cache = self.parameters.vector
+#         to_cache = self.parameters.vector
 
-        if hypercube is None:
-            hypercube = np.random.rand(len(self))
+#         if hypercube is None:
+#             hypercube = np.random.rand(len(self))
 
-        # the base method is useful, so to avoid writing that code again:
-        _ = super(CustomPrior, self).inverse_sample(hypercube)
+#         # the base method is useful, so to avoid writing that code again:
+#         _ = super(CustomPrior, self).inverse_sample(hypercube)
 
-        ref = self.parameters # shortcut
+#         ref = self.parameters # shortcut
     
-        idx = ref.index('distance')
-        temporary = truncnorm.ppf(hypercube[idx], -3.0, 3.0, loc=8.5, scale=2.)
-        ref['distance'] = temporary
+#         idx = ref.index('distance')
+#         temporary = truncnorm.ppf(hypercube[idx], -3.0, 3.0, loc=8.5, scale=2.)
+#         ref['distance'] = temporary
 
-        # flat priors in cosine of hot region centre colatitudes (isotropy)
-        # support modified by no-overlap rejection condition
-        idx = ref.index('super_colatitude')
-        a, b = ref.get_param('super_colatitude').bounds
-        a = math.cos(a); b = math.cos(b)
-        ref['super_colatitude'] = math.acos(b + (a - b) * hypercube[idx])
+#         # flat priors in cosine of hot region centre colatitudes (isotropy)
+#         # support modified by no-overlap rejection condition
+#         idx = ref.index('super_colatitude')
+#         a, b = ref.get_param('super_colatitude').bounds
+#         a = math.cos(a); b = math.cos(b)
+#         ref['super_colatitude'] = math.acos(b + (a - b) * hypercube[idx])
 
-        if self.eos_informed:
-            ref['mass'], ref['radius'] = self.nf_eos_mr_prior.sample_mr_from_nf()
+#         if self.eos_informed:
+#             ref['mass'], ref['radius'] = self.nf_eos_mr_prior.sample_mr_from_nf()
 
-        # restore proper cache
-        for parameter, cache in zip(ref, to_cache):
-            parameter.cached = cache
+#         # restore proper cache
+#         for parameter, cache in zip(ref, to_cache):
+#             parameter.cached = cache
 
-        # it is important that we return the desired vector because it is
-        # automatically written to disk by MultiNest and only by MultiNest
-        return self.parameters.vector
+#         # it is important that we return the desired vector because it is
+#         # automatically written to disk by MultiNest and only by MultiNest
+#         return self.parameters.vector
 
-    def transform(self, p, **kwargs):
-        """ Add compactness. """
+#     def transform(self, p, **kwargs):
+#         """ Add compactness. """
 
-        p = list(p) # copy
+#         p = list(p) # copy
 
-        # used ordered names and values
-        ref = dict(zip(self.parameters.names, p))
-        # print('ref', ref)
+#         # used ordered names and values
+#         ref = dict(zip(self.parameters.names, p))
+#         # print('ref', ref)
 
-        # compactness ratio M/R_eq
-        if not self.fix_mass:
-            p += [gravradius(ref['mass']) / ref['radius']]
-        elif self.fix_mass and self.scenario == '2019':
-            p += [gravradius(1.4) / ref['radius']]
-        else:
-            raise(NotImplementedError)
+#         # compactness ratio M/R_eq
+#         if not self.fix_mass:
+#             p += [gravradius(ref['mass']) / ref['radius']]
+#         elif self.fix_mass and self.scenario == '2019':
+#             p += [gravradius(1.4) / ref['radius']]
+#         else:
+#             raise(NotImplementedError)
 
-        p += [ref['super_tbb']*511] # tbb in keV
-        p += [ref['super_te']*511/1000] # te in keV
-        p += [np.arccos(ref['cos_inclination'])*180/np.pi] # inclination in deg
-        p += [ref['super_colatitude']*180/np.pi] # colatitude in deg
-        p += [ref['super_radius']*180/np.pi] # ang radius in deg
+#         p += [ref['super_tbb']*511] # tbb in keV
+#         p += [ref['super_te']*511/1000] # te in keV
+#         p += [np.arccos(ref['cos_inclination'])*180/np.pi] # inclination in deg
+#         p += [ref['super_colatitude']*180/np.pi] # colatitude in deg
+#         p += [ref['super_radius']*180/np.pi] # ang radius in deg
 
-        if 'line' in self.bkg:
-            p+=[ref['N']*1e-37]
-        return p
+#         if 'line' in self.bkg:
+#             p+=[ref['N']*1e-37]
+#         return p
 
 
 class CustomPrior_twohotspots(xpsi.Prior):
@@ -232,7 +232,8 @@ class CustomPrior_twohotspots(xpsi.Prior):
             self.interpolator_radius = make_extrapolator(1)
             self.interpolator_distance = make_extrapolator(2)
             self.interpolator_cosi = make_extrapolator(3)
-            self.interpolator_nh = make_extrapolator(18)
+            if not self.sequential == 'nh_not_shared':
+                self.interpolator_nh = make_extrapolator(18)
 
         
         if self.eos_informed:        
@@ -265,8 +266,13 @@ class CustomPrior_twohotspots(xpsi.Prior):
 
         # causality limit for compactness
         R_p = 1.0 + ref.epsilon * (-0.788 + 1.030 * ref.zeta)
-        if R_p < 1.45 / ref.R_r_s:
-            return -np.inf
+        
+        if self.sequential:
+            if R_p < 1.505 / ref.R_r_s:
+                return -np.inf
+        elif not self.sequential:
+            if R_p < 1.45 / ref.R_r_s:
+                return -np.inf
 
         mu = math.sqrt(-1.0 / (3.0 * ref.epsilon * (-0.788 + 1.030 * ref.zeta)))
 
@@ -357,8 +363,9 @@ class CustomPrior_twohotspots(xpsi.Prior):
             ref['distance'] = float(self.interpolator_distance(hypercube[idx]))
             idx = ref.index('cos_inclination')
             ref['cos_inclination'] = float(self.interpolator_cosi(hypercube[idx]))
-            idx = ref.index('column_density')
-            ref['column_density'] = float(self.interpolator_nh(hypercube[idx]))
+            if not self.sequential == 'nh_not_shared':
+                idx = ref.index('column_density')
+                ref['column_density'] = float(self.interpolator_nh(hypercube[idx]))
 
 
         if self.eos_informed:
@@ -415,27 +422,27 @@ class CustomPrior_twohotspots(xpsi.Prior):
         p += [gravradius(ref['mass']) / ref['radius']]
         p += [np.arccos(ref['cos_inclination'])*180/np.pi]
 
-
-        if self.scenario=='J1444' or self.scenario=='J1444_STU':
-            p += [ref['p__super_tbb']*511]
-            p += [ref['p__super_te']*511/1000]
-            p += [ref['p__super_colatitude']*180/np.pi]
-            p += [ref['p__super_radius']*180/np.pi]
-    
-            p += [ref['s__super_tbb']*511]
-            p += [ref['s__super_te']*511/1000]
-            p += [ref['s__super_colatitude']*180/np.pi]
-            p += [ref['s__super_radius']*180/np.pi]
-        elif self.scenario=='J1444_STS':
-            p += [ref['NICER__p__super_tbb']*511]
-            p += [ref['NICER__p__super_te']*511/1000]
-            p += [ref['NICER__p__super_colatitude']*180/np.pi]
-            p += [ref['NICER__p__super_radius']*180/np.pi]
-            
-            p += [ref['IXPE__p__super_tbb']*511]
-            p += [ref['IXPE__p__super_te']*511/1000]
-            p += [ref['IXPE__p__super_colatitude']*180/np.pi]
-            p += [ref['IXPE__p__super_radius']*180/np.pi]
+        if not self.combine_kdes:
+            if self.scenario=='J1444' or self.scenario=='J1444_STU':
+                p += [ref['p__super_tbb']*511]
+                p += [ref['p__super_te']*511/1000]
+                p += [ref['p__super_colatitude']*180/np.pi]
+                p += [ref['p__super_radius']*180/np.pi]
+        
+                p += [ref['s__super_tbb']*511]
+                p += [ref['s__super_te']*511/1000]
+                p += [ref['s__super_colatitude']*180/np.pi]
+                p += [ref['s__super_radius']*180/np.pi]
+            elif self.scenario=='J1444_STS':
+                p += [ref['NICER__p__super_tbb']*511]
+                p += [ref['NICER__p__super_te']*511/1000]
+                p += [ref['NICER__p__super_colatitude']*180/np.pi]
+                p += [ref['NICER__p__super_radius']*180/np.pi]
+                
+                p += [ref['IXPE__p__super_tbb']*511]
+                p += [ref['IXPE__p__super_te']*511/1000]
+                p += [ref['IXPE__p__super_colatitude']*180/np.pi]
+                p += [ref['IXPE__p__super_radius']*180/np.pi]
             
 
         return p

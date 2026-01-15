@@ -20,6 +20,7 @@ class CustomPhotosphereDiskLine(xpsi.Photosphere):
                  bounds = None, values = None,
                  stokes=False,
                  disk = None,
+                 disk_blocking = True,
                  combine_unpulsed=True,
                  line = None,
                  **kwargs):
@@ -60,6 +61,7 @@ class CustomPhotosphereDiskLine(xpsi.Photosphere):
         self._everywhere = everywhere
         self._stokes = stokes
         self._combine_unpulsed = combine_unpulsed
+        self._disk_blocking = disk_blocking #override to test disk emission without blocking needed here
         
         if disk is not None:
             self._disk = disk
@@ -218,9 +220,9 @@ class CustomPhotosphereDiskLine(xpsi.Photosphere):
                     
                 if isinstance(self._disk, list): # not correct but I dont want to do this now
                     R_in = 1e6 # default value with no disk
-                elif self._disk is not None: 
+                elif self._disk is not None and self._disk_blocking: 
                     R_in = self.disk['R_in'] * 1000 # in meters now
-                elif self._disk is None:
+                elif self._disk is None or not self._disk_blocking:
                     R_in = 1e6 # default value with no disk
 
                 if self._stokes:

@@ -143,63 +143,102 @@ class parameter_values(object):
         self.p = [x for x in self.p if x is not None]
         return self.p
     
+    # From Serena
+    def derive_names(self, model):
+        out = str(model.likelihood)
+        outA = out.split('\n')
+        outA = outA[2:-1]
+        names = []
+        for i in range(len(outA)):
+            a = outA[i]
+            ind_end = a.find(':')
+            if a[:ind_end].find(' ')<0:
+                names.append(a[:ind_end])
+        return names    
         
-    def names(self):
-        self.names = [
-            'mass' if not self.fix_mass else None, 
-            'radius', 
-            'distance', 
-            'cos_inclination',
-            'spin_axis_position_angle' if self.polarization else None,
-            'phase_shift' if not self.secondary else None, 
-            'super_colatitude' if not self.secondary else None, 
-            'super_radius' if not self.secondary else None,
-            'super_tbb' if not self.secondary else None,
-            'super_te' if not self.secondary else None, 
-            'super_tau' if not self.secondary else None, 
-            'p__phase_shift' if self.secondary else None, 
-            'p__super_colatitude' if self.secondary else None, 
-            'p__super_radius' if self.secondary else None, 
-            'p__super_tbb' if self.secondary else None, 
-            'p__super_te' if self.secondary else None, 
-            'p__super_tau' if self.secondary else None, 
-            's__phase_shift' if self.secondary else None, 
-            's__super_colatitude' if self.secondary else None, 
-            's__super_radius' if self.secondary else None, 
-            's__super_tbb' if self.secondary else None, 
-            's__super_te' if self.secondary else None, 
-            's__super_tau' if self.secondary else None, 
-            # 'T_in' if self.bkg in ['disk', 'diskline'] else None,
-            'T_in_keV' if self.bkg in ['disk', 'diskline'] else None,
-            'R_in' if self.bkg in ['disk', 'diskline'] else None,
-            'mu' if self.bkg == 'diskline' else None,
-            'sigma' if self.bkg == 'diskline' else None,
-            'N' if self.bkg == 'diskline' else None,
-            'column_density', 
-            'phase_shift' if self.signal_phase_shift else None,
-            'alpha_1' if self.polarization else None,
-            'alpha_2' if self.polarization else None,
-            'alpha_3' if self.polarization else None,
-            'compactness',
-            'inclination_deg',
-            'tbb_keV' if not self.secondary else None, 
-            'te_keV' if not self.secondary else None, 
-            'colatitude_deg' if not self.secondary else None, 
-            'radius_deg' if not self.secondary else None,
-            'p__tbb_keV' if self.secondary else None, 
-            'p__te_keV' if self.secondary else None, 
-            'p__colatitude_deg' if self.secondary else None, 
-            'p__radius_deg' if self.secondary else None,
-            's__tbb_keV' if self.secondary else None, 
-            's__te_keV' if self.secondary else None, 
-            's__colatitude_deg' if self.secondary else None, 
-            's__radius_deg' if self.secondary else None,
-            'N_norm' if self.bkg == 'diskline' else None
-        ]
+    
+    def names(self, model):
+        # self.names = [
+        #     'mass' if not self.fix_mass else None, 
+        #     'radius', 
+        #     'distance', 
+        #     'cos_inclination',
+        #     'spin_axis_position_angle' if self.polarization else None,
+        #     'phase_shift' if not self.secondary else None, 
+        #     'super_colatitude' if not self.secondary else None, 
+        #     'super_radius' if not self.secondary else None,
+        #     'super_tbb' if not self.secondary else None,
+        #     'super_te' if not self.secondary else None, 
+        #     'super_tau' if not self.secondary else None, 
+        #     'p__phase_shift' if self.secondary else None, 
+        #     'p__super_colatitude' if self.secondary else None, 
+        #     'p__super_radius' if self.secondary else None, 
+        #     'p__super_tbb' if self.secondary else None, 
+        #     'p__super_te' if self.secondary else None, 
+        #     'p__super_tau' if self.secondary else None, 
+        #     's__phase_shift' if self.secondary else None, 
+        #     's__super_colatitude' if self.secondary else None, 
+        #     's__super_radius' if self.secondary else None, 
+        #     's__super_tbb' if self.secondary else None, 
+        #     's__super_te' if self.secondary else None, 
+        #     's__super_tau' if self.secondary else None, 
+        #     # 'T_in' if self.bkg in ['disk', 'diskline'] else None,
+        #     'T_in_keV' if self.bkg in ['disk', 'diskline'] else None,
+        #     'R_in' if self.bkg in ['disk', 'diskline'] else None,
+        #     'mu' if self.bkg == 'diskline' else None,
+        #     'sigma' if self.bkg == 'diskline' else None,
+        #     'N' if self.bkg == 'diskline' else None,
+        #     'column_density', 
+        #     'phase_shift' if self.signal_phase_shift else None,
+        #     'alpha_1' if self.polarization else None,
+        #     'alpha_2' if self.polarization else None,
+        #     'alpha_3' if self.polarization else None,
+        #     'compactness',
+        #     'inclination_deg',
+        #     'tbb_keV' if not self.secondary else None, 
+        #     'te_keV' if not self.secondary else None, 
+        #     'colatitude_deg' if not self.secondary else None, 
+        #     'radius_deg' if not self.secondary else None,
+        #     'p__tbb_keV' if self.secondary else None, 
+        #     'p__te_keV' if self.secondary else None, 
+        #     'p__colatitude_deg' if self.secondary else None, 
+        #     'p__radius_deg' if self.secondary else None,
+        #     's__tbb_keV' if self.secondary else None, 
+        #     's__te_keV' if self.secondary else None, 
+        #     's__colatitude_deg' if self.secondary else None, 
+        #     's__radius_deg' if self.secondary else None,
+        #     'N_norm' if self.bkg == 'diskline' else None
+        # ]
         
-        # Filter out None values
-        self.names = [name for name in self.names if name is not None]
+        # # Filter out None values
+        # self.names = [name for name in self.names if name is not None]
+        # return self.names
+        
+        base_model_names = self.derive_names(model)
+        
+        names_transform = ['compactness',
+          'inclination_deg',
+          'p__tbb_keV' if self.scenario =='J1444_STU' else None,
+          'p__te_keV' if self.scenario =='J1444_STU' else None,
+          'p__colatitude_deg' if self.scenario =='J1444_STU' else None,
+          'p__radius_deg' if self.scenario =='J1444_STU' else None,
+          's__tbb_keV' if self.scenario =='J1444_STU' else None,
+          's__te_keV' if self.scenario =='J1444_STU' else None,
+          's__colatitude_deg' if self.scenario =='J1444_STU' else None,
+          's__radius_deg' if self.scenario =='J1444_STU' else None,
+          'NICER__p__tbb_keV' if self.scenario =='J1444_STS' else None,
+          'NICER__p__te_keV' if self.scenario =='J1444_STS' else None,
+          'NICER__p__colatitude_deg' if self.scenario =='J1444_STS' else None,
+          'NICER__p__radius_deg' if self.scenario =='J1444_STS' else None,
+          'IXPE__p__tbb_keV' if self.scenario =='J1444_STS' else None,
+          'IXPE__p__te_keV' if self.scenario =='J1444_STS' else None,
+          'IXPE__p__colatitude_deg' if self.scenario =='J1444_STS' else None,
+          'IXPE__p__radius_deg' if self.scenario =='J1444_STS' else None]
+        
+        names_transform = [name for name in names_transform if name is not None]
+        self.names = base_model_names + names_transform
         return self.names
+
 
     def bounds(self):
         
@@ -218,7 +257,6 @@ class parameter_values(object):
             cos_i_high = np.cos(i_low_deg*np.pi/180)
             column_density_low = 19.
         
-        # temporarily off for prior testing:
         mass_high = 2.2 #2.8 #2.2
         radius_low= 8. #5.5 #8.
         radius_high = 14.
@@ -232,17 +270,17 @@ class parameter_values(object):
                   'inclination_deg': (i_low_deg, i_high_deg),           
                   }
         
-        if not self.scenario == 'J1444_STU': 
-            bounds['phase_shift']=(-0.5, 0.5)
-            bounds['super_colatitude']=(0.001, math.pi - 0.001)
-            bounds['super_radius']=(0.001, math.pi/2.0)
-            bounds['super_tbb']=(0.001, 0.003)
-            bounds['tbb_keV']= (0.511, 1.533)
-            bounds['super_te']= (40., 200.)
-            bounds['te_keV']= (40*511/1000, 200*511/1000)
-            bounds['super_tau']= (0.5, 3.5)
-            bounds['colatitude_deg']= (0.001, 180-0.001),
-            bounds['radius_deg']= (0.001, 90)   
+        # if not self.scenario == 'J1444_STU': 
+        #     bounds['phase_shift']=(-0.5, 0.5)
+        #     bounds['super_colatitude']=(0.001, math.pi - 0.001)
+        #     bounds['super_radius']=(0.001, math.pi/2.0)
+        #     bounds['super_tbb']=(0.001, 0.003)
+        #     bounds['tbb_keV']= (0.511, 1.533)
+        #     bounds['super_te']= (40., 200.)
+        #     bounds['te_keV']= (40*511/1000, 200*511/1000)
+        #     bounds['super_tau']= (0.5, 3.5)
+        #     bounds['colatitude_deg']= (0.001, 180-0.001),
+        #     bounds['radius_deg']= (0.001, 90)   
         if self.scenario == 'J1444_STU': 
             bounds['p__phase_shift']=(-0.5, 0.5)
             bounds['p__super_colatitude']=(0.001, math.pi - 0.001)
@@ -264,31 +302,47 @@ class parameter_values(object):
             bounds['s__te_keV']= (40*511/1000, 200*511/1000)
             bounds['s__super_tau']= (0.5, 3.5)
             bounds['s__colatitude_deg']= (0.001, 180-0.001)
-            bounds['s__radius_deg']= (0.001, 90)   
+            bounds['s__radius_deg']= (0.001, 90)
+            bounds['T_in_keV'] = (0.01, 0.6) # (0.225, 0.275 )  # (0.01, 0.6) # keV
+            bounds['R_in'] = (5, 40) # from star radius to around corotation radius for the heaviest saxJ1808 possible # (27, 33)  # (20, 200) # km
+            # bounds['spin_axis_position_angle']=(-math.pi/2.0, math.pi/2.0)
+
+        elif self.scenario == 'J1444_STS':
+            bounds['NICER__p__phase_shift']=(-0.5, 0.5)
+            bounds['NICER__p__super_colatitude']=(0.001, np.pi/2 - 0.001)
+            bounds['NICER__p__super_radius']=(0.001, math.pi/2.0)
+            bounds['NICER__p__super_tbb']=(0.001, 0.003)
+            bounds['NICER__p__tbb_keV']= (0.511, 1.533)
+            bounds['NICER__p__super_te']= (40., 200.)
+            bounds['NICER__p__te_keV']= (40*511/1000, 200*511/1000)
+            bounds['NICER__p__super_tau']= (0.5, 3.5)
+            bounds['NICER__p__colatitude_deg']= (0.001, 180-0.001)
+            bounds['NICER__p__radius_deg']= (0.001, 90)
+            bounds['NICER__T_in_keV'] = (0.01, 0.6) # (0.225, 0.275 )  # (0.01, 0.6) # keV
+            bounds['NICER__R_in'] = (5, 60) # from star radius to around corotation radius for the heaviest saxJ1808 possible # (27, 33)  # (20, 200) # km
             
+            
+            bounds['IXPE__p__phase_shift']=(-0.5, 0.5)
+            bounds['IXPE__p__super_colatitude']=(0.001, np.pi/2 - 0.001)
+            bounds['IXPE__p__super_radius']=(0.001, math.pi/2.0)
+            bounds['IXPE__p__super_tbb']=(0.001, 0.003)
+            bounds['IXPE__p__tbb_keV']= (0.511, 1.533)
+            bounds['IXPE__p__super_te']= (40., 200.)
+            bounds['IXPE__p__te_keV']= (40*511/1000, 200*511/1000)
+            bounds['IXPE__p__super_tau']= (0.5, 3.5)
+            bounds['IXPE__p__colatitude_deg']= (0.001, 180-0.001)
+            bounds['IXPE__p__radius_deg']= (0.001, 90)   
+            # bounds['IXPE__T_in_keV'] = (0.01, 0.6) # (0.225, 0.275 )  # (0.01, 0.6) # keV
+            # bounds['IXPE__R_in'] = (5, 60) # from star radius to around corotation radius for the heaviest saxJ1808 possible # (27, 33)  # (20, 200) # km
+            bounds['NICER__alpha'] = (0.8, 1.2)
+            bounds['IXPE__spin_axis_position_angle']=(-math.pi/2.0, math.pi/2.0)
+            bounds['du2__alpha'] = (0.8, 1.2)
+            bounds['du3__alpha'] = (0.8, 1.2)
+        
         
         if not self.fix_mass:
             bounds['mass'] = (1.0, mass_high)
-            
-        if self.ew:
-            bounds['elsewhere_temperature'] = (None, None)
 
-        if 'disk' in self.bkg:
-            bounds['T_in_keV'] = (0.01, 0.6) # (0.225, 0.275 )  # (0.01, 0.6) # keV
-            bounds['R_in'] = (5, 40) # from star radius to around corotation radius for the heaviest saxJ1808 possible # (27, 33)  # (20, 200) # km
-            # bounds['T_in_keV'] = (None, None)
-            # bounds['T_in_keV'] = (0.01, 0.6)
-            
-            
-        if 'line' in self.bkg:
-            bounds['mu'] = (0.8,1.1)
-            bounds['sigma'] = (1e-2,5e-1)
-            bounds['N'] = (1e35,1e38)
-            bounds['N_norm'] = (1e-2,1e1)
-        
-        if self.polarization:
-            bounds['spin_axis_position_angle']=(-math.pi/2.0, math.pi/2.0)
-            # bounds['alpha'] = (0.8, 1.2) # doesn't work?
             
         if self.signal_phase_shift:
             bounds['phase_shift'] = (-0.5, 0.5)
@@ -418,7 +472,7 @@ class parameter_values(object):
            'inclination_deg': r"i\;\mathrm{[deg]}"}
      
      
-        if not self.secondary:
+        if self.scenario == 'J1444':
             labels['phase_shift']       = r"\phi\;\mathrm{[cycles]}"
             labels['super_colatitude']  = r"\Theta_{spot}\;\mathrm{[rad]}"
             labels['colatitude_deg']    = r"\theta\;\mathrm{[deg]}"
@@ -429,7 +483,9 @@ class parameter_values(object):
             labels['super_te']          = r"T_\mathrm{electrons}\;\mathrm{[data units]}"
             labels['te_keV']            = r"T_\mathrm{e}\;\mathrm{[keV]}"
             labels['super_tau']         = r"\tau\;[-]"    
-        elif self.secondary:
+            labels['T_in_keV'] = r"T_\mathrm{in}\;\mathrm{[keV]}"
+            labels['R_in'] =  r"R_\mathrm{in}\;\mathrm{[km]}"
+        elif self.scenario == 'J1444_STU':
             labels['p__phase_shift']       = r"\phi_\mathrm{p}\;\mathrm{[cycles]}"
             labels['p__super_colatitude']  = r"\Theta_\mathrm{p}\;\mathrm{[rad]}"
             labels['p__colatitude_deg']    = r"\theta_\mathrm{p}\;\mathrm{[deg]}"
@@ -451,28 +507,55 @@ class parameter_values(object):
             labels['s__super_te']          = r"T_\mathrm{e,s}\;\mathrm{[data units]}"
             labels['s__te_keV']            = r"T_\mathrm{e,s}\;\mathrm{[keV]}"
             labels['s__super_tau']         = r"\tau_\mathrm{s}\;[-]"
+
+        elif self.scenario == 'J1444_STS':
+            labels['NICER__p__phase_shift']       = r"\phi_\mathrm{p,N}\;\mathrm{[cycles]}"
+            labels['NICER__p__super_colatitude']  = r"\Theta_\mathrm{p,N}\;\mathrm{[rad]}"
+            labels['NICER__p__colatitude_deg']    = r"\theta_\mathrm{p,N}\;\mathrm{[deg]}"
+            labels['NICER__p__super_radius']      = r"\zeta_\mathrm{p,N}\;\mathrm{[rad]}"
+            labels['NICER__p__radius_deg']        = r"\zeta_\mathrm{p,N}\;\mathrm{[deg]}"
+            labels['NICER__p__super_tbb']         = r"T_\mathrm{seed,p,N}\;\mathrm{[data units]}"
+            labels['NICER__p__tbb_keV']           = r"T_\mathrm{seed,p,N}\;\mathrm{[keV]}"
+            labels['NICER__p__super_te']          = r"T_\mathrm{e,p,N}\;\mathrm{[data units]}"
+            labels['NICER__p__te_keV']            = r"T_\mathrm{e,p,N}\;\mathrm{[keV]}"
+            labels['NICER__p__super_tau']         = r"\tau_\mathrm{p,N}\;[-]"
+            labels['NICER__T_in_keV'] = r"T_\mathrm{in,N}\;\mathrm{[keV]}"
+            labels['NICER__R_in'] =  r"R_\mathrm{in,N}\;\mathrm{[km]}"
+            
+            labels['IXPE__p__phase_shift']       = r"\phi_\mathrm{p,I}\;\mathrm{[cycles]}"
+            labels['IXPE__p__super_colatitude']  = r"\Theta_\mathrm{p,I}\;\mathrm{[rad]}"
+            labels['IXPE__p__colatitude_deg']    = r"\theta_\mathrm{p,I}\;\mathrm{[deg]}"
+            labels['IXPE__p__super_radius']      = r"\zeta_\mathrm{p,I}\;\mathrm{[rad]}"
+            labels['IXPE__p__radius_deg']        = r"\zeta_\mathrm{p,I}\;\mathrm{[deg]}"
+            labels['IXPE__p__super_tbb']         = r"T_\mathrm{seed,p,I}\;\mathrm{[data units]}"
+            labels['IXPE__p__tbb_keV']           = r"T_\mathrm{seed,p,I}\;\mathrm{[keV]}"
+            labels['IXPE__p__super_te']          = r"T_\mathrm{e,p,I}\;\mathrm{[data units]}"
+            labels['IXPE__p__te_keV']            = r"T_\mathrm{e,p,I}\;\mathrm{[keV]}"
+            labels['IXPE__p__super_tau']         = r"\tau_\mathrm{p,I}\;[-]"
+            # labels['IXPE__T_in_keV'] = r"T_\mathrm{in,I}\;\mathrm{[keV]}"
+            # labels['IXPE__R_in'] =  r"R_\mathrm{in,I}\;\mathrm{[km]}"
+
+            labels['IXPE__spin_axis_position_angle']=r"\chi\;\mathrm{[rad]}"
+            labels['NICER__alpha']=r"\alpha_\mathrm{NICER}\;[-]"
+            labels['du2__alpha']=r"\alpha_2\;[-]"
+            labels['du3__alpha']=r"\alpha_3\;[-]"
             
         
         if not self.fix_mass:
             labels['mass'] =  r"M\;\mathrm{[M}_{\odot}\mathrm{]}"
         
-        if 'disk' in self.bkg:
-            # labels['T_in'] = r"T_{in} log10 of Kelvin"
-            labels['T_in_keV'] = r"T_\mathrm{in}\;\mathrm{[keV]}"
-            labels['R_in'] =  r"R_\mathrm{in}\;\mathrm{[km]}"
-            
-        if 'line' in self.bkg:
-            labels['mu'] = r"\mu\;\mathrm{[keV]}"
-            labels['sigma'] = r"\sigma\;\mathrm{[keV]}"
-            labels['N'] =  r"N\;\mathrm{[photons/cm^2/s]}"
-            labels['N_norm'] =  r"N_\mathrm{norm}\;\mathrm{[photons/cm^2/s]}"
-           
-        if self.polarization:
-            labels['spin_axis_position_angle']=r"\Chi\;\mathrm{[rad]}"
-            labels['alpha_1']=r"\alpha_1\;[-]"
-            labels['alpha_2']=r"\alpha_2\;[-]"
-            labels['alpha_3']=r"\alpha_3\;[-]"
-           
+        if not self.scenario == 'J1444_STS':
+            if 'disk' in self.bkg:
+                labels['T_in_keV'] = r"T_\mathrm{in}\;\mathrm{[keV]}"
+                labels['R_in'] =  r"R_\mathrm{in}\;\mathrm{[km]}"
+       
+                
+            if self.polarization:
+                labels['spin_axis_position_angle']=r"\chi\;\mathrm{[rad]}"
+                labels['alpha_1']=r"\alpha_1\;[-]"
+                labels['alpha_2']=r"\alpha_2\;[-]"
+                labels['alpha_3']=r"\alpha_3\;[-]"
+               
         if self.signal_phase_shift:
             labels['phase_shift']=r"phi_\mathrm{NICER}\;[cycles]"
         

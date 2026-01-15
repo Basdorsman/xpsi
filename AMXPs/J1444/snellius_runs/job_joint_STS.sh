@@ -3,7 +3,7 @@
 #SBATCH --tasks-per-node=192
 #SBATCH -t 5-0:00:00
 #SBATCH -p genoa
-#SBATCH --job-name=J1444_STS_var_flatmr
+#SBATCH --job-name=J1444_STS_diskNICER
 #SBATCH --mail-user=b.dorsman@uva.nl
 #SBATCH --mail-type=END
 
@@ -20,9 +20,9 @@ export sqrt_num_cells=50  # 90
 export num_rays=512
 export machine=snellius
 export live_points=1000 #$SLURM_TASKS_PER_NODE
-export max_iter=20
+export max_iter=-1
 export run_type=sample
-export bkg=disk
+export bkg=disk_NICER
 export support_factor=None
 export scenario=J1444_STS
 export poisson_noise=True
@@ -32,7 +32,6 @@ export fix_mass=False
 export eos_informed=False
 export channel_min=100
 export polarization=iqu
-
 
 export XPSI_DIR=$HOME/xpsi-bas-fork
 export LABEL=${SLURM_JOB_NAME}_lp${live_points}
@@ -57,6 +56,8 @@ export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$HOME/multinest/MultiNest_v3.12_CMake/mu
 
 cp -r $XPSI_DIR/AMXPs/* $TMPDIR/
 cd $TMPDIR/$DIR_NAME/
+#cp -r $XPSI_DIR/AMXPs/J1444/* $TMPDIR/
+#cd $TMPDIR/
 
 echo 'srun python'
 srun python joint_STS_variable.py > std.out 2> std.err
@@ -71,5 +72,4 @@ cp -r $LABEL/ $STORAGE_DIR
 # copy analysis files for posterity
 mkdir $STORAGE_DIR/analysis_files
 
-cp $TMPDIR/$DIR_NAME/{joint_STS_variable.py,Custom*,Disk*,synthesise_data.py,parameter_values.py,snellius_runs/job*} -r $TMPDIR/data $STORAGE_DIR/analysis_files
-
+cp $TMPDIR/$DIR_NAME/{joint_STS_variable.py,Custom*,Disk*,parameter_values.py,snellius_runs/job_joint_STS.sh} -r $STORAGE_DIR/analysis_files

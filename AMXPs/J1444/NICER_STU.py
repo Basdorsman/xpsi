@@ -38,8 +38,9 @@ class analysis(object):
                  fix_mass=False, 
                  eos_informed=False, 
                  channel_min=None,
-                 sequential=False,
-                 combine_unpulsed=True):
+                 sequential='nh_not_shared',
+                 combine_unpulsed=True,
+                 disk_blocking=True):
 
         self.scenario = os.environ.get('scenario')
         if os.environ.get('scenario') == None or os.environ.get('scenario') =='None':
@@ -180,6 +181,8 @@ class analysis(object):
 
         if self.sequential == "True" or self.sequential == True:
             self.sequential = True
+        elif self.sequential == 'nh_not_shared':
+            pass
         else:
             self.sequential = False
 
@@ -198,6 +201,18 @@ class analysis(object):
 
         print(f'combine_unpulsed: {self.combine_unpulsed}')
         
+        if os.environ.get('disk_blocking') == None or os.environ.get('disk_blocking') =='None':
+            print('disk_blocking is not in environment variables, using passed argument.')
+            self.disk_blocking = disk_blocking
+        else:
+            self.disk_blocking = os.environ.get('disk_blocking')
+
+        if self.disk_blocking == "True" or self.disk_blocking == True:
+            self.disk_blocking = True
+        else:
+            self.disk_blocking = False
+
+        print(f'disk_blocking: {self.disk_blocking}')
         
 
         self.pv = parameter_values(self.scenario, self.bkg, self.fix_mass)
@@ -300,7 +315,7 @@ class analysis(object):
                   'cede': False,
                   'concentric': False,
                   'sqrt_num_cells': self.sqrt_num_cells,
-                  'min_sqrt_num_cells': 10,
+                  'min_sqrt_num_cells': self.sqrt_num_cells,
                   'max_sqrt_num_cells': 128,
                   'num_leaves': self.num_leaves,  #50 avoids interp error.
                   'num_rays': self.num_rays,
@@ -324,7 +339,7 @@ class analysis(object):
                   'cede': False,
                   'concentric': False,
                   'sqrt_num_cells': self.sqrt_num_cells,
-                  'min_sqrt_num_cells': 10,
+                  'min_sqrt_num_cells': self.sqrt_num_cells,
                   'max_sqrt_num_cells': 128,
                   'num_leaves': self.num_leaves,  #50 avoids interp error.
                   'num_rays': self.num_rays,
@@ -359,6 +374,7 @@ class analysis(object):
                                                      disk=self.disk, 
                                                      line=self.line,
                                                      combine_unpulsed=self.combine_unpulsed,
+                                                     disk_blocking=self.disk_blocking,
                                                      values=dict(mode_frequency = self.spacetime['frequency']), 
                                                      bounds={})
 
@@ -497,7 +513,7 @@ class analysis(object):
         
         # start call with a likelihood check
         t_check = time.time()
-        self.likelihood.check(None, [self.true_logl], 1.0e-6, physical_points=[self.p], force_update=True)
+        self.likelihood.check(None, [self.true_logl], 1.0e6, physical_points=[self.p], force_update=True)
         print('Likelihood check took {:.3f} seconds'.format((time.time()-t_check)))
         
         
@@ -531,9 +547,9 @@ class analysis(object):
         
         fig, axes = plt.subplots(3,1,figsize=(5,8))
        
-        profile = CustomAxes.plot_2D_counts(axes[0], self.NICER_data.counts, get_mids_from_edges(self.NICER_data.phases), get_mids_from_edges(self.NICER.channel_edges))
-        profile = CustomAxes.plot_2D_counts(axes[1], self.signal_NICER.expected_counts, get_mids_from_edges(self.NICER_data.phases), get_mids_from_edges(self.NICER.channel_edges))
-        profile = CustomAxes.plot_2D_counts(axes[2], self.signal_NICER.expected_counts-self.NICER_data.counts, get_mids_from_edges(self.NICER_data.phases), get_mids_from_edges(self.NICER.channel_edges))
+        axes[0],profile = CustomAxes.plot_2D_counts(axes[0], self.NICER_data.counts, get_mids_from_edges(self.NICER_data.phases), get_mids_from_edges(self.NICER.channel_edges))
+        axes[1],profile = CustomAxes.plot_2D_counts(axes[1], self.signal_NICER.expected_counts, get_mids_from_edges(self.NICER_data.phases), get_mids_from_edges(self.NICER.channel_edges))
+        axes[2],profile = CustomAxes.plot_2D_counts(axes[2], self.signal_NICER.expected_counts-self.NICER_data.counts, get_mids_from_edges(self.NICER_data.phases), get_mids_from_edges(self.NICER.channel_edges))
         fig.colorbar(profile, ax=axes[0])
         fig.colorbar(profile, ax=axes[1])
         fig.colorbar(profile, ax=axes[2])     
@@ -609,28 +625,51 @@ class analysis(object):
             
             
             # test specific point
-#             p_weird = [
-                # 	2.1200561610599205,
-                # 	9.416322611065725, 
-                # 	3.6100199937357425,
-                # 	0.4, #0.44298832107853886,
-                # 	0.15, #0.16307810892890606,
-                # 	0.04, #0.036259331126923484,
-                # 	1.0, #1.4941520766484677,
-                # 	0.0024841317902831978,
-                # 	47.91259306551796,
-                # 	2.2451996447160694,
-                # 	0.4073814271800825,
-                # 	2.5282227194144915,
-                # 	0.9909885386107089,
-                # 	0.0028602243161872463,
-                # 	105.31648050921747,
-                # 	2.715670560621089,
-                # 	0.5780280037187668,
-                # 	16.00397360134858,
-                # 	25.370674480414763]
+            # p_weird = [
+            #      	2.1200561610599205,
+            #      	9.416322611065725, 
+            #      	3.6100199937357425,
+            #      	0.4, #0.44298832107853886,
+            #      	0.15, #0.16307810892890606,
+            #      	0.04, #0.036259331126923484,
+            #      	1.0, #1.4941520766484677,
+            #      	0.0024841317902831978,
+            #      	47.91259306551796,
+            #      	2.2451996447160694,
+            #      	0.4073814271800825,
+            #      	2.5282227194144915,
+            #      	0.9909885386107089,
+            #      	0.0028602243161872463,
+            #      	105.31648050921747,
+            #      	2.715670560621089,
+            #      	0.5780280037187668,
+            #      	16.00397360134858,
+            #      	25.370674480414763]
+            
+            
+            # p_weird2 = [
+            #     0.218641031764318816E+001,
+            #     0.975310145057444089E+001,
+            #     0.355979202681168250E+001,
+            #     0.541329518561872947E+000,
+            #     -0.206823679548632788E-001,      
+            #     0.785098517447519045E-001,
+            #     0.142302726267343482E+001,   
+            #     0.258842198036471089E-002,   
+            #     0.502040264914150356E+002,   
+            #     0.229354590720264806E+001,        
+            #     0.249610810939906336E+000,   
+            #     0.222458389817435132E+001,   
+            #     0.560427966585465787E+000,   
+            #     0.260849037251272529E-002,   
+            #     0.563435955484642790E+002,        
+            #     0.274625049627498541E+001,   
+            #     0.573731309866196582E+000,   
+            #     0.150002071095646983E+002,   
+            #     0.258811243314100707E+002] 
 
             # print(self.likelihood(p_weird, reinitialise=True))
+            # print(self.likelihood(p_weird2, reinitialise=True))
             print('Test took {:.3f} seconds'.format((time.time()-t_start)))
 
             plt.close('all')
@@ -641,6 +680,6 @@ if __name__ == '__main__':
                         sampler='multi', 
                         scenario='J1444_STU', 
                         eos_informed=False, 
-                        sequential=False,
+                        sequential='nh_not_shared',
                         channel_min=100)
     Analysis()

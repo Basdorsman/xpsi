@@ -45,7 +45,7 @@ class analysis(object):
                  polarization=False,
                  channel_min=None,
                  combine_kdes=True,
-                 nh_shared=False):
+                 nh_shared=True):
 
         self.scenario = os.environ.get('scenario')
         if os.environ.get('scenario') == None or os.environ.get('scenario') =='None':
@@ -195,8 +195,8 @@ class analysis(object):
             self.nh_shared = nh_shared
         else:
             self.nh_shared = os.environ.get('nh_shared')
-        if self.nh_shared == "qu" or self.nh_shared == "iqu":
-            self.nh_shared = self.nh_shared
+        if self.nh_shared == "True" or self.nh_shared == True:
+            self.nh_shared = True
         else:
             self.nh_shared = False
         print(f'nh_shared: {self.nh_shared}')
@@ -596,10 +596,11 @@ class analysis(object):
             
 if __name__ == '__main__':
     Analysis = analysis('test', 
-                        'disk', 
+                        'disk_NICER', 
                         sampler='multi', 
                         scenario='J1444_STU', 
                         eos_informed=False, 
                         polarization=False, 
-                        channel_min=100)
+                        channel_min=100,
+                        nh_shared=True)
     Analysis()

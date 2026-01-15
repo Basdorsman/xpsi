@@ -240,7 +240,7 @@ class CustomAxes(Axes):
         #veneer((0.05, 0.2), (None, None), self)
         #plt.subplots_adjust(wspace = 1)#0.025)
         
-        return profile
+        return self, profile
 
     def plot_pulse(self, phases_edges, my_data):
     
@@ -451,3 +451,29 @@ def shift_and_rebin_pulse_2D(pulse, pulse_phases, phase_shift, new_phases):
     pulse_rebinned *= len(pulse_phases) / len(new_phases)
 
     return pulse_rebinned
+
+
+# From Serena
+def derive_names(model):
+    out = str(model.likelihood)
+    outA = out.split('\n')
+    outA = outA[2:-1]
+    names = []
+    for i in range(len(outA)):
+        a = outA[i]
+        ind_end = a.find(':')
+        if a[:ind_end].find(' ')<0:
+            names.append(a[:ind_end])
+    return names
+
+
+from scipy.stats import chi2
+
+def chi2_p_value(chi2_obs, dof):
+    """
+    Compute the p-value: probability of observing a chi2 >= chi2_obs
+    for a chi2 distribution with given degrees of freedom.
+    """
+    # Survival function (1 - CDF) gives the upper-tail probability
+    p_value = chi2.sf(chi2_obs, dof)
+    return p_value

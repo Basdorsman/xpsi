@@ -37,7 +37,8 @@ class analysis(object):
                  eos_informed=False,
                  polarization=False,
                  NICER=True,
-                 channel_min=None):
+                 channel_min=None,
+                 combine_unpulsed=True):
 
         self.scenario = os.environ.get('scenario')
         if os.environ.get('scenario') == None or os.environ.get('scenario') =='None':
@@ -180,10 +181,25 @@ class analysis(object):
             self.channel_min = int(os.environ.get('channel_min'))
         print(f'channel_min: {self.channel_min}') 
 
+        if os.environ.get('combine_unpulsed') == None or os.environ.get('combine_unpulsed') =='None':
+            print('combine_unpulsed is not in environment variables, using passed argument.')
+            self.combine_unpulsed = combine_unpulsed
+        else:
+            self.combine_unpulsed = os.environ.get('combine_unpulsed')
+
+        if self.combine_unpulsed == "True" or self.combine_unpulsed == True:
+            self.combine_unpulsed = True
+        else:
+            self.combine_unpulsed = False
+
+        print(f'combine_unpulsed: {self.combine_unpulsed}')
+
+
+
+
         self.NICER = NICER
         self.signal_phase_shift = False
         self.variable_params=True
-        self.disk_NICER_only=False
         self.pv = parameter_values(self.scenario, self.bkg, self.fix_mass, polarization=self.polarization, signal_phase_shift=self.signal_phase_shift)
         self.file_locations()
         self.set_parameter_vector()
@@ -254,6 +270,8 @@ class analysis(object):
 
         minchan = 50
         maxchan1 = 151
+        
+        self.exposure1 = exposure1
 
         self.IXPE_I_DU1_data = xpsi.Data(Idat1.T[minchan:maxchan1,:],
                                channels=channels1[minchan:maxchan1],
@@ -485,12 +503,12 @@ class analysis(object):
                   'num_rays': self.num_rays,
                   'atm_ext':'Num5D'}
         
-        self.p_bounds = dict(super_colatitude = (0.001, np.pi/2 - 0.001),
-                                super_radius = self.bounds["super_radius"],
-                                phase_shift = self.bounds["phase_shift"], 
-                                super_tbb = self.bounds['super_tbb'],
-                                super_tau = self.bounds['super_tau'],
-                                super_te = self.bounds['super_te'])
+        self.p_bounds = dict(super_colatitude = self.bounds["NICER__p__super_colatitude"],
+                                super_radius = self.bounds["NICER__p__super_radius"],
+                                phase_shift = self.bounds["NICER__p__phase_shift"], 
+                                super_tbb = self.bounds['NICER__p__super_tbb'],
+                                super_tau = self.bounds['NICER__p__super_tau'],
+                                super_te = self.bounds['NICER__p__super_te'])
         self.p_values = {}
         
         if self.variable_params:
@@ -520,15 +538,15 @@ class analysis(object):
                   'is_antiphased': True}
                   # 'prefix': 's'}
         
-        if self.scenario == 'J1444_STU':  
-            self.s_bounds = dict(super_colatitude = self.bounds["super_colatitude"],
-                                    super_radius = self.bounds["super_radius"],
-                                    phase_shift = self.bounds["phase_shift"], 
-                                    super_tbb = self.bounds['super_tbb'],
-                                    super_tau = self.bounds['super_tau'],
-                                    super_te = self.bounds['super_te'])
-            self.s_values = {}
-        elif self.scenario == 'J1444_STS':
+        # if self.scenario == 'J1444_STU':  
+        #     self.s_bounds = dict(super_colatitude = self.bounds["super_colatitude"],
+        #                             super_radius = self.bounds["super_radius"],
+        #                             phase_shift = self.bounds["phase_shift"], 
+        #                             super_tbb = self.bounds['super_tbb'],
+        #                             super_tau = self.bounds['super_tau'],
+        #                             super_te = self.bounds['super_te'])
+        #     self.s_values = {}
+        if self.scenario == 'J1444_STS':
             class derive_s__super_colatitude(Derive):
                 def __init__(self):
                     pass
@@ -654,6 +672,7 @@ class analysis(object):
                                                          elsewhere = None, 
                                                          stokes=False, 
                                                          disk=self.disk_NICER, 
+                                                         combine_unpulsed=self.combine_unpulsed,
                                                          values=photosphere_values, 
                                                          bounds=photosphere_bounds,
                                                          prefix='NICER')
@@ -665,6 +684,7 @@ class analysis(object):
                                                          elsewhere = None, 
                                                          stokes=True, 
                                                          disk=self.disk_IXPE, 
+                                                         combine_unpulsed=self.combine_unpulsed,
                                                          values=photosphere_values, 
                                                          bounds=photosphere_bounds,
                                                          prefix='IXPE')
@@ -705,8 +725,8 @@ class analysis(object):
         
     def set_disk(self):
         from Disk import Disk, k_disk_derive
-        bounds = dict(T_in_keV = self.bounds["T_in_keV"],
-                      R_in = self.bounds["R_in"],
+        bounds = dict(T_in_keV = self.bounds["NICER__T_in_keV"],
+                      R_in = self.bounds["NICER__R_in"],
                       K_disk = None)
         if self.bkg == 'disk':    
             self.k_disk_NICER = k_disk_derive()
@@ -759,6 +779,7 @@ class analysis(object):
                             background = None,
                             photosphere_prefix = 'NICER',
                             interstellar = self.interstellar,
+                            combine_unpulsed = self.combine_unpulsed,
                             cache = False, # only true if verifying code implementation otherwise useless slowdown.
                             bounds=phase_bounds,
                             values=phase_values,
@@ -1058,19 +1079,19 @@ class analysis(object):
 
             t_start = time.time()
 
-            n_priors = 10000
+            # n_priors = 10000
             # inverse sampling test
-            test=self.prior.draw(ndraws=n_priors)[0]#[:,0:-1]
+            # test=self.prior.draw(ndraws=n_priors)[0]#[:,0:-1]
             
-            print(f'time to draw {n_priors} priors:',time.time()-t_start)
+            # print(f'time to draw {n_priors} priors:',time.time()-t_start)
             # names_dictionary = self.pv.names()
             # labels_dictionary = self.pv.labels()
             # axis_labels = [labels_dictionary[key] for key in names_dictionary]
             
-            import corner
-            figure=corner.corner(test)
-            figure.tight_layout()
-            figure.savefig(f'{folderstring}/prior_test.png',dpi=50)
+            # import corner
+            # figure=corner.corner(test)
+            # figure.tight_layout()
+            # figure.savefig(f'{folderstring}/prior_test.png',dpi=50)
             print('Test took {:.3f} seconds'.format((time.time()-t_start)))
 
             plt.close('all')
@@ -1084,5 +1105,6 @@ if __name__ == '__main__':
                         poisson_seed=42, 
                         eos_informed=False, 
                         polarization='iqu', 
-                        channel_min=100)
+                        channel_min=100,
+                        combine_unpulsed=False)
     Analysis()
